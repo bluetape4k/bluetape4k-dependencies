@@ -73,6 +73,36 @@ dependencies {
         api(libs.bluetape4k.tokenizer.korean)
         api(libs.bluetape4k.lingua)
         api(libs.bluetape4k.text.search)
+
+        // ── bluetape4k-graph modules ────────────────────────────────────────
+        api(libs.bluetape4k.graph.bom)
+        api(libs.bluetape4k.graph.core)
+        api(libs.bluetape4k.graph.age)
+        api(libs.bluetape4k.graph.falkordb)
+        api(libs.bluetape4k.graph.memgraph)
+        api(libs.bluetape4k.graph.neo4j)
+        api(libs.bluetape4k.graph.tinkerpop)
+        api(libs.bluetape4k.graph.io.core)
+        api(libs.bluetape4k.graph.io.csv)
+        api(libs.bluetape4k.graph.io.graphml)
+        api(libs.bluetape4k.graph.io.jackson2)
+        api(libs.bluetape4k.graph.io.jackson3)
+        api(libs.bluetape4k.graph.io.okio)
+
+        // ── bluetape4k-leader modules ───────────────────────────────────────
+        api(libs.bluetape4k.leader.bom)
+        api(libs.bluetape4k.leader.core)
+        api(libs.bluetape4k.leader.redis.lettuce)
+        api(libs.bluetape4k.leader.redis.redisson)
+        api(libs.bluetape4k.leader.exposed.core)
+        api(libs.bluetape4k.leader.exposed.jdbc)
+        api(libs.bluetape4k.leader.exposed.r2dbc)
+        api(libs.bluetape4k.leader.mongodb)
+        api(libs.bluetape4k.leader.hazelcast)
+        api(libs.bluetape4k.leader.spring.boot.common)
+        api(libs.bluetape4k.leader.spring.boot3)
+        api(libs.bluetape4k.leader.spring.boot4)
+        api(libs.bluetape4k.leader.micrometer)
     }
 }
 
