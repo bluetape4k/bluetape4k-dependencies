@@ -4,21 +4,21 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.bluetape4k/bluetape4k-dependencies)](https://central.sonatype.com/artifact/io.github.bluetape4k/bluetape4k-dependencies)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-> **Single BOM to rule all bluetape4k modules.**
+> **bluetape4k 전체 모듈을 하나의 BOM으로 관리합니다.**
 
-`bluetape4k-dependencies` is the centralized Bill of Materials (BOM) for the entire bluetape4k ecosystem.
-It follows the same pattern as `spring-boot-dependencies`: import one platform dependency and all bluetape4k
-module versions are aligned automatically — no per-artifact version declarations needed.
+`bluetape4k-dependencies`는 bluetape4k 생태계 전체를 위한 중앙화된 BOM(Bill of Materials)입니다.
+`spring-boot-dependencies`와 동일한 패턴을 따릅니다: 플랫폼 의존성 하나만 추가하면 모든 bluetape4k
+모듈의 버전이 자동으로 정렬됩니다 — 개별 아티팩트에 버전을 명시할 필요가 없습니다.
 
-Also available in [Korean / 한국어](README.ko.md).
+영어 버전은 [README.md](README.md)를 참고하세요.
 
 ---
 
-## Why a Separate BOM Repository?
+## 왜 별도의 BOM 레포지토리가 필요한가?
 
-The bluetape4k ecosystem is split across multiple independent repositories, each with its own release cadence:
+bluetape4k 생태계는 각자 독립적인 릴리즈 주기를 가진 여러 레포지토리로 분리되어 있습니다:
 
-| Repository | Group ID |
+| 레포지토리 | Group ID |
 |---|---|
 | [bluetape4k-projects](https://github.com/bluetape4k/bluetape4k-projects) | `io.github.bluetape4k` |
 | [bluetape4k-aws](https://github.com/bluetape4k/bluetape4k-aws) | `io.github.bluetape4k.aws` |
@@ -27,12 +27,12 @@ The bluetape4k ecosystem is split across multiple independent repositories, each
 | [bluetape4k-graph](https://github.com/bluetape4k/bluetape4k-graph) | `io.github.bluetape4k.graph` |
 | [bluetape4k-leader](https://github.com/bluetape4k/bluetape4k-leader) | `io.github.bluetape4k.leader` |
 
-Without a central BOM, consumers must track every repository's version independently.
-`bluetape4k-dependencies` solves this by collecting all version constraints in one place.
+중앙화된 BOM이 없으면 사용자는 각 레포지토리의 버전을 직접 추적해야 합니다.
+`bluetape4k-dependencies`는 모든 버전 제약을 한 곳에 모아 이 문제를 해결합니다.
 
 ---
 
-## Architecture
+## 구조
 
 ```mermaid
 graph TD
@@ -50,7 +50,7 @@ graph TD
     CORE --> C3["bluetape4k-logging"]
     CORE --> C4["bluetape4k-jackson2 / jackson3"]
     CORE --> C5["bluetape4k-junit5 / testcontainers"]
-    CORE --> C6["... and more"]
+    CORE --> C6["... 외 다수"]
 
     AWS --> A1["aws"]
     AWS --> A2["aws-kotlin"]
@@ -80,9 +80,9 @@ graph TD
 
 ---
 
-## Usage
+## 사용 방법
 
-Add the BOM as a platform dependency. After that, all bluetape4k artifacts can be declared **without a version**.
+BOM을 플랫폼 의존성으로 추가하면 이후 모든 bluetape4k 아티팩트를 **버전 없이** 선언할 수 있습니다.
 
 ### Gradle (Kotlin DSL)
 
@@ -90,7 +90,7 @@ Add the BOM as a platform dependency. After that, all bluetape4k artifacts can b
 dependencies {
     implementation(platform("io.github.bluetape4k:bluetape4k-dependencies:VERSION"))
 
-    // bluetape4k-projects — core utilities
+    // bluetape4k-projects — 핵심 유틸리티
     implementation("io.github.bluetape4k:bluetape4k-core")
     implementation("io.github.bluetape4k:bluetape4k-coroutines")
     implementation("io.github.bluetape4k:bluetape4k-logging")
@@ -132,7 +132,7 @@ dependencies {
 
     implementation "io.github.bluetape4k:bluetape4k-core"
     implementation "io.github.bluetape4k:bluetape4k-coroutines"
-    // ... no version needed
+    // ... 버전 불필요
 }
 ```
 
@@ -155,101 +155,101 @@ dependencies {
     <dependency>
         <groupId>io.github.bluetape4k</groupId>
         <artifactId>bluetape4k-core</artifactId>
-        <!-- no version needed -->
+        <!-- 버전 불필요 -->
     </dependency>
 </dependencies>
 ```
 
 ---
 
-## Managed Modules
+## 관리 모듈 목록
 
 ### bluetape4k-projects (`io.github.bluetape4k`)
 
-| Artifact | Description |
+| 아티팩트 | 설명 |
 |---|---|
-| `bluetape4k-bom` | Core module BOM |
-| `bluetape4k-core` | Core Kotlin utilities |
-| `bluetape4k-io` | I/O utilities (compression, serialization) |
-| `bluetape4k-netty` | Netty helpers |
-| `bluetape4k-coroutines` | Kotlin Coroutines extensions |
-| `bluetape4k-logging` | Structured logging (SLF4J + Kotlin) |
-| `bluetape4k-jackson2` | Jackson 2.x serialization support |
-| `bluetape4k-jackson3` | Jackson 3.x serialization support |
-| `bluetape4k-idgenerators` | Distributed ID generation (Snowflake, TSID, …) |
+| `bluetape4k-bom` | 코어 모듈 BOM |
+| `bluetape4k-core` | 핵심 Kotlin 유틸리티 |
+| `bluetape4k-io` | I/O 유틸리티 (압축, 직렬화) |
+| `bluetape4k-netty` | Netty 헬퍼 |
+| `bluetape4k-coroutines` | Kotlin Coroutines 확장 |
+| `bluetape4k-logging` | 구조화 로깅 (SLF4J + Kotlin) |
+| `bluetape4k-jackson2` | Jackson 2.x 직렬화 지원 |
+| `bluetape4k-jackson3` | Jackson 3.x 직렬화 지원 |
+| `bluetape4k-idgenerators` | 분산 ID 생성 (Snowflake, TSID 등) |
 | `bluetape4k-resilience4j` | Resilience4j Kotlin DSL |
-| `bluetape4k-junit5` | JUnit 5 testing utilities |
-| `bluetape4k-testcontainers` | Testcontainers helpers |
+| `bluetape4k-junit5` | JUnit 5 테스트 유틸리티 |
+| `bluetape4k-testcontainers` | Testcontainers 헬퍼 |
 
 ### bluetape4k-aws (`io.github.bluetape4k.aws`)
 
-| Artifact | Description |
+| 아티팩트 | 설명 |
 |---|---|
-| `aws` | AWS SDK v2 Kotlin extensions |
-| `aws-kotlin` | AWS Kotlin SDK support |
-| `aws-spring-boot` | Spring Boot auto-configuration for AWS |
-| `aws-ktor` | Ktor integration for AWS |
+| `aws` | AWS SDK v2 Kotlin 확장 |
+| `aws-kotlin` | AWS Kotlin SDK 지원 |
+| `aws-spring-boot` | AWS용 Spring Boot 자동 설정 |
+| `aws-ktor` | AWS용 Ktor 통합 |
 
 ### bluetape4k-image (`io.github.bluetape4k.image`)
 
-| Artifact | Description |
+| 아티팩트 | 설명 |
 |---|---|
-| `images` | Core image processing utilities |
-| `images-vips-api` | libvips API abstraction |
-| `images-vips-java21` | libvips bindings for Java 21 |
-| `images-vips-java25` | libvips bindings for Java 25 |
+| `images` | 이미지 처리 핵심 유틸리티 |
+| `images-vips-api` | libvips API 추상화 |
+| `images-vips-java21` | Java 21용 libvips 바인딩 |
+| `images-vips-java25` | Java 25용 libvips 바인딩 |
 
 ### bluetape4k-text (`io.github.bluetape4k.text`)
 
-| Artifact | Description |
+| 아티팩트 | 설명 |
 |---|---|
-| `tokenizer-core` | Text tokenizer core API |
-| `tokenizer-japanese` | Japanese tokenizer (Kuromoji) |
-| `tokenizer-korean` | Korean tokenizer (Nori / Komoran) |
-| `lingua` | Language detection (Lingua) |
-| `text-search` | Full-text search utilities |
+| `tokenizer-core` | 텍스트 토크나이저 핵심 API |
+| `tokenizer-japanese` | 일본어 토크나이저 (Kuromoji) |
+| `tokenizer-korean` | 한국어 토크나이저 (Nori / Komoran) |
+| `lingua` | 언어 감지 (Lingua) |
+| `text-search` | 전문 검색 유틸리티 |
 
 ### bluetape4k-graph (`io.github.bluetape4k.graph`)
 
-| Artifact | Description |
+| 아티팩트 | 설명 |
 |---|---|
-| `bluetape4k-graph-bom` | Graph module BOM |
-| `graph-core` | Core graph abstractions |
-| `graph-age` | Apache AGE (PostgreSQL graph) integration |
-| `graph-falkordb` | FalkorDB integration |
-| `graph-memgraph` | Memgraph integration |
-| `graph-neo4j` | Neo4j integration |
-| `graph-tinkerpop` | Apache TinkerPop integration |
-| `graph-io-core` | Graph I/O core |
-| `graph-io-csv` | CSV graph serialization |
-| `graph-io-graphml` | GraphML serialization |
-| `graph-io-jackson2` | Jackson 2.x graph serialization |
-| `graph-io-jackson3` | Jackson 3.x graph serialization |
-| `graph-io-okio` | Okio-based graph I/O |
+| `bluetape4k-graph-bom` | 그래프 모듈 BOM |
+| `graph-core` | 핵심 그래프 추상화 |
+| `graph-age` | Apache AGE (PostgreSQL 그래프) 통합 |
+| `graph-falkordb` | FalkorDB 통합 |
+| `graph-memgraph` | Memgraph 통합 |
+| `graph-neo4j` | Neo4j 통합 |
+| `graph-tinkerpop` | Apache TinkerPop 통합 |
+| `graph-io-core` | 그래프 I/O 핵심 |
+| `graph-io-csv` | CSV 그래프 직렬화 |
+| `graph-io-graphml` | GraphML 직렬화 |
+| `graph-io-jackson2` | Jackson 2.x 그래프 직렬화 |
+| `graph-io-jackson3` | Jackson 3.x 그래프 직렬화 |
+| `graph-io-okio` | Okio 기반 그래프 I/O |
 
 ### bluetape4k-leader (`io.github.bluetape4k.leader`)
 
-| Artifact | Description |
+| 아티팩트 | 설명 |
 |---|---|
-| `leader-bom` | Leader election module BOM |
-| `leader-core` | Core leader election API |
-| `leader-redis-lettuce` | Redis leader election via Lettuce |
-| `leader-redis-redisson` | Redis leader election via Redisson |
-| `leader-exposed-core` | Exposed (JDBC/R2DBC) leader election core |
-| `leader-exposed-jdbc` | Exposed JDBC leader election |
-| `leader-exposed-r2dbc` | Exposed R2DBC leader election |
-| `leader-mongodb` | MongoDB leader election |
-| `leader-hazelcast` | Hazelcast leader election |
-| `leader-spring-boot-common` | Spring Boot auto-configuration (shared) |
-| `leader-spring-boot3` | Spring Boot 3.x integration |
-| `leader-spring-boot4` | Spring Boot 4.x integration |
-| `leader-micrometer` | Micrometer metrics for leader election |
+| `leader-bom` | 리더 선출 모듈 BOM |
+| `leader-core` | 핵심 리더 선출 API |
+| `leader-redis-lettuce` | Lettuce 기반 Redis 리더 선출 |
+| `leader-redis-redisson` | Redisson 기반 Redis 리더 선출 |
+| `leader-exposed-core` | Exposed 리더 선출 공통 |
+| `leader-exposed-jdbc` | Exposed JDBC 리더 선출 |
+| `leader-exposed-r2dbc` | Exposed R2DBC 리더 선출 |
+| `leader-mongodb` | MongoDB 리더 선출 |
+| `leader-hazelcast` | Hazelcast 리더 선출 |
+| `leader-spring-boot-common` | Spring Boot 자동 설정 (공통) |
+| `leader-spring-boot3` | Spring Boot 3.x 통합 |
+| `leader-spring-boot4` | Spring Boot 4.x 통합 |
+| `leader-micrometer` | 리더 선출 Micrometer 메트릭 |
 
 ---
 
-## Versioning
+## 버전 관리 정책
 
-Each upstream repository maintains its **own independent version**, tracked in `gradle/libs.versions.toml`:
+각 업스트림 레포지토리는 **독립적인 버전**을 유지하며 `gradle/libs.versions.toml`에서 관리됩니다:
 
 ```toml
 [versions]
@@ -261,10 +261,10 @@ bluetape4k-graph  = "0.3.0-SNAPSHOT"
 bluetape4k-leader = "0.1.0-SNAPSHOT"
 ```
 
-To align a new upstream release, edit the version in `libs.versions.toml` and publish a new BOM version.
+새로운 업스트림 릴리즈를 반영하려면 `libs.versions.toml`에서 해당 버전을 수정하고 새 BOM 버전을 배포하면 됩니다.
 
 ---
 
-## License
+## 라이선스
 
-Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 라이선스를 따릅니다.
