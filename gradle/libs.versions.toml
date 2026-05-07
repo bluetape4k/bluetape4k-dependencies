@@ -4,7 +4,7 @@
 [versions]
 # ── Core ecosystem ─────────────────────────────────────────────────────────
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-core    = "1.7.0-SNAPSHOT"
+bluetape4k-core    = "1.8.0-SNAPSHOT"
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
