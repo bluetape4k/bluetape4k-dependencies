@@ -33,3 +33,8 @@ local.properties
 .omx/
 
 **/.profileconfig.json
+
+# AI
+.claude/
+.omc/
+.omx/

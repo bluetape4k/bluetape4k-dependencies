@@ -105,11 +105,3 @@ dependencies {
   constraints. Consumers may import the sub-BOM for convenience or reference individual artifacts directly.
 - The CI workflow (`ci.yml`) runs `./gradlew build` on every push/PR against `develop` and `main`.
 
----
-
-## Git Workflow
-
-- **Base branch**: `develop`
-- **Commit style**: Korean description + conventional prefix — e.g., `feat: bluetape4k-graph 0.4.0으로 버전 업`
-- **Worktrees**: `git worktree add .worktrees/<branch> -b <branch>` for feature work
-- Do **not** push directly to `main`; open a PR from `develop` (or a feature branch).
