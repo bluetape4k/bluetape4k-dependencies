@@ -43,8 +43,13 @@ dependencies {
     // Sub-BOMs imported as platform: all modules in each repo are version-managed for
     // consumers without requiring individual constraint entries here.
     api(platform(libs.bluetape4k.bom))
+    api(platform(libs.bluetape4k.aws.bom))
+    api(platform(libs.bluetape4k.image.bom))
+    api(platform(libs.bluetape4k.text.bom))
     api(platform(libs.bluetape4k.graph.bom))
     api(platform(libs.bluetape4k.leader.bom))
+    api(platform(libs.bluetape4k.exposed.bom))
+    api(platform(libs.bluetape4k.javers.bom))
 
     constraints {
         // ── bluetape4k-projects core modules (also covered by bluetape4k-bom above) ──
@@ -106,6 +111,11 @@ dependencies {
         api(libs.bluetape4k.leader.spring.boot3)
         api(libs.bluetape4k.leader.spring.boot4)
         api(libs.bluetape4k.leader.micrometer)
+
+        // ── bluetape4k-javers modules ───────────────────────────────────────────
+        api(libs.bluetape4k.javers.core)
+        api(libs.bluetape4k.javers.persistence.kafka)
+        api(libs.bluetape4k.javers.persistence.redis)
 
         // ── bluetape4k-exposed modules ──────────────────────────────────────────
         api(libs.bluetape4k.exposed.core)
