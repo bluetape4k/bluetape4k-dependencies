@@ -107,6 +107,7 @@ dependencies {
         api(libs.bluetape4k.leader.exposed.r2dbc)
         api(libs.bluetape4k.leader.mongodb)
         api(libs.bluetape4k.leader.hazelcast)
+        api(libs.bluetape4k.leader.zookeeper)
         api(libs.bluetape4k.leader.spring.boot.common)
         api(libs.bluetape4k.leader.spring.boot3)
         api(libs.bluetape4k.leader.spring.boot4)

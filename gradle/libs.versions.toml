@@ -105,6 +105,7 @@ bluetape4k-leader-exposed-jdbc    = { module = "io.github.bluetape4k.leader:lead
 bluetape4k-leader-exposed-r2dbc   = { module = "io.github.bluetape4k.leader:leader-exposed-r2dbc",      version.ref = "bluetape4k-leader" }
 bluetape4k-leader-mongodb         = { module = "io.github.bluetape4k.leader:leader-mongodb",            version.ref = "bluetape4k-leader" }
 bluetape4k-leader-hazelcast       = { module = "io.github.bluetape4k.leader:leader-hazelcast",          version.ref = "bluetape4k-leader" }
+bluetape4k-leader-zookeeper       = { module = "io.github.bluetape4k.leader:leader-zookeeper",          version.ref = "bluetape4k-leader" }
 bluetape4k-leader-spring-boot-common = { module = "io.github.bluetape4k.leader:leader-spring-boot-common", version.ref = "bluetape4k-leader" }
 bluetape4k-leader-spring-boot3    = { module = "io.github.bluetape4k.leader:leader-spring-boot3",       version.ref = "bluetape4k-leader" }
 bluetape4k-leader-spring-boot4    = { module = "io.github.bluetape4k.leader:leader-spring-boot4",       version.ref = "bluetape4k-leader" }
