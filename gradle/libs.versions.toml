@@ -25,6 +25,9 @@ bluetape4k-leader  = "0.1.0-SNAPSHOT"
 # https://github.com/bluetape4k/bluetape4k-exposed
 bluetape4k-exposed = "1.8.0-SNAPSHOT"
 
+# https://github.com/bluetape4k/bluetape4k-javers
+bluetape4k-javers  = "0.1.0-SNAPSHOT"
+
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.3.21"
 nmcp               = "1.4.4"
@@ -56,18 +59,21 @@ bluetape4k-junit5                 = { module = "io.github.bluetape4k:bluetape4k-
 bluetape4k-testcontainers         = { module = "io.github.bluetape4k:bluetape4k-testcontainers",         version.ref = "bluetape4k-core" }
 
 # ── bluetape4k-aws modules ─────────────────────────────────────────────────
+bluetape4k-aws-bom                = { module = "io.github.bluetape4k.aws:bluetape4k-aws-bom",            version.ref = "bluetape4k-aws" }
 bluetape4k-aws                    = { module = "io.github.bluetape4k.aws:aws",                           version.ref = "bluetape4k-aws" }
 bluetape4k-aws-kotlin             = { module = "io.github.bluetape4k.aws:aws-kotlin",                   version.ref = "bluetape4k-aws" }
 bluetape4k-aws-spring-boot        = { module = "io.github.bluetape4k.aws:aws-spring-boot",              version.ref = "bluetape4k-aws" }
 bluetape4k-aws-ktor               = { module = "io.github.bluetape4k.aws:aws-ktor",                     version.ref = "bluetape4k-aws" }
 
 # ── bluetape4k-image modules ───────────────────────────────────────────────
+bluetape4k-image-bom              = { module = "io.github.bluetape4k.image:bluetape4k-image-bom",       version.ref = "bluetape4k-image" }
 bluetape4k-images                 = { module = "io.github.bluetape4k.image:images",                     version.ref = "bluetape4k-image" }
 bluetape4k-images-vips-api        = { module = "io.github.bluetape4k.image:images-vips-api",            version.ref = "bluetape4k-image" }
 bluetape4k-images-vips-java21     = { module = "io.github.bluetape4k.image:images-vips-java21",         version.ref = "bluetape4k-image" }
 bluetape4k-images-vips-java25     = { module = "io.github.bluetape4k.image:images-vips-java25",         version.ref = "bluetape4k-image" }
 
 # ── bluetape4k-text modules ────────────────────────────────────────────────
+bluetape4k-text-bom               = { module = "io.github.bluetape4k.text:bluetape4k-text-bom",         version.ref = "bluetape4k-text" }
 bluetape4k-tokenizer-core         = { module = "io.github.bluetape4k.text:tokenizer-core",              version.ref = "bluetape4k-text" }
 bluetape4k-tokenizer-japanese     = { module = "io.github.bluetape4k.text:tokenizer-japanese",          version.ref = "bluetape4k-text" }
 bluetape4k-tokenizer-korean       = { module = "io.github.bluetape4k.text:tokenizer-korean",            version.ref = "bluetape4k-text" }
@@ -105,6 +111,7 @@ bluetape4k-leader-spring-boot4    = { module = "io.github.bluetape4k.leader:lead
 bluetape4k-leader-micrometer      = { module = "io.github.bluetape4k.leader:leader-micrometer",         version.ref = "bluetape4k-leader" }
 
 # ── bluetape4k-exposed modules ─────────────────────────────────────────────
+bluetape4k-exposed-bom                         = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-bom",                         version.ref = "bluetape4k-exposed" }
 bluetape4k-exposed-core                        = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-core",                        version.ref = "bluetape4k-exposed" }
 bluetape4k-exposed-dao                         = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-dao",                         version.ref = "bluetape4k-exposed" }
 bluetape4k-exposed-jdbc                        = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-jdbc",                        version.ref = "bluetape4k-exposed" }
@@ -137,3 +144,9 @@ bluetape4k-spring-boot3-exposed-r2dbc          = { module = "io.github.bluetape4
 bluetape4k-spring-boot4-batch-exposed          = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot4-batch-exposed",          version.ref = "bluetape4k-exposed" }
 bluetape4k-spring-boot4-exposed-jdbc           = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot4-exposed-jdbc",           version.ref = "bluetape4k-exposed" }
 bluetape4k-spring-boot4-exposed-r2dbc          = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot4-exposed-r2dbc",          version.ref = "bluetape4k-exposed" }
+
+# ── bluetape4k-javers modules ──────────────────────────────────────────────
+bluetape4k-javers-bom                = { module = "io.github.bluetape4k.javers:bluetape4k-javers-bom",         version.ref = "bluetape4k-javers" }
+bluetape4k-javers-core               = { module = "io.github.bluetape4k.javers:javers-core",                   version.ref = "bluetape4k-javers" }
+bluetape4k-javers-persistence-kafka  = { module = "io.github.bluetape4k.javers:javers-persistence-kafka",      version.ref = "bluetape4k-javers" }
+bluetape4k-javers-persistence-redis  = { module = "io.github.bluetape4k.javers:javers-persistence-redis",      version.ref = "bluetape4k-javers" }
