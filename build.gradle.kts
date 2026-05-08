@@ -40,9 +40,13 @@ javaPlatform {
 }
 
 dependencies {
+    // bluetape4k-bom (from bluetape4k-projects) is imported as platform so ALL
+    // io.github.bluetape4k:* module versions are managed for consumers automatically —
+    // no per-module constraint entry needed for bluetape4k-projects modules.
+    api(platform(libs.bluetape4k.bom))
+
     constraints {
-        // ── bluetape4k-projects core modules ───────────────────────────────
-        api(libs.bluetape4k.bom)
+        // ── bluetape4k-projects core modules (also covered by bluetape4k-bom above) ──
         api(libs.bluetape4k.core)
         api(libs.bluetape4k.io)
         api(libs.bluetape4k.netty)
@@ -74,8 +78,7 @@ dependencies {
         api(libs.bluetape4k.lingua)
         api(libs.bluetape4k.text.search)
 
-        // ── bluetape4k-graph modules ────────────────────────────────────────
-        api(libs.bluetape4k.graph.bom)
+        // ── bluetape4k-graph modules ────────────────────────────────────────────
         api(libs.bluetape4k.graph.core)
         api(libs.bluetape4k.graph.age)
         api(libs.bluetape4k.graph.falkordb)
@@ -89,8 +92,7 @@ dependencies {
         api(libs.bluetape4k.graph.io.jackson3)
         api(libs.bluetape4k.graph.io.okio)
 
-        // ── bluetape4k-leader modules ───────────────────────────────────────
-        api(libs.bluetape4k.leader.bom)
+        // ── bluetape4k-leader modules ───────────────────────────────────────────
         api(libs.bluetape4k.leader.core)
         api(libs.bluetape4k.leader.redis.lettuce)
         api(libs.bluetape4k.leader.redis.redisson)

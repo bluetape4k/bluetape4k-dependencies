@@ -26,11 +26,15 @@ consistent, pre-coordinated versions for every bluetape4k module — no per-depe
 
 ## How It Works
 
-`build.gradle.kts` declares a `java-platform` project with `dependencies { constraints { ... } }`.
-Each constraint entry is driven by a library alias from `gradle/libs.versions.toml`.
+`build.gradle.kts` declares a `java-platform` project.
+`bluetape4k-bom` (from `bluetape4k-projects`) is imported as `api(platform(...))` so **all**
+`io.github.bluetape4k:*` modules (cache-*, lettuce, jdbc, r2dbc, etc.) are version-managed
+for consumers automatically — no per-module entry needed here.
+Other ecosystem repos (aws, image, text, graph, leader, exposed) are listed as explicit `constraints`.
 
 ```
-libs.versions.toml  ──version refs──▶  build.gradle.kts constraints  ──▶  published BOM POM
+bluetape4k-bom  ──platform import──▶  ALL bluetape4k-projects versions
+libs.versions.toml  ──version refs──▶  explicit constraints for other repos
 ```
 
 Consumers use `platform(...)` to import the BOM:
@@ -100,8 +104,8 @@ dependencies {
 ## Important Notes
 
 - **No source code lives here.** This is a pure `java-platform` BOM project.
-- **`allowDependencies()`** is enabled so constraints can reference external BOMs (e.g., `bluetape4k-bom`).
-- When a repo publishes both a module-level BOM (`*-bom`) and individual artifacts, both are declared as
-  constraints. Consumers may import the sub-BOM for convenience or reference individual artifacts directly.
+- **`allowDependencies()`** is enabled to allow `api(platform(...))` declarations alongside `constraints {}`.
+- `bluetape4k-bom` is imported via `api(platform(...))` — this propagates ALL `bluetape4k-projects` module versions to consumers. Do NOT put it back inside `constraints {}`.
+- Individual constraints for aws, image, text, graph, leader, exposed remain explicit because those repos don't have sub-BOMs imported here.
 - The CI workflow (`ci.yml`) runs `./gradlew build` on every push/PR against `develop` and `main`.
 
