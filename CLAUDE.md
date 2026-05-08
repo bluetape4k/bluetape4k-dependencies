@@ -27,14 +27,15 @@ consistent, pre-coordinated versions for every bluetape4k module — no per-depe
 ## How It Works
 
 `build.gradle.kts` declares a `java-platform` project.
-`bluetape4k-bom` (from `bluetape4k-projects`) is imported as `api(platform(...))` so **all**
-`io.github.bluetape4k:*` modules (cache-*, lettuce, jdbc, r2dbc, etc.) are version-managed
-for consumers automatically — no per-module entry needed here.
-Other ecosystem repos (aws, image, text, graph, leader, exposed) are listed as explicit `constraints`.
+`bluetape4k-bom`, `bluetape4k-graph-bom`, `leader-bom` are imported as `api(platform(...))` so
+all modules in each repo are version-managed for consumers automatically.
+Other ecosystem repos (aws, image, text, exposed) are listed as explicit `constraints`.
 
 ```
-bluetape4k-bom  ──platform import──▶  ALL bluetape4k-projects versions
-libs.versions.toml  ──version refs──▶  explicit constraints for other repos
+bluetape4k-bom    ──platform import──▶  ALL bluetape4k-projects versions
+bluetape4k-graph-bom  ──platform import──▶  ALL graph module versions
+leader-bom        ──platform import──▶  ALL leader module versions
+libs.versions.toml  ──version refs──▶  explicit constraints for aws/image/text/exposed
 ```
 
 Consumers use `platform(...)` to import the BOM:

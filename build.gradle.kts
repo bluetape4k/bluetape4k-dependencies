@@ -40,10 +40,11 @@ javaPlatform {
 }
 
 dependencies {
-    // bluetape4k-bom (from bluetape4k-projects) is imported as platform so ALL
-    // io.github.bluetape4k:* module versions are managed for consumers automatically —
-    // no per-module constraint entry needed for bluetape4k-projects modules.
+    // Sub-BOMs imported as platform: all modules in each repo are version-managed for
+    // consumers without requiring individual constraint entries here.
     api(platform(libs.bluetape4k.bom))
+    api(platform(libs.bluetape4k.graph.bom))
+    api(platform(libs.bluetape4k.leader.bom))
 
     constraints {
         // ── bluetape4k-projects core modules (also covered by bluetape4k-bom above) ──
@@ -78,7 +79,7 @@ dependencies {
         api(libs.bluetape4k.lingua)
         api(libs.bluetape4k.text.search)
 
-        // ── bluetape4k-graph modules ────────────────────────────────────────────
+        // ── bluetape4k-graph modules (versions also covered by graph-bom platform above) ──
         api(libs.bluetape4k.graph.core)
         api(libs.bluetape4k.graph.age)
         api(libs.bluetape4k.graph.falkordb)
@@ -92,7 +93,7 @@ dependencies {
         api(libs.bluetape4k.graph.io.jackson3)
         api(libs.bluetape4k.graph.io.okio)
 
-        // ── bluetape4k-leader modules ───────────────────────────────────────────
+        // ── bluetape4k-leader modules (versions also covered by leader-bom platform above) ──
         api(libs.bluetape4k.leader.core)
         api(libs.bluetape4k.leader.redis.lettuce)
         api(libs.bluetape4k.leader.redis.redisson)
