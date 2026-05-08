@@ -75,7 +75,7 @@ graph TD
     LEADER --> L1["leader-core"]
     LEADER --> L2["leader-redis-lettuce / redisson"]
     LEADER --> L3["leader-exposed-core / jdbc / r2dbc"]
-    LEADER --> L4["leader-mongodb / hazelcast"]
+    LEADER --> L4["leader-mongodb / hazelcast / zookeeper"]
     LEADER --> L5["leader-spring-boot-common / boot3 / boot4"]
     LEADER --> L6["leader-micrometer"]
 ```
@@ -242,6 +242,7 @@ dependencies {
 | `leader-exposed-r2dbc` | Exposed R2DBC 리더 선출 |
 | `leader-mongodb` | MongoDB 리더 선출 |
 | `leader-hazelcast` | Hazelcast 리더 선출 |
+| `leader-zookeeper` | ZooKeeper/Apache Curator 리더 선출 |
 | `leader-spring-boot-common` | Spring Boot 자동 설정 (공통) |
 | `leader-spring-boot3` | Spring Boot 3.x 통합 |
 | `leader-spring-boot4` | Spring Boot 4.x 통합 |
