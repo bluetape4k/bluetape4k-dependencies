@@ -64,6 +64,14 @@ dependencies {
         api(libs.bluetape4k.resilience4j)
         api(libs.bluetape4k.junit5)
         api(libs.bluetape4k.testcontainers)
+        api(libs.bluetape4k.spring.boot.core)
+        api(libs.bluetape4k.spring.boot.cassandra)
+        api(libs.bluetape4k.spring.boot.cassandra.demo)
+        api(libs.bluetape4k.spring.boot.hibernate.lettuce)
+        api(libs.bluetape4k.spring.boot.hibernate.lettuce.demo)
+        api(libs.bluetape4k.spring.boot.mongodb)
+        api(libs.bluetape4k.spring.boot.r2dbc)
+        api(libs.bluetape4k.spring.boot.redis)
 
         // ── bluetape4k-aws modules ──────────────────────────────────────────
         api(libs.bluetape4k.aws)
@@ -108,9 +116,7 @@ dependencies {
         api(libs.bluetape4k.leader.mongodb)
         api(libs.bluetape4k.leader.hazelcast)
         api(libs.bluetape4k.leader.zookeeper)
-        api(libs.bluetape4k.leader.spring.boot.common)
-        api(libs.bluetape4k.leader.spring.boot3)
-        api(libs.bluetape4k.leader.spring.boot4)
+        api(libs.bluetape4k.leader.spring.boot)
         api(libs.bluetape4k.leader.micrometer)
 
         // ── bluetape4k-javers modules ───────────────────────────────────────────
@@ -145,12 +151,9 @@ dependencies {
         api(libs.bluetape4k.exposed.trino)
         api(libs.bluetape4k.exposed.timefold.solver.persistence)
         api(libs.bluetape4k.batch)
-        api(libs.bluetape4k.spring.boot3.batch.exposed)
-        api(libs.bluetape4k.spring.boot3.exposed.jdbc)
-        api(libs.bluetape4k.spring.boot3.exposed.r2dbc)
-        api(libs.bluetape4k.spring.boot4.batch.exposed)
-        api(libs.bluetape4k.spring.boot4.exposed.jdbc)
-        api(libs.bluetape4k.spring.boot4.exposed.r2dbc)
+        api(libs.bluetape4k.spring.boot.batch.exposed)
+        api(libs.bluetape4k.spring.boot.exposed.jdbc)
+        api(libs.bluetape4k.spring.boot.exposed.r2dbc)
     }
 }
 

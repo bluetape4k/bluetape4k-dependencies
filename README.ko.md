@@ -76,7 +76,7 @@ graph TD
     LEADER --> L2["leader-redis-lettuce / redisson"]
     LEADER --> L3["leader-exposed-core / jdbc / r2dbc"]
     LEADER --> L4["leader-mongodb / hazelcast / zookeeper"]
-    LEADER --> L5["leader-spring-boot-common / boot3 / boot4"]
+    LEADER --> L5["leader-spring-boot"]
     LEADER --> L6["leader-micrometer"]
 ```
 
@@ -100,6 +100,7 @@ dependencies {
     implementation("io.github.bluetape4k:bluetape4k-jackson3")
     implementation("io.github.bluetape4k:bluetape4k-idgenerators")
     implementation("io.github.bluetape4k:bluetape4k-resilience4j")
+    implementation("io.github.bluetape4k:bluetape4k-spring-boot-core")
     testImplementation("io.github.bluetape4k:bluetape4k-junit5")
     testImplementation("io.github.bluetape4k:bluetape4k-testcontainers")
 
@@ -123,6 +124,7 @@ dependencies {
     // bluetape4k-leader
     implementation("io.github.bluetape4k.leader:leader-core")
     implementation("io.github.bluetape4k.leader:leader-redis-lettuce")
+    implementation("io.github.bluetape4k.leader:leader-spring-boot")
 }
 ```
 
@@ -164,6 +166,23 @@ dependencies {
 
 ---
 
+## Spring Boot 정책
+
+`bluetape4k-dependencies`의 첫 공식 배포는 Spring Boot 4-only 통합을
+표준으로 삼습니다. Spring Boot 3 아티팩트는 기존 1.7.x 라인에 남아 있지만,
+이 BOM의 forward public contract로는 노출하지 않습니다.
+
+Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용합니다:
+
+| 기존 또는 전환 전 이름 | 첫 공식 BOM 표준 이름 |
+|---|---|
+| `bluetape4k-spring-boot3-*` | 노출하지 않음 |
+| `bluetape4k-spring-boot4-*` | `bluetape4k-spring-boot-*` |
+| `leader-spring-boot3` / `leader-spring-boot4` | `leader-spring-boot` |
+| `bluetape4k-spring-boot4-exposed-*` | `bluetape4k-spring-boot-exposed-*` |
+
+---
+
 ## 관리 모듈 목록
 
 ### bluetape4k-projects (`io.github.bluetape4k`)
@@ -182,6 +201,14 @@ dependencies {
 | `bluetape4k-resilience4j` | Resilience4j Kotlin DSL |
 | `bluetape4k-junit5` | JUnit 5 테스트 유틸리티 |
 | `bluetape4k-testcontainers` | Testcontainers 헬퍼 |
+| `bluetape4k-spring-boot-core` | Spring Boot 4 공통 유틸리티 |
+| `bluetape4k-spring-boot-cassandra` | Spring Data Cassandra 코루틴 확장 |
+| `bluetape4k-spring-boot-cassandra-demo` | Cassandra 사용 예제 |
+| `bluetape4k-spring-boot-hibernate-lettuce` | Lettuce 기반 Hibernate 2차 캐시 |
+| `bluetape4k-spring-boot-hibernate-lettuce-demo` | Hibernate Lettuce 사용 예제 |
+| `bluetape4k-spring-boot-mongodb` | Spring Data MongoDB 코루틴 확장 |
+| `bluetape4k-spring-boot-r2dbc` | Spring Data R2DBC 코루틴 확장 |
+| `bluetape4k-spring-boot-redis` | Spring Data Redis 직렬화 유틸리티 |
 
 ### bluetape4k-aws (`io.github.bluetape4k.aws`)
 
@@ -243,9 +270,7 @@ dependencies {
 | `leader-mongodb` | MongoDB 리더 선출 |
 | `leader-hazelcast` | Hazelcast 리더 선출 |
 | `leader-zookeeper` | ZooKeeper/Apache Curator 리더 선출 |
-| `leader-spring-boot-common` | Spring Boot 자동 설정 (공통) |
-| `leader-spring-boot3` | Spring Boot 3.x 통합 |
-| `leader-spring-boot4` | Spring Boot 4.x 통합 |
+| `leader-spring-boot` | Spring Boot 4 자동 설정과 AOP |
 | `leader-micrometer` | 리더 선출 Micrometer 메트릭 |
 
 ---

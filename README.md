@@ -76,7 +76,7 @@ graph TD
     LEADER --> L2["leader-redis-lettuce / redisson"]
     LEADER --> L3["leader-exposed-core / jdbc / r2dbc"]
     LEADER --> L4["leader-mongodb / hazelcast / zookeeper"]
-    LEADER --> L5["leader-spring-boot-common / boot3 / boot4"]
+    LEADER --> L5["leader-spring-boot"]
     LEADER --> L6["leader-micrometer"]
 ```
 
@@ -100,6 +100,7 @@ dependencies {
     implementation("io.github.bluetape4k:bluetape4k-jackson3")
     implementation("io.github.bluetape4k:bluetape4k-idgenerators")
     implementation("io.github.bluetape4k:bluetape4k-resilience4j")
+    implementation("io.github.bluetape4k:bluetape4k-spring-boot-core")
     testImplementation("io.github.bluetape4k:bluetape4k-junit5")
     testImplementation("io.github.bluetape4k:bluetape4k-testcontainers")
 
@@ -123,6 +124,7 @@ dependencies {
     // bluetape4k-leader
     implementation("io.github.bluetape4k.leader:leader-core")
     implementation("io.github.bluetape4k.leader:leader-redis-lettuce")
+    implementation("io.github.bluetape4k.leader:leader-spring-boot")
 }
 ```
 
@@ -164,6 +166,24 @@ dependencies {
 
 ---
 
+## Spring Boot Policy
+
+The first official `bluetape4k-dependencies` release standardizes on Spring
+Boot 4-only integrations. Spring Boot 3 artifacts remain available from the
+older 1.7.x line, but they are not exposed by this BOM as the forward public
+contract.
+
+Use versionless `spring-boot` artifact names for Spring Boot 4 integrations:
+
+| Older or transitional name | First official BOM name |
+|---|---|
+| `bluetape4k-spring-boot3-*` | Not exposed |
+| `bluetape4k-spring-boot4-*` | `bluetape4k-spring-boot-*` |
+| `leader-spring-boot3` / `leader-spring-boot4` | `leader-spring-boot` |
+| `bluetape4k-spring-boot4-exposed-*` | `bluetape4k-spring-boot-exposed-*` |
+
+---
+
 ## Managed Modules
 
 ### bluetape4k-projects (`io.github.bluetape4k`)
@@ -182,6 +202,14 @@ dependencies {
 | `bluetape4k-resilience4j` | Resilience4j Kotlin DSL |
 | `bluetape4k-junit5` | JUnit 5 testing utilities |
 | `bluetape4k-testcontainers` | Testcontainers helpers |
+| `bluetape4k-spring-boot-core` | Spring Boot 4 common utilities |
+| `bluetape4k-spring-boot-cassandra` | Spring Data Cassandra coroutine extensions |
+| `bluetape4k-spring-boot-cassandra-demo` | Cassandra usage example |
+| `bluetape4k-spring-boot-hibernate-lettuce` | Hibernate second-level cache via Lettuce |
+| `bluetape4k-spring-boot-hibernate-lettuce-demo` | Hibernate Lettuce usage example |
+| `bluetape4k-spring-boot-mongodb` | Spring Data MongoDB coroutine extensions |
+| `bluetape4k-spring-boot-r2dbc` | Spring Data R2DBC coroutine extensions |
+| `bluetape4k-spring-boot-redis` | Spring Data Redis serialization utilities |
 
 ### bluetape4k-aws (`io.github.bluetape4k.aws`)
 
@@ -243,9 +271,7 @@ dependencies {
 | `leader-mongodb` | MongoDB leader election |
 | `leader-hazelcast` | Hazelcast leader election |
 | `leader-zookeeper` | ZooKeeper/Apache Curator leader election |
-| `leader-spring-boot-common` | Spring Boot auto-configuration (shared) |
-| `leader-spring-boot3` | Spring Boot 3.x integration |
-| `leader-spring-boot4` | Spring Boot 4.x integration |
+| `leader-spring-boot` | Spring Boot 4 auto-configuration and AOP |
 | `leader-micrometer` | Micrometer metrics for leader election |
 
 ---
