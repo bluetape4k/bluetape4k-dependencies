@@ -57,6 +57,14 @@ bluetape4k-idgenerators           = { module = "io.github.bluetape4k:bluetape4k-
 bluetape4k-resilience4j           = { module = "io.github.bluetape4k:bluetape4k-resilience4j",           version.ref = "bluetape4k-core" }
 bluetape4k-junit5                 = { module = "io.github.bluetape4k:bluetape4k-junit5",                 version.ref = "bluetape4k-core" }
 bluetape4k-testcontainers         = { module = "io.github.bluetape4k:bluetape4k-testcontainers",         version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-core       = { module = "io.github.bluetape4k:bluetape4k-spring-boot-core",       version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-cassandra  = { module = "io.github.bluetape4k:bluetape4k-spring-boot-cassandra",  version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-cassandra-demo = { module = "io.github.bluetape4k:bluetape4k-spring-boot-cassandra-demo", version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-hibernate-lettuce = { module = "io.github.bluetape4k:bluetape4k-spring-boot-hibernate-lettuce", version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-hibernate-lettuce-demo = { module = "io.github.bluetape4k:bluetape4k-spring-boot-hibernate-lettuce-demo", version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-mongodb    = { module = "io.github.bluetape4k:bluetape4k-spring-boot-mongodb",    version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-r2dbc      = { module = "io.github.bluetape4k:bluetape4k-spring-boot-r2dbc",      version.ref = "bluetape4k-core" }
+bluetape4k-spring-boot-redis      = { module = "io.github.bluetape4k:bluetape4k-spring-boot-redis",      version.ref = "bluetape4k-core" }
 
 # ── bluetape4k-aws modules ─────────────────────────────────────────────────
 bluetape4k-aws-bom                = { module = "io.github.bluetape4k.aws:bluetape4k-aws-bom",            version.ref = "bluetape4k-aws" }
@@ -106,9 +114,7 @@ bluetape4k-leader-exposed-r2dbc   = { module = "io.github.bluetape4k.leader:lead
 bluetape4k-leader-mongodb         = { module = "io.github.bluetape4k.leader:leader-mongodb",            version.ref = "bluetape4k-leader" }
 bluetape4k-leader-hazelcast       = { module = "io.github.bluetape4k.leader:leader-hazelcast",          version.ref = "bluetape4k-leader" }
 bluetape4k-leader-zookeeper       = { module = "io.github.bluetape4k.leader:leader-zookeeper",          version.ref = "bluetape4k-leader" }
-bluetape4k-leader-spring-boot-common = { module = "io.github.bluetape4k.leader:leader-spring-boot-common", version.ref = "bluetape4k-leader" }
-bluetape4k-leader-spring-boot3    = { module = "io.github.bluetape4k.leader:leader-spring-boot3",       version.ref = "bluetape4k-leader" }
-bluetape4k-leader-spring-boot4    = { module = "io.github.bluetape4k.leader:leader-spring-boot4",       version.ref = "bluetape4k-leader" }
+bluetape4k-leader-spring-boot     = { module = "io.github.bluetape4k.leader:leader-spring-boot",        version.ref = "bluetape4k-leader" }
 bluetape4k-leader-micrometer      = { module = "io.github.bluetape4k.leader:leader-micrometer",         version.ref = "bluetape4k-leader" }
 
 # ── bluetape4k-exposed modules ─────────────────────────────────────────────
@@ -139,12 +145,9 @@ bluetape4k-exposed-postgresql                  = { module = "io.github.bluetape4
 bluetape4k-exposed-trino                       = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-trino",                       version.ref = "bluetape4k-exposed" }
 bluetape4k-exposed-timefold-solver-persistence = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-timefold-solver-persistence", version.ref = "bluetape4k-exposed" }
 bluetape4k-batch                               = { module = "io.github.bluetape4k.exposed:bluetape4k-batch",                               version.ref = "bluetape4k-exposed" }
-bluetape4k-spring-boot3-batch-exposed          = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot3-batch-exposed",          version.ref = "bluetape4k-exposed" }
-bluetape4k-spring-boot3-exposed-jdbc           = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot3-exposed-jdbc",           version.ref = "bluetape4k-exposed" }
-bluetape4k-spring-boot3-exposed-r2dbc          = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot3-exposed-r2dbc",          version.ref = "bluetape4k-exposed" }
-bluetape4k-spring-boot4-batch-exposed          = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot4-batch-exposed",          version.ref = "bluetape4k-exposed" }
-bluetape4k-spring-boot4-exposed-jdbc           = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot4-exposed-jdbc",           version.ref = "bluetape4k-exposed" }
-bluetape4k-spring-boot4-exposed-r2dbc          = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot4-exposed-r2dbc",          version.ref = "bluetape4k-exposed" }
+bluetape4k-spring-boot-batch-exposed           = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot-batch-exposed",           version.ref = "bluetape4k-exposed" }
+bluetape4k-spring-boot-exposed-jdbc            = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot-exposed-jdbc",            version.ref = "bluetape4k-exposed" }
+bluetape4k-spring-boot-exposed-r2dbc           = { module = "io.github.bluetape4k.exposed:bluetape4k-spring-boot-exposed-r2dbc",           version.ref = "bluetape4k-exposed" }
 
 # ── bluetape4k-javers modules ──────────────────────────────────────────────
 bluetape4k-javers-bom                = { module = "io.github.bluetape4k.javers:bluetape4k-javers-bom",         version.ref = "bluetape4k-javers" }
