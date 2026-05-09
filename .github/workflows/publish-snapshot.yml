@@ -4,14 +4,10 @@ permissions:
   contents: read
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
     branches: [develop]
-    paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - '.gitleaks.toml'
-      - 'CHANGELOG.md'
-      - 'LICENSE'
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -27,6 +23,7 @@ jobs:
   publish:
     name: Publish SNAPSHOT to Maven Central
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
         with:
