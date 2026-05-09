@@ -1,24 +1,31 @@
 # Changelog
 
-All notable changes to `bluetape4k-dependencies` are documented in this file.
+All notable changes to `bluetape4k-dependencies` are documented here.
 
-## Unreleased
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Dependabot configuration for repository maintenance ([PR #1](https://github.com/bluetape4k/bluetape4k-dependencies/pull/1)).
+- SNAPSHOT publishing workflow on `develop` pushes ([PR #3](https://github.com/bluetape4k/bluetape4k-dependencies/pull/3)).
+- `bluetape4k-exposed` modules in the central BOM ([PR #2](https://github.com/bluetape4k/bluetape4k-dependencies/pull/2)).
+- AWS, image, text, exposed, and javers BOM platform imports ([PR #6](https://github.com/bluetape4k/bluetape4k-dependencies/pull/6)).
+- `leader-zookeeper` BOM entry ([PR #7](https://github.com/bluetape4k/bluetape4k-dependencies/pull/7)).
 
 ### Changed
 
-- Standardized the first official Spring Boot integration surface on Spring Boot
-  4-only, versionless `spring-boot` artifact names before the BOM is publicly
-  released.
-- Replaced transitional `leader-spring-boot3` / `leader-spring-boot4` aliases
-  with the single `leader-spring-boot` alias.
-- Replaced transitional Exposed `bluetape4k-spring-boot3-*` and
-  `bluetape4k-spring-boot4-*` aliases with versionless
-  `bluetape4k-spring-boot-*` aliases.
-- Added versionless Spring Boot module aliases for the core
-  `bluetape4k-projects` Spring Boot integration modules.
+- Standardized the first official Spring Boot integration surface on Spring Boot 4-only, versionless `spring-boot` artifact names before the BOM is publicly released ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- Replaced transitional `leader-spring-boot3` / `leader-spring-boot4` aliases with the single `leader-spring-boot` alias ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- Replaced transitional Exposed `bluetape4k-spring-boot3-*` and `bluetape4k-spring-boot4-*` aliases with versionless `bluetape4k-spring-boot-*` aliases ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- Added versionless Spring Boot module aliases for the core `bluetape4k-projects` Spring Boot integration modules ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+
+### Fixed
+
+- Converted `bluetape4k-bom`, graph BOM, and leader BOM references to platform imports so dependency constraints compose correctly ([PR #4](https://github.com/bluetape4k/bluetape4k-dependencies/pull/4), [PR #5](https://github.com/bluetape4k/bluetape4k-dependencies/pull/5)).
 
 ### Notes
 
-- Spring Boot 3 artifacts remain available from the older 1.7.x line, but they
-  are intentionally not part of the first official `bluetape4k-dependencies`
-  public contract.
+- Spring Boot 3 artifacts remain available from the older 1.7.x line, but they are intentionally not part of the first official `bluetape4k-dependencies` public contract.
