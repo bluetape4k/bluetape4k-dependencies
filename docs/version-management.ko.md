@@ -159,6 +159,34 @@ Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot rep
 
 단, `-SNAPSHOT` 제거는 해당 upstream release artifact가 Central에 존재할 때만 해야 합니다. 예를 들어 `bluetape4k-leader = "0.1.0"`으로 바꾸는 것은 “BOM이 `io.github.bluetape4k.leader:*:0.1.0` release artifact를 관리한다”는 뜻입니다. 이것은 `bluetape4k-leader` repo의 `gradle.properties`를 자동으로 바꾸지 않습니다.
 
+### Pre-release 배포
+
+정식 버전으로 확정하기 전에도 `1.0.0-Beta1`, `1.0.0-RC1` 같은 pre-release version을 Central Portal에 배포할 수 있습니다. Maven Central은 version 문자열을 기준으로 release artifact를 저장하므로, 이런 버전도 snapshot이 아닌 immutable release artifact입니다.
+
+Pre-release는 다음 상황에 사용합니다.
+
+- [ ] 여러 repo를 실제 Central artifact 기준으로 검증해야 합니다.
+- [ ] 정식 `1.0.0`으로 고정하기 전에 downstream 사용성을 먼저 확인해야 합니다.
+- [ ] snapshot repository가 아니라 Maven Central 경로에서 소비되는지 확인해야 합니다.
+
+Pre-release를 배포할 때도 아래 원칙은 동일합니다.
+
+- [ ] 같은 pre-release version은 다시 배포할 수 없습니다. `1.0.0-Beta1`을 수정해야 하면 `1.0.0-Beta2`를 새로 배포합니다.
+- [ ] `bluetape4k-dependencies` release BOM이 `1.0.0-Beta1` upstream artifact를 참조한다면, 해당 upstream artifact가 Central에 먼저 존재해야 합니다.
+- [ ] 정식 release BOM은 최종적으로 정식 upstream version을 참조해야 합니다. 예: `1.0.0-Beta1` -> `1.0.0`.
+- [ ] pre-release와 정식 release는 서로 다른 version matrix로 기록합니다.
+
+예시:
+
+```toml
+bluetape4k-dependencies = "1.1.0-Beta1"
+bluetape4k-core         = "1.8.0-Beta1"
+bluetape4k-aws          = "1.8.0-Beta1"
+bluetape4k-leader       = "0.1.0-Beta1"
+```
+
+이 경우 `bluetape4k-dependencies:1.1.0-Beta1`은 정식 `1.1.0`이 아니지만 Central에 배포된 release artifact입니다. 정식 `1.1.0` 배포 시에는 upstream ref를 다시 정식 version matrix로 바꾸고 동일한 missing-only 절차를 반복합니다.
+
 공식 릴리즈는 아래 체크리스트 순서로 진행합니다. 실행자는 체크리스트를 채우고, 검증자는 release matrix, Central 존재 여부, CI/release workflow 결과를 확인합니다.
 
 #### 1. 릴리즈 요청 정리
