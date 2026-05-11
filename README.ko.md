@@ -6,11 +6,14 @@
 [![JVM](https://img.shields.io/badge/JVM-21-ED8B00?logo=openjdk)](https://openjdk.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **bluetape4k 전체 모듈을 하나의 BOM으로 관리합니다.**
+> **Dependency resolution은 BOM으로, Gradle build alias는 catalog로 관리합니다.**
 
 `bluetape4k-dependencies`는 bluetape4k 생태계 전체를 위한 중앙화된 BOM(Bill of Materials)입니다.
 `spring-boot-dependencies`와 동일한 패턴을 따릅니다: 플랫폼 의존성 하나만 추가하면 모든 bluetape4k
 모듈의 버전이 자동으로 정렬됩니다 — 개별 아티팩트에 버전을 명시할 필요가 없습니다.
+
+같은 레포지토리에서 `bluetape4k-version-catalog`도 함께 배포합니다. 이 Gradle Version Catalog
+artifact는 공통 plugin version, library alias, bluetape4k 모듈 좌표를 제공합니다.
 
 영어 버전은 [README.md](README.md)를 참고하세요.
 
@@ -28,9 +31,12 @@ bluetape4k 생태계는 각자 독립적인 릴리즈 주기를 가진 여러 �
 | [bluetape4k-text](https://github.com/bluetape4k/bluetape4k-text) | `io.github.bluetape4k.text` |
 | [bluetape4k-graph](https://github.com/bluetape4k/bluetape4k-graph) | `io.github.bluetape4k.graph` |
 | [bluetape4k-leader](https://github.com/bluetape4k/bluetape4k-leader) | `io.github.bluetape4k.leader` |
+| [bluetape4k-exposed](https://github.com/bluetape4k/bluetape4k-exposed) | `io.github.bluetape4k.exposed` |
+| [bluetape4k-javers](https://github.com/bluetape4k/bluetape4k-javers) | `io.github.bluetape4k.javers` |
 
-중앙화된 BOM이 없으면 사용자는 각 레포지토리의 버전을 직접 추적해야 합니다.
-`bluetape4k-dependencies`는 모든 버전 제약을 한 곳에 모아 이 문제를 해결합니다.
+중앙화된 BOM과 catalog가 없으면 사용자는 각 레포지토리 버전, Gradle plugin 버전,
+compatibility-line alias를 직접 추적해야 합니다. `bluetape4k-dependencies`는 dependency
+constraint와 Gradle build alias를 한 곳에 모아 이 문제를 해결합니다.
 
 ---
 
@@ -39,6 +45,11 @@ bluetape4k 생태계는 각자 독립적인 릴리즈 주기를 가진 여러 �
 ```mermaid
 graph TD
     BOM["bluetape4k-dependencies<br/>(java-platform BOM)"]
+    CATALOG["bluetape4k-version-catalog<br/>(Gradle Version Catalog)"]
+    TOML["gradle/libs.versions.toml<br/>(single managed source)"]
+
+    TOML --> BOM
+    TOML --> CATALOG
 
     BOM --> CORE["bluetape4k-projects<br/>io.github.bluetape4k"]
     BOM --> AWS["bluetape4k-aws<br/>io.github.bluetape4k.aws"]
@@ -46,6 +57,8 @@ graph TD
     BOM --> TEXT["bluetape4k-text<br/>io.github.bluetape4k.text"]
     BOM --> GRAPH["bluetape4k-graph<br/>io.github.bluetape4k.graph"]
     BOM --> LEADER["bluetape4k-leader<br/>io.github.bluetape4k.leader"]
+    BOM --> EXPOSED["bluetape4k-exposed<br/>io.github.bluetape4k.exposed"]
+    BOM --> JAVERS["bluetape4k-javers<br/>io.github.bluetape4k.javers"]
 
     CORE --> C1["bluetape4k-core"]
     CORE --> C2["bluetape4k-coroutines"]
@@ -83,6 +96,41 @@ graph TD
 ---
 
 ## 사용 방법
+
+Dependency resolution에는 BOM을 사용합니다. Gradle build alias와 plugin version에는 published Gradle
+Version Catalog를 사용합니다. Catalog는 BOM을 대체하지 않습니다. Catalog는 Gradle build가 공유하는
+이름 체계를 제공하고, BOM은 실제 resolved dependency version을 정렬합니다.
+
+### Gradle Version Catalog
+
+```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven("https://central.sonatype.com/repository/maven-snapshots/")
+    }
+    versionCatalogs {
+        create("bt4k") {
+            from("io.github.bluetape4k:bluetape4k-version-catalog:VERSION")
+        }
+    }
+}
+```
+
+```kotlin
+// build.gradle.kts
+plugins {
+    alias(bt4k.plugins.kotlin.jvm)
+    alias(bt4k.plugins.nmcp) apply false
+}
+
+dependencies {
+    implementation(platform("io.github.bluetape4k:bluetape4k-dependencies:VERSION"))
+    implementation(bt4k.bluetape4k.core)
+    implementation(bt4k.bluetape4k.coroutines)
+}
+```
 
 BOM을 플랫폼 의존성으로 추가하면 이후 모든 bluetape4k 아티팩트를 **버전 없이** 선언할 수 있습니다.
 
@@ -185,6 +233,19 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 
 ## 관리 모듈 목록
 
+관리 catalog alias와 BOM constraint는 sibling repository의
+`settings.gradle.kts` 모듈 include 목록에서 생성합니다:
+
+```bash
+scripts/sync-managed-catalog.py --check --summary
+scripts/sync-managed-catalog.py --write --check --summary
+python3 -m unittest tests/test_sync_managed_catalog.py
+```
+
+정확한 생성 아티팩트 목록, BOM constraint, published Gradle Version Catalog의 기준은
+`gradle/libs.versions.toml`입니다.
+아래 섹션은 주요 public module family를 요약합니다.
+
 ### bluetape4k-projects (`io.github.bluetape4k`)
 
 | 아티팩트 | 설명 |
@@ -203,9 +264,7 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 | `bluetape4k-testcontainers` | Testcontainers 헬퍼 |
 | `bluetape4k-spring-boot-core` | Spring Boot 4 공통 유틸리티 |
 | `bluetape4k-spring-boot-cassandra` | Spring Data Cassandra 코루틴 확장 |
-| `bluetape4k-spring-boot-cassandra-demo` | Cassandra 사용 예제 |
 | `bluetape4k-spring-boot-hibernate-lettuce` | Lettuce 기반 Hibernate 2차 캐시 |
-| `bluetape4k-spring-boot-hibernate-lettuce-demo` | Hibernate Lettuce 사용 예제 |
 | `bluetape4k-spring-boot-mongodb` | Spring Data MongoDB 코루틴 확장 |
 | `bluetape4k-spring-boot-r2dbc` | Spring Data R2DBC 코루틴 확장 |
 | `bluetape4k-spring-boot-redis` | Spring Data Redis 직렬화 유틸리티 |
@@ -254,7 +313,7 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 | `graph-io-graphml` | GraphML 직렬화 |
 | `graph-io-jackson2` | Jackson 2.x 그래프 직렬화 |
 | `graph-io-jackson3` | Jackson 3.x 그래프 직렬화 |
-| `graph-io-okio` | Okio 기반 그래프 I/O |
+| `graph-okio` | Okio 기반 그래프 I/O |
 
 ### bluetape4k-leader (`io.github.bluetape4k.leader`)
 
@@ -271,6 +330,7 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 | `leader-hazelcast` | Hazelcast 리더 선출 |
 | `leader-zookeeper` | ZooKeeper/Apache Curator 리더 선출 |
 | `leader-spring-boot` | Spring Boot 4 자동 설정과 AOP |
+| `leader-ktor` | 리더 선출 Ktor 통합 |
 | `leader-micrometer` | 리더 선출 Micrometer 메트릭 |
 
 ---
@@ -281,12 +341,14 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 
 ```toml
 [versions]
-bluetape4k-core   = "1.7.0-SNAPSHOT"
+bluetape4k-core   = "1.8.0-SNAPSHOT"
 bluetape4k-aws    = "0.1.0-SNAPSHOT"
 bluetape4k-image  = "0.1.0-SNAPSHOT"
 bluetape4k-text   = "0.1.0-SNAPSHOT"
 bluetape4k-graph  = "0.3.0-SNAPSHOT"
 bluetape4k-leader = "0.1.0-SNAPSHOT"
+bluetape4k-exposed = "1.8.0-SNAPSHOT"
+bluetape4k-javers = "0.1.0-SNAPSHOT"
 ```
 
 새로운 업스트림 릴리즈를 반영하려면 `libs.versions.toml`에서 해당 버전을 수정하고 새 BOM 버전을 배포하면 됩니다.

@@ -2,6 +2,7 @@ import nmcp.NmcpExtension
 
 plugins {
     `java-platform`
+    `version-catalog`
     `maven-publish`
     signing
 
@@ -33,6 +34,12 @@ repositories {
     }
 }
 
+catalog {
+    versionCatalog {
+        from(files("gradle/libs.versions.toml"))
+    }
+}
+
 // Allow dependencies block in java-platform
 javaPlatform {
     allowDependencies()
@@ -51,108 +58,168 @@ dependencies {
     api(platform(libs.bluetape4k.javers.bom))
 
     constraints {
-        // ── bluetape4k-projects core modules (also covered by bluetape4k-bom above) ──
+        // <generated-managed-modules by scripts/sync-managed-catalog.py>
+        // -- bluetape4k-projects modules --
+        api(libs.bluetape4k.assertions)
+        api(libs.bluetape4k.avro)
+        api(libs.bluetape4k.bucket4j)
+        api(libs.bluetape4k.cache.core)
+        api(libs.bluetape4k.cache.hazelcast)
+        api(libs.bluetape4k.cache.lettuce)
+        api(libs.bluetape4k.cache.redisson)
+        api(libs.bluetape4k.cassandra)
         api(libs.bluetape4k.core)
-        api(libs.bluetape4k.io)
-        api(libs.bluetape4k.netty)
         api(libs.bluetape4k.coroutines)
-        api(libs.bluetape4k.logging)
+        api(libs.bluetape4k.csv)
+        api(libs.bluetape4k.elasticsearch)
+        api(libs.bluetape4k.fastjson2)
+        api(libs.bluetape4k.feign)
+        api(libs.bluetape4k.geo)
+        api(libs.bluetape4k.grpc)
+        api(libs.bluetape4k.hibernate)
+        api(libs.bluetape4k.hibernate.cache.lettuce)
+        api(libs.bluetape4k.hibernate.reactive)
+        api(libs.bluetape4k.http)
+        api(libs.bluetape4k.idgenerators)
+        api(libs.bluetape4k.io)
         api(libs.bluetape4k.jackson2)
         api(libs.bluetape4k.jackson3)
-        api(libs.bluetape4k.idgenerators)
-        api(libs.bluetape4k.resilience4j)
+        api(libs.bluetape4k.javatimes)
+        api(libs.bluetape4k.jdbc)
+        api(libs.bluetape4k.json)
         api(libs.bluetape4k.junit5)
-        api(libs.bluetape4k.testcontainers)
-        api(libs.bluetape4k.spring.boot.core)
+        api(libs.bluetape4k.jwt)
+        api(libs.bluetape4k.kafka)
+        api(libs.bluetape4k.kafka.logback)
+        api(libs.bluetape4k.kafka4)
+        api(libs.bluetape4k.lettuce)
+        api(libs.bluetape4k.logging)
+        api(libs.bluetape4k.math)
+        api(libs.bluetape4k.measured)
+        api(libs.bluetape4k.micrometer)
+        api(libs.bluetape4k.mock.web.server)
+        api(libs.bluetape4k.mock.webflux.server)
+        api(libs.bluetape4k.money)
+        api(libs.bluetape4k.mongodb)
+        api(libs.bluetape4k.mutiny)
+        api(libs.bluetape4k.nats)
+        api(libs.bluetape4k.netty)
+        api(libs.bluetape4k.okio)
+        api(libs.bluetape4k.opentelemetry)
+        api(libs.bluetape4k.probabilistic)
+        api(libs.bluetape4k.protobuf)
+        api(libs.bluetape4k.pulsar)
+        api(libs.bluetape4k.r2dbc)
+        api(libs.bluetape4k.redis)
+        api(libs.bluetape4k.redisson)
+        api(libs.bluetape4k.resilience4j)
+        api(libs.bluetape4k.retrofit2)
+        api(libs.bluetape4k.rule.engine)
+        api(libs.bluetape4k.science)
         api(libs.bluetape4k.spring.boot.cassandra)
-        api(libs.bluetape4k.spring.boot.cassandra.demo)
+        api(libs.bluetape4k.spring.boot.core)
         api(libs.bluetape4k.spring.boot.hibernate.lettuce)
-        api(libs.bluetape4k.spring.boot.hibernate.lettuce.demo)
         api(libs.bluetape4k.spring.boot.mongodb)
         api(libs.bluetape4k.spring.boot.r2dbc)
         api(libs.bluetape4k.spring.boot.redis)
+        api(libs.bluetape4k.states)
+        api(libs.bluetape4k.testcontainers)
+        api(libs.bluetape4k.tink)
+        api(libs.bluetape4k.vertx)
+        api(libs.bluetape4k.virtualthread.api)
+        api(libs.bluetape4k.virtualthread.jdk21)
+        api(libs.bluetape4k.virtualthread.jdk25)
+        api(libs.bluetape4k.workflow)
 
-        // ── bluetape4k-aws modules ──────────────────────────────────────────
+        // -- bluetape4k-aws modules --
         api(libs.bluetape4k.aws)
         api(libs.bluetape4k.aws.kotlin)
-        api(libs.bluetape4k.aws.spring.boot)
         api(libs.bluetape4k.aws.ktor)
+        api(libs.bluetape4k.aws.spring.boot)
 
-        // ── bluetape4k-image modules ────────────────────────────────────────
+        // -- bluetape4k-image modules --
         api(libs.bluetape4k.images)
         api(libs.bluetape4k.images.vips.api)
         api(libs.bluetape4k.images.vips.java21)
         api(libs.bluetape4k.images.vips.java25)
 
-        // ── bluetape4k-text modules ─────────────────────────────────────────
+        // -- bluetape4k-text modules --
+        api(libs.bluetape4k.lingua)
+        api(libs.bluetape4k.text.search)
         api(libs.bluetape4k.tokenizer.core)
         api(libs.bluetape4k.tokenizer.japanese)
         api(libs.bluetape4k.tokenizer.korean)
-        api(libs.bluetape4k.lingua)
-        api(libs.bluetape4k.text.search)
 
-        // ── bluetape4k-graph modules (versions also covered by graph-bom platform above) ──
-        api(libs.bluetape4k.graph.core)
+        // -- bluetape4k-graph modules --
         api(libs.bluetape4k.graph.age)
+        api(libs.bluetape4k.graph.age.benchmark)
+        api(libs.bluetape4k.graph.benchmark)
+        api(libs.bluetape4k.graph.core)
         api(libs.bluetape4k.graph.falkordb)
-        api(libs.bluetape4k.graph.memgraph)
-        api(libs.bluetape4k.graph.neo4j)
-        api(libs.bluetape4k.graph.tinkerpop)
+        api(libs.bluetape4k.graph.io.benchmark)
         api(libs.bluetape4k.graph.io.core)
         api(libs.bluetape4k.graph.io.csv)
         api(libs.bluetape4k.graph.io.graphml)
         api(libs.bluetape4k.graph.io.jackson2)
         api(libs.bluetape4k.graph.io.jackson3)
-        api(libs.bluetape4k.graph.io.okio)
+        api(libs.bluetape4k.graph.memgraph)
+        api(libs.bluetape4k.graph.neo4j)
+        api(libs.bluetape4k.graph.neo4j.benchmark)
+        api(libs.bluetape4k.graph.okio)
+        api(libs.bluetape4k.graph.spring.boot4.starter)
+        api(libs.bluetape4k.graph.tinkerpop)
 
-        // ── bluetape4k-leader modules (versions also covered by leader-bom platform above) ──
+        // -- bluetape4k-leader modules --
         api(libs.bluetape4k.leader.core)
-        api(libs.bluetape4k.leader.redis.lettuce)
-        api(libs.bluetape4k.leader.redis.redisson)
         api(libs.bluetape4k.leader.exposed.core)
         api(libs.bluetape4k.leader.exposed.jdbc)
         api(libs.bluetape4k.leader.exposed.r2dbc)
-        api(libs.bluetape4k.leader.mongodb)
         api(libs.bluetape4k.leader.hazelcast)
-        api(libs.bluetape4k.leader.zookeeper)
-        api(libs.bluetape4k.leader.spring.boot)
+        api(libs.bluetape4k.leader.ktor)
         api(libs.bluetape4k.leader.micrometer)
+        api(libs.bluetape4k.leader.mongodb)
+        api(libs.bluetape4k.leader.redis.lettuce)
+        api(libs.bluetape4k.leader.redis.redisson)
+        api(libs.bluetape4k.leader.spring.boot)
+        api(libs.bluetape4k.leader.zookeeper)
 
-        // ── bluetape4k-javers modules ───────────────────────────────────────────
+        // -- bluetape4k-exposed modules --
+        api(libs.bluetape4k.batch)
+        api(libs.bluetape4k.exposed.bigquery)
+        api(libs.bluetape4k.exposed.cache)
+        api(libs.bluetape4k.exposed.clickhouse)
+        api(libs.bluetape4k.exposed.core)
+        api(libs.bluetape4k.exposed.dao)
+        api(libs.bluetape4k.exposed.duckdb)
+        api(libs.bluetape4k.exposed.fastjson2)
+        api(libs.bluetape4k.exposed.jackson2)
+        api(libs.bluetape4k.exposed.jackson3)
+        api(libs.bluetape4k.exposed.jdbc)
+        api(libs.bluetape4k.exposed.jdbc.caffeine)
+        api(libs.bluetape4k.exposed.jdbc.lettuce)
+        api(libs.bluetape4k.exposed.jdbc.redisson)
+        api(libs.bluetape4k.exposed.jdbc.tests)
+        api(libs.bluetape4k.exposed.measured)
+        api(libs.bluetape4k.exposed.mysql8)
+        api(libs.bluetape4k.exposed.postgresql)
+        api(libs.bluetape4k.exposed.r2dbc)
+        api(libs.bluetape4k.exposed.r2dbc.caffeine)
+        api(libs.bluetape4k.exposed.r2dbc.lettuce)
+        api(libs.bluetape4k.exposed.r2dbc.redisson)
+        api(libs.bluetape4k.exposed.r2dbc.tests)
+        api(libs.bluetape4k.exposed.timefold.solver.persistence)
+        api(libs.bluetape4k.exposed.tink)
+        api(libs.bluetape4k.exposed.trino)
+        api(libs.bluetape4k.spring.boot.batch.exposed)
+        api(libs.bluetape4k.spring.boot.exposed.jdbc)
+        api(libs.bluetape4k.spring.boot.exposed.r2dbc)
+
+        // -- bluetape4k-javers modules --
         api(libs.bluetape4k.javers.core)
         api(libs.bluetape4k.javers.persistence.kafka)
         api(libs.bluetape4k.javers.persistence.redis)
 
-        // ── bluetape4k-exposed modules ──────────────────────────────────────────
-        api(libs.bluetape4k.exposed.core)
-        api(libs.bluetape4k.exposed.dao)
-        api(libs.bluetape4k.exposed.jdbc)
-        api(libs.bluetape4k.exposed.jdbc.tests)
-        api(libs.bluetape4k.exposed.jdbc.caffeine)
-        api(libs.bluetape4k.exposed.jdbc.lettuce)
-        api(libs.bluetape4k.exposed.jdbc.redisson)
-        api(libs.bluetape4k.exposed.r2dbc)
-        api(libs.bluetape4k.exposed.r2dbc.tests)
-        api(libs.bluetape4k.exposed.r2dbc.caffeine)
-        api(libs.bluetape4k.exposed.r2dbc.lettuce)
-        api(libs.bluetape4k.exposed.r2dbc.redisson)
-        api(libs.bluetape4k.exposed.cache)
-        api(libs.bluetape4k.exposed.measured)
-        api(libs.bluetape4k.exposed.jackson2)
-        api(libs.bluetape4k.exposed.jackson3)
-        api(libs.bluetape4k.exposed.fastjson2)
-        api(libs.bluetape4k.exposed.tink)
-        api(libs.bluetape4k.exposed.bigquery)
-        api(libs.bluetape4k.exposed.clickhouse)
-        api(libs.bluetape4k.exposed.duckdb)
-        api(libs.bluetape4k.exposed.mysql8)
-        api(libs.bluetape4k.exposed.postgresql)
-        api(libs.bluetape4k.exposed.trino)
-        api(libs.bluetape4k.exposed.timefold.solver.persistence)
-        api(libs.bluetape4k.batch)
-        api(libs.bluetape4k.spring.boot.batch.exposed)
-        api(libs.bluetape4k.spring.boot.exposed.jdbc)
-        api(libs.bluetape4k.spring.boot.exposed.r2dbc)
+        // </generated-managed-modules>
     }
 }
 
@@ -194,6 +261,34 @@ publishing {
                 }
             }
         }
+        create<MavenPublication>("BluetapeVersionCatalog") {
+            from(components["versionCatalog"])
+            artifactId = "bluetape4k-version-catalog"
+
+            pom {
+                name.set("bluetape4k-version-catalog")
+                description.set("Published Gradle version catalog for bluetape4k build plugins, aliases, and managed module coordinates")
+                url.set("https://github.com/bluetape4k/bluetape4k-dependencies")
+                licenses {
+                    license {
+                        name.set("The Apache License, Version 2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("debop")
+                        name.set("Sunghyouk Bae")
+                        email.set("sunghyouk.bae@gmail.com")
+                    }
+                }
+                scm {
+                    connection.set("scm:git:git://github.com/bluetape4k/bluetape4k-dependencies.git")
+                    developerConnection.set("scm:git:ssh://github.com/bluetape4k/bluetape4k-dependencies.git")
+                    url.set("https://github.com/bluetape4k/bluetape4k-dependencies")
+                }
+            }
+        }
     }
     repositories {
         mavenCentral()
@@ -205,3 +300,4 @@ publishing {
 }
 
 configurePublishingSigning("BluetapeDependencies")
+configurePublishingSigning("BluetapeVersionCatalog")
