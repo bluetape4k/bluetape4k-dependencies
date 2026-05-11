@@ -187,6 +187,41 @@ bluetape4k-leader       = "0.1.0-Beta1"
 
 이 경우 `bluetape4k-dependencies:1.1.0-Beta1`은 정식 `1.1.0`이 아니지만 Central에 배포된 release artifact입니다. 정식 `1.1.0` 배포 시에는 upstream ref를 다시 정식 version matrix로 바꾸고 동일한 missing-only 절차를 반복합니다.
 
+### 릴리즈 요청 템플릿
+
+릴리즈 요청을 받을 때 운영자는 아래 항목을 먼저 정리합니다. 요청자가 명시하지 않은 항목도 기본값을 추정하지 말고 release note나 PR 본문에 결정 결과를 남깁니다.
+
+```text
+Release target:
+- dependencies version: 1.1.0-Beta1
+- release type: snapshot | pre-release | final
+
+Upstream matrix:
+- bluetape4k-core = 1.8.0-Beta1
+- bluetape4k-aws = 1.8.0-Beta1
+- bluetape4k-exposed = 1.8.0-Beta1
+- bluetape4k-image = 1.8.0-Beta1
+- bluetape4k-text = 1.8.0-Beta1
+- bluetape4k-graph = 0.3.0-Beta1
+- bluetape4k-javers = 1.8.0-Beta1
+- bluetape4k-leader = 0.1.0-Beta1
+
+Release policy:
+- already published artifacts: skip
+- missing artifacts: run upstream Publish Release first
+- excluded repos: none
+```
+
+#### 요청 시 먼저 판단할 항목
+
+- [ ] 이번 배포가 `snapshot`, `pre-release`, `final` 중 무엇인지 확인합니다.
+- [ ] `pre-release`이면 suffix 규칙을 정합니다. 예: `Beta1`, `Beta2`, `RC1`.
+- [ ] version matrix에 BOM 대상 alias가 모두 있는지 확인합니다.
+- [ ] `bluetape4k-workshop`, `bluetape4k-experimental`처럼 배포 대상이 아닌 repo가 섞이지 않았는지 확인합니다.
+- [ ] 이미 Central에 있는 artifact를 다시 배포하려는 요청이 아닌지 확인합니다.
+- [ ] 정식 release 전 검증 목적이면 `1.0.0-Beta1` 같은 Central pre-release를 제안합니다.
+- [ ] 정식 release 요청이면 upstream이 final version으로 이미 배포되어 있거나, missing-only release 대상인지 확인합니다.
+
 공식 릴리즈는 아래 체크리스트 순서로 진행합니다. 실행자는 체크리스트를 채우고, 검증자는 release matrix, Central 존재 여부, CI/release workflow 결과를 확인합니다.
 
 #### 1. 릴리즈 요청 정리
