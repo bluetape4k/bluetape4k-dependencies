@@ -10,6 +10,7 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Dependabot configuration for repository maintenance ([PR #1](https://github.com/bluetape4k/bluetape4k-dependencies/pull/1)).
+- Release workflow for Maven Central Portal publishing and GitHub Release creation.
 - SNAPSHOT publishing workflow on `develop` pushes ([PR #3](https://github.com/bluetape4k/bluetape4k-dependencies/pull/3)).
 - `bluetape4k-exposed` modules in the central BOM ([PR #2](https://github.com/bluetape4k/bluetape4k-dependencies/pull/2)).
 - AWS, image, text, exposed, and javers BOM platform imports ([PR #6](https://github.com/bluetape4k/bluetape4k-dependencies/pull/6)).
