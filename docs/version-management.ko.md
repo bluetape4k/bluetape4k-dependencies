@@ -134,18 +134,72 @@ Dependabot PR은 자동으로 맞다고 가정하지 않습니다.
 
 특정 repo 하나에만 Dependabot PR이 생기고 `bluetape4k-projects` 또는 source-of-truth에는 없으면, 그 PR만 단독 머지하지 말고 shared alias인지 먼저 확인합니다.
 
-## 릴리즈와 Snapshot
+## Snapshot 배포와 공식 릴리즈
 
 `bluetape4k-dependencies`의 catalog version은 `gradle.properties`의 `baseVersion + snapshotVersion`과 맞아야 합니다. `scripts/sync-shared-versions.py`는 source-of-truth block의 `bluetape4k-dependencies` 버전과 `gradle.properties`가 다르면 실패합니다.
 
-릴리즈 준비 시 확인할 항목:
+### Snapshot 배포
+
+Snapshot 배포는 개발 중인 최신 상태를 검증하거나 다른 repo에서 미리 참조하기 위한 배포입니다.
+
+Snapshot 배포 시에는 다음 값을 유지합니다.
+
+| 위치 | 예시 |
+|---|---|
+| upstream repo `gradle.properties` | `baseVersion=0.1.0`, `snapshotVersion=-SNAPSHOT` |
+| `bluetape4k-dependencies/gradle/libs.versions.toml` upstream ref | `bluetape4k-leader = "0.1.0-SNAPSHOT"` |
+| `bluetape4k-dependencies/gradle.properties` | `baseVersion=1.0.0`, `snapshotVersion=-SNAPSHOT` |
+| source-of-truth block | `bluetape4k-dependencies = "1.0.0-SNAPSHOT"` |
+
+Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot repository를 가리켜도 됩니다.
+
+### 공식 릴리즈 원칙
+
+공식 릴리즈 BOM은 snapshot artifact를 가리키면 안 됩니다. `bluetape4k-dependencies`를 release로 배포할 때는 BOM이 관리하는 `bluetape4k-*` upstream version ref에서 `-SNAPSHOT`을 제거해야 합니다.
+
+단, `-SNAPSHOT` 제거는 upstream artifact가 먼저 release repository에 배포된 뒤에 해야 합니다. 예를 들어 `bluetape4k-leader = "0.1.0"`으로 바꾸는 것은 “BOM이 `io.github.bluetape4k.leader:*:0.1.0` release artifact를 관리한다”는 뜻입니다. 이것은 `bluetape4k-leader` repo의 `gradle.properties`를 자동으로 바꾸지 않습니다.
+
+공식 릴리즈 순서는 다음과 같습니다.
+
+1. 릴리즈할 upstream repo를 확정합니다.
+2. 각 upstream repo에서 release version으로 배포합니다.
+   - 예: `bluetape4k-leader/gradle.properties`에서 `snapshotVersion=`로 두고 `0.1.0` artifact를 배포합니다.
+3. Maven Central 또는 Central Portal에서 upstream release artifact가 실제로 조회되는지 확인합니다.
+4. `bluetape4k-dependencies/gradle/libs.versions.toml`에서 해당 upstream ref의 `-SNAPSHOT`을 제거합니다.
+   - 예: `bluetape4k-leader = "0.1.0-SNAPSHOT"` -> `bluetape4k-leader = "0.1.0"`
+5. `bluetape4k-dependencies` 자체도 release version으로 맞춥니다.
+   - `gradle.properties`: `snapshotVersion=`
+   - source-of-truth block: `bluetape4k-dependencies = "1.0.0"`
+6. `scripts/sync-managed-catalog.py --check --summary`를 실행합니다.
+7. `scripts/sync-shared-versions.py --workspace .. --check --summary`를 실행합니다.
+8. `./gradlew build publishToMavenLocal --no-daemon`로 로컬 release BOM/catalog를 검증합니다.
+9. `bluetape4k-dependencies` release PR을 만들고 CI를 확인합니다.
+10. release 배포 workflow를 실행합니다.
+
+### 공식 릴리즈 체크리스트
 
 | 항목 | 확인 |
 |---|---|
+| Upstream release artifact | 모든 `bluetape4k-*` version ref가 실제 release artifact로 존재 |
+| Snapshot 제거 | release BOM의 managed `bluetape4k-*` ref에 `-SNAPSHOT`이 없음 |
+| Dependencies 자체 버전 | `gradle.properties`와 source-of-truth block의 `bluetape4k-dependencies` 값이 일치 |
 | Downstream sync | `scripts/sync-shared-versions.py --workspace .. --check --summary` |
 | Managed module sync | `scripts/sync-managed-catalog.py --check --summary` |
 | Local publish | `./gradlew build publishToMavenLocal --no-daemon` |
 | Snapshot publish | GitHub Actions `Publish Snapshot` 성공 |
+
+### 릴리즈 후 다음 개발 사이클
+
+공식 릴리즈가 끝나면 다음 개발 cycle을 시작하기 위해 version을 다시 snapshot으로 올립니다.
+
+1. upstream repo들의 다음 개발 버전을 설정합니다.
+   - 예: `baseVersion=0.1.1`, `snapshotVersion=-SNAPSHOT`
+2. `bluetape4k-dependencies/gradle/libs.versions.toml`의 upstream refs를 다음 snapshot으로 갱신합니다.
+   - 예: `bluetape4k-leader = "0.1.1-SNAPSHOT"`
+3. `bluetape4k-dependencies` 자체도 다음 snapshot으로 갱신합니다.
+   - 예: `baseVersion=1.0.1`, `snapshotVersion=-SNAPSHOT`
+   - source-of-truth block: `bluetape4k-dependencies = "1.0.1-SNAPSHOT"`
+4. drift check와 CI를 통과시킨 뒤 snapshot publish를 확인합니다.
 
 ## 장애 대응
 
@@ -156,3 +210,4 @@ Dependabot PR은 자동으로 맞다고 가정하지 않습니다.
 | Dependabot이 compatibility alias를 잘못 올림 | PR을 닫고 올바른 major-line alias를 갱신 |
 | generated module이 README에 없음 | `gradle/libs.versions.toml` generated section과 README 표를 비교 |
 | `--write --check`가 실패 | sync script regression 가능성이 있으므로 unittest fixture 추가 후 수정 |
+| release BOM이 snapshot artifact를 참조 | upstream release 완료 여부 확인 후 `libs.versions.toml` ref에서 `-SNAPSHOT` 제거 |
