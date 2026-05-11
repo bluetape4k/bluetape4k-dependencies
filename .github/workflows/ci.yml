@@ -58,6 +58,33 @@ jobs:
     needs: validate-wrapper
     steps:
       - uses: actions/checkout@v6
+      - name: Clone managed repositories for catalog script checks
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repos=(
+            bluetape4k-projects
+            bluetape4k-aws
+            bluetape4k-experimental
+            bluetape4k-exposed
+            bluetape4k-graph
+            bluetape4k-image
+            bluetape4k-javers
+            bluetape4k-leader
+            bluetape4k-text
+            bluetape4k-workshop
+          )
+          for repo in "${repos[@]}"; do
+            gh repo clone "bluetape4k/${repo}" "../${repo}" -- --depth 1
+          done
+      - name: Verify catalog scripts
+        run: |
+          python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py tests/*.py
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          scripts/sync-managed-catalog.py --check --summary
+          scripts/sync-shared-versions.py --workspace .. --check --summary
       - uses: actions/setup-java@v5
         with:
           java-version: ${{ env.JAVA_VERSION }}

@@ -246,6 +246,14 @@ python3 -m unittest tests/test_sync_managed_catalog.py
 `gradle/libs.versions.toml`입니다.
 아래 섹션은 주요 public module family를 요약합니다.
 
+이 레포지토리의 shared dependency/plugin version alias는 sibling `bluetape4k-*` 레포지토리의
+source of truth이기도 합니다. 해당 alias를 변경한 뒤에는 downstream local catalog를 동기화합니다:
+
+```bash
+scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/sync-shared-versions.py --workspace .. --write --check --summary
+```
+
 ### bluetape4k-projects (`io.github.bluetape4k`)
 
 | 아티팩트 | 설명 |

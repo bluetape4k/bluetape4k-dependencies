@@ -247,6 +247,14 @@ python3 -m unittest tests/test_sync_managed_catalog.py
 artifact list, BOM constraints, and published Gradle Version Catalog. The sections below summarize the main
 public module families.
 
+Shared dependency and plugin version aliases in this repository are also the source of truth for sibling
+`bluetape4k-*` repositories. Sync downstream local catalogs after changing those aliases:
+
+```bash
+scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/sync-shared-versions.py --workspace .. --write --check --summary
+```
+
 ### bluetape4k-projects (`io.github.bluetape4k`)
 
 | Artifact | Description |

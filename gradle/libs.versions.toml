@@ -2,7 +2,10 @@
 # Gradle Version Catalog for bluetape4k-dependencies (ecosystem BOM)
 
 [versions]
+# <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
+bluetape4k-dependencies = "1.0.0-SNAPSHOT"  # This catalog/BOM release train version; must match gradle.properties.
+
 # bluetape4k-projects (monorepo core modules)
 bluetape4k-core    = "1.8.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
 
@@ -34,6 +37,28 @@ nmcp               = "1.5.0"  # https://mvnrepository.com/artifact/com.gradleup.
 dokka              = "2.2.0"  # https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
 dependency-management = "1.1.7"  # https://mvnrepository.com/artifact/io.spring.gradle/dependency-management-plugin
 
+# ── Shared runtime / framework lines ───────────────────────────────────────
+spring-boot       = "4.0.6"  # https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-dependencies
+spring-boot3      = "3.5.14"  # https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-dependencies
+spring-boot4      = "4.0.6"  # https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-dependencies
+coroutines        = "1.10.2"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-bom
+jackson           = "2.21.3"  # https://mvnrepository.com/artifact/com.fasterxml.jackson/jackson-bom
+jackson2          = "2.21.3"  # Jackson 2 compatibility line
+jackson3          = "3.1.3"  # Jackson 3 compatibility line
+lettuce           = "6.8.2.RELEASE"  # https://mvnrepository.com/artifact/io.lettuce/lettuce-core
+exposed           = "1.2.0"  # https://mvnrepository.com/artifact/org.jetbrains.exposed/exposed-bom
+ignite            = "2.18.0"  # Apache Ignite 2 compatibility line
+ignite3           = "3.1.0"  # Apache Ignite 3 compatibility line
+kafka3            = "3.9.2"  # Kafka 3 compatibility line
+kafka4            = "4.2.0"  # Kafka 4 compatibility line
+spring-kafka      = "3.3.13"  # Spring Kafka 3 compatibility line
+spring-kafka4     = "4.0.5"  # Spring Kafka 4 compatibility line
+testcontainers    = "2.0.5"  # https://mvnrepository.com/artifact/org.testcontainers/testcontainers-bom
+kover             = "0.9.8"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kover-gradle-plugin
+fory              = "0.15.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
+fory-kotlin       = "0.15.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
+# </shared-version-source-of-truth>
+
 # ────────────────────────────────────────────────────────────────────────────
 [plugins]
 kotlin-jvm            = { id = "org.jetbrains.kotlin.jvm",            version.ref = "kotlin" }
@@ -44,6 +69,8 @@ nmcp-aggregation      = { id = "com.gradleup.nmcp.aggregation",        version.r
 
 # ────────────────────────────────────────────────────────────────────────────
 [libraries]
+bluetape4k-dependencies                       = { module = "io.github.bluetape4k:bluetape4k-dependencies", version.ref = "bluetape4k-dependencies" }
+
 # <generated-managed-modules by scripts/sync-managed-catalog.py>
 # -- bluetape4k-projects modules --
 bluetape4k-assertions                          = { module = "io.github.bluetape4k:bluetape4k-assertions", version.ref = "bluetape4k-core" }
