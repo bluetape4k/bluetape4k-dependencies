@@ -157,30 +157,93 @@ Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot rep
 
 공식 릴리즈 BOM은 snapshot artifact를 가리키면 안 됩니다. `bluetape4k-dependencies`를 release로 배포할 때는 BOM이 관리하는 `bluetape4k-*` upstream version ref에서 `-SNAPSHOT`을 제거해야 합니다.
 
-단, `-SNAPSHOT` 제거는 upstream artifact가 먼저 release repository에 배포된 뒤에 해야 합니다. 예를 들어 `bluetape4k-leader = "0.1.0"`으로 바꾸는 것은 “BOM이 `io.github.bluetape4k.leader:*:0.1.0` release artifact를 관리한다”는 뜻입니다. 이것은 `bluetape4k-leader` repo의 `gradle.properties`를 자동으로 바꾸지 않습니다.
+단, `-SNAPSHOT` 제거는 해당 upstream release artifact가 Central에 존재할 때만 해야 합니다. 예를 들어 `bluetape4k-leader = "0.1.0"`으로 바꾸는 것은 “BOM이 `io.github.bluetape4k.leader:*:0.1.0` release artifact를 관리한다”는 뜻입니다. 이것은 `bluetape4k-leader` repo의 `gradle.properties`를 자동으로 바꾸지 않습니다.
 
 공식 릴리즈 순서는 다음과 같습니다.
 
-1. 릴리즈할 upstream repo를 확정합니다.
-2. 각 upstream repo에서 release version으로 배포합니다.
-   - 예: `bluetape4k-leader/gradle.properties`에서 `snapshotVersion=`로 두고 `0.1.0` artifact를 배포합니다.
-3. Maven Central 또는 Central Portal에서 upstream release artifact가 실제로 조회되는지 확인합니다.
-4. `bluetape4k-dependencies/gradle/libs.versions.toml`에서 해당 upstream ref의 `-SNAPSHOT`을 제거합니다.
+1. `bluetape4k-dependencies` release BOM이 참조할 upstream version matrix를 확정합니다.
+2. Maven Central 또는 Central Portal에서 각 upstream version이 이미 배포되어 있는지 확인합니다.
+3. Central에 없는 upstream repo/version만 release action을 실행합니다.
+   - 예: `bluetape4k-leader` 0.1.0이 없으면 `bluetape4k-leader`만 release합니다.
+   - 이미 Central에 있는 version은 다시 배포하지 않습니다. Maven Central release artifact는 같은 version으로 재배포할 수 없습니다.
+4. missing artifact가 모두 Central에서 조회되는지 다시 확인합니다.
+5. `bluetape4k-dependencies/gradle/libs.versions.toml`에서 해당 upstream ref의 `-SNAPSHOT`을 제거합니다.
    - 예: `bluetape4k-leader = "0.1.0-SNAPSHOT"` -> `bluetape4k-leader = "0.1.0"`
-5. `bluetape4k-dependencies` 자체도 release version으로 맞춥니다.
+6. `bluetape4k-dependencies` 자체도 release version으로 맞춥니다.
    - `gradle.properties`: `snapshotVersion=`
    - source-of-truth block: `bluetape4k-dependencies = "1.0.0"`
-6. `scripts/sync-managed-catalog.py --check --summary`를 실행합니다.
-7. `scripts/sync-shared-versions.py --workspace .. --check --summary`를 실행합니다.
-8. `./gradlew build publishToMavenLocal --no-daemon`로 로컬 release BOM/catalog를 검증합니다.
-9. `bluetape4k-dependencies` release PR을 만들고 CI를 확인합니다.
-10. release 배포 workflow를 실행합니다.
+7. `scripts/sync-managed-catalog.py --check --summary`를 실행합니다.
+8. `scripts/sync-shared-versions.py --workspace .. --check --summary`를 실행합니다.
+9. `./gradlew build publishToMavenLocal --no-daemon`로 로컬 release BOM/catalog를 검증합니다.
+10. `bluetape4k-dependencies` release PR을 만들고 CI를 확인합니다.
+11. release 배포 workflow를 실행합니다.
+
+### 실제 배포 예시: `bluetape4k-dependencies` 1.1.0
+
+요청 예시:
+
+```text
+이번에 dependencies 1.1.0을 릴리즈하자.
+bluetape4k-core = 1.8.0
+aws = 1.8.0
+exposed = 1.8.0
+image = 1.8.0
+graph = 0.3.0
+javers = 1.8.0
+leader = 0.1.0
+```
+
+운영자는 먼저 이 요청을 release matrix로 정규화합니다.
+
+| Source alias | Group | Version |
+|---|---|---|
+| `bluetape4k-core` | `io.github.bluetape4k` | `1.8.0` |
+| `bluetape4k-aws` | `io.github.bluetape4k.aws` | `1.8.0` |
+| `bluetape4k-exposed` | `io.github.bluetape4k.exposed` | `1.8.0` |
+| `bluetape4k-image` | `io.github.bluetape4k.image` | `1.8.0` |
+| `bluetape4k-graph` | `io.github.bluetape4k.graph` | `0.3.0` |
+| `bluetape4k-javers` | `io.github.bluetape4k.javers` | `1.8.0` |
+| `bluetape4k-leader` | `io.github.bluetape4k.leader` | `0.1.0` |
+
+`bluetape4k-text`도 BOM 대상입니다. 요청에 빠져 있으면 release BOM에서 어떤 version을 가리킬지 확인해야 합니다. release BOM이 snapshot을 가리키면 안 되므로, `bluetape4k-text`를 release matrix에 추가하거나 해당 alias를 BOM에서 의도적으로 제외하는 별도 결정을 해야 합니다.
+
+다음으로 Central 존재 여부를 확인합니다.
+
+| 확인 결과 | 조치 |
+|---|---|
+| 이미 Central에 존재 | release action을 다시 실행하지 않음 |
+| Central에 없음 | 해당 upstream repo의 release action만 실행 |
+
+예를 들어 `bluetape4k-core:1.8.0`, `bluetape4k-aws:1.8.0`, `bluetape4k-image:1.8.0`은 이미 있고, `bluetape4k-graph:0.3.0`, `bluetape4k-leader:0.1.0`만 없다면 `bluetape4k-graph`와 `bluetape4k-leader`만 release합니다.
+
+missing upstream release가 끝나면 `bluetape4k-dependencies`를 다음처럼 변경합니다.
+
+```toml
+bluetape4k-dependencies = "1.1.0"
+bluetape4k-core         = "1.8.0"
+bluetape4k-aws          = "1.8.0"
+bluetape4k-exposed      = "1.8.0"
+bluetape4k-image        = "1.8.0"
+bluetape4k-graph        = "0.3.0"
+bluetape4k-javers       = "1.8.0"
+bluetape4k-leader       = "0.1.0"
+```
+
+그리고 `gradle.properties`도 release version으로 맞춥니다.
+
+```properties
+baseVersion=1.1.0
+snapshotVersion=
+```
+
+그 뒤 검증, PR, CI, merge, release workflow 순서로 `bluetape4k-dependencies`를 마지막에 배포합니다.
 
 ### 공식 릴리즈 체크리스트
 
 | 항목 | 확인 |
 |---|---|
 | Upstream release artifact | 모든 `bluetape4k-*` version ref가 실제 release artifact로 존재 |
+| Missing-only release | Central에 없는 upstream version만 release action 실행 |
 | Snapshot 제거 | release BOM의 managed `bluetape4k-*` ref에 `-SNAPSHOT`이 없음 |
 | Dependencies 자체 버전 | `gradle.properties`와 source-of-truth block의 `bluetape4k-dependencies` 값이 일치 |
 | Downstream sync | `scripts/sync-shared-versions.py --workspace .. --check --summary` |
