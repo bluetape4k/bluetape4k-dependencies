@@ -254,28 +254,99 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
 ```
 
+이 방식은 **materialized sync**입니다. Sibling 레포지토리가 build 시점에 이 catalog를 동적으로
+가져가는 구조가 아닙니다. `bluetape4k-dependencies/gradle/libs.versions.toml`이 승인된 버전을
+소유하고, `scripts/sync-shared-versions.py`가 각 대상 레포지토리의 `gradle/libs.versions.toml`에서
+같은 alias를 물리적으로 갱신합니다. 권장 릴리즈 흐름은 다음과 같습니다:
+
+1. 이 레포지토리의 source-of-truth block을 수정합니다.
+2. `scripts/sync-shared-versions.py --workspace .. --write --check --summary`를 실행합니다.
+3. 변경된 downstream 레포지토리 PR을 열고 CI 검증 후 머지합니다.
+4. 마지막으로 `bluetape4k-dependencies` PR을 머지합니다. 이 PR의 CI는 downstream `develop` branch를
+   다시 clone해서 shared-version drift가 남아 있는지 검사합니다.
+
+Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 중 `kafka3`/`kafka4`,
+`jackson2`/`jackson3`, `spring-boot3`/`spring-boot4`, `spring-kafka`/`spring-kafka4` 같은 alias를
+하나로 합치지 않습니다.
+
 ### bluetape4k-projects (`io.github.bluetape4k`)
 
-| 아티팩트 | 설명 |
+아래 표는 현재 `gradle/libs.versions.toml`에 생성되는 모든 managed `bluetape4k-projects` artifact를
+기록합니다.
+
+| 아티팩트 | 영역 |
 |---|---|
-| `bluetape4k-bom` | 코어 모듈 BOM |
-| `bluetape4k-core` | 핵심 Kotlin 유틸리티 |
-| `bluetape4k-io` | I/O 유틸리티 (압축, 직렬화) |
-| `bluetape4k-netty` | Netty 헬퍼 |
-| `bluetape4k-coroutines` | Kotlin Coroutines 확장 |
-| `bluetape4k-logging` | 구조화 로깅 (SLF4J + Kotlin) |
-| `bluetape4k-jackson2` | Jackson 2.x 직렬화 지원 |
-| `bluetape4k-jackson3` | Jackson 3.x 직렬화 지원 |
-| `bluetape4k-idgenerators` | 분산 ID 생성 (Snowflake, TSID 등) |
-| `bluetape4k-resilience4j` | Resilience4j Kotlin DSL |
-| `bluetape4k-junit5` | JUnit 5 테스트 유틸리티 |
-| `bluetape4k-testcontainers` | Testcontainers 헬퍼 |
-| `bluetape4k-spring-boot-core` | Spring Boot 4 공통 유틸리티 |
-| `bluetape4k-spring-boot-cassandra` | Spring Data Cassandra 코루틴 확장 |
-| `bluetape4k-spring-boot-hibernate-lettuce` | Lettuce 기반 Hibernate 2차 캐시 |
-| `bluetape4k-spring-boot-mongodb` | Spring Data MongoDB 코루틴 확장 |
-| `bluetape4k-spring-boot-r2dbc` | Spring Data R2DBC 코루틴 확장 |
-| `bluetape4k-spring-boot-redis` | Spring Data Redis 직렬화 유틸리티 |
+| `bluetape4k-assertions` | 테스트 assertion |
+| `bluetape4k-avro` | 직렬화 |
+| `bluetape4k-bom` | BOM |
+| `bluetape4k-bucket4j` | Rate limiting |
+| `bluetape4k-cache-core` | Cache |
+| `bluetape4k-cache-hazelcast` | Cache |
+| `bluetape4k-cache-lettuce` | Cache |
+| `bluetape4k-cache-redisson` | Cache |
+| `bluetape4k-cassandra` | Data access |
+| `bluetape4k-core` | 핵심 유틸리티 |
+| `bluetape4k-coroutines` | Coroutines |
+| `bluetape4k-csv` | 직렬화 |
+| `bluetape4k-elasticsearch` | Search |
+| `bluetape4k-fastjson2` | 직렬화 |
+| `bluetape4k-feign` | HTTP client |
+| `bluetape4k-geo` | Geo 유틸리티 |
+| `bluetape4k-grpc` | gRPC |
+| `bluetape4k-hibernate` | Hibernate |
+| `bluetape4k-hibernate-cache-lettuce` | Hibernate cache |
+| `bluetape4k-hibernate-reactive` | Hibernate Reactive |
+| `bluetape4k-http` | HTTP |
+| `bluetape4k-idgenerators` | ID 생성 |
+| `bluetape4k-io` | I/O |
+| `bluetape4k-jackson2` | Jackson 2 |
+| `bluetape4k-jackson3` | Jackson 3 |
+| `bluetape4k-javatimes` | 날짜/시간 |
+| `bluetape4k-jdbc` | JDBC |
+| `bluetape4k-json` | JSON |
+| `bluetape4k-junit5` | JUnit 5 |
+| `bluetape4k-jwt` | JWT |
+| `bluetape4k-kafka` | Kafka 3 line |
+| `bluetape4k-kafka-logback` | Kafka logging |
+| `bluetape4k-kafka4` | Kafka 4 line |
+| `bluetape4k-lettuce` | Redis Lettuce |
+| `bluetape4k-logging` | Logging |
+| `bluetape4k-math` | Math |
+| `bluetape4k-measured` | Measurement |
+| `bluetape4k-micrometer` | Metrics |
+| `bluetape4k-mock-web-server` | Testing |
+| `bluetape4k-mock-webflux-server` | Testing |
+| `bluetape4k-money` | Money |
+| `bluetape4k-mongodb` | MongoDB |
+| `bluetape4k-mutiny` | Mutiny |
+| `bluetape4k-nats` | NATS |
+| `bluetape4k-netty` | Netty |
+| `bluetape4k-okio` | Okio |
+| `bluetape4k-opentelemetry` | OpenTelemetry |
+| `bluetape4k-probabilistic` | 확률적 자료구조 |
+| `bluetape4k-protobuf` | Protobuf |
+| `bluetape4k-pulsar` | Pulsar |
+| `bluetape4k-r2dbc` | R2DBC |
+| `bluetape4k-redis` | Redis |
+| `bluetape4k-redisson` | Redis Redisson |
+| `bluetape4k-resilience4j` | Resilience4j |
+| `bluetape4k-retrofit2` | HTTP client |
+| `bluetape4k-rule-engine` | Rules |
+| `bluetape4k-science` | Science 유틸리티 |
+| `bluetape4k-spring-boot-cassandra` | Spring Boot |
+| `bluetape4k-spring-boot-core` | Spring Boot |
+| `bluetape4k-spring-boot-hibernate-lettuce` | Spring Boot |
+| `bluetape4k-spring-boot-mongodb` | Spring Boot |
+| `bluetape4k-spring-boot-r2dbc` | Spring Boot |
+| `bluetape4k-spring-boot-redis` | Spring Boot |
+| `bluetape4k-states` | State machine |
+| `bluetape4k-testcontainers` | Testcontainers |
+| `bluetape4k-tink` | Tink crypto |
+| `bluetape4k-vertx` | Vert.x |
+| `bluetape4k-virtualthread-api` | Virtual threads |
+| `bluetape4k-virtualthread-jdk21` | Virtual threads |
+| `bluetape4k-virtualthread-jdk25` | Virtual threads |
+| `bluetape4k-workflow` | Workflow 유틸리티 |
 
 ### bluetape4k-aws (`io.github.bluetape4k.aws`)
 
