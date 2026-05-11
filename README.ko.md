@@ -4,7 +4,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.bluetape4k/bluetape4k-dependencies)](https://central.sonatype.com/artifact/io.github.bluetape4k/bluetape4k-dependencies)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21-ED8B00?logo=openjdk)](https://openjdk.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](LICENSE)
 
 > **Dependency resolution은 BOM으로, Gradle build alias는 catalog로 관리합니다.**
 
@@ -241,6 +241,9 @@ scripts/sync-managed-catalog.py --check --summary
 scripts/sync-managed-catalog.py --write --check --summary
 python3 -m unittest tests/test_sync_managed_catalog.py
 ```
+
+bluetape4k 유지보수자를 위한 상세 버전 관리 절차는
+[`docs/version-management.ko.md`](docs/version-management.ko.md)를 참고하세요.
 
 정확한 생성 아티팩트 목록, BOM constraint, published Gradle Version Catalog의 기준은
 `gradle/libs.versions.toml`입니다.
