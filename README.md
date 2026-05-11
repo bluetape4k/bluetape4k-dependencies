@@ -255,28 +255,99 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
 ```
 
+This is a **materialized sync** workflow. Sibling repositories do not dynamically pull this catalog at
+build time. Instead, `bluetape4k-dependencies/gradle/libs.versions.toml` owns the approved versions,
+and `scripts/sync-shared-versions.py` rewrites the matching aliases in each target repository's
+`gradle/libs.versions.toml`. The expected release flow is:
+
+1. Update the source-of-truth block in this repository.
+2. Run `scripts/sync-shared-versions.py --workspace .. --write --check --summary`.
+3. Open, verify, and merge PRs for the downstream repositories that changed.
+4. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
+   that no shared-version drift remains.
+
+Compatibility-line aliases are intentionally separate. Do not collapse aliases such as `kafka3`/`kafka4`,
+`jackson2`/`jackson3`, `spring-boot3`/`spring-boot4`, or `spring-kafka`/`spring-kafka4` during automated
+version sync.
+
 ### bluetape4k-projects (`io.github.bluetape4k`)
 
-| Artifact | Description |
+The table below lists every managed `bluetape4k-projects` artifact currently generated into
+`gradle/libs.versions.toml`.
+
+| Artifact | Area |
 |---|---|
-| `bluetape4k-bom` | Core module BOM |
-| `bluetape4k-core` | Core Kotlin utilities |
-| `bluetape4k-io` | I/O utilities (compression, serialization) |
-| `bluetape4k-netty` | Netty helpers |
-| `bluetape4k-coroutines` | Kotlin Coroutines extensions |
-| `bluetape4k-logging` | Structured logging (SLF4J + Kotlin) |
-| `bluetape4k-jackson2` | Jackson 2.x serialization support |
-| `bluetape4k-jackson3` | Jackson 3.x serialization support |
-| `bluetape4k-idgenerators` | Distributed ID generation (Snowflake, TSID, …) |
-| `bluetape4k-resilience4j` | Resilience4j Kotlin DSL |
-| `bluetape4k-junit5` | JUnit 5 testing utilities |
-| `bluetape4k-testcontainers` | Testcontainers helpers |
-| `bluetape4k-spring-boot-core` | Spring Boot 4 common utilities |
-| `bluetape4k-spring-boot-cassandra` | Spring Data Cassandra coroutine extensions |
-| `bluetape4k-spring-boot-hibernate-lettuce` | Hibernate second-level cache via Lettuce |
-| `bluetape4k-spring-boot-mongodb` | Spring Data MongoDB coroutine extensions |
-| `bluetape4k-spring-boot-r2dbc` | Spring Data R2DBC coroutine extensions |
-| `bluetape4k-spring-boot-redis` | Spring Data Redis serialization utilities |
+| `bluetape4k-assertions` | Test assertions |
+| `bluetape4k-avro` | Serialization |
+| `bluetape4k-bom` | BOM |
+| `bluetape4k-bucket4j` | Rate limiting |
+| `bluetape4k-cache-core` | Cache |
+| `bluetape4k-cache-hazelcast` | Cache |
+| `bluetape4k-cache-lettuce` | Cache |
+| `bluetape4k-cache-redisson` | Cache |
+| `bluetape4k-cassandra` | Data access |
+| `bluetape4k-core` | Core utilities |
+| `bluetape4k-coroutines` | Coroutines |
+| `bluetape4k-csv` | Serialization |
+| `bluetape4k-elasticsearch` | Search |
+| `bluetape4k-fastjson2` | Serialization |
+| `bluetape4k-feign` | HTTP client |
+| `bluetape4k-geo` | Geo utilities |
+| `bluetape4k-grpc` | gRPC |
+| `bluetape4k-hibernate` | Hibernate |
+| `bluetape4k-hibernate-cache-lettuce` | Hibernate cache |
+| `bluetape4k-hibernate-reactive` | Hibernate Reactive |
+| `bluetape4k-http` | HTTP |
+| `bluetape4k-idgenerators` | ID generation |
+| `bluetape4k-io` | I/O |
+| `bluetape4k-jackson2` | Jackson 2 |
+| `bluetape4k-jackson3` | Jackson 3 |
+| `bluetape4k-javatimes` | Date/time |
+| `bluetape4k-jdbc` | JDBC |
+| `bluetape4k-json` | JSON |
+| `bluetape4k-junit5` | JUnit 5 |
+| `bluetape4k-jwt` | JWT |
+| `bluetape4k-kafka` | Kafka 3 line |
+| `bluetape4k-kafka-logback` | Kafka logging |
+| `bluetape4k-kafka4` | Kafka 4 line |
+| `bluetape4k-lettuce` | Redis Lettuce |
+| `bluetape4k-logging` | Logging |
+| `bluetape4k-math` | Math |
+| `bluetape4k-measured` | Measurement |
+| `bluetape4k-micrometer` | Metrics |
+| `bluetape4k-mock-web-server` | Testing |
+| `bluetape4k-mock-webflux-server` | Testing |
+| `bluetape4k-money` | Money |
+| `bluetape4k-mongodb` | MongoDB |
+| `bluetape4k-mutiny` | Mutiny |
+| `bluetape4k-nats` | NATS |
+| `bluetape4k-netty` | Netty |
+| `bluetape4k-okio` | Okio |
+| `bluetape4k-opentelemetry` | OpenTelemetry |
+| `bluetape4k-probabilistic` | Probabilistic data structures |
+| `bluetape4k-protobuf` | Protobuf |
+| `bluetape4k-pulsar` | Pulsar |
+| `bluetape4k-r2dbc` | R2DBC |
+| `bluetape4k-redis` | Redis |
+| `bluetape4k-redisson` | Redis Redisson |
+| `bluetape4k-resilience4j` | Resilience4j |
+| `bluetape4k-retrofit2` | HTTP client |
+| `bluetape4k-rule-engine` | Rules |
+| `bluetape4k-science` | Science utilities |
+| `bluetape4k-spring-boot-cassandra` | Spring Boot |
+| `bluetape4k-spring-boot-core` | Spring Boot |
+| `bluetape4k-spring-boot-hibernate-lettuce` | Spring Boot |
+| `bluetape4k-spring-boot-mongodb` | Spring Boot |
+| `bluetape4k-spring-boot-r2dbc` | Spring Boot |
+| `bluetape4k-spring-boot-redis` | Spring Boot |
+| `bluetape4k-states` | State machines |
+| `bluetape4k-testcontainers` | Testcontainers |
+| `bluetape4k-tink` | Tink crypto |
+| `bluetape4k-vertx` | Vert.x |
+| `bluetape4k-virtualthread-api` | Virtual threads |
+| `bluetape4k-virtualthread-jdk21` | Virtual threads |
+| `bluetape4k-virtualthread-jdk25` | Virtual threads |
+| `bluetape4k-workflow` | Workflow utilities |
 
 ### bluetape4k-aws (`io.github.bluetape4k.aws`)
 
