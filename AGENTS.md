@@ -36,20 +36,26 @@ catalog for Gradle build aliases and plugin/tooling versions.
 ## Updating Versions
 
 1. Update the relevant version ref in `gradle/libs.versions.toml`.
-2. For managed repository module additions/removals, run
+2. For shared dependency/plugin version changes, run
+   `scripts/sync-shared-versions.py --workspace .. --write --check --summary`
+   so downstream `bluetape4k-*` catalogs stay aligned with this source.
+3. For managed repository module additions/removals, run
    `scripts/sync-managed-catalog.py --write --check`; do not edit
    generated catalog/constraint blocks by hand.
-3. Verify existing constraints pick up the version through the catalog alias.
-4. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
+4. Verify existing constraints pick up the version through the catalog alias.
+5. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
    matching `api(libs.<alias>)` constraint.
-5. Run `./gradlew build`.
+6. Run `./gradlew build`.
 
 ## Commands
 
 ```bash
 scripts/sync-managed-catalog.py --check --summary
 scripts/sync-managed-catalog.py --write --check --summary
+scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/sync-shared-versions.py --workspace .. --write --check --summary
 python3 -m unittest tests/test_sync_managed_catalog.py
+python3 -m unittest tests/test_sync_shared_versions.py
 ./gradlew build
 ./gradlew publishBluetapeDependenciesPublicationToCentralPortal
 ./gradlew publishBluetapeVersionCatalogPublicationToCentralPortal
