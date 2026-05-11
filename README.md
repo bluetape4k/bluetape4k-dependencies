@@ -6,11 +6,14 @@
 [![JVM](https://img.shields.io/badge/JVM-21-ED8B00?logo=openjdk)](https://openjdk.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Single BOM to rule all bluetape4k modules.**
+> **One BOM for dependency resolution, one Gradle catalog for build aliases.**
 
 `bluetape4k-dependencies` is the centralized Bill of Materials (BOM) for the entire bluetape4k ecosystem.
 It follows the same pattern as `spring-boot-dependencies`: import one platform dependency and all bluetape4k
 module versions are aligned automatically — no per-artifact version declarations needed.
+
+The same repository also publishes `bluetape4k-version-catalog`, a Gradle Version Catalog artifact for
+shared plugin versions, library aliases, and bluetape4k module coordinates.
 
 Also available in [Korean / 한국어](README.ko.md).
 
@@ -28,9 +31,12 @@ The bluetape4k ecosystem is split across multiple independent repositories, each
 | [bluetape4k-text](https://github.com/bluetape4k/bluetape4k-text) | `io.github.bluetape4k.text` |
 | [bluetape4k-graph](https://github.com/bluetape4k/bluetape4k-graph) | `io.github.bluetape4k.graph` |
 | [bluetape4k-leader](https://github.com/bluetape4k/bluetape4k-leader) | `io.github.bluetape4k.leader` |
+| [bluetape4k-exposed](https://github.com/bluetape4k/bluetape4k-exposed) | `io.github.bluetape4k.exposed` |
+| [bluetape4k-javers](https://github.com/bluetape4k/bluetape4k-javers) | `io.github.bluetape4k.javers` |
 
-Without a central BOM, consumers must track every repository's version independently.
-`bluetape4k-dependencies` solves this by collecting all version constraints in one place.
+Without a central BOM and catalog, consumers must track every repository version, Gradle plugin version, and
+compatibility-line alias independently. `bluetape4k-dependencies` solves this by collecting dependency
+constraints and Gradle build aliases in one place.
 
 ---
 
@@ -39,6 +45,11 @@ Without a central BOM, consumers must track every repository's version independe
 ```mermaid
 graph TD
     BOM["bluetape4k-dependencies<br/>(java-platform BOM)"]
+    CATALOG["bluetape4k-version-catalog<br/>(Gradle Version Catalog)"]
+    TOML["gradle/libs.versions.toml<br/>(single managed source)"]
+
+    TOML --> BOM
+    TOML --> CATALOG
 
     BOM --> CORE["bluetape4k-projects<br/>io.github.bluetape4k"]
     BOM --> AWS["bluetape4k-aws<br/>io.github.bluetape4k.aws"]
@@ -46,6 +57,8 @@ graph TD
     BOM --> TEXT["bluetape4k-text<br/>io.github.bluetape4k.text"]
     BOM --> GRAPH["bluetape4k-graph<br/>io.github.bluetape4k.graph"]
     BOM --> LEADER["bluetape4k-leader<br/>io.github.bluetape4k.leader"]
+    BOM --> EXPOSED["bluetape4k-exposed<br/>io.github.bluetape4k.exposed"]
+    BOM --> JAVERS["bluetape4k-javers<br/>io.github.bluetape4k.javers"]
 
     CORE --> C1["bluetape4k-core"]
     CORE --> C2["bluetape4k-coroutines"]
@@ -83,6 +96,41 @@ graph TD
 ---
 
 ## Usage
+
+Use the BOM for dependency resolution. Use the published Gradle Version Catalog for build aliases and plugin
+versions. The catalog does not replace the BOM; it gives Gradle builds a shared vocabulary while the BOM
+aligns resolved dependency versions.
+
+### Gradle Version Catalog
+
+```kotlin
+// settings.gradle.kts
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven("https://central.sonatype.com/repository/maven-snapshots/")
+    }
+    versionCatalogs {
+        create("bt4k") {
+            from("io.github.bluetape4k:bluetape4k-version-catalog:VERSION")
+        }
+    }
+}
+```
+
+```kotlin
+// build.gradle.kts
+plugins {
+    alias(bt4k.plugins.kotlin.jvm)
+    alias(bt4k.plugins.nmcp) apply false
+}
+
+dependencies {
+    implementation(platform("io.github.bluetape4k:bluetape4k-dependencies:VERSION"))
+    implementation(bt4k.bluetape4k.core)
+    implementation(bt4k.bluetape4k.coroutines)
+}
+```
 
 Add the BOM as a platform dependency. After that, all bluetape4k artifacts can be declared **without a version**.
 
@@ -186,6 +234,19 @@ Use versionless `spring-boot` artifact names for Spring Boot 4 integrations:
 
 ## Managed Modules
 
+Managed catalog aliases and BOM constraints are generated from sibling
+repository `settings.gradle.kts` module includes:
+
+```bash
+scripts/sync-managed-catalog.py --check --summary
+scripts/sync-managed-catalog.py --write --check --summary
+python3 -m unittest tests/test_sync_managed_catalog.py
+```
+
+`gradle/libs.versions.toml` is the source of truth for the exact generated
+artifact list, BOM constraints, and published Gradle Version Catalog. The sections below summarize the main
+public module families.
+
 ### bluetape4k-projects (`io.github.bluetape4k`)
 
 | Artifact | Description |
@@ -204,9 +265,7 @@ Use versionless `spring-boot` artifact names for Spring Boot 4 integrations:
 | `bluetape4k-testcontainers` | Testcontainers helpers |
 | `bluetape4k-spring-boot-core` | Spring Boot 4 common utilities |
 | `bluetape4k-spring-boot-cassandra` | Spring Data Cassandra coroutine extensions |
-| `bluetape4k-spring-boot-cassandra-demo` | Cassandra usage example |
 | `bluetape4k-spring-boot-hibernate-lettuce` | Hibernate second-level cache via Lettuce |
-| `bluetape4k-spring-boot-hibernate-lettuce-demo` | Hibernate Lettuce usage example |
 | `bluetape4k-spring-boot-mongodb` | Spring Data MongoDB coroutine extensions |
 | `bluetape4k-spring-boot-r2dbc` | Spring Data R2DBC coroutine extensions |
 | `bluetape4k-spring-boot-redis` | Spring Data Redis serialization utilities |
@@ -255,7 +314,7 @@ Use versionless `spring-boot` artifact names for Spring Boot 4 integrations:
 | `graph-io-graphml` | GraphML serialization |
 | `graph-io-jackson2` | Jackson 2.x graph serialization |
 | `graph-io-jackson3` | Jackson 3.x graph serialization |
-| `graph-io-okio` | Okio-based graph I/O |
+| `graph-okio` | Okio-based graph I/O |
 
 ### bluetape4k-leader (`io.github.bluetape4k.leader`)
 
@@ -272,6 +331,7 @@ Use versionless `spring-boot` artifact names for Spring Boot 4 integrations:
 | `leader-hazelcast` | Hazelcast leader election |
 | `leader-zookeeper` | ZooKeeper/Apache Curator leader election |
 | `leader-spring-boot` | Spring Boot 4 auto-configuration and AOP |
+| `leader-ktor` | Ktor integration for leader election |
 | `leader-micrometer` | Micrometer metrics for leader election |
 
 ---
@@ -282,12 +342,14 @@ Each upstream repository maintains its **own independent version**, tracked in `
 
 ```toml
 [versions]
-bluetape4k-core   = "1.7.0-SNAPSHOT"
+bluetape4k-core   = "1.8.0-SNAPSHOT"
 bluetape4k-aws    = "0.1.0-SNAPSHOT"
 bluetape4k-image  = "0.1.0-SNAPSHOT"
 bluetape4k-text   = "0.1.0-SNAPSHOT"
 bluetape4k-graph  = "0.3.0-SNAPSHOT"
 bluetape4k-leader = "0.1.0-SNAPSHOT"
+bluetape4k-exposed = "1.8.0-SNAPSHOT"
+bluetape4k-javers = "0.1.0-SNAPSHOT"
 ```
 
 To align a new upstream release, edit the version in `libs.versions.toml` and publish a new BOM version.
