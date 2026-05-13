@@ -15,6 +15,7 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `bluetape4k-exposed` modules in the central BOM ([PR #2](https://github.com/bluetape4k/bluetape4k-dependencies/pull/2)).
 - AWS, image, text, exposed, and javers BOM platform imports ([PR #6](https://github.com/bluetape4k/bluetape4k-dependencies/pull/6)).
 - `leader-zookeeper` BOM entry ([PR #7](https://github.com/bluetape4k/bluetape4k-dependencies/pull/7)).
+- `bluetape4k-graph-ktor` generated catalog alias and BOM constraint.
 
 ### Changed
 
@@ -22,6 +23,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Replaced transitional `leader-spring-boot3` / `leader-spring-boot4` aliases with the single `leader-spring-boot` alias ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
 - Replaced transitional Exposed `bluetape4k-spring-boot3-*` and `bluetape4k-spring-boot4-*` aliases with versionless `bluetape4k-spring-boot-*` aliases ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
 - Added versionless Spring Boot module aliases for the core `bluetape4k-projects` Spring Boot integration modules ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- Replaced the generated `bluetape4k-graph-spring-boot4-starter` alias with the versionless `bluetape4k-graph-spring-boot` alias.
+- README license references now point to MIT License.
 
 ### Fixed
 

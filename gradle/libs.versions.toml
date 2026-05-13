@@ -180,11 +180,12 @@ bluetape4k-graph-io-csv                        = { module = "io.github.bluetape4
 bluetape4k-graph-io-graphml                    = { module = "io.github.bluetape4k.graph:graph-io-graphml", version.ref = "bluetape4k-graph" }
 bluetape4k-graph-io-jackson2                   = { module = "io.github.bluetape4k.graph:graph-io-jackson2", version.ref = "bluetape4k-graph" }
 bluetape4k-graph-io-jackson3                   = { module = "io.github.bluetape4k.graph:graph-io-jackson3", version.ref = "bluetape4k-graph" }
+bluetape4k-graph-ktor                          = { module = "io.github.bluetape4k.graph:graph-ktor", version.ref = "bluetape4k-graph" }
 bluetape4k-graph-memgraph                      = { module = "io.github.bluetape4k.graph:graph-memgraph", version.ref = "bluetape4k-graph" }
 bluetape4k-graph-neo4j                         = { module = "io.github.bluetape4k.graph:graph-neo4j", version.ref = "bluetape4k-graph" }
 bluetape4k-graph-neo4j-benchmark               = { module = "io.github.bluetape4k.graph:graph-neo4j-benchmark", version.ref = "bluetape4k-graph" }
 bluetape4k-graph-okio                          = { module = "io.github.bluetape4k.graph:graph-okio", version.ref = "bluetape4k-graph" }
-bluetape4k-graph-spring-boot4-starter          = { module = "io.github.bluetape4k.graph:graph-spring-boot4-starter", version.ref = "bluetape4k-graph" }
+bluetape4k-graph-spring-boot                   = { module = "io.github.bluetape4k.graph:graph-spring-boot", version.ref = "bluetape4k-graph" }
 bluetape4k-graph-tinkerpop                     = { module = "io.github.bluetape4k.graph:graph-tinkerpop", version.ref = "bluetape4k-graph" }
 
 # -- bluetape4k-leader modules --

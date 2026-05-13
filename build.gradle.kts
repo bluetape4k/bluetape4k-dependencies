@@ -162,11 +162,12 @@ dependencies {
         api(libs.bluetape4k.graph.io.graphml)
         api(libs.bluetape4k.graph.io.jackson2)
         api(libs.bluetape4k.graph.io.jackson3)
+        api(libs.bluetape4k.graph.ktor)
         api(libs.bluetape4k.graph.memgraph)
         api(libs.bluetape4k.graph.neo4j)
         api(libs.bluetape4k.graph.neo4j.benchmark)
         api(libs.bluetape4k.graph.okio)
-        api(libs.bluetape4k.graph.spring.boot4.starter)
+        api(libs.bluetape4k.graph.spring.boot)
         api(libs.bluetape4k.graph.tinkerpop)
 
         // -- bluetape4k-leader modules --
