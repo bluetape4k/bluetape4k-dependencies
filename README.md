@@ -4,7 +4,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.bluetape4k/bluetape4k-dependencies)](https://central.sonatype.com/artifact/io.github.bluetape4k/bluetape4k-dependencies)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21-ED8B00?logo=openjdk)](https://openjdk.org)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **One BOM for dependency resolution, one Gradle catalog for build aliases.**
 
@@ -440,4 +440,4 @@ To align a new upstream release, edit the version in `libs.versions.toml` and pu
 
 ## License
 
-Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+Licensed under the [MIT License](LICENSE).

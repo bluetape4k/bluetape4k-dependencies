@@ -4,7 +4,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.bluetape4k/bluetape4k-dependencies)](https://central.sonatype.com/artifact/io.github.bluetape4k/bluetape4k-dependencies)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin)](https://kotlinlang.org)
 [![JVM](https://img.shields.io/badge/JVM-21-ED8B00?logo=openjdk)](https://openjdk.org)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > **Dependency resolution은 BOM으로, Gradle build alias는 catalog로 관리합니다.**
 
@@ -439,4 +439,4 @@ bluetape4k-javers = "0.1.0-SNAPSHOT"
 
 ## 라이선스
 
-[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 라이선스를 따릅니다.
+[MIT License](LICENSE) 라이선스를 따릅니다.
