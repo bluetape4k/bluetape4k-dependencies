@@ -8,6 +8,8 @@
 
 > **One BOM for dependency resolution, one Gradle catalog for build aliases.**
 
+![Bluetape4k dependencies alignment workbench](./docs/assets/dependencies-workbench.png)
+
 `bluetape4k-dependencies` is the centralized Bill of Materials (BOM) for the entire bluetape4k ecosystem.
 It follows the same pattern as `spring-boot-dependencies`: import one platform dependency and all bluetape4k
 module versions are aligned automatically — no per-artifact version declarations needed.
