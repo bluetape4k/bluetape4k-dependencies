@@ -8,6 +8,8 @@
 
 > **Dependency resolution은 BOM으로, Gradle build alias는 catalog로 관리합니다.**
 
+![bluetape4k dependencies 버전 정렬 작업대 일러스트](./docs/assets/dependencies-workbench.png)
+
 `bluetape4k-dependencies`는 bluetape4k 생태계 전체를 위한 중앙화된 BOM(Bill of Materials)입니다.
 `spring-boot-dependencies`와 동일한 패턴을 따릅니다: 플랫폼 의존성 하나만 추가하면 모든 bluetape4k
 모듈의 버전이 자동으로 정렬됩니다 — 개별 아티팩트에 버전을 명시할 필요가 없습니다.
