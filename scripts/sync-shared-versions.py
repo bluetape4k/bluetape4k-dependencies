@@ -41,6 +41,7 @@ class SourceVersion:
     alias: str
     version: str
     line: str
+    module_groups: frozenset[str] = frozenset()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -53,6 +54,7 @@ class Change:
 
 def read_source_versions(catalog: Path) -> dict[str, SourceVersion]:
     text = catalog.read_text(encoding="utf-8")
+    module_groups = module_groups_by_version_ref(text)
     try:
         block = text.split(SOURCE_START, 1)[1].split(SOURCE_END, 1)[0]
     except IndexError as exc:
@@ -67,8 +69,49 @@ def read_source_versions(catalog: Path) -> dict[str, SourceVersion]:
         if not match:
             continue
         alias = match.group(1)
-        versions[alias] = SourceVersion(alias=alias, version=match.group(2), line=stripped)
+        versions[alias] = SourceVersion(
+            alias=alias,
+            version=match.group(2),
+            line=stripped,
+            module_groups=source_module_groups(alias, stripped, module_groups),
+        )
     return versions
+
+
+def source_module_groups(
+    alias: str,
+    source_line: str,
+    module_groups: dict[str, frozenset[str]],
+) -> frozenset[str]:
+    groups = set(module_groups.get(alias, frozenset()))
+    metadata_group = mavenrepository_group(source_line)
+    if metadata_group is not None:
+        groups.add(metadata_group)
+    return frozenset(groups)
+
+
+def mavenrepository_group(text: str) -> str | None:
+    match = re.search(r"mvnrepository\.com/artifact/([^/\s]+)/", text)
+    return match.group(1) if match else None
+
+
+def module_groups_by_version_ref(text: str) -> dict[str, frozenset[str]]:
+    groups: dict[str, set[str]] = {}
+    pattern = re.compile(
+        r'\bmodule\s*=\s*"(?P<group>[^":]+):[^"]+".*?\bversion\.ref\s*=\s*"(?P<alias>[^"]+)"',
+    )
+    for match in pattern.finditer(text):
+        groups.setdefault(match.group("alias"), set()).add(match.group("group"))
+    return {alias: frozenset(alias_groups) for alias, alias_groups in groups.items()}
+
+
+def has_conflicting_module_group(
+    alias: str,
+    source: SourceVersion,
+    target_module_groups: dict[str, frozenset[str]],
+) -> bool:
+    target_groups = target_module_groups.get(alias, frozenset())
+    return bool(source.module_groups and target_groups and source.module_groups.isdisjoint(target_groups))
 
 
 def read_gradle_properties(path: Path) -> dict[str, str]:
@@ -101,7 +144,9 @@ def verify_source_version_matches_project(repo_root: Path, source_versions: dict
 
 
 def sync_catalog(catalog: Path, source_versions: dict[str, SourceVersion]) -> tuple[str, list[Change]]:
-    lines = catalog.read_text(encoding="utf-8").splitlines()
+    catalog_text = catalog.read_text(encoding="utf-8")
+    target_module_groups = module_groups_by_version_ref(catalog_text)
+    lines = catalog_text.splitlines()
     changes: list[Change] = []
     updated: list[str] = []
     in_versions = False
@@ -122,6 +167,9 @@ def sync_catalog(catalog: Path, source_versions: dict[str, SourceVersion]) -> tu
         alias = match.group(1)
         source = source_versions.get(alias)
         if source is None:
+            updated.append(raw_line)
+            continue
+        if has_conflicting_module_group(alias, source, target_module_groups):
             updated.append(raw_line)
             continue
 

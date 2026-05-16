@@ -229,7 +229,7 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 | `bluetape4k-spring-boot3-*` | 노출하지 않음 |
 | `bluetape4k-spring-boot4-*` | `bluetape4k-spring-boot-*` |
 | `leader-spring-boot3` / `leader-spring-boot4` | `leader-spring-boot` |
-| `bluetape4k-spring-boot4-exposed-*` | `bluetape4k-spring-boot-exposed-*` |
+| `bluetape4k-spring-boot4-exposed-*` | `exposed-spring-boot-*` |
 
 ---
 
