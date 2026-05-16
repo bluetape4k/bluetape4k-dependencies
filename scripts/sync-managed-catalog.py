@@ -25,6 +25,7 @@ CATALOG_START = f"# <generated-managed-modules by {SCRIPT_NAME}>"
 CATALOG_END = f"# </generated-managed-modules>"
 CONSTRAINT_START = f"        // <generated-managed-modules by {SCRIPT_NAME}>"
 CONSTRAINT_END = "        // </generated-managed-modules>"
+MIN_CATALOG_ALIAS_WIDTH = 46
 
 
 @dataclasses.dataclass(frozen=True)
@@ -33,6 +34,12 @@ class IncludeConfig:
     with_project_name: bool
     with_base_dir: bool
     exclude_module_names: frozenset[str] = frozenset()
+
+
+@dataclasses.dataclass(frozen=True)
+class MappedInclude:
+    module_path: str
+    project_name: str
 
 
 @dataclasses.dataclass(frozen=True)
@@ -186,10 +193,19 @@ def parse_set_of_strings(args: str, name: str) -> frozenset[str]:
     return frozenset(re.findall(r'"([^"]+)"', match.group(1)))
 
 
+def include_modules_default_with_project_name(text: str) -> bool:
+    match = re.search(r"fun\s+includeModules\s*\((.*?)\)", text, flags=re.DOTALL)
+    if not match:
+        return True
+    return "withProjectName" in match.group(1)
+
+
 def parse_include_configs(settings_file: Path) -> list[IncludeConfig]:
+    text = settings_file.read_text(encoding="utf-8")
+    default_with_project_name = include_modules_default_with_project_name(text)
     configs: list[IncludeConfig] = []
 
-    for args in function_call_args(settings_file.read_text(encoding="utf-8"), "includeModules"):
+    for args in function_call_args(text, "includeModules"):
         base_match = re.search(r'"([^"]+)"', args)
         if not base_match:
             continue
@@ -198,7 +214,9 @@ def parse_include_configs(settings_file: Path) -> list[IncludeConfig]:
             token == "true"
             for token in re.findall(r"(?:^|,\s*)(true|false)(?=,|\s*,|\s*$)", args)
         ]
-        with_project_name = positional_bools[0] if len(positional_bools) >= 1 else True
+        with_project_name = (
+            positional_bools[0] if len(positional_bools) >= 1 else default_with_project_name
+        )
         with_base_dir = positional_bools[1] if len(positional_bools) >= 2 else True
 
         named_project = re.search(r"withProjectName\s*=\s*(true|false)", args)
@@ -222,6 +240,18 @@ def parse_include_configs(settings_file: Path) -> list[IncludeConfig]:
         )
 
     return configs
+
+
+def parse_mapped_includes(settings_file: Path) -> list[MappedInclude]:
+    mapped_includes: list[MappedInclude] = []
+
+    for args in function_call_args(settings_file.read_text(encoding="utf-8"), "includeMappedModule"):
+        values = re.findall(r'"([^"]+)"', args)
+        if len(values) < 2:
+            continue
+        mapped_includes.append(MappedInclude(module_path=values[0], project_name=values[1]))
+
+    return mapped_includes
 
 
 def parse_direct_includes(settings_file: Path) -> list[str]:
@@ -346,6 +376,27 @@ def discover_repo_modules(workspace_root: Path, repo: ManagedRepo) -> list[Modul
                 include_constraint=not is_bom(project_name),
             )
 
+    for mapped_include in parse_mapped_includes(settings_file):
+        module_dir = root / mapped_include.module_path
+        if not (module_dir / "build.gradle.kts").is_file():
+            continue
+
+        project_name = mapped_include.project_name
+        relative_path = module_dir.relative_to(root).as_posix()
+        if not include_module(repo, project_name, relative_path):
+            continue
+
+        modules[project_name] = Module(
+            project_name=project_name,
+            artifact_id=project_name,
+            alias=alias_for(repo, project_name),
+            group_id=repo.group_id,
+            version_ref=repo.version_ref,
+            project_path=f":{project_name}",
+            relative_path=relative_path,
+            include_constraint=not is_bom(project_name),
+        )
+
     if not modules:
         raise RuntimeError(f"No managed modules discovered for {repo.label} under {root}")
 
@@ -391,7 +442,7 @@ def validate_discovered(discovered: dict[ManagedRepo, list[Module]]) -> None:
 
 def render_catalog_section(discovered: dict[ManagedRepo, list[Module]]) -> str:
     modules = [module for repo in MANAGED_REPOS for module in discovered[repo]]
-    max_alias = max(len(module.alias) for module in modules)
+    max_alias = max(MIN_CATALOG_ALIAS_WIDTH, max(len(module.alias) for module in modules))
     lines = [CATALOG_START]
 
     for repo in MANAGED_REPOS:

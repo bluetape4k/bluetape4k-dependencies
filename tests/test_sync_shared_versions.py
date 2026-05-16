@@ -40,6 +40,26 @@ class SyncSharedVersionsTest(unittest.TestCase):
         self.assertEqual(set(versions), {"kotlin"})
         self.assertEqual(versions["kotlin"].version, "2.3.21")
 
+    def test_read_source_versions_keeps_mavenrepository_group_hint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog = Path(tmp) / "libs.versions.toml"
+            catalog.write_text(
+                "\n".join(
+                    [
+                        "[versions]",
+                        sync.SOURCE_START,
+                        'jackson = "2.21.3"  # https://mvnrepository.com/artifact/com.fasterxml.jackson/jackson-bom',
+                        sync.SOURCE_END,
+                        "",
+                    ],
+                ),
+                encoding="utf-8",
+            )
+
+            versions = sync.read_source_versions(catalog)
+
+        self.assertEqual(versions["jackson"].module_groups, frozenset({"com.fasterxml.jackson"}))
+
     def test_read_source_versions_requires_marked_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"
@@ -127,6 +147,36 @@ class SyncSharedVersionsTest(unittest.TestCase):
         self.assertIn('version = "0.15.0"', synced_text)
         self.assertEqual(len(changes), 1)
         self.assertEqual(changes[0].alias, "fory-kotlin")
+
+    def test_sync_catalog_skips_same_alias_for_different_module_group(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "sample"
+            catalog = repo / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir(parents=True)
+            original = "\n".join(
+                [
+                    "[versions]",
+                    'jackson = "3.1.3"',
+                    "",
+                    "[libraries]",
+                    'jackson-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson" }',
+                    "",
+                ],
+            )
+            catalog.write_text(original, encoding="utf-8")
+            source = {
+                "jackson": sync.SourceVersion(
+                    alias="jackson",
+                    version="2.21.3",
+                    line='jackson = "2.21.3"',
+                    module_groups=frozenset({"com.fasterxml.jackson"}),
+                ),
+            }
+
+            synced_text, changes = sync.sync_catalog(catalog, source)
+
+        self.assertEqual(synced_text, original)
+        self.assertEqual(changes, [])
 
     def test_verify_source_version_matches_project(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

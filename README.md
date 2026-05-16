@@ -230,7 +230,7 @@ Use versionless `spring-boot` artifact names for Spring Boot 4 integrations:
 | `bluetape4k-spring-boot3-*` | Not exposed |
 | `bluetape4k-spring-boot4-*` | `bluetape4k-spring-boot-*` |
 | `leader-spring-boot3` / `leader-spring-boot4` | `leader-spring-boot` |
-| `bluetape4k-spring-boot4-exposed-*` | `bluetape4k-spring-boot-exposed-*` |
+| `bluetape4k-spring-boot4-exposed-*` | `exposed-spring-boot-*` |
 
 ---
 
