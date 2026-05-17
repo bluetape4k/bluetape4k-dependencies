@@ -40,7 +40,7 @@ jobs:
           cache-read-only: true
 
       - name: Publish SNAPSHOT
-        run: ./gradlew publishAllPublicationsToCentralSnapshots --no-daemon --no-configuration-cache --no-build-cache
+        run: ./gradlew publishAllPublicationsToCentralSnapshots -PsnapshotVersion=-SNAPSHOT --no-daemon --no-configuration-cache --no-build-cache
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
           CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
