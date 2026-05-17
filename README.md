@@ -155,26 +155,26 @@ dependencies {
     testImplementation("io.github.bluetape4k:bluetape4k-testcontainers")
 
     // bluetape4k-aws
-    implementation("io.github.bluetape4k.aws:aws")
-    implementation("io.github.bluetape4k.aws:aws-kotlin")
-    implementation("io.github.bluetape4k.aws:aws-spring-boot")
+    implementation("io.github.bluetape4k.aws:bluetape4k-aws-java")
+    implementation("io.github.bluetape4k.aws:bluetape4k-aws-kotlin")
+    implementation("io.github.bluetape4k.aws:bluetape4k-aws-spring-boot")
 
     // bluetape4k-image
-    implementation("io.github.bluetape4k.image:images")
-    implementation("io.github.bluetape4k.image:images-vips-api")
+    implementation("io.github.bluetape4k.image:bluetape4k-images")
+    implementation("io.github.bluetape4k.image:bluetape4k-images-vips-api")
 
     // bluetape4k-text
     implementation("io.github.bluetape4k.text:tokenizer-core")
     implementation("io.github.bluetape4k.text:lingua")
 
     // bluetape4k-graph
-    implementation("io.github.bluetape4k.graph:graph-core")
-    implementation("io.github.bluetape4k.graph:graph-neo4j")
+    implementation("io.github.bluetape4k.graph:bluetape4k-graph-core")
+    implementation("io.github.bluetape4k.graph:bluetape4k-graph-neo4j")
 
     // bluetape4k-leader
-    implementation("io.github.bluetape4k.leader:leader-core")
-    implementation("io.github.bluetape4k.leader:leader-redis-lettuce")
-    implementation("io.github.bluetape4k.leader:leader-spring-boot")
+    implementation("io.github.bluetape4k.leader:bluetape4k-leader-core")
+    implementation("io.github.bluetape4k.leader:bluetape4k-leader-redis-lettuce")
+    implementation("io.github.bluetape4k.leader:bluetape4k-leader-spring-boot")
 }
 ```
 

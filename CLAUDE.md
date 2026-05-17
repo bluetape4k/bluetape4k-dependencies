@@ -44,7 +44,7 @@ Consumers use `platform(...)` to import the BOM:
 dependencies {
     implementation(platform("io.github.bluetape4k:bluetape4k-dependencies:VERSION"))
     implementation("io.github.bluetape4k:bluetape4k-core")          // no version
-    implementation("io.github.bluetape4k.image:images")             // no version
+    implementation("io.github.bluetape4k.image:bluetape4k-images")             // no version
 }
 ```
 
