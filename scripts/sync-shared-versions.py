@@ -25,14 +25,12 @@ PROPERTY_LINE = re.compile(r"^([A-Za-z0-9_.-]+)=(.*)$")
 DEFAULT_REPOSITORIES = (
     "bluetape4k-projects",
     "bluetape4k-aws",
-    "bluetape4k-experimental",
     "bluetape4k-exposed",
     "bluetape4k-graph",
     "bluetape4k-image",
     "bluetape4k-javers",
     "bluetape4k-leader",
     "bluetape4k-text",
-    "bluetape4k-workshop",
 )
 
 

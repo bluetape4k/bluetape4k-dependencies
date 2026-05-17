@@ -16,6 +16,10 @@ not be reintroduced before Central Portal release. Keep
 Name release-train version aliases after the BOM artifacts, for example
 `bluetape4k-bom`, `bluetape4k-aws-bom`, and `bluetape4k-exposed-bom`.
 
+Release scope: `bluetape4k-experimental` and `bluetape4k-workshop` are excluded
+from the Central Portal release campaign, so default shared-version validation
+must not clone or gate on them.
+
 Verification: `actionlint .github/workflows/publish-snapshot.yml`;
 `python3 -m unittest discover -s tests -p 'test_*.py'`.
 
