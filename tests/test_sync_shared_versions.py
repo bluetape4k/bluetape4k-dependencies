@@ -182,14 +182,14 @@ class SyncSharedVersionsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             (repo / "gradle.properties").write_text(
-                "baseVersion=1.0.0\nsnapshotVersion=-SNAPSHOT\n",
+                "baseVersion=1.0.0\nsnapshotVersion=\n",
                 encoding="utf-8",
             )
             source = {
                 "bluetape4k-dependencies": sync.SourceVersion(
                     alias="bluetape4k-dependencies",
-                    version="1.0.0-SNAPSHOT",
-                    line='bluetape4k-dependencies = "1.0.0-SNAPSHOT"',
+                    version="1.0.0",
+                    line='bluetape4k-dependencies = "1.0.0"',
                 ),
             }
 

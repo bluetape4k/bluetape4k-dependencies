@@ -172,7 +172,7 @@ class SyncManagedCatalogTest(unittest.TestCase):
             artifact_id="sample",
             alias="duplicate",
             group_id="io.github.bluetape4k",
-            version_ref="bluetape4k-core",
+            version_ref="bluetape4k-bom",
             project_path=":sample",
             relative_path="sample",
             include_constraint=True,

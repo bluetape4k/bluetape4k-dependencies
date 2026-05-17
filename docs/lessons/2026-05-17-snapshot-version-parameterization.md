@@ -9,7 +9,15 @@ Decision: Keep `snapshotVersion=` empty by default and let
 Outcome: `develop` stays release-ready, while snapshot publishing remains
 explicit in the workflow command.
 
-Verification: `actionlint .github/workflows/publish-snapshot.yml`.
+Dependencies-specific outcome: the ecosystem BOM catalog now keeps
+`bluetape4k-*` coordinates on formal release versions; snapshot references must
+not be reintroduced before Central Portal release. Keep
+`bluetape4k-dependencies` as the first release-train alias in version catalogs.
+Name release-train version aliases after the BOM artifacts, for example
+`bluetape4k-bom`, `bluetape4k-aws-bom`, and `bluetape4k-exposed-bom`.
+
+Verification: `actionlint .github/workflows/publish-snapshot.yml`;
+`python3 -m unittest discover -s tests -p 'test_*.py'`.
 
 Future guard: Do not reintroduce `snapshotVersion=-SNAPSHOT` as the default in
 `gradle.properties`.
