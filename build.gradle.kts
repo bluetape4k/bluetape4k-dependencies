@@ -54,7 +54,7 @@ dependencies {
     api(platform(libs.bluetape4k.text.bom))
     api(platform(libs.bluetape4k.graph.bom))
     api(platform(libs.bluetape4k.leader.bom))
-    api(platform(libs.exposed.bom))
+    api(platform(libs.bluetape4k.exposed.bom))
     api(platform(libs.bluetape4k.javers.bom))
 
     constraints {
@@ -132,13 +132,14 @@ dependencies {
         api(libs.bluetape4k.workflow)
 
         // -- bluetape4k-aws modules --
-        api(libs.bluetape4k.aws)
+        api(libs.bluetape4k.aws.java)
         api(libs.bluetape4k.aws.kotlin)
         api(libs.bluetape4k.aws.ktor)
         api(libs.bluetape4k.aws.spring.boot)
 
         // -- bluetape4k-image modules --
         api(libs.bluetape4k.images)
+        api(libs.bluetape4k.images.spring.boot)
         api(libs.bluetape4k.images.vips.api)
         api(libs.bluetape4k.images.vips.java21)
         api(libs.bluetape4k.images.vips.java25)
@@ -185,7 +186,11 @@ dependencies {
         api(libs.bluetape4k.leader.zookeeper)
 
         // -- bluetape4k-exposed modules --
-        api(libs.exposed.batch)
+        api(libs.bluetape4k.exposed.batch)
+        api(libs.bluetape4k.exposed.spring.boot.batch)
+        api(libs.bluetape4k.exposed.spring.boot.jdbc)
+        api(libs.bluetape4k.exposed.spring.boot.r2dbc)
+        api(libs.bluetape4k.exposed.spring.modulith)
         api(libs.exposed.bigquery)
         api(libs.exposed.cache)
         api(libs.exposed.clickhouse)
@@ -208,10 +213,6 @@ dependencies {
         api(libs.exposed.r2dbc.lettuce)
         api(libs.exposed.r2dbc.redisson)
         api(libs.exposed.r2dbc.tests)
-        api(libs.exposed.spring.boot.batch)
-        api(libs.exposed.spring.boot.jdbc)
-        api(libs.exposed.spring.boot.r2dbc)
-        api(libs.exposed.spring.modulith)
         api(libs.exposed.timefold.solver.persistence)
         api(libs.exposed.tink)
         api(libs.exposed.trino)
