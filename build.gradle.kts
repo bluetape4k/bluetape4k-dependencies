@@ -153,11 +153,8 @@ dependencies {
 
         // -- bluetape4k-graph modules --
         api(libs.bluetape4k.graph.age)
-        api(libs.bluetape4k.graph.age.benchmark)
-        api(libs.bluetape4k.graph.benchmark)
         api(libs.bluetape4k.graph.core)
         api(libs.bluetape4k.graph.falkordb)
-        api(libs.bluetape4k.graph.io.benchmark)
         api(libs.bluetape4k.graph.io.core)
         api(libs.bluetape4k.graph.io.csv)
         api(libs.bluetape4k.graph.io.graphml)
@@ -166,7 +163,6 @@ dependencies {
         api(libs.bluetape4k.graph.ktor)
         api(libs.bluetape4k.graph.memgraph)
         api(libs.bluetape4k.graph.neo4j)
-        api(libs.bluetape4k.graph.neo4j.benchmark)
         api(libs.bluetape4k.graph.okio)
         api(libs.bluetape4k.graph.spring.boot)
         api(libs.bluetape4k.graph.tinkerpop)
