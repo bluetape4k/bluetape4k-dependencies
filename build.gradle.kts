@@ -54,7 +54,7 @@ dependencies {
     api(platform(libs.bluetape4k.text.bom))
     api(platform(libs.bluetape4k.graph.bom))
     api(platform(libs.bluetape4k.leader.bom))
-    api(platform(libs.exposed.bom))
+    api(platform(libs.bluetape4k.exposed.bom))
     api(platform(libs.bluetape4k.javers.bom))
 
     constraints {
