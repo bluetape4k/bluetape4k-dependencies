@@ -165,6 +165,22 @@ class SyncManagedCatalogTest(unittest.TestCase):
 
         self.assertEqual(includes, ["leader-core", "examples:cache-warmer"])
 
+    def test_include_module_excludes_examples_demos_and_benchmarks(self) -> None:
+        repo = sync.ManagedRepo(
+            label="sample",
+            root_name="sample",
+            group_id="io.github.bluetape4k.sample",
+            version_ref="sample-bom",
+            alias_mode="prefix",
+            exclude_path_fragments=("examples", "benchmark"),
+            exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
+        )
+
+        self.assertFalse(sync.include_module(repo, "sample-demo", "spring/sample-demo"))
+        self.assertFalse(sync.include_module(repo, "sample-examples", "examples/sample-examples"))
+        self.assertFalse(sync.include_module(repo, "sample-benchmark", "benchmark/sample-benchmark"))
+        self.assertTrue(sync.include_module(repo, "sample-core", "sample-core"))
+
     def test_validate_discovered_rejects_duplicate_aliases(self) -> None:
         repo = sync.MANAGED_REPOS[0]
         module = sync.Module(

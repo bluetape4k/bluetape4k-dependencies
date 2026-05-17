@@ -76,8 +76,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k",
         version_ref="bluetape4k-bom",
         alias_mode="identity",
-        exclude_path_fragments=("examples", "workshop"),
-        exclude_name_suffixes=("-demo", "-benchmark"),
+        exclude_path_fragments=("examples", "workshop", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
     ManagedRepo(
         label="bluetape4k-aws",
@@ -85,7 +85,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k.aws",
         version_ref="bluetape4k-aws-bom",
         alias_mode="prefix",
-        exclude_path_fragments=("examples",),
+        exclude_path_fragments=("examples", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
     ManagedRepo(
         label="bluetape4k-image",
@@ -93,7 +94,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k.image",
         version_ref="bluetape4k-image-bom",
         alias_mode="prefix",
-        exclude_name_suffixes=("-benchmark",),
+        exclude_path_fragments=("examples", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
     ManagedRepo(
         label="bluetape4k-text",
@@ -101,6 +103,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k.text",
         version_ref="bluetape4k-text-bom",
         alias_mode="prefix",
+        exclude_path_fragments=("examples", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
     ManagedRepo(
         label="bluetape4k-graph",
@@ -108,7 +112,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k.graph",
         version_ref="bluetape4k-graph-bom",
         alias_mode="prefix",
-        exclude_path_fragments=("examples",),
+        exclude_path_fragments=("examples", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
     ManagedRepo(
         label="bluetape4k-leader",
@@ -116,7 +121,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k.leader",
         version_ref="bluetape4k-leader-bom",
         alias_mode="prefix",
-        exclude_path_fragments=("examples",),
+        exclude_path_fragments=("examples", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
     ManagedRepo(
         label="bluetape4k-exposed",
@@ -124,8 +130,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k.exposed",
         version_ref="bluetape4k-exposed-bom",
         alias_mode="identity",
-        exclude_path_fragments=("examples",),
-        exclude_name_suffixes=("-demo",),
+        exclude_path_fragments=("examples", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
     ManagedRepo(
         label="bluetape4k-javers",
@@ -133,6 +139,8 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         group_id="io.github.bluetape4k.javers",
         version_ref="bluetape4k-javers-bom",
         alias_mode="prefix",
+        exclude_path_fragments=("examples", "benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
     ),
 )
 
