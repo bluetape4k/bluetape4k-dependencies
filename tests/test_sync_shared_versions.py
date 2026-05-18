@@ -18,6 +18,74 @@ SPEC.loader.exec_module(sync)
 
 
 class SyncSharedVersionsTest(unittest.TestCase):
+    def test_default_repositories_include_active_gradle_repos(self) -> None:
+        self.assertIn("bluetape4k-projects", sync.DEFAULT_REPOSITORIES)
+        self.assertIn("bluetape4k-experimental", sync.DEFAULT_REPOSITORIES)
+        self.assertIn("bluetape4k-workshop", sync.DEFAULT_REPOSITORIES)
+        self.assertIn("exposed-workshop", sync.DEFAULT_REPOSITORIES)
+
+    def test_compatibility_line_errors_detect_wrong_major(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog = Path(tmp) / "libs.versions.toml"
+            catalog.write_text(
+                "\n".join(
+                    [
+                        "[versions]",
+                        'spring-kafka = "3.3.13"',
+                        'spring-kafka4 = "3.3.15"',
+                        'jackson3 = "3.1.3"',
+                        "",
+                    ],
+                ),
+                encoding="utf-8",
+            )
+
+            errors = sync.compatibility_line_errors(catalog, "sample")
+
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0].repo, "sample")
+        self.assertEqual(errors[0].alias, "spring-kafka4")
+        self.assertEqual(errors[0].expected_major, "4")
+
+    def test_compatibility_line_errors_accept_expected_major(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog = Path(tmp) / "libs.versions.toml"
+            catalog.write_text(
+                "\n".join(
+                    [
+                        "[versions]",
+                        'spring-boot3 = "3.5.14"',
+                        'spring-boot4 = "4.0.6"',
+                        'jackson2 = "2.21.3"',
+                        'jackson3 = "3.1.3"',
+                        'kafka3 = "3.9.2"',
+                        'kafka4 = "4.2.0"',
+                        "",
+                    ],
+                ),
+                encoding="utf-8",
+            )
+
+            errors = sync.compatibility_line_errors(catalog, "sample")
+
+        self.assertEqual(errors, [])
+
+    def test_print_default_repositories_cli(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT_PATH),
+                "--print-default-repositories",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("bluetape4k-projects", result.stdout)
+        self.assertIn("exposed-workshop", result.stdout)
+
     def test_read_source_versions_reads_only_marked_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"

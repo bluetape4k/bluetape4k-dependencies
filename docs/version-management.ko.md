@@ -39,8 +39,15 @@ bluetape4k-dependencies/gradle/libs.versions.toml
 | `bluetape4k-leader` | Leader election 통합 |
 | `bluetape4k-text` | Text/tokenizer 통합 |
 | `bluetape4k-workshop` | workshop 중 sync 대상 |
+| `clinic-appointment` | 예제 애플리케이션 |
+| `exposed-r2dbc-workshop` | Exposed R2DBC workshop |
+| `exposed-workshop` | Exposed workshop |
+| `timefold-workshop` | Timefold workshop |
 
-`ocean-workshop`과 `kotlin-dev-agent`는 기본 sync 대상에서 제외합니다.
+`.github`, `demo-repository`, `ocean-workshop`, `kotlin-dev-agent`는 기본 sync 대상에서 제외합니다.
+
+CI는 이 표를 별도로 복사하지 않고 `scripts/sync-shared-versions.py --print-default-repositories`의
+출력을 사용해 clone 대상을 결정합니다.
 
 ## 버전 변경 절차
 

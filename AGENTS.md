@@ -16,12 +16,18 @@ source code.
 |---|---|---|
 | `bluetape4k-projects` | `bluetape4k-core` | `io.github.bluetape4k` |
 | `bluetape4k-aws` | `bluetape4k-aws` | `io.github.bluetape4k.aws` |
-| `bluetape4k-image` | `bluetape4k-image` | `io.github.bluetape4k.image` |
-| `bluetape4k-text` | `bluetape4k-text` | `io.github.bluetape4k.text` |
-| `bluetape4k-graph` | `bluetape4k-graph` | `io.github.bluetape4k.graph` |
-| `bluetape4k-leader` | `bluetape4k-leader` | `io.github.bluetape4k.leader` |
+| `bluetape4k-experimental` | shared catalog only | mixed bluetape4k modules |
 | `bluetape4k-exposed` | `bluetape4k-exposed` | `io.github.bluetape4k.exposed` |
+| `bluetape4k-graph` | `bluetape4k-graph` | `io.github.bluetape4k.graph` |
+| `bluetape4k-image` | `bluetape4k-image` | `io.github.bluetape4k.image` |
 | `bluetape4k-javers` | `bluetape4k-javers` | `io.github.bluetape4k.javers` |
+| `bluetape4k-leader` | `bluetape4k-leader` | `io.github.bluetape4k.leader` |
+| `bluetape4k-text` | `bluetape4k-text` | `io.github.bluetape4k.text` |
+| `bluetape4k-workshop` | shared catalog only | mixed examples |
+| `clinic-appointment` | shared catalog only | example application |
+| `exposed-r2dbc-workshop` | shared catalog only | Exposed R2DBC examples |
+| `exposed-workshop` | shared catalog only | Exposed examples |
+| `timefold-workshop` | shared catalog only | Timefold examples |
 
 ## How It Works
 
