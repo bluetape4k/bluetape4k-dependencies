@@ -1,47 +1,56 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-05-09 KST
+Snapshot: 2026-05-18 KST
 Scope: open GitHub issues assigned to `debop`, created on or after 2026-01-01.
-Open count: 1 issue.
+Open count: 3 issues.
+
+## Recently Completed
+
+- First-release Spring Boot 4-only versionless alias policy (#8) is closed.
+- Central dependency governance is active: `sync-shared-versions.py`,
+  `sync-dependabot-ignores.py`, and `sync-managed-catalog.py` are now the
+  workspace propagation surfaces.
+- Organization-level Dependabot ignore generation and managed catalog sync are
+  covered by unit tests and CI checks.
 
 ## Current Direction
 
-This repo has not had an official public release yet, so it is still possible
-to change the first BOM and Version Catalog contract without creating a public
-migration burden.
+Dependency governance script correctness before more version upgrades.
 
-The first official surface should expose Spring Boot 4 integrations through
-versionless `spring-boot` names. Do not publish `spring-boot3` aliases, and do
-not make `spring-boot4` suffixes the standard public names.
+The catalog is the workspace source of truth. Fix sync-tool safety gaps before
+promoting larger dependency upgrades so local checks and CI cannot silently skip
+managed repositories.
 
 ## Priority Queue
 
 | Priority | Issue | Difficulty | Notes |
 |---|---|---:|---|
-| P0 | [#8](https://github.com/bluetape4k/bluetape4k-dependencies/issues/8) Spring Boot 4-only versionless aliases | M | First official BOM/Version Catalog contract. Aligns with `projects #280/#263` and `exposed #3`. |
+| P1 | [#39](https://github.com/bluetape4k/bluetape4k-dependencies/issues/39) `sync-dependabot-ignores` default workspace is one directory too high | S | Default run can silently no-op; align with `sync-shared-versions.py` and add no-target diagnostics. |
+| P2 | [#34](https://github.com/bluetape4k/bluetape4k-dependencies/issues/34) Upgrade MyBatis Dynamic SQL to 2.x | M | Dependency upgrade lane; verify downstream consumers before promotion. |
+| P2 | [#35](https://github.com/bluetape4k/bluetape4k-dependencies/issues/35) Upgrade Timefold Solver to 2.x | M | Dependency upgrade lane; likely requires workshop/example compatibility checks. |
 
 ## Dependency Map
 
 ```text
-projects #280 Boot 4-only policy
-  -> dependencies #8 first official Spring Boot alias policy
-  -> projects #263 spring-boot3 removal + spring-boot4 -> spring-boot rename
-      -> exposed #3 spring-boot3 removal + spring-boot4 -> spring-boot rename
+#39 sync-dependabot-ignores default workspace fix
+  -> safe local governance checks
+  -> #34 MyBatis Dynamic SQL 2.x
+  -> #35 Timefold Solver 2.x
 
-projects #263 and exposed #3 publishable artifact names
-  -> dependencies #8 constraints and catalog aliases
+#8 Spring Boot 4-only versionless alias policy (closed)
+  -> first official BOM/Version Catalog contract baseline
 ```
 
 ## WIP Limits
 
 | Lane | Limit | Current next |
 |---|---:|---|
-| Public BOM contract | 1 | `#8` |
+| Governance tooling | 1 | `#39` |
+| Dependency upgrade | 1 | `#34`, then `#35` |
 
 ## Cleanup Actions
 
 | Candidate | Action |
 |---|---|
-| stale `leader-spring-boot3/4` aliases | Remove before official release; expose `leader-spring-boot` only. |
-| stale `bluetape4k-spring-boot3-*` aliases | Remove before official release. |
-| transitional `bluetape4k-spring-boot4-*` aliases | Replace with versionless `bluetape4k-spring-boot-*` aliases after upstream rename lands. |
+| no-target-file script behavior | Fail or warn when governance scripts discover no managed repositories. |
+| dependency major upgrades | Verify downstream compile/test impact before catalog promotion. |
