@@ -258,12 +258,19 @@ repositories. Sync downstream local catalogs after changing those aliases:
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
+scripts/sync-dependabot-ignores.py --workspace .. --check --summary
+scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 ```
 
 This is currently a **materialized sync** workflow for local catalogs. During
 the migration to the published catalog, `bluetape4k-dependencies/gradle/libs.versions.toml`
 owns the approved versions, and `scripts/sync-shared-versions.py` rewrites the matching
 aliases in each target repository's `gradle/libs.versions.toml`.
+
+Downstream repositories also ignore centrally governed dependency names in
+Dependabot. Add new central dependency names to `CENTRAL_DEPENDENCY_IGNORES` in
+`scripts/sync-dependabot-ignores.py`, then sync downstream `.github/dependabot.yml`
+files with the command above.
 
 Long-term, downstream repositories should import `bluetape4k-version-catalog`
 as a `bt4k` catalog and import `bluetape4k-dependencies` as a platform through
@@ -274,8 +281,10 @@ The expected release flow is:
 
 1. Update the source-of-truth block in this repository.
 2. Run `scripts/sync-shared-versions.py --workspace .. --write --check --summary`.
-3. Open, verify, and merge PRs for the downstream repositories that changed.
-4. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
+3. Run `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
+   when the change adds or removes centrally governed dependency names.
+4. Open, verify, and merge PRs for the downstream repositories that changed.
+5. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
    that no shared-version drift remains across the configured organization repositories.
 
 Compatibility-line aliases are intentionally separate. Do not collapse aliases such as `kafka3`/`kafka4`,

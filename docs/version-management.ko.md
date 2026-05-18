@@ -136,10 +136,16 @@ Dependabot PR은 자동으로 맞다고 가정하지 않습니다.
 1. compatibility-line alias가 깨졌는지 먼저 확인합니다.
 2. 같은 alias가 여러 repo에 있으면 `bluetape4k-dependencies` source-of-truth에서 먼저 결정합니다.
 3. source-of-truth 변경 후 sync script로 downstream repo PR을 일괄 생성합니다.
-4. PR별 CI를 확인합니다.
-5. downstream이 모두 green이면 central PR을 마지막에 머지합니다.
+4. 중앙에서 관리하기로 한 dependency name은 `scripts/sync-dependabot-ignores.py`에 추가하고,
+   downstream `.github/dependabot.yml`도 같은 PR에서 갱신합니다.
+5. PR별 CI를 확인합니다.
+6. downstream이 모두 green이면 central PR을 마지막에 머지합니다.
 
 특정 repo 하나에만 Dependabot PR이 생기고 `bluetape4k-projects` 또는 source-of-truth에는 없으면, 그 PR만 단독 머지하지 말고 shared alias인지 먼저 확인합니다.
+
+중앙 관리 대상 dependency는 downstream Dependabot PR을 머지하지 않습니다. 대신 central
+catalog에서 버전을 올리고 `scripts/sync-shared-versions.py`와
+`scripts/sync-dependabot-ignores.py`를 같이 실행합니다.
 
 ## Snapshot 배포와 공식 릴리즈
 
@@ -365,6 +371,7 @@ snapshotVersion=
 
 - [ ] `scripts/sync-managed-catalog.py --check --summary`
 - [ ] `scripts/sync-shared-versions.py --workspace .. --check --summary`
+- [ ] `scripts/sync-dependabot-ignores.py --workspace .. --check --summary`
 - [ ] `./gradlew build publishToMavenLocal --no-daemon`
 - [ ] release PR 생성 및 `debop` 할당
 - [ ] PR CI green 확인
@@ -380,6 +387,7 @@ snapshotVersion=
 - [ ] release BOM의 managed `bluetape4k-*` ref에 `-SNAPSHOT`이 없습니다.
 - [ ] `gradle.properties`와 source-of-truth block의 `bluetape4k-dependencies` 값이 일치합니다.
 - [ ] `scripts/sync-shared-versions.py --workspace .. --check --summary`가 통과합니다.
+- [ ] `scripts/sync-dependabot-ignores.py --workspace .. --check --summary`가 통과합니다.
 - [ ] `scripts/sync-managed-catalog.py --check --summary`가 통과합니다.
 - [ ] `./gradlew build publishToMavenLocal --no-daemon`가 통과합니다.
 - [ ] GitHub Actions `Publish Release`가 성공했습니다.
@@ -404,6 +412,7 @@ snapshotVersion=
 | central PR CI에서 shared-version drift 실패 | downstream PR이 먼저 머지되었는지 확인 |
 | 특정 repo만 drift가 남음 | 해당 repo가 sync 대상인지, alias 이름이 같은지 확인 |
 | Dependabot이 compatibility alias를 잘못 올림 | PR을 닫고 올바른 major-line alias를 갱신 |
+| downstream Dependabot이 중앙 관리 dependency PR을 계속 생성 | `CENTRAL_DEPENDENCY_IGNORES`와 downstream dependabot.yml sync 여부 확인 |
 | generated module이 README에 없음 | `gradle/libs.versions.toml` generated section과 README 표를 비교 |
 | `--write --check`가 실패 | sync script regression 가능성이 있으므로 unittest fixture 추가 후 수정 |
 | release BOM이 snapshot artifact를 참조 | upstream release 완료 여부 확인 후 `libs.versions.toml` ref에서 `-SNAPSHOT` 제거 |
