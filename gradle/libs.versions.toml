@@ -4,7 +4,7 @@
 [versions]
 # <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
-bluetape4k-dependencies = "1.0.0"  # This catalog/BOM release train version; must match gradle.properties.
+bluetape4k-dependencies = "1.0.1-SNAPSHOT"  # This catalog/BOM release train version; must match gradle.properties.
 
 # bluetape4k-projects (monorepo core modules)
 bluetape4k-bom     = "1.8.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
@@ -26,7 +26,7 @@ bluetape4k-graph-bom   = "0.3.0"  # https://mvnrepository.com/artifact/io.github
 bluetape4k-leader-bom  = "0.1.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/leader-bom
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "1.8.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/exposed-bom
+bluetape4k-exposed-bom = "1.8.1-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/exposed-bom
 
 # https://github.com/bluetape4k/bluetape4k-javers
 bluetape4k-javers-bom  = "0.1.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom

@@ -19,6 +19,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Opened the next snapshot train as `1.0.1-SNAPSHOT` and aligned the managed
+  `bluetape4k-exposed` BOM to `1.8.1-SNAPSHOT`.
 - Standardized the first official Spring Boot integration surface on Spring Boot 4-only, versionless `spring-boot` artifact names before the BOM is publicly released ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
 - Replaced transitional `leader-spring-boot3` / `leader-spring-boot4` aliases with the single `leader-spring-boot` alias ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
 - Replaced transitional Exposed `bluetape4k-spring-boot3-*` and `bluetape4k-spring-boot4-*` aliases with versionless `bluetape4k-spring-boot-*` aliases ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
