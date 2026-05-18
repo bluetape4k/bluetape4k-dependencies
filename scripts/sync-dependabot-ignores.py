@@ -120,7 +120,7 @@ def sync_text(text: str) -> str:
         None,
     )
     if gradle_update_start is None:
-        raise ValueError("missing Gradle Dependabot update block")
+        return "\n".join(lines) + "\n"
 
     next_update = next(
         (

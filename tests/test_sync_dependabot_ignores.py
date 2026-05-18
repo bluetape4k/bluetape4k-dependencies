@@ -60,6 +60,21 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         self.assertIn("    ignore:", synced)
         self.assertLess(synced.index("    ignore:"), synced.index('  - package-ecosystem: "github-actions"'))
 
+    def test_sync_text_leaves_actions_only_config_unchanged(self) -> None:
+        text = "\n".join(
+            [
+                "version: 2",
+                "# Gradle/Maven library version updates are centralized in bluetape4k-dependencies.",
+                "# Leaf repositories keep Dependabot only for GitHub Actions updates.",
+                "updates:",
+                '  - package-ecosystem: "github-actions"',
+                '    directory: "/"',
+                "",
+            ],
+        )
+
+        self.assertEqual(sync.sync_text(text), text)
+
     def test_sync_text_is_idempotent(self) -> None:
         text = "\n".join(
             [
