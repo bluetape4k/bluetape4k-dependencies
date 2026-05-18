@@ -253,23 +253,30 @@ artifact list, BOM constraints, and published Gradle Version Catalog. The sectio
 public module families.
 
 Shared dependency and plugin version aliases in this repository are also the source of truth for sibling
-`bluetape4k-*` repositories. Sync downstream local catalogs after changing those aliases:
+repositories. Sync downstream local catalogs after changing those aliases:
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
 ```
 
-This is a **materialized sync** workflow. Sibling repositories do not dynamically pull this catalog at
-build time. Instead, `bluetape4k-dependencies/gradle/libs.versions.toml` owns the approved versions,
-and `scripts/sync-shared-versions.py` rewrites the matching aliases in each target repository's
-`gradle/libs.versions.toml`. The expected release flow is:
+This is currently a **materialized sync** workflow for local catalogs. During
+the migration to the published catalog, `bluetape4k-dependencies/gradle/libs.versions.toml`
+owns the approved versions, and `scripts/sync-shared-versions.py` rewrites the matching
+aliases in each target repository's `gradle/libs.versions.toml`.
+
+Long-term, downstream repositories should import `bluetape4k-version-catalog`
+as a `bt4k` catalog and import `bluetape4k-dependencies` as a platform through
+their repository convention plugin. The BOM remains the dependency-resolution
+contract; the catalog remains the Gradle authoring contract.
+
+The expected release flow is:
 
 1. Update the source-of-truth block in this repository.
 2. Run `scripts/sync-shared-versions.py --workspace .. --write --check --summary`.
 3. Open, verify, and merge PRs for the downstream repositories that changed.
 4. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
-   that no shared-version drift remains.
+   that no shared-version drift remains across the configured organization repositories.
 
 Compatibility-line aliases are intentionally separate. Do not collapse aliases such as `kafka3`/`kafka4`,
 `jackson2`/`jackson3`, `spring-boot3`/`spring-boot4`, or `spring-kafka`/`spring-kafka4` during automated

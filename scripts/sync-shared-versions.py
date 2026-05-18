@@ -25,13 +25,32 @@ PROPERTY_LINE = re.compile(r"^([A-Za-z0-9_.-]+)=(.*)$")
 DEFAULT_REPOSITORIES = (
     "bluetape4k-projects",
     "bluetape4k-aws",
+    "bluetape4k-experimental",
     "bluetape4k-exposed",
     "bluetape4k-graph",
     "bluetape4k-image",
     "bluetape4k-javers",
     "bluetape4k-leader",
     "bluetape4k-text",
+    "bluetape4k-workshop",
+    "clinic-appointment",
+    "exposed-r2dbc-workshop",
+    "exposed-workshop",
+    "timefold-workshop",
 )
+
+COMPATIBILITY_MAJOR_LINES = {
+    "ignite": "2",
+    "ignite3": "3",
+    "jackson2": "2",
+    "jackson3": "3",
+    "kafka3": "3",
+    "kafka4": "4",
+    "spring-boot3": "3",
+    "spring-boot4": "4",
+    "spring-kafka": "3",
+    "spring-kafka4": "4",
+}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -48,6 +67,15 @@ class Change:
     alias: str
     before: str
     after: str
+
+
+@dataclasses.dataclass(frozen=True)
+class CompatibilityError:
+    repo: str
+    alias: str
+    version: str
+    expected_major: str
+    catalog: Path
 
 
 def read_source_versions(catalog: Path) -> dict[str, SourceVersion]:
@@ -74,6 +102,41 @@ def read_source_versions(catalog: Path) -> dict[str, SourceVersion]:
             module_groups=source_module_groups(alias, stripped, module_groups),
         )
     return versions
+
+
+def compatibility_line_errors(catalog: Path, repo: str) -> list[CompatibilityError]:
+    errors: list[CompatibilityError] = []
+    in_versions = False
+
+    for raw_line in catalog.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            in_versions = stripped == "[versions]"
+            continue
+        if not in_versions:
+            continue
+
+        match = VERSION_LINE.match(stripped)
+        if not match:
+            continue
+
+        alias = match.group(1)
+        expected_major = COMPATIBILITY_MAJOR_LINES.get(alias)
+        if expected_major is None:
+            continue
+
+        version = match.group(2)
+        if not version.startswith(f"{expected_major}."):
+            errors.append(
+                CompatibilityError(
+                    repo=repo,
+                    alias=alias,
+                    version=version,
+                    expected_major=expected_major,
+                    catalog=catalog,
+                ),
+            )
+    return errors
 
 
 def source_module_groups(
@@ -200,6 +263,11 @@ def target_catalogs(workspace: Path, repositories: tuple[str, ...]) -> list[Path
     return catalogs
 
 
+def print_default_repositories() -> None:
+    for repo in DEFAULT_REPOSITORIES:
+        print(repo)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -217,19 +285,31 @@ def main() -> int:
     parser.add_argument("--write", action="store_true", help="Rewrite downstream catalogs.")
     parser.add_argument("--check", action="store_true", help="Fail when downstream catalogs drift.")
     parser.add_argument("--summary", action="store_true", help="Print a compact sync summary.")
+    parser.add_argument(
+        "--print-default-repositories",
+        action="store_true",
+        help="Print the built-in repository list and exit.",
+    )
     args = parser.parse_args()
+
+    if args.print_default_repositories:
+        print_default_repositories()
+        return 0
 
     repo_root = Path(__file__).resolve().parents[1]
     workspace = args.workspace.resolve()
     repositories = tuple(args.repositories) if args.repositories else DEFAULT_REPOSITORIES
-    source_versions = read_source_versions(repo_root / "gradle" / "libs.versions.toml")
+    source_catalog = repo_root / "gradle" / "libs.versions.toml"
+    source_versions = read_source_versions(source_catalog)
     verify_source_version_matches_project(repo_root, source_versions)
 
+    compatibility_errors = compatibility_line_errors(source_catalog, repo_root.name)
     all_changes: list[Change] = []
     for catalog in target_catalogs(workspace, repositories):
         synced_text, changes = sync_catalog(catalog, source_versions)
         if changes and args.write:
             catalog.write_text(synced_text, encoding="utf-8")
+        compatibility_errors.extend(compatibility_line_errors(catalog, catalog.parents[1].name))
         all_changes.extend(changes)
 
     if args.summary or all_changes:
@@ -240,6 +320,14 @@ def main() -> int:
 
     if args.check and all_changes and not args.write:
         print(f"Shared version drift detected: {len(all_changes)} changes required.", file=sys.stderr)
+        return 1
+    if compatibility_errors:
+        for error in compatibility_errors:
+            print(
+                f"{error.repo}: {error.alias} {error.version} violates expected {error.expected_major}.x "
+                f"({error.catalog})",
+                file=sys.stderr,
+            )
         return 1
     return 0
 

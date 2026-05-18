@@ -251,7 +251,7 @@ bluetape4k 유지보수자를 위한 상세 버전 관리 절차는
 `gradle/libs.versions.toml`입니다.
 아래 섹션은 주요 public module family를 요약합니다.
 
-이 레포지토리의 shared dependency/plugin version alias는 sibling `bluetape4k-*` 레포지토리의
+이 레포지토리의 shared dependency/plugin version alias는 sibling 레포지토리의
 source of truth이기도 합니다. 해당 alias를 변경한 뒤에는 downstream local catalog를 동기화합니다:
 
 ```bash
@@ -259,16 +259,23 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
 ```
 
-이 방식은 **materialized sync**입니다. Sibling 레포지토리가 build 시점에 이 catalog를 동적으로
-가져가는 구조가 아닙니다. `bluetape4k-dependencies/gradle/libs.versions.toml`이 승인된 버전을
-소유하고, `scripts/sync-shared-versions.py`가 각 대상 레포지토리의 `gradle/libs.versions.toml`에서
-같은 alias를 물리적으로 갱신합니다. 권장 릴리즈 흐름은 다음과 같습니다:
+현재 방식은 local catalog를 위한 **materialized sync**입니다.
+Published catalog로 완전히 이행하기 전까지
+`bluetape4k-dependencies/gradle/libs.versions.toml`이 승인된 버전을 소유하고,
+`scripts/sync-shared-versions.py`가 각 대상 레포지토리의 `gradle/libs.versions.toml`에서
+같은 alias를 물리적으로 갱신합니다.
+
+장기적으로 downstream 레포지토리는 `bluetape4k-version-catalog`를 `bt4k` catalog로
+import하고, repository convention plugin을 통해 `bluetape4k-dependencies` BOM을 platform으로
+import해야 합니다. BOM은 dependency resolution 계약이고, catalog는 Gradle authoring 계약입니다.
+
+권장 릴리즈 흐름은 다음과 같습니다:
 
 1. 이 레포지토리의 source-of-truth block을 수정합니다.
 2. `scripts/sync-shared-versions.py --workspace .. --write --check --summary`를 실행합니다.
 3. 변경된 downstream 레포지토리 PR을 열고 CI 검증 후 머지합니다.
 4. 마지막으로 `bluetape4k-dependencies` PR을 머지합니다. 이 PR의 CI는 downstream `develop` branch를
-   다시 clone해서 shared-version drift가 남아 있는지 검사합니다.
+   다시 clone해서 설정된 조직 레포지토리 전체에 shared-version drift가 남아 있는지 검사합니다.
 
 Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 중 `kafka3`/`kafka4`,
 `jackson2`/`jackson3`, `spring-boot3`/`spring-boot4`, `spring-kafka`/`spring-kafka4` 같은 alias를
