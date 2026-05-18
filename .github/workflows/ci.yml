@@ -74,6 +74,7 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_*.py'
           scripts/sync-managed-catalog.py --check --summary
           scripts/sync-shared-versions.py --workspace .. --check --summary
+          scripts/sync-dependabot-ignores.py --workspace .. --check --summary
       - uses: actions/setup-java@v5
         with:
           java-version: ${{ env.JAVA_VERSION }}

@@ -56,8 +56,41 @@ dependencies {
     api(platform(libs.bluetape4k.leader.bom))
     api(platform(libs.bluetape4k.exposed.bom))
     api(platform(libs.bluetape4k.javers.bom))
+    api(platform(libs.aws2.bom))
+    api(platform(libs.ktor.bom))
+    api(platform(libs.reactor.bom))
+    api(platform(libs.timefold.solver.bom))
 
     constraints {
+        // <external-managed-modules by dependency governance>
+        api(libs.agroal.pool)
+        api(libs.aws.kotlin.core)
+        api(libs.commons.codec)
+        api(libs.commons.csv)
+        api(libs.commons.exec)
+        api(libs.commons.io)
+        api(libs.commons.logging)
+        api(libs.commons.pool2)
+        api(libs.flyway.core)
+        api(libs.gatling.app)
+        api(libs.guava)
+        api(libs.hazelcast)
+        api(libs.jakarta.activation.api)
+        api(libs.jakarta.xml.bind)
+        api(libs.javamoney.moneta)
+        api(libs.logcaptor)
+        api(libs.mysql.connector.j)
+        api(libs.mybatis.dynamic.sql)
+        api(libs.ow2.asm)
+        api(libs.postgresql)
+        api(libs.r2dbc.h2)
+        api(libs.redisson)
+        api(libs.scrimage.core)
+        api(libs.slf4j.api)
+        api(libs.springdoc.openapi.starter.webmvc.ui)
+        api(libs.zstd.jni)
+        // </external-managed-modules by dependency governance>
+
         // <generated-managed-modules by scripts/sync-managed-catalog.py>
         // -- bluetape4k-projects modules --
         api(libs.bluetape4k.assertions)

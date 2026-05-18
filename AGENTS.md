@@ -45,13 +45,17 @@ catalog for Gradle build aliases and plugin/tooling versions.
 2. For shared dependency/plugin version changes, run
    `scripts/sync-shared-versions.py --workspace .. --write --check --summary`
    so downstream `bluetape4k-*` catalogs stay aligned with this source.
-3. For managed repository module additions/removals, run
+3. For centrally managed dependency names, run
+   `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
+   so downstream Dependabot does not open repo-local PRs for source-of-truth
+   versions.
+4. For managed repository module additions/removals, run
    `scripts/sync-managed-catalog.py --write --check`; do not edit
    generated catalog/constraint blocks by hand.
-4. Verify existing constraints pick up the version through the catalog alias.
-5. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
+5. Verify existing constraints pick up the version through the catalog alias.
+6. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
    matching `api(libs.<alias>)` constraint.
-6. Run `./gradlew build`.
+7. Run `./gradlew build`.
 
 ## Commands
 
@@ -60,8 +64,11 @@ scripts/sync-managed-catalog.py --check --summary
 scripts/sync-managed-catalog.py --write --check --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
+scripts/sync-dependabot-ignores.py --workspace .. --check --summary
+scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 python3 -m unittest tests/test_sync_managed_catalog.py
 python3 -m unittest tests/test_sync_shared_versions.py
+python3 -m unittest tests/test_sync_dependabot_ignores.py
 ./gradlew build
 ./gradlew publishBluetapeDependenciesPublicationToCentralPortal
 ./gradlew publishBluetapeVersionCatalogPublicationToCentralPortal
@@ -75,6 +82,9 @@ Publishing credentials come from `resolveCentralPublishingConfig()`. Use
 
 - Keep all per-repo versions and shared Gradle plugin/tooling versions in
   `gradle/libs.versions.toml`; do not hard-code module versions elsewhere.
+- Downstream Dependabot must ignore centrally governed dependency names; update
+  `CENTRAL_DEPENDENCY_IGNORES` and resync downstream repos when a new shared
+  dependency line is added.
 - The BOM version is bumped when a coordinated upstream version set is promoted.
 - `allowDependencies()` is enabled so constraints can reference external BOMs.
 - The version catalog is a Gradle build contract, not a substitute for the BOM.
