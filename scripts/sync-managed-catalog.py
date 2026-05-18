@@ -33,6 +33,7 @@ class IncludeConfig:
     base_dir: str
     with_project_name: bool
     with_base_dir: bool
+    project_prefix: str = ""
     exclude_module_names: frozenset[str] = frozenset()
 
 
@@ -201,6 +202,11 @@ def parse_set_of_strings(args: str, name: str) -> frozenset[str]:
     return frozenset(re.findall(r'"([^"]+)"', match.group(1)))
 
 
+def parse_string_arg(args: str, name: str) -> str | None:
+    match = re.search(rf'{name}\s*=\s*"([^"]*)"', args)
+    return match.group(1) if match else None
+
+
 def include_modules_default_with_project_name(text: str) -> bool:
     match = re.search(r"fun\s+includeModules\s*\((.*?)\)", text, flags=re.DOTALL)
     if not match:
@@ -243,7 +249,15 @@ def parse_include_configs(settings_file: Path) -> list[IncludeConfig]:
                 base_dir=base_match.group(1),
                 with_project_name=with_project_name,
                 with_base_dir=with_base_dir,
-                exclude_module_names=parse_set_of_strings(args, "excludeModuleNames"),
+                project_prefix=(
+                    parse_string_arg(args, "prefix")
+                    if parse_string_arg(args, "prefix") is not None
+                    else ("bluetape4k-" if with_project_name else "")
+                ),
+                exclude_module_names=(
+                    parse_set_of_strings(args, "excludeModuleNames")
+                    | parse_set_of_strings(args, "excludeDirNames")
+                ),
             )
         )
 
@@ -252,12 +266,19 @@ def parse_include_configs(settings_file: Path) -> list[IncludeConfig]:
 
 def parse_mapped_includes(settings_file: Path) -> list[MappedInclude]:
     mapped_includes: list[MappedInclude] = []
+    text = settings_file.read_text(encoding="utf-8")
 
-    for args in function_call_args(settings_file.read_text(encoding="utf-8"), "includeMappedModule"):
+    for args in function_call_args(text, "includeMappedModule"):
         values = re.findall(r'"([^"]+)"', args)
         if len(values) < 2:
             continue
         mapped_includes.append(MappedInclude(module_path=values[0], project_name=values[1]))
+
+    for args in function_call_args(text, "includeProject"):
+        values = re.findall(r'"([^"]+)"', args)
+        if len(values) < 2:
+            continue
+        mapped_includes.append(MappedInclude(module_path=values[1], project_name=values[0]))
 
     return mapped_includes
 
@@ -278,14 +299,14 @@ def parse_project_dir_overrides(settings_file: Path) -> dict[str, str]:
     return {name: path for name, path in pattern.findall(text)}
 
 
-def module_name(config: IncludeConfig, directory_name: str, project_prefix: str = "bluetape4k") -> str:
+def module_name(config: IncludeConfig, directory_name: str) -> str:
     base_path = config.base_dir.replace("/", "-")
     if not config.with_project_name and not config.with_base_dir:
-        return directory_name
+        return f"{config.project_prefix}{directory_name}"
     if config.with_project_name and not config.with_base_dir:
-        return f"{project_prefix}-{directory_name}"
-    if config.with_project_name:
-        return f"{project_prefix}-{base_path}-{directory_name}"
+        return f"{config.project_prefix}{directory_name}"
+    if config.with_project_name or config.project_prefix:
+        return f"{config.project_prefix}{base_path}-{directory_name}"
     return f"{base_path}-{directory_name}"
 
 

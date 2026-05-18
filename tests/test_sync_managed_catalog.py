@@ -32,7 +32,7 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertIn('setOf("okio", "tmp")', calls[0])
 
-    def test_parse_include_configs_keeps_excluded_module_names(self) -> None:
+    def test_parse_include_configs_keeps_excluded_module_names_and_prefix(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             settings_file = Path(tmp) / "settings.gradle.kts"
             settings_file.write_text(
@@ -41,7 +41,9 @@ class SyncManagedCatalogTest(unittest.TestCase):
                     "graph-io",
                     false,
                     true,
+                    prefix = "bt4k-",
                     excludeModuleNames = setOf("okio"),
+                    excludeDirNames = setOf("tmp"),
                 )
                 """,
                 encoding="utf-8",
@@ -53,16 +55,17 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertEqual(configs[0].base_dir, "graph-io")
         self.assertFalse(configs[0].with_project_name)
         self.assertTrue(configs[0].with_base_dir)
-        self.assertEqual(configs[0].exclude_module_names, frozenset({"okio"}))
+        self.assertEqual(configs[0].project_prefix, "bt4k-")
+        self.assertEqual(configs[0].exclude_module_names, frozenset({"okio", "tmp"}))
 
-    def test_parse_include_configs_supports_exposed_short_module_names(self) -> None:
+    def test_parse_include_configs_supports_exposed_prefixed_module_names(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             settings_file = Path(tmp) / "settings.gradle.kts"
             settings_file.write_text(
                 """
-                includeModules("exposed", withBaseDir = false)
+                includeModules("exposed", withBaseDir = false, prefix = "bluetape4k-")
 
-                fun includeModules(baseDir: String, withBaseDir: Boolean = true) {
+                fun includeModules(baseDir: String, withBaseDir: Boolean = true, prefix: String = "") {
                     // implementation omitted
                 }
                 """,
@@ -75,7 +78,7 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertEqual(configs[0].base_dir, "exposed")
         self.assertFalse(configs[0].with_project_name)
         self.assertFalse(configs[0].with_base_dir)
-        self.assertEqual(sync.module_name(configs[0], "exposed-core"), "exposed-core")
+        self.assertEqual(sync.module_name(configs[0], "exposed-core"), "bluetape4k-exposed-core")
 
     def test_parse_mapped_includes_keeps_path_and_project_name(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -84,6 +87,7 @@ class SyncManagedCatalogTest(unittest.TestCase):
                 """
                 includeMappedModule("utils/batch", "exposed-batch")
                 includeMappedModule("spring-boot/exposed-jdbc", "exposed-spring-boot-jdbc")
+                includeProject("bluetape4k-exposed-bom", file("exposed/bluetape4k-exposed-bom"))
                 """,
                 encoding="utf-8",
             )
@@ -95,6 +99,7 @@ class SyncManagedCatalogTest(unittest.TestCase):
             [
                 sync.MappedInclude("utils/batch", "exposed-batch"),
                 sync.MappedInclude("spring-boot/exposed-jdbc", "exposed-spring-boot-jdbc"),
+                sync.MappedInclude("exposed/bluetape4k-exposed-bom", "bluetape4k-exposed-bom"),
             ],
         )
 
@@ -117,11 +122,21 @@ class SyncManagedCatalogTest(unittest.TestCase):
                 """
                 rootProject.name = "bluetape4k-exposed"
 
-                includeModules("exposed", withBaseDir = false)
-                includeMappedModule("spring-boot/exposed-jdbc", "exposed-spring-boot-jdbc")
+                includeProject("bluetape4k-exposed-bom", file("exposed/bluetape4k-exposed-bom"))
+                includeModules(
+                    "exposed",
+                    withBaseDir = false,
+                    prefix = "bluetape4k-",
+                    excludeDirNames = setOf("bluetape4k-exposed-bom"),
+                )
+                includeMappedModule("spring-boot/exposed-jdbc", "bluetape4k-exposed-spring-boot-jdbc")
 
-                fun includeModules(baseDir: String, withBaseDir: Boolean = true) {
+                fun includeModules(baseDir: String, withBaseDir: Boolean = true, prefix: String = "") {
                     // implementation omitted
+                }
+                fun includeProject(projectName: String, projectDir: File) {
+                    include(projectName)
+                    project(":$projectName").projectDir = projectDir
                 }
                 """,
                 encoding="utf-8",
@@ -133,19 +148,26 @@ class SyncManagedCatalogTest(unittest.TestCase):
         discovered = {repo: [] for repo in sync.MANAGED_REPOS}
         discovered[repo] = modules
         aliases = {module.alias: module for module in modules}
-        self.assertEqual(sorted(aliases), ["exposed-bom", "exposed-core", "exposed-spring-boot-jdbc"])
-        self.assertFalse(aliases["exposed-bom"].include_constraint)
-        self.assertTrue(aliases["exposed-core"].include_constraint)
-        self.assertTrue(aliases["exposed-spring-boot-jdbc"].include_constraint)
+        self.assertEqual(
+            sorted(aliases),
+            [
+                "bluetape4k-exposed-bom",
+                "bluetape4k-exposed-core",
+                "bluetape4k-exposed-spring-boot-jdbc",
+            ],
+        )
+        self.assertFalse(aliases["bluetape4k-exposed-bom"].include_constraint)
+        self.assertTrue(aliases["bluetape4k-exposed-core"].include_constraint)
+        self.assertTrue(aliases["bluetape4k-exposed-spring-boot-jdbc"].include_constraint)
 
         catalog = sync.render_catalog_section(discovered)
         constraints = sync.render_constraint_section(discovered)
 
-        self.assertIn('exposed-bom', catalog)
-        self.assertIn('module = "io.github.bluetape4k.exposed:exposed-spring-boot-jdbc"', catalog)
-        self.assertIn("api(libs.exposed.core)", constraints)
-        self.assertIn("api(libs.exposed.spring.boot.jdbc)", constraints)
-        self.assertNotIn("api(libs.exposed.bom)", constraints)
+        self.assertIn('bluetape4k-exposed-bom', catalog)
+        self.assertIn('module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-boot-jdbc"', catalog)
+        self.assertIn("api(libs.bluetape4k.exposed.core)", constraints)
+        self.assertIn("api(libs.bluetape4k.exposed.spring.boot.jdbc)", constraints)
+        self.assertNotIn("api(libs.bluetape4k.exposed.bom)", constraints)
 
     def test_parse_direct_includes_ignores_include_modules_calls(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
