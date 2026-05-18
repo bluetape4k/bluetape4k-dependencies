@@ -90,7 +90,6 @@ dependencies {
         api(libs.springdoc.openapi.starter.webmvc.ui)
         api(libs.zstd.jni)
         // </external-managed-modules by dependency governance>
-
         // <generated-managed-modules by scripts/sync-managed-catalog.py>
         // -- bluetape4k-projects modules --
         api(libs.bluetape4k.assertions)
