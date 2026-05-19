@@ -44,56 +44,7 @@ constraint와 Gradle build alias를 한 곳에 모아 이 문제를 해결합니
 
 ## 구조
 
-```mermaid
-graph TD
-    BOM["bluetape4k-dependencies<br/>(java-platform BOM)"]
-    CATALOG["bluetape4k-version-catalog<br/>(Gradle Version Catalog)"]
-    TOML["gradle/libs.versions.toml<br/>(single managed source)"]
-
-    TOML --> BOM
-    TOML --> CATALOG
-
-    BOM --> CORE["bluetape4k-projects<br/>io.github.bluetape4k"]
-    BOM --> AWS["bluetape4k-aws<br/>io.github.bluetape4k.aws"]
-    BOM --> IMAGE["bluetape4k-image<br/>io.github.bluetape4k.image"]
-    BOM --> TEXT["bluetape4k-text<br/>io.github.bluetape4k.text"]
-    BOM --> GRAPH["bluetape4k-graph<br/>io.github.bluetape4k.graph"]
-    BOM --> LEADER["bluetape4k-leader<br/>io.github.bluetape4k.leader"]
-    BOM --> EXPOSED["bluetape4k-exposed<br/>io.github.bluetape4k.exposed"]
-    BOM --> JAVERS["bluetape4k-javers<br/>io.github.bluetape4k.javers"]
-
-    CORE --> C1["bluetape4k-core"]
-    CORE --> C2["bluetape4k-coroutines"]
-    CORE --> C3["bluetape4k-logging"]
-    CORE --> C4["bluetape4k-jackson2 / jackson3"]
-    CORE --> C5["bluetape4k-junit5 / testcontainers"]
-    CORE --> C6["... 외 다수"]
-
-    AWS --> A1["aws"]
-    AWS --> A2["aws-kotlin"]
-    AWS --> A3["aws-spring-boot"]
-    AWS --> A4["aws-ktor"]
-
-    IMAGE --> I1["images"]
-    IMAGE --> I2["images-vips-api"]
-    IMAGE --> I3["images-vips-java21 / java25"]
-
-    TEXT --> T1["tokenizer-core"]
-    TEXT --> T2["tokenizer-japanese / korean"]
-    TEXT --> T3["lingua"]
-    TEXT --> T4["text-search"]
-
-    GRAPH --> G1["graph-core"]
-    GRAPH --> G2["graph-age / falkordb / memgraph / neo4j / tinkerpop"]
-    GRAPH --> G3["graph-io-core / csv / graphml / jackson2 / jackson3 / okio"]
-
-    LEADER --> L1["leader-core"]
-    LEADER --> L2["leader-redis-lettuce / redisson"]
-    LEADER --> L3["leader-exposed-core / jdbc / r2dbc"]
-    LEADER --> L4["leader-mongodb / hazelcast / zookeeper"]
-    LEADER --> L5["leader-spring-boot"]
-    LEADER --> L6["leader-micrometer"]
-```
+![Structure diagram](docs/images/readme-diagrams/bluetape4k-dependencies-architecture-01.png)
 
 ---
 
