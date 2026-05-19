@@ -44,7 +44,7 @@ constraint와 Gradle build alias를 한 곳에 모아 이 문제를 해결합니
 
 ## 구조
 
-![Component 1](docs/images/readme-diagrams/root-readme-ko-diagram-01.svg)
+![Component 1](docs/images/readme-diagrams/root-readme-ko-diagram-01.png)
 
 ---
 
