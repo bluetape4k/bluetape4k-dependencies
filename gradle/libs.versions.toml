@@ -56,7 +56,7 @@ spring-kafka      = "3.3.13"  # Spring Kafka 3 compatibility line
 spring-kafka4     = "4.0.5"  # Spring Kafka 4 compatibility line
 testcontainers    = "2.0.5"  # https://mvnrepository.com/artifact/org.testcontainers/testcontainers-bom
 kover             = "0.9.8"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kover-gradle-plugin
-fory              = "0.15.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
+fory              = "0.17.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
 fory-kotlin       = "0.15.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
