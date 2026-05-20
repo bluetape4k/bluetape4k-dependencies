@@ -101,6 +101,7 @@ dependencies {
         // </external-managed-modules by dependency governance>
         // <generated-managed-modules by scripts/sync-managed-catalog.py>
         // -- bluetape4k-projects modules --
+        api(libs.bluetape4k.annotations)
         api(libs.bluetape4k.assertions)
         api(libs.bluetape4k.avro)
         api(libs.bluetape4k.bucket4j)
