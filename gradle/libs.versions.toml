@@ -7,7 +7,7 @@
 bluetape4k-dependencies = "1.0.1-SNAPSHOT"  # This catalog/BOM release train version; must match gradle.properties.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "1.8.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
+bluetape4k-bom     = "1.8.1-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
