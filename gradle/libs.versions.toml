@@ -151,6 +151,7 @@ zstd-jni                                      = { module = "com.github.luben:zst
 
 # <generated-managed-modules by scripts/sync-managed-catalog.py>
 # -- bluetape4k-projects modules --
+bluetape4k-annotations                         = { module = "io.github.bluetape4k:bluetape4k-annotations", version.ref = "bluetape4k-bom" }
 bluetape4k-assertions                          = { module = "io.github.bluetape4k:bluetape4k-assertions", version.ref = "bluetape4k-bom" }
 bluetape4k-avro                                = { module = "io.github.bluetape4k:bluetape4k-avro", version.ref = "bluetape4k-bom" }
 bluetape4k-bom                                 = { module = "io.github.bluetape4k:bluetape4k-bom", version.ref = "bluetape4k-bom" }
