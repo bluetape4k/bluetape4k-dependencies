@@ -134,12 +134,22 @@ scripts/sync-managed-catalog.py --write --check --summary
 Dependabot PR은 자동으로 맞다고 가정하지 않습니다.
 
 1. compatibility-line alias가 깨졌는지 먼저 확인합니다.
-2. 같은 alias가 여러 repo에 있으면 `bluetape4k-dependencies` source-of-truth에서 먼저 결정합니다.
-3. source-of-truth 변경 후 sync script로 downstream repo PR을 일괄 생성합니다.
-4. 중앙에서 관리하기로 한 dependency name은 `scripts/sync-dependabot-ignores.py`에 추가하고,
+2. `scripts/triage-dependabot-alerts.py --repo <repo>`로 alert owner를 분류합니다.
+3. 같은 alias가 여러 repo에 있으면 `bluetape4k-dependencies` source-of-truth에서 먼저 결정합니다.
+4. source-of-truth 변경 후 sync script로 downstream repo PR을 일괄 생성합니다.
+5. 중앙에서 관리하기로 한 dependency name은 `scripts/sync-dependabot-ignores.py`에 추가하고,
    downstream `.github/dependabot.yml`도 같은 PR에서 갱신합니다.
-5. PR별 CI를 확인합니다.
-6. downstream이 모두 green이면 central PR을 마지막에 머지합니다.
+6. PR별 CI를 확인합니다.
+7. downstream이 모두 green이면 central PR을 마지막에 머지합니다.
+
+Alert route는 다음 기준으로 결정합니다.
+
+| Route | Owner | 처리 |
+|---|---|---|
+| `central-catalog` | `bluetape4k-dependencies` | catalog/BOM source-of-truth를 갱신한 뒤 `sync-shared-versions.py`와 `sync-dependabot-ignores.py`를 실행합니다. |
+| `central-bom-transitive` | `spring-boot` 같은 central BOM line | patched BOM이 있으면 BOM line을 올리고, 없으면 central override를 추가하거나 유지한 뒤 downstream sync합니다. |
+| `repo-tooling` | alert 레포지토리 | `settings.gradle.kts`, Gradle plugin, repo tooling을 해당 레포에서 수정합니다. 공통 tooling이면 central governance로 승격합니다. |
+| `repo-local` | alert 레포지토리 | 해당 manifest가 소유한 repo-local dependency를 직접 수정합니다. |
 
 특정 repo 하나에만 Dependabot PR이 생기고 `bluetape4k-projects` 또는 source-of-truth에는 없으면, 그 PR만 단독 머지하지 말고 shared alias인지 먼저 확인합니다.
 

@@ -65,6 +65,10 @@ dependencies {
         // <external-managed-modules by dependency governance>
         api(libs.agroal.pool)
         api(libs.aws.kotlin.core)
+        api(libs.bouncycastle.bcpg)
+        api(libs.bouncycastle.bcpkix)
+        api(libs.bouncycastle.bcprov)
+        api(libs.classgraph)
         api(libs.commons.codec)
         api(libs.commons.csv)
         api(libs.commons.exec)
@@ -97,6 +101,8 @@ dependencies {
         api(libs.scrimage.core)
         api(libs.slf4j.api)
         api(libs.springdoc.openapi.starter.webmvc.ui)
+        api(libs.tomcat.embed.core)
+        api(libs.tomcat.jdbc)
         api(libs.zstd.jni)
         // </external-managed-modules by dependency governance>
         // <generated-managed-modules by scripts/sync-managed-catalog.py>

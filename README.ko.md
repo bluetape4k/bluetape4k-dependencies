@@ -210,6 +210,7 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
+scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 ```
 
 현재 방식은 local catalog를 위한 **materialized sync**입니다.
@@ -222,6 +223,16 @@ Downstream 레포지토리의 Dependabot도 중앙에서 관리하는 dependency
 새 shared dependency line을 추가하면 `scripts/sync-dependabot-ignores.py`의
 `CENTRAL_DEPENDENCY_IGNORES`에 dependency name을 추가하고, 위 명령으로
 downstream `.github/dependabot.yml`을 동기화합니다.
+
+Dependabot security alert은 alert이 보이는 레포지토리가 아니라 dependency owner 기준으로
+분류합니다. `scripts/triage-dependabot-alerts.py`로 open alert을 다음 route로 나눕니다.
+
+| Route | Owner | Action |
+|---|---|---|
+| `central-catalog` | `bluetape4k-dependencies` | source-of-truth catalog를 먼저 갱신하고 downstream 레포지토리를 sync합니다. |
+| `central-bom-transitive` | `spring-boot` 같은 central BOM line | patched BOM이 있으면 BOM line을 올리고, 없으면 central override를 추가하거나 유지한 뒤 downstream sync합니다. |
+| `repo-tooling` | alert 레포지토리 | Gradle/plugin/settings tooling을 해당 레포에서 고치되, 공통이면 central governance로 승격합니다. |
+| `repo-local` | alert 레포지토리 | manifest를 소유한 레포에서 직접 고칩니다. |
 
 장기적으로 downstream 레포지토리는 `bluetape4k-version-catalog`를 `bt4k` catalog로
 import하고, repository convention plugin을 통해 `bluetape4k-dependencies` BOM을 platform으로
