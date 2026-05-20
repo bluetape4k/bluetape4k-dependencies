@@ -90,6 +90,14 @@ class DependabotChange:
     path: Path
 
 
+def default_workspace() -> Path:
+    script_path = Path(__file__).resolve()
+    for parent in script_path.parents:
+        if parent.name == "bluetape4k-dependencies":
+            return parent.parent
+    return script_path.parents[2]
+
+
 def generated_block() -> list[str]:
     lines = [
         MARKER_START,
@@ -162,7 +170,7 @@ def main() -> int:
     parser.add_argument(
         "--workspace",
         type=Path,
-        default=Path(__file__).resolve().parents[2].parent,
+        default=default_workspace(),
         help="Workspace containing sibling repositories.",
     )
     parser.add_argument(
@@ -179,9 +187,18 @@ def main() -> int:
 
     workspace = args.workspace.resolve()
     repositories = tuple(args.repositories) if args.repositories else DEFAULT_REPOSITORIES
+    files = target_files(workspace, repositories)
     changes: list[DependabotChange] = []
 
-    for config in target_files(workspace, repositories):
+    if not files:
+        print(
+            "No downstream Dependabot files found. "
+            f"Check --workspace ({workspace}) and --repo filters.",
+            file=sys.stderr,
+        )
+        return 1 if args.check else 0
+
+    for config in files:
         before = config.read_text(encoding="utf-8")
         after = sync_text(before)
         if before == after:

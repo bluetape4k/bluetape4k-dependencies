@@ -18,6 +18,43 @@ SPEC.loader.exec_module(sync)
 
 
 class SyncDependabotIgnoresTest(unittest.TestCase):
+    def test_default_workspace_matches_repository_workspace(self) -> None:
+        original_file = sync.__file__
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp) / "bluetape4k"
+            script = workspace / "bluetape4k-dependencies" / "scripts" / "sync-dependabot-ignores.py"
+            script.parent.mkdir(parents=True)
+            script.touch()
+
+            try:
+                sync.__file__ = str(script)
+
+                self.assertEqual(sync.default_workspace(), workspace.resolve())
+            finally:
+                sync.__file__ = original_file
+
+    def test_default_workspace_matches_repository_workspace_from_worktree(self) -> None:
+        original_file = sync.__file__
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp) / "bluetape4k"
+            script = (
+                workspace
+                / "bluetape4k-dependencies"
+                / ".worktrees"
+                / "chore-all-open-issues"
+                / "scripts"
+                / "sync-dependabot-ignores.py"
+            )
+            script.parent.mkdir(parents=True)
+            script.touch()
+
+            try:
+                sync.__file__ = str(script)
+
+                self.assertEqual(sync.default_workspace(), workspace.resolve())
+            finally:
+                sync.__file__ = original_file
+
     def test_sync_text_adds_generated_block_to_existing_ignore(self) -> None:
         text = "\n".join(
             [
@@ -132,6 +169,29 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
         self.assertIn("Dependabot ignore drift detected", result.stderr)
+
+    def test_cli_check_fails_when_no_target_files_are_found(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "sample"
+            repo.mkdir()
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_PATH),
+                    "--workspace",
+                    tmp,
+                    "--repo",
+                    "sample",
+                    "--check",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("No downstream Dependabot files found", result.stderr)
 
 
 if __name__ == "__main__":
