@@ -211,6 +211,7 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
+scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 ```
 
 This is currently a **materialized sync** workflow for local catalogs. During
@@ -222,6 +223,17 @@ Downstream repositories also ignore centrally governed dependency names in
 Dependabot. Add new central dependency names to `CENTRAL_DEPENDENCY_IGNORES` in
 `scripts/sync-dependabot-ignores.py`, then sync downstream `.github/dependabot.yml`
 files with the command above.
+
+Dependabot security alerts are triaged by ownership, not by the repository that
+displays the alert. Use `scripts/triage-dependabot-alerts.py` to classify open
+alerts as:
+
+| Route | Owner | Action |
+|---|---|---|
+| `central-catalog` | `bluetape4k-dependencies` | Update the source-of-truth catalog first, then sync downstream repositories. |
+| `central-bom-transitive` | Central BOM line such as `spring-boot` | Move the BOM line when a patched BOM exists; otherwise add or keep a central override and sync downstream. |
+| `repo-tooling` | Alert repository | Fix local Gradle/plugin/settings tooling unless the package is promoted to central governance. |
+| `repo-local` | Alert repository | Fix the repository-owned dependency directly. |
 
 Long-term, downstream repositories should import `bluetape4k-version-catalog`
 as a `bt4k` catalog and import `bluetape4k-dependencies` as a platform through

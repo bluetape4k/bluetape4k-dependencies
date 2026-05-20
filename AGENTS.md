@@ -66,9 +66,11 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/sync-shared-versions.py --workspace .. --write --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
+scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 python3 -m unittest tests/test_sync_managed_catalog.py
 python3 -m unittest tests/test_sync_shared_versions.py
 python3 -m unittest tests/test_sync_dependabot_ignores.py
+python3 -m unittest tests/test_triage_dependabot_alerts.py
 ./gradlew build
 ./gradlew publishBluetapeDependenciesPublicationToCentralPortal
 ./gradlew publishBluetapeVersionCatalogPublicationToCentralPortal
@@ -85,6 +87,10 @@ Publishing credentials come from `resolveCentralPublishingConfig()`. Use
 - Downstream Dependabot must ignore centrally governed dependency names; update
   `CENTRAL_DEPENDENCY_IGNORES` and resync downstream repos when a new shared
   dependency line is added.
+- Triage Dependabot security alerts by ownership, not by the repository where
+  the alert is displayed. Use `scripts/triage-dependabot-alerts.py` to route
+  alerts to `central-catalog`, `central-bom-transitive`, `repo-tooling`, or
+  `repo-local`.
 - The BOM version is bumped when a coordinated upstream version set is promoted.
 - `allowDependencies()` is enabled so constraints can reference external BOMs.
 - The version catalog is a Gradle build contract, not a substitute for the BOM.

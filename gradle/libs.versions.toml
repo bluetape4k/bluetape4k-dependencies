@@ -65,6 +65,11 @@ aws-kotlin        = "1.6.72"  # https://mvnrepository.com/artifact/aws.sdk.kotli
 ktor              = "3.5.0"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
 redisson          = "4.4.0"  # https://mvnrepository.com/artifact/org.redisson/redisson
+bouncycastle-bcpg = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
+bouncycastle-bcpkix = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on
+bouncycastle-bcprov = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on
+classgraph        = "4.8.112"  # https://mvnrepository.com/artifact/io.github.classgraph/classgraph
+tomcat            = "11.0.22"  # https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core
 guava             = "33.6.0-jre"  # https://mvnrepository.com/artifact/com.google.guava/guava
 ow2-asm           = "9.10"  # https://mvnrepository.com/artifact/org.ow2.asm/asm
 zstd              = "1.5.7-8"  # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
@@ -111,6 +116,10 @@ bluetape4k-dependencies                       = { module = "io.github.bluetape4k
 agroal-pool                                   = { module = "io.agroal:agroal-pool", version.ref = "agroal" }
 aws-kotlin-core                               = { module = "aws.sdk.kotlin:aws-core", version.ref = "aws-kotlin" }
 aws2-bom                                      = { module = "software.amazon.awssdk:bom", version.ref = "aws2" }
+bouncycastle-bcpg                             = { module = "org.bouncycastle:bcpg-jdk18on", version.ref = "bouncycastle-bcpg" }
+bouncycastle-bcpkix                           = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle-bcpkix" }
+bouncycastle-bcprov                           = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle-bcprov" }
+classgraph                                    = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
 commons-codec                                 = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 commons-csv                                   = { module = "org.apache.commons:commons-csv", version.ref = "commons-csv" }
 commons-exec                                  = { module = "org.apache.commons:commons-exec", version.ref = "commons-exec" }
@@ -146,6 +155,8 @@ scrimage-core                                 = { module = "com.sksamuel.scrimag
 slf4j-api                                     = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 springdoc-openapi-starter-webmvc-ui           = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 timefold-solver-bom                           = { module = "ai.timefold.solver:timefold-solver-bom", version.ref = "timefold-solver" }
+tomcat-embed-core                             = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat" }
+tomcat-jdbc                                   = { module = "org.apache.tomcat:tomcat-jdbc", version.ref = "tomcat" }
 zstd-jni                                      = { module = "com.github.luben:zstd-jni", version.ref = "zstd-jni" }
 # </external-managed-modules by dependency governance>
 

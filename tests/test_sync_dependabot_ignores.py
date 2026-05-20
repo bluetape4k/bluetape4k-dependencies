@@ -40,6 +40,8 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         self.assertIn(sync.MARKER_START, synced)
         self.assertIn('dependency-name: "io.github.bluetape4k*"', synced)
         self.assertIn('dependency-name: "org.slf4j:*"', synced)
+        self.assertIn('dependency-name: "org.bouncycastle:*"', synced)
+        self.assertIn('dependency-name: "org.apache.tomcat.embed:*"', synced)
         self.assertIn('dependency-name: "org.springframework.boot"', synced)
 
     def test_sync_text_adds_ignore_section_when_missing(self) -> None:
