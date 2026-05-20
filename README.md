@@ -44,7 +44,7 @@ constraints and Gradle build aliases in one place.
 
 ## Architecture
 
-![Architecture diagram](docs/images/readme-diagrams/bluetape4k-dependencies-architecture-01.png)
+![dependencies Architecture diagram](docs/images/readme-diagrams/bluetape4k-dependencies-architecture-01.png)
 
 ---
 

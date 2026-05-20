@@ -44,7 +44,7 @@ constraint와 Gradle build alias를 한 곳에 모아 이 문제를 해결합니
 
 ## 구조
 
-![Structure diagram](docs/images/readme-diagrams/bluetape4k-dependencies-architecture-01.png)
+![dependencies Architecture diagram](docs/images/readme-diagrams/bluetape4k-dependencies-architecture-01.png)
 
 ---
 
