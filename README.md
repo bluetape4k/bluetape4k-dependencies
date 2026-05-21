@@ -42,6 +42,16 @@ constraints and Gradle build aliases in one place.
 
 ---
 
+<!-- README_VISUAL_OVERVIEW:START -->
+## Overview Diagram
+
+![Bluetape4k Dependencies overview diagram](docs/images/readme-diagrams/root-readme-overview-01.png)
+
+## Module Composition Chart
+
+![Bluetape4k Dependencies module composition chart](docs/images/readme-charts/root-readme-module-chart-01.png)
+<!-- README_VISUAL_OVERVIEW:END -->
+
 ## Architecture
 
 ![dependencies Architecture diagram](docs/images/readme-diagrams/bluetape4k-dependencies-architecture-01.png)
