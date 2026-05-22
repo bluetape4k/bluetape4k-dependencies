@@ -7,6 +7,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-22
+
 ### Added
 
 - Dependabot configuration for repository maintenance ([PR #1](https://github.com/bluetape4k/bluetape4k-dependencies/pull/1)).
@@ -27,6 +29,11 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Added versionless Spring Boot module aliases for the core `bluetape4k-projects` Spring Boot integration modules ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
 - Replaced the generated `bluetape4k-graph-spring-boot4-starter` alias with the versionless `bluetape4k-graph-spring-boot` alias.
 - README license references now point to MIT License.
+- Promoted the ecosystem BOM set to the current published release train:
+  `bluetape4k-bom:1.9.0`, `bluetape4k-aws-bom:0.2.0`,
+  `bluetape4k-exposed-bom:1.9.0`, `bluetape4k-graph-bom:0.4.0`,
+  `bluetape4k-image-bom:0.1.1`, `bluetape4k-javers-bom:0.1.1`, and
+  `bluetape4k-text-bom:0.1.1`.
 
 ### Fixed
 
