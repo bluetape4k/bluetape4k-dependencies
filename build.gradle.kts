@@ -180,6 +180,7 @@ dependencies {
         api(libs.bluetape4k.workflow)
 
         // -- bluetape4k-aws modules --
+        api(libs.bluetape4k.aws.exposed)
         api(libs.bluetape4k.aws.java)
         api(libs.bluetape4k.aws.kotlin)
         api(libs.bluetape4k.aws.ktor)
