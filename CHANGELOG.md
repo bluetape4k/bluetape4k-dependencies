@@ -7,9 +7,16 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-05-23
+
 ### Added
 
 - `bluetape4k-leader-dynamodb` generated catalog alias and BOM constraint.
+
+### Changed
+
+- Promoted the managed `bluetape4k-leader` BOM from `0.1.0` to the published
+  `0.2.0` release.
 
 ## [1.0.1] - 2026-05-22
 
