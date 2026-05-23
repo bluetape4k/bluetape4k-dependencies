@@ -7,6 +7,13 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-05-23
+
+### Changed
+
+- Promoted the managed `bluetape4k-projects` BOM from `1.9.0` to the published
+  `1.9.1` release.
+
 ## [1.1.1] - 2026-05-23
 
 ### Fixed
