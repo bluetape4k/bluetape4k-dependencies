@@ -182,6 +182,16 @@ Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot rep
 
 단, `-SNAPSHOT` 제거는 해당 upstream release artifact가 Central에 존재할 때만 해야 합니다. 예를 들어 `bluetape4k-leader = "0.1.0"`으로 바꾸는 것은 “BOM이 `io.github.bluetape4k.leader:*:0.1.0` release artifact를 관리한다”는 뜻입니다. 이것은 `bluetape4k-leader` repo의 `gradle.properties`를 자동으로 바꾸지 않습니다.
 
+각 upstream repo를 공식 릴리즈로 준비할 때도 repo 내부의 `bluetape4k-*`
+참조를 최신 published release train으로 먼저 맞춰야 합니다. 예를 들어
+`bluetape4k-leader`를 `0.2.0`으로 릴리즈한다면
+`gradle/libs.versions.toml`의 `bluetape4k`, `bluetape4k-exposed`,
+`bluetape4k-aws` 같은 bluetape4k 계열 alias가 이미 Central에 공개된 최신
+release version을 가리키는지 확인하고, snapshot이나 이전 release line이
+남아 있으면 release prep PR에서 함께 갱신합니다. 이 원칙은 repo-local
+`gradle.properties` release version 변경, README dependency snippet 갱신,
+`CHANGELOG.md`/`WIP.md` 최신화와 같은 release metadata 작업의 일부입니다.
+
 ### Pre-release 배포
 
 정식 버전으로 확정하기 전에도 `1.0.0-Beta1`, `1.0.0-RC1` 같은 pre-release version을 Central Portal에 배포할 수 있습니다. Maven Central은 version 문자열을 기준으로 release artifact를 저장하므로, 이런 버전도 snapshot이 아닌 immutable release artifact입니다.
