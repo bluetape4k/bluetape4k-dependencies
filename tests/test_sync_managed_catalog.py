@@ -203,6 +203,19 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertFalse(sync.include_module(repo, "sample-benchmark", "benchmark/sample-benchmark"))
         self.assertTrue(sync.include_module(repo, "sample-core", "sample-core"))
 
+    def test_projects_repo_excludes_non_published_mock_web_apps(self) -> None:
+        repo = next(
+            managed_repo
+            for managed_repo in sync.MANAGED_REPOS
+            if managed_repo.label == "bluetape4k-projects"
+        )
+
+        self.assertFalse(sync.include_module(repo, "bluetape4k-mock-web-server", "testing/mock-web-server"))
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-mock-webflux-server", "testing/mock-webflux-server")
+        )
+        self.assertTrue(sync.include_module(repo, "bluetape4k-testcontainers", "testing/testcontainers"))
+
     def test_validate_discovered_rejects_duplicate_aliases(self) -> None:
         repo = sync.MANAGED_REPOS[0]
         module = sync.Module(

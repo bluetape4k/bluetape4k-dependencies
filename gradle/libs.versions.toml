@@ -4,7 +4,7 @@
 [versions]
 # <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
-bluetape4k-dependencies = "1.1.0"  # This catalog/BOM release train version; must match gradle.properties.
+bluetape4k-dependencies = "1.1.1"  # This catalog/BOM release train version; must match gradle.properties.
 
 # bluetape4k-projects (monorepo core modules)
 bluetape4k-bom     = "1.9.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
@@ -201,8 +201,6 @@ bluetape4k-logging                             = { module = "io.github.bluetape4
 bluetape4k-math                                = { module = "io.github.bluetape4k:bluetape4k-math", version.ref = "bluetape4k-bom" }
 bluetape4k-measured                            = { module = "io.github.bluetape4k:bluetape4k-measured", version.ref = "bluetape4k-bom" }
 bluetape4k-micrometer                          = { module = "io.github.bluetape4k:bluetape4k-micrometer", version.ref = "bluetape4k-bom" }
-bluetape4k-mock-web-server                     = { module = "io.github.bluetape4k:bluetape4k-mock-web-server", version.ref = "bluetape4k-bom" }
-bluetape4k-mock-webflux-server                 = { module = "io.github.bluetape4k:bluetape4k-mock-webflux-server", version.ref = "bluetape4k-bom" }
 bluetape4k-money                               = { module = "io.github.bluetape4k:bluetape4k-money", version.ref = "bluetape4k-bom" }
 bluetape4k-mongodb                             = { module = "io.github.bluetape4k:bluetape4k-mongodb", version.ref = "bluetape4k-bom" }
 bluetape4k-mutiny                              = { module = "io.github.bluetape4k:bluetape4k-mutiny", version.ref = "bluetape4k-bom" }

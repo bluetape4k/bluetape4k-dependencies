@@ -78,7 +78,13 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         version_ref="bluetape4k-bom",
         alias_mode="identity",
         exclude_path_fragments=("examples", "workshop", "benchmark"),
-        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
+        exclude_name_suffixes=(
+            "-demo",
+            "-examples",
+            "-benchmark",
+            "-mock-web-server",
+            "-mock-webflux-server",
+        ),
     ),
     ManagedRepo(
         label="bluetape4k-aws",

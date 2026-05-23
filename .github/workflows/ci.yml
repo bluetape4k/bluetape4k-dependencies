@@ -82,9 +82,10 @@ jobs:
           done
       - name: Verify catalog scripts
         run: |
-          python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py tests/*.py
+          python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-managed-artifacts.py tests/*.py
           python3 -m unittest discover -s tests -p 'test_*.py'
           scripts/sync-managed-catalog.py --check --summary
+          scripts/verify-managed-artifacts.py --summary
 
       - name: Verify downstream repository sync
         if: ${{ github.event_name != 'pull_request' }}
