@@ -414,7 +414,7 @@ Each upstream repository maintains its **own independent version**, tracked in `
 
 ```toml
 [versions]
-bluetape4k-core   = "1.9.0"
+bluetape4k-core   = "1.9.1"
 bluetape4k-aws    = "0.2.0"
 bluetape4k-image  = "0.1.1"
 bluetape4k-text   = "0.1.1"
