@@ -140,7 +140,7 @@ jobs:
 
       - name: Publish to Central Portal
         run: >
-          ./gradlew publishAllPublicationsToCentralPortal
+          ./gradlew nmcpPublishAllPublicationsToCentralPortal
           --no-daemon
           --no-configuration-cache
           --no-build-cache

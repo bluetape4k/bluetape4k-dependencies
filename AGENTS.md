@@ -1,13 +1,13 @@
 # AGENTS.md - bluetape4k-dependencies
 
 This repository is the centralized dependency-governance project for the
-bluetape4k ecosystem. It publishes a Gradle `java-platform` BOM plus a Gradle
-version catalog from the same managed version source. It contains no production
-source code.
+bluetape4k ecosystem. It publishes a Gradle `java-platform` BOM. Its
+`gradle/libs.versions.toml` is also the internal build catalog source consumed
+by other `bluetape4k-*` repositories from a checked-out git ref. It contains no
+production source code.
 
 - Group: `io.github.bluetape4k`
 - BOM artifact: `bluetape4k-dependencies`
-- Gradle version catalog artifact: `bluetape4k-version-catalog`
 - Published to Maven Central through Sonatype NMCP
 
 ## Managed Repositories
@@ -32,12 +32,21 @@ source code.
 ## How It Works
 
 `gradle/libs.versions.toml` owns version refs, library aliases, and plugin
-aliases. `build.gradle.kts` publishes that file as `bluetape4k-version-catalog`
-and also declares `dependencies { constraints { ... } }` for the
-`bluetape4k-dependencies` BOM.
+aliases. `build.gradle.kts` declares `dependencies { constraints { ... } }` for
+the `bluetape4k-dependencies` BOM. Other `bluetape4k-*` repositories read this
+catalog from a checked-out `bluetape4k-dependencies` ref; it is not a Maven
+Central publication.
 
-Use the BOM for dependency resolution contracts. Use the published version
-catalog for Gradle build aliases and plugin/tooling versions.
+Use the BOM for dependency resolution contracts. Use the checked-out catalog
+source for Gradle build aliases and plugin/tooling versions.
+
+## Versioning Policy
+
+- `baseVersion` is the semantic version of the user-facing
+  `bluetape4k-dependencies` BOM.
+- Shared catalog source refs use date-stamped train tags such as
+  `catalog/2026-05-23-00`. Do not publish the internal catalog as a Maven
+  Central artifact.
 
 ## Updating Versions
 
@@ -73,7 +82,6 @@ python3 -m unittest tests/test_sync_dependabot_ignores.py
 python3 -m unittest tests/test_triage_dependabot_alerts.py
 ./gradlew build
 ./gradlew publishBluetapeDependenciesPublicationToCentralPortal
-./gradlew publishBluetapeVersionCatalogPublicationToCentralPortal
 ./gradlew publishToMavenLocal
 ```
 
@@ -92,8 +100,10 @@ Publishing credentials come from `resolveCentralPublishingConfig()`. Use
   alerts to `central-catalog`, `central-bom-transitive`, `repo-tooling`, or
   `repo-local`.
 - The BOM version is bumped when a coordinated upstream version set is promoted.
+- The build/contributor catalog is cut by tagging this repo, for example
+  `catalog/2026-05-23-00`; it does not have to match the BOM version.
 - `allowDependencies()` is enabled so constraints can reference external BOMs.
-- The version catalog is a Gradle build contract, not a substitute for the BOM.
+- The version catalog source is a Gradle build contract, not a substitute for the BOM.
   Consumers should still import `bluetape4k-dependencies` as a platform when
   they need dependency resolution alignment.
 - CI runs `./gradlew build` for pushes/PRs against `develop` and `main`.

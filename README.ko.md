@@ -25,8 +25,8 @@
 `spring-boot-dependencies`와 동일한 패턴을 따릅니다: 플랫폼 의존성 하나만 추가하면 모든 bluetape4k
 모듈의 버전이 자동으로 정렬됩니다 — 개별 아티팩트에 버전을 명시할 필요가 없습니다.
 
-같은 레포지토리에서 `bluetape4k-version-catalog`도 함께 배포합니다. 이 Gradle Version Catalog
-artifact는 공통 plugin version, library alias, bluetape4k 모듈 좌표를 제공합니다.
+같은 레포지토리의 `gradle/libs.versions.toml`은 내부 Gradle Version Catalog source입니다.
+공통 plugin version, library alias, bluetape4k 모듈 좌표를 제공합니다.
 
 영어 버전은 [README.md](README.md)를 참고하세요.
 
@@ -61,22 +61,19 @@ constraint와 Gradle build alias를 한 곳에 모아 이 문제를 해결합니
 
 ## 사용 방법
 
-Dependency resolution에는 BOM을 사용합니다. Gradle build alias와 plugin version에는 published Gradle
-Version Catalog를 사용합니다. Catalog는 BOM을 대체하지 않습니다. Catalog는 Gradle build가 공유하는
-이름 체계를 제공하고, BOM은 실제 resolved dependency version을 정렬합니다.
+Dependency resolution에는 BOM을 사용합니다. 내부 Gradle build alias와 plugin version에는 checkout된
+`bluetape4k-dependencies/gradle/libs.versions.toml`을 사용합니다. Catalog는 BOM을 대체하지
+않습니다. Catalog는 Gradle build가 공유하는 이름 체계를 제공하고, BOM은 실제 resolved dependency
+version을 정렬합니다.
 
 ### Gradle Version Catalog
 
 ```kotlin
 // settings.gradle.kts
 dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven("https://central.sonatype.com/repository/maven-snapshots/")
-    }
     versionCatalogs {
         create("bt4k") {
-            from("io.github.bluetape4k:bluetape4k-version-catalog:VERSION")
+            from(files("../bluetape4k-dependencies/gradle/libs.versions.toml"))
         }
     }
 }
@@ -246,9 +243,10 @@ Dependabot security alert은 alert이 보이는 레포지토리가 아니라 dep
 | `repo-tooling` | alert 레포지토리 | Gradle/plugin/settings tooling을 해당 레포에서 고치되, 공통이면 central governance로 승격합니다. |
 | `repo-local` | alert 레포지토리 | manifest를 소유한 레포에서 직접 고칩니다. |
 
-장기적으로 downstream 레포지토리는 `bluetape4k-version-catalog`를 `bt4k` catalog로
-import하고, repository convention plugin을 통해 `bluetape4k-dependencies` BOM을 platform으로
-import해야 합니다. BOM은 dependency resolution 계약이고, catalog는 Gradle authoring 계약입니다.
+장기적으로 downstream 레포지토리는 checkout된
+`bluetape4k-dependencies/gradle/libs.versions.toml`을 `bt4k` catalog로 import하고,
+repository convention plugin을 통해 `bluetape4k-dependencies` BOM을 platform으로 import해야
+합니다. BOM은 dependency resolution 계약이고, catalog는 Gradle authoring 계약입니다.
 
 권장 릴리즈 흐름은 다음과 같습니다:
 

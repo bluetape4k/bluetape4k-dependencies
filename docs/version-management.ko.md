@@ -9,7 +9,7 @@
 | 역할 | 대상 | 결과물 |
 |---|---|---|
 | BOM | bluetape4k artifact dependency resolution | `io.github.bluetape4k:bluetape4k-dependencies` |
-| Version catalog | Gradle plugin/library alias와 bluetape4k artifact alias | `io.github.bluetape4k:bluetape4k-version-catalog` |
+| Version catalog source | Gradle plugin/library alias와 bluetape4k artifact alias | `gradle/libs.versions.toml` pinned by git ref |
 
 중요한 점은 shared version alias가 동적으로 참조되는 구조가 아니라는 것입니다.
 
@@ -402,7 +402,7 @@ snapshotVersion=
 - [ ] PR merge 및 로컬 `develop` 동기화
 - [ ] `Publish Release` workflow 실행
 - [ ] release workflow green 확인
-- [ ] `bluetape4k-dependencies:1.1.0`과 `bluetape4k-version-catalog:1.1.0` Central 조회 확인
+- [ ] `bluetape4k-dependencies:1.1.0` Central 조회 확인
 
 ### 공식 릴리즈 체크리스트
 

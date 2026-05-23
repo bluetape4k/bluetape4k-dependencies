@@ -2,7 +2,6 @@ import nmcp.NmcpExtension
 
 plugins {
     `java-platform`
-    `version-catalog`
     `maven-publish`
     signing
 
@@ -31,12 +30,6 @@ repositories {
     maven {
         name = "central-snapshots"
         url = uri("https://central.sonatype.com/repository/maven-snapshots/")
-    }
-}
-
-catalog {
-    versionCatalog {
-        from(files("gradle/libs.versions.toml"))
     }
 }
 
@@ -308,43 +301,21 @@ publishing {
                 }
             }
         }
-        create<MavenPublication>("BluetapeVersionCatalog") {
-            from(components["versionCatalog"])
-            artifactId = "bluetape4k-version-catalog"
-
-            pom {
-                name.set("bluetape4k-version-catalog")
-                description.set("Published Gradle version catalog for bluetape4k build plugins, aliases, and managed module coordinates")
-                url.set("https://github.com/bluetape4k/bluetape4k-dependencies")
-                licenses {
-                    license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                developers {
-                    developer {
-                        id.set("debop")
-                        name.set("Sunghyouk Bae")
-                        email.set("sunghyouk.bae@gmail.com")
-                    }
-                }
-                scm {
-                    connection.set("scm:git:git://github.com/bluetape4k/bluetape4k-dependencies.git")
-                    developerConnection.set("scm:git:ssh://github.com/bluetape4k/bluetape4k-dependencies.git")
-                    url.set("https://github.com/bluetape4k/bluetape4k-dependencies")
-                }
-            }
-        }
     }
     repositories {
         mavenCentral()
         maven {
             name = "central-snapshots"
             url = uri("https://central.sonatype.com/repository/maven-snapshots/")
+            credentials(org.gradle.api.artifacts.repositories.PasswordCredentials::class) {
+                username = centralUser
+                password = centralPassword
+            }
+            authentication {
+                create<org.gradle.authentication.http.BasicAuthentication>("basic")
+            }
         }
     }
 }
 
 configurePublishingSigning("BluetapeDependencies")
-configurePublishingSigning("BluetapeVersionCatalog")

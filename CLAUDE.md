@@ -98,6 +98,9 @@ dependencies {
 - Each upstream repository maintains its own independent version (`bluetape4k-core`, `bluetape4k-graph`, …).
 - The BOM's own version (`baseVersion` in `gradle.properties`) is bumped whenever a new set of upstream
   versions is promoted and the BOM is re-published.
+- The Gradle version catalog source (`gradle/libs.versions.toml`) is cut by tagging this repo with
+  a date-stamped train ref such as `catalog/2026-05-23-00`. It is an internal build input, not a
+  Maven Central publication.
 - All per-repo versions live exclusively in `gradle/libs.versions.toml` — never hard-coded elsewhere.
 
 ---
@@ -109,4 +112,3 @@ dependencies {
 - `bluetape4k-bom` is imported via `api(platform(...))` — this propagates ALL `bluetape4k-projects` module versions to consumers. Do NOT put it back inside `constraints {}`.
 - Individual constraints for aws, image, text, graph, leader, exposed remain explicit because those repos don't have sub-BOMs imported here.
 - The CI workflow (`ci.yml`) runs `./gradlew build` on every push/PR against `develop` and `main`.
-
