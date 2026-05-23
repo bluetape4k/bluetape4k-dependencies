@@ -203,6 +203,7 @@ repository `settings.gradle.kts` module includes:
 ```bash
 scripts/sync-managed-catalog.py --check --summary
 scripts/sync-managed-catalog.py --write --check --summary
+scripts/verify-managed-artifacts.py --summary
 python3 -m unittest tests/test_sync_managed_catalog.py
 ```
 
@@ -309,8 +310,6 @@ The table below lists every managed `bluetape4k-projects` artifact currently gen
 | `bluetape4k-math` | Math |
 | `bluetape4k-measured` | Measurement |
 | `bluetape4k-micrometer` | Metrics |
-| `bluetape4k-mock-web-server` | Testing |
-| `bluetape4k-mock-webflux-server` | Testing |
 | `bluetape4k-money` | Money |
 | `bluetape4k-mongodb` | MongoDB |
 | `bluetape4k-mutiny` | Mutiny |

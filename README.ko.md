@@ -203,6 +203,7 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 ```bash
 scripts/sync-managed-catalog.py --check --summary
 scripts/sync-managed-catalog.py --write --check --summary
+scripts/verify-managed-artifacts.py --summary
 python3 -m unittest tests/test_sync_managed_catalog.py
 ```
 
@@ -308,8 +309,6 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 | `bluetape4k-math` | Math |
 | `bluetape4k-measured` | Measurement |
 | `bluetape4k-micrometer` | Metrics |
-| `bluetape4k-mock-web-server` | Testing |
-| `bluetape4k-mock-webflux-server` | Testing |
 | `bluetape4k-money` | Money |
 | `bluetape4k-mongodb` | MongoDB |
 | `bluetape4k-mutiny` | Mutiny |

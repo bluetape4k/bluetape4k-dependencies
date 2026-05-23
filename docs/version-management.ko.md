@@ -78,9 +78,10 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 스크립트는 반복 운영 도구이므로, 변경 시 다음 검증을 기본으로 수행합니다.
 
 ```bash
-python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py tests/*.py
+python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/verify-managed-artifacts.py tests/*.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 scripts/sync-managed-catalog.py --check --summary
+scripts/verify-managed-artifacts.py --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
 ./gradlew build publishToMavenLocal --no-daemon
 ```
@@ -90,6 +91,7 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 ```bash
 git diff --check
 scripts/sync-managed-catalog.py --check --summary
+scripts/verify-managed-artifacts.py --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
 ```
 
@@ -286,6 +288,7 @@ Release policy:
 - [ ] source-of-truth block의 `bluetape4k-dependencies` 값을 release version으로 변경합니다.
 - [ ] `gradle.properties`를 release version으로 맞춥니다. 예: `baseVersion=1.1.0`, `snapshotVersion=`.
 - [ ] `scripts/sync-managed-catalog.py --check --summary`를 실행합니다.
+- [ ] `scripts/verify-managed-artifacts.py --summary`로 self artifact를 제외한 managed `bluetape4k-*` GAV가 Central에 존재하는지 확인합니다.
 - [ ] `scripts/sync-shared-versions.py --workspace .. --check --summary`를 실행합니다.
 - [ ] `./gradlew build publishToMavenLocal --no-daemon`로 로컬 release BOM/catalog를 검증합니다.
 
@@ -390,6 +393,7 @@ snapshotVersion=
 그 뒤 아래 순서로 `bluetape4k-dependencies`를 마지막에 배포합니다.
 
 - [ ] `scripts/sync-managed-catalog.py --check --summary`
+- [ ] `scripts/verify-managed-artifacts.py --summary`
 - [ ] `scripts/sync-shared-versions.py --workspace .. --check --summary`
 - [ ] `scripts/sync-dependabot-ignores.py --workspace .. --check --summary`
 - [ ] `./gradlew build publishToMavenLocal --no-daemon`
@@ -403,6 +407,7 @@ snapshotVersion=
 ### 공식 릴리즈 체크리스트
 
 - [ ] 모든 `bluetape4k-*` version ref가 실제 release artifact로 존재합니다.
+- [ ] `scripts/verify-managed-artifacts.py --summary`가 통과합니다.
 - [ ] Central에 없는 upstream version만 release action을 실행했습니다.
 - [ ] release BOM의 managed `bluetape4k-*` ref에 `-SNAPSHOT`이 없습니다.
 - [ ] `gradle.properties`와 source-of-truth block의 `bluetape4k-dependencies` 값이 일치합니다.

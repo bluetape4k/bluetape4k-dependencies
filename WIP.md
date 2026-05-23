@@ -20,10 +20,14 @@ Open count: 0 issues.
 
 ## Current Direction
 
-Prepare and publish `1.1.0`.
+Prepare and publish `1.1.1`. The patch removes non-published mock web
+application modules from the managed catalog and adds a Central artifact audit
+gate.
 
 Do not start the next governance or major dependency-upgrade lane until the
-1.1.0 BOM and version catalog are visible in Maven Central.
+1.1.1 BOM and version catalog are visible in Maven Central. Treat 1.1.0 as
+superseded for downstream sync because it exposed non-published mock web app
+modules.
 
 ## Priority Queue
 
@@ -33,4 +37,4 @@ No assigned open issues remain for this release train.
 
 | Lane | Limit | Current next |
 |---|---:|---|
-| Release | 1 | Finish 1.1.0 release before starting more dependency governance work. |
+| Release | 1 | Finish 1.1.1 release before starting more dependency governance work. |

@@ -145,8 +145,6 @@ dependencies {
         api(libs.bluetape4k.math)
         api(libs.bluetape4k.measured)
         api(libs.bluetape4k.micrometer)
-        api(libs.bluetape4k.mock.web.server)
-        api(libs.bluetape4k.mock.webflux.server)
         api(libs.bluetape4k.money)
         api(libs.bluetape4k.mongodb)
         api(libs.bluetape4k.mutiny)
