@@ -218,6 +218,7 @@ dependencies {
 
         // -- bluetape4k-leader modules --
         api(libs.bluetape4k.leader.core)
+        api(libs.bluetape4k.leader.dynamodb)
         api(libs.bluetape4k.leader.exposed.core)
         api(libs.bluetape4k.leader.exposed.jdbc)
         api(libs.bluetape4k.leader.exposed.r2dbc)

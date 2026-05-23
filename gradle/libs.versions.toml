@@ -279,6 +279,7 @@ bluetape4k-graph-tinkerpop                     = { module = "io.github.bluetape4
 # -- bluetape4k-leader modules --
 bluetape4k-leader-bom                          = { module = "io.github.bluetape4k.leader:bluetape4k-leader-bom", version.ref = "bluetape4k-leader-bom" }
 bluetape4k-leader-core                         = { module = "io.github.bluetape4k.leader:bluetape4k-leader-core", version.ref = "bluetape4k-leader-bom" }
+bluetape4k-leader-dynamodb                     = { module = "io.github.bluetape4k.leader:bluetape4k-leader-dynamodb", version.ref = "bluetape4k-leader-bom" }
 bluetape4k-leader-exposed-core                 = { module = "io.github.bluetape4k.leader:bluetape4k-leader-exposed-core", version.ref = "bluetape4k-leader-bom" }
 bluetape4k-leader-exposed-jdbc                 = { module = "io.github.bluetape4k.leader:bluetape4k-leader-exposed-jdbc", version.ref = "bluetape4k-leader-bom" }
 bluetape4k-leader-exposed-r2dbc                = { module = "io.github.bluetape4k.leader:bluetape4k-leader-exposed-r2dbc", version.ref = "bluetape4k-leader-bom" }
