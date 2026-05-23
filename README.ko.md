@@ -414,14 +414,14 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 
 ```toml
 [versions]
-bluetape4k-core   = "1.8.0"
-bluetape4k-aws    = "0.1.0"
-bluetape4k-image  = "0.1.0"
-bluetape4k-text   = "0.1.0"
-bluetape4k-graph  = "0.3.0"
-bluetape4k-leader = "0.1.0"
-bluetape4k-exposed = "1.8.1-SNAPSHOT"
-bluetape4k-javers = "0.1.0"
+bluetape4k-core   = "1.9.0"
+bluetape4k-aws    = "0.2.0"
+bluetape4k-image  = "0.1.1"
+bluetape4k-text   = "0.1.1"
+bluetape4k-graph  = "0.4.0"
+bluetape4k-leader = "0.2.0"
+bluetape4k-exposed = "1.9.0"
+bluetape4k-javers = "0.1.1"
 ```
 
 새로운 업스트림 릴리즈를 반영하려면 `libs.versions.toml`에서 해당 버전을 수정하고 새 BOM 버전을 배포하면 됩니다.
