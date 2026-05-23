@@ -14,7 +14,7 @@
 It follows the same pattern as `spring-boot-dependencies`: import one platform dependency and all bluetape4k
 module versions are aligned automatically — no per-artifact version declarations needed.
 
-The same repository also publishes `bluetape4k-version-catalog`, a Gradle Version Catalog artifact for
+The same repository also owns `gradle/libs.versions.toml`, the internal Gradle Version Catalog source for
 shared plugin versions, library aliases, and bluetape4k module coordinates.
 
 Also available in [Korean / 한국어](README.ko.md).
@@ -60,22 +60,19 @@ constraints and Gradle build aliases in one place.
 
 ## Usage
 
-Use the BOM for dependency resolution. Use the published Gradle Version Catalog for build aliases and plugin
-versions. The catalog does not replace the BOM; it gives Gradle builds a shared vocabulary while the BOM
-aligns resolved dependency versions.
+Use the BOM for dependency resolution. Use a checked-out
+`bluetape4k-dependencies/gradle/libs.versions.toml` for internal build aliases
+and plugin versions. The catalog does not replace the BOM; it gives Gradle
+builds a shared vocabulary while the BOM aligns resolved dependency versions.
 
 ### Gradle Version Catalog
 
 ```kotlin
 // settings.gradle.kts
 dependencyResolutionManagement {
-    repositories {
-        mavenCentral()
-        maven("https://central.sonatype.com/repository/maven-snapshots/")
-    }
     versionCatalogs {
         create("bt4k") {
-            from("io.github.bluetape4k:bluetape4k-version-catalog:VERSION")
+            from(files("../bluetape4k-dependencies/gradle/libs.versions.toml"))
         }
     }
 }
@@ -246,10 +243,11 @@ alerts as:
 | `repo-tooling` | Alert repository | Fix local Gradle/plugin/settings tooling unless the package is promoted to central governance. |
 | `repo-local` | Alert repository | Fix the repository-owned dependency directly. |
 
-Long-term, downstream repositories should import `bluetape4k-version-catalog`
-as a `bt4k` catalog and import `bluetape4k-dependencies` as a platform through
-their repository convention plugin. The BOM remains the dependency-resolution
-contract; the catalog remains the Gradle authoring contract.
+Long-term, downstream repositories should import the checked-out
+`bluetape4k-dependencies/gradle/libs.versions.toml` file as a `bt4k` catalog
+and import `bluetape4k-dependencies` as a platform through their repository
+convention plugin. The BOM remains the dependency-resolution contract; the
+catalog remains the Gradle authoring contract.
 
 The expected release flow is:
 
