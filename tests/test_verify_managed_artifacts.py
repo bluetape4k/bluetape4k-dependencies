@@ -73,6 +73,19 @@ class VerifyManagedArtifactsTest(unittest.TestCase):
             "https://repo1.maven.org/maven2/io/github/bluetape4k/leader/leader-dynamodb/0.2.0/leader-dynamodb-0.2.0.pom",
         )
 
+    def test_metadata_url_uses_maven_snapshot_layout(self) -> None:
+        artifact = verify.ManagedArtifact(
+            alias="bluetape4k-core",
+            group_id="io.github.bluetape4k",
+            artifact_id="bluetape4k-core",
+            version="1.9.2-SNAPSHOT",
+        )
+
+        self.assertEqual(
+            verify.metadata_url("https://central.sonatype.com/repository/maven-snapshots/", artifact),
+            "https://central.sonatype.com/repository/maven-snapshots/io/github/bluetape4k/bluetape4k-core/1.9.2-SNAPSHOT/maven-metadata.xml",
+        )
+
     def test_verify_artifacts_rejects_snapshots_by_default(self) -> None:
         artifact = verify.ManagedArtifact(
             alias="bluetape4k-core",
@@ -88,6 +101,29 @@ class VerifyManagedArtifactsTest(unittest.TestCase):
             [
                 "Snapshot version is not release-verifiable: bluetape4k-core -> io.github.bluetape4k:bluetape4k-core:1.9.1-SNAPSHOT"
             ],
+        )
+
+    def test_verify_artifacts_allows_snapshots_via_snapshot_metadata(self) -> None:
+        artifact = verify.ManagedArtifact(
+            alias="bluetape4k-core",
+            group_id="io.github.bluetape4k",
+            artifact_id="bluetape4k-core",
+            version="1.9.2-SNAPSHOT",
+        )
+
+        with mock.patch.object(verify, "artifact_exists", return_value=(True, "200")) as artifact_exists:
+            errors = verify.verify_artifacts(
+                [artifact],
+                "https://repo1.maven.org/maven2",
+                1.0,
+                True,
+                "https://central.sonatype.com/repository/maven-snapshots",
+            )
+
+        self.assertEqual(errors, [])
+        artifact_exists.assert_called_once_with(
+            "https://central.sonatype.com/repository/maven-snapshots/io/github/bluetape4k/bluetape4k-core/1.9.2-SNAPSHOT/maven-metadata.xml",
+            1.0,
         )
 
     def test_verify_artifacts_reports_missing_aliases(self) -> None:

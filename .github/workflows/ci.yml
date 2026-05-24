@@ -86,7 +86,11 @@ jobs:
           python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-managed-artifacts.py tests/*.py
           python3 -m unittest discover -s tests -p 'test_*.py'
           scripts/sync-managed-catalog.py --check --summary
-          scripts/verify-managed-artifacts.py --summary
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && "${GITHUB_BASE_REF}" == "main" ]]; then
+            scripts/verify-managed-artifacts.py --summary
+          else
+            scripts/verify-managed-artifacts.py --summary --allow-snapshots
+          fi
 
       - name: Verify downstream repository sync
         if: ${{ github.event_name != 'pull_request' }}
