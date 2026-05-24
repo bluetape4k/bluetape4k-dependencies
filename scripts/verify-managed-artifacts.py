@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 DEFAULT_REPOSITORY_URL = "https://repo1.maven.org/maven2"
+DEFAULT_SNAPSHOT_REPOSITORY_URL = "https://central.sonatype.com/repository/maven-snapshots"
 SELF_ALIAS = "bluetape4k-dependencies"
 
 
@@ -113,6 +114,12 @@ def pom_url(repository_url: str, artifact: ManagedArtifact) -> str:
     )
 
 
+def metadata_url(repository_url: str, artifact: ManagedArtifact) -> str:
+    base = repository_url.rstrip("/")
+    group_path = artifact.group_id.replace(".", "/")
+    return f"{base}/{group_path}/{artifact.artifact_id}/{artifact.version}/maven-metadata.xml"
+
+
 def artifact_exists(url: str, timeout: float) -> tuple[bool, str]:
     request = urllib.request.Request(url, method="HEAD")
     try:
@@ -138,15 +145,18 @@ def verify_artifacts(
     repository_url: str,
     timeout: float,
     allow_snapshots: bool,
+    snapshot_repository_url: str = DEFAULT_SNAPSHOT_REPOSITORY_URL,
 ) -> list[str]:
     errors: list[str] = []
 
     for artifact in artifacts:
-        if artifact.version.endswith("-SNAPSHOT") and not allow_snapshots:
+        is_snapshot = artifact.version.endswith("-SNAPSHOT")
+        if is_snapshot and not allow_snapshots:
             errors.append(f"Snapshot version is not release-verifiable: {artifact.alias} -> {artifact.gav}")
             continue
 
-        exists, status = artifact_exists(pom_url(repository_url, artifact), timeout)
+        url = metadata_url(snapshot_repository_url, artifact) if is_snapshot else pom_url(repository_url, artifact)
+        exists, status = artifact_exists(url, timeout)
         if not exists:
             errors.append(f"Missing managed artifact ({status}): {artifact.alias} -> {artifact.gav}")
 
@@ -165,6 +175,11 @@ def main() -> int:
         "--repository-url",
         default=DEFAULT_REPOSITORY_URL,
         help="Maven repository base URL",
+    )
+    parser.add_argument(
+        "--snapshot-repository-url",
+        default=DEFAULT_SNAPSHOT_REPOSITORY_URL,
+        help="Maven snapshot repository base URL",
     )
     parser.add_argument("--timeout", type=float, default=10.0, help="HTTP timeout in seconds")
     parser.add_argument(
@@ -186,6 +201,7 @@ def main() -> int:
         repository_url=args.repository_url,
         timeout=args.timeout,
         allow_snapshots=args.allow_snapshots,
+        snapshot_repository_url=args.snapshot_repository_url,
     )
 
     if args.summary:
