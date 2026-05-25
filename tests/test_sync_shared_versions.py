@@ -246,22 +246,20 @@ class SyncSharedVersionsTest(unittest.TestCase):
         self.assertEqual(synced_text, original)
         self.assertEqual(changes, [])
 
-    def test_verify_source_version_matches_project(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = Path(tmp)
-            (repo / "gradle.properties").write_text(
-                "baseVersion=1.0.0\nsnapshotVersion=\n",
-                encoding="utf-8",
-            )
-            source = {
-                "bluetape4k-dependencies": sync.SourceVersion(
-                    alias="bluetape4k-dependencies",
-                    version="1.0.0",
-                    line='bluetape4k-dependencies = "1.0.0"',
-                ),
-            }
+    def test_verify_self_version_alias_allows_released_consumer_line(self) -> None:
+        source = {
+            "bluetape4k-dependencies": sync.SourceVersion(
+                alias="bluetape4k-dependencies",
+                version="1.1.3",
+                line='bluetape4k-dependencies = "1.1.3"',
+            ),
+        }
 
-            sync.verify_source_version_matches_project(repo, source)
+        sync.verify_self_version_alias(source)
+
+    def test_verify_self_version_alias_requires_self_alias(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "source-of-truth block"):
+            sync.verify_self_version_alias({})
 
     def test_cli_check_detects_drift_and_write_fixes_it(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
