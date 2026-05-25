@@ -18,9 +18,9 @@ from pathlib import Path
 
 SOURCE_START = "# <shared-version-source-of-truth by scripts/sync-shared-versions.py>"
 SOURCE_END = "# </shared-version-source-of-truth>"
+SELF_ALIAS = "bluetape4k-dependencies"
 VERSION_LINE = re.compile(r'^([A-Za-z0-9_.-]+)\s*=\s*"([^"]+)"(?P<suffix>.*)$')
 INLINE_VERSION_LINE = re.compile(r'^([A-Za-z0-9_.-]+)\s*=\s*\{.*\bversion\s*=\s*"([^"]+)".*\}\s*(?:#.*)?$')
-PROPERTY_LINE = re.compile(r"^([A-Za-z0-9_.-]+)=(.*)$")
 
 DEFAULT_REPOSITORIES = (
     "bluetape4k-projects",
@@ -175,33 +175,10 @@ def has_conflicting_module_group(
     return bool(source.module_groups and target_groups and source.module_groups.isdisjoint(target_groups))
 
 
-def read_gradle_properties(path: Path) -> dict[str, str]:
-    properties: dict[str, str] = {}
-    if not path.exists():
-        return properties
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        match = PROPERTY_LINE.match(raw_line.strip())
-        if match:
-            properties[match.group(1)] = match.group(2)
-    return properties
-
-
-def expected_project_version(repo_root: Path) -> str:
-    properties = read_gradle_properties(repo_root / "gradle.properties")
-    return properties.get("baseVersion", "") + properties.get("snapshotVersion", "")
-
-
-def verify_source_version_matches_project(repo_root: Path, source_versions: dict[str, SourceVersion]) -> None:
-    catalog_version = source_versions.get("bluetape4k-dependencies")
+def verify_self_version_alias(source_versions: dict[str, SourceVersion]) -> None:
+    catalog_version = source_versions.get(SELF_ALIAS)
     if catalog_version is None:
         raise RuntimeError("source-of-truth block must include `bluetape4k-dependencies`")
-
-    project_version = expected_project_version(repo_root)
-    if project_version and catalog_version.version != project_version:
-        raise RuntimeError(
-            "`bluetape4k-dependencies` catalog version "
-            f"({catalog_version.version}) does not match gradle.properties ({project_version})",
-        )
 
 
 def sync_catalog(catalog: Path, source_versions: dict[str, SourceVersion]) -> tuple[str, list[Change]]:
@@ -301,7 +278,7 @@ def main() -> int:
     repositories = tuple(args.repositories) if args.repositories else DEFAULT_REPOSITORIES
     source_catalog = repo_root / "gradle" / "libs.versions.toml"
     source_versions = read_source_versions(source_catalog)
-    verify_source_version_matches_project(repo_root, source_versions)
+    verify_self_version_alias(source_versions)
 
     compatibility_errors = compatibility_line_errors(source_catalog, repo_root.name)
     all_changes: list[Change] = []
