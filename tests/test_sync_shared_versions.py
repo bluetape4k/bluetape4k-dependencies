@@ -270,6 +270,9 @@ class SyncSharedVersionsTest(unittest.TestCase):
             catalog = workspace / "bluetape4k-projects" / "gradle" / "libs.versions.toml"
             catalog.parent.mkdir(parents=True)
             catalog.write_text('[versions]\nkotlin = "0.0.0"\n', encoding="utf-8")
+            env = os.environ.copy()
+            env.pop("GITHUB_EVENT_NAME", None)
+            env.pop("GITHUB_REF", None)
 
             check = subprocess.run(
                 [
@@ -285,6 +288,7 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
+                env=env,
             )
 
             self.assertNotEqual(check.returncode, 0)
@@ -306,6 +310,7 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
+                env=env,
             )
 
             self.assertEqual(write.returncode, 0, write.stderr)
@@ -325,6 +330,7 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 check=False,
                 capture_output=True,
                 text=True,
+                env=env,
             )
 
             self.assertEqual(recheck.returncode, 0, recheck.stderr)
