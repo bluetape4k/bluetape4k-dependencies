@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import os
 import re
 import sys
 from pathlib import Path
@@ -268,6 +269,13 @@ def print_default_repositories() -> None:
         print(repo)
 
 
+def is_release_train_manual_dispatch() -> bool:
+    return (
+        os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
+        and os.environ.get("GITHUB_REF") != "refs/heads/develop"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -318,9 +326,14 @@ def main() -> int:
         if not all_changes:
             print("Shared versions are aligned.")
 
-    if args.check and all_changes and not args.write:
+    if args.check and all_changes and not args.write and not is_release_train_manual_dispatch():
         print(f"Shared version drift detected: {len(all_changes)} changes required.", file=sys.stderr)
         return 1
+    if args.check and all_changes and not args.write:
+        print(
+            "Shared version drift detected but allowed for release-train workflow_dispatch.",
+            file=sys.stderr,
+        )
     if compatibility_errors:
         for error in compatibility_errors:
             print(

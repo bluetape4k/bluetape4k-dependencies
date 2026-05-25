@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
 import tempfile
@@ -328,6 +329,38 @@ class SyncSharedVersionsTest(unittest.TestCase):
 
             self.assertEqual(recheck.returncode, 0, recheck.stderr)
             self.assertIn("Shared versions are aligned.", recheck.stdout)
+
+    def test_cli_check_allows_release_train_manual_dispatch_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp)
+            catalog = workspace / "bluetape4k-projects" / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir(parents=True)
+            catalog.write_text('[versions]\nkotlin = "0.0.0"\n', encoding="utf-8")
+
+            env = os.environ.copy()
+            env["GITHUB_EVENT_NAME"] = "workflow_dispatch"
+            env["GITHUB_REF"] = "refs/heads/build/catalog-20260525-00"
+
+            check = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_PATH),
+                    "--workspace",
+                    str(workspace),
+                    "--repo",
+                    "bluetape4k-projects",
+                    "--check",
+                    "--summary",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+
+            self.assertEqual(check.returncode, 0, check.stderr)
+            self.assertIn("bluetape4k-projects: kotlin 0.0.0 ->", check.stdout)
+            self.assertIn("allowed for release-train workflow_dispatch", check.stderr)
 
 
 if __name__ == "__main__":
