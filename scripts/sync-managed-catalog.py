@@ -102,7 +102,7 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         version_ref="bluetape4k-image-bom",
         alias_mode="prefix",
         exclude_path_fragments=("examples", "benchmark"),
-        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark", "-captcha"),
     ),
     ManagedRepo(
         label="bluetape4k-text",

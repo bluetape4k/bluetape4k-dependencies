@@ -216,6 +216,16 @@ class SyncManagedCatalogTest(unittest.TestCase):
         )
         self.assertTrue(sync.include_module(repo, "bluetape4k-testcontainers", "testing/testcontainers"))
 
+    def test_image_repo_delegates_unpublished_captcha_version_to_image_bom(self) -> None:
+        repo = next(
+            managed_repo
+            for managed_repo in sync.MANAGED_REPOS
+            if managed_repo.label == "bluetape4k-image"
+        )
+
+        self.assertFalse(sync.include_module(repo, "bluetape4k-images-captcha", "images-captcha"))
+        self.assertTrue(sync.include_module(repo, "bluetape4k-images", "images"))
+
     def test_validate_discovered_rejects_duplicate_aliases(self) -> None:
         repo = sync.MANAGED_REPOS[0]
         module = sync.Module(
