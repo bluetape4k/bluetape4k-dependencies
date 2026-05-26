@@ -38,3 +38,5 @@ local.properties
 .claude/
 .omc/
 .omx/
+
+.codegraph/
