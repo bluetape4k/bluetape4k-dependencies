@@ -7,6 +7,11 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Added centrally governed Netty 4.1/4.2, Protobuf, Fabric8, and Vert.x
+  catalog lines plus BOM constraints where a single compatible line is safe.
+
 ## [1.1.4] - 2026-05-26
 
 ### Changed

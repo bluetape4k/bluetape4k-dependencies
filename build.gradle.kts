@@ -51,8 +51,11 @@ dependencies {
     api(platform(libs.bluetape4k.javers.bom))
     api(platform(libs.aws2.bom))
     api(platform(libs.ktor.bom))
+    api(platform(libs.netty.bom))
+    api(platform(libs.protobuf.bom))
     api(platform(libs.reactor.bom))
     api(platform(libs.timefold.solver.bom))
+    api(platform(libs.vertx.dependencies))
 
     constraints {
         // <external-managed-modules by dependency governance>
@@ -75,6 +78,7 @@ dependencies {
         api(libs.exposed.migration.jdbc)
         api(libs.exposed.spring7.transaction)
         api(libs.exposed.spring.boot4.starter)
+        api(libs.fabric8.kubernetes.client)
         api(libs.flyway.core)
         api(libs.fory.core)
         api(libs.fory.kotlin)
@@ -87,8 +91,11 @@ dependencies {
         api(libs.logcaptor)
         api(libs.mysql.connector.j)
         api(libs.mybatis.dynamic.sql)
+        api(libs.netty.codec.http)
+        api(libs.netty.codec.http2)
         api(libs.ow2.asm)
         api(libs.postgresql)
+        api(libs.protobuf.java)
         api(libs.r2dbc.h2)
         api(libs.redisson)
         api(libs.scrimage.core)
@@ -96,6 +103,7 @@ dependencies {
         api(libs.springdoc.openapi.starter.webmvc.ui)
         api(libs.tomcat.embed.core)
         api(libs.tomcat.jdbc)
+        api(libs.vertx.core)
         api(libs.zstd.jni)
         // </external-managed-modules by dependency governance>
         // <generated-managed-modules by scripts/sync-managed-catalog.py>
