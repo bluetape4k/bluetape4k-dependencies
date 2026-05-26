@@ -62,8 +62,14 @@ fory-kotlin       = "1.0.0"  # https://mvnrepository.com/artifact/org.apache.for
 # ── Centrally governed Dependabot lines ───────────────────────────────────
 aws2              = "2.44.12"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
 aws-kotlin        = "1.6.80"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
+fabric8-kubernetes-client = "7.7.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
 ktor              = "3.5.0"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
+netty4            = "4.1.133.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
+netty             = "4.2.13.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
+protobuf          = "4.34.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+vertx4            = "4.5.27"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
+vertx             = "5.0.12"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
 redisson          = "4.4.0"  # https://mvnrepository.com/artifact/org.redisson/redisson
 bouncycastle-bcpg = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
 bouncycastle-bcpkix = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on
@@ -134,6 +140,7 @@ exposed-java-time                             = { module = "org.jetbrains.expose
 exposed-migration-jdbc                        = { module = "org.jetbrains.exposed:exposed-migration-jdbc", version.ref = "exposed" }
 exposed-spring7-transaction                   = { module = "org.jetbrains.exposed:spring7-transaction", version.ref = "exposed" }
 exposed-spring-boot4-starter                  = { module = "org.jetbrains.exposed:exposed-spring-boot4-starter", version.ref = "exposed" }
+fabric8-kubernetes-client                     = { module = "io.fabric8:kubernetes-client", version.ref = "fabric8-kubernetes-client" }
 flyway-core                                   = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 fory-core                                     = { module = "org.apache.fory:fory-core", version.ref = "fory" }
 fory-kotlin                                   = { module = "org.apache.fory:fory-kotlin", version.ref = "fory-kotlin" }
@@ -147,8 +154,13 @@ ktor-bom                                      = { module = "io.ktor:ktor-bom", v
 logcaptor                                     = { module = "io.github.hakky54:logcaptor", version.ref = "logcaptor" }
 mysql-connector-j                             = { module = "com.mysql:mysql-connector-j", version.ref = "mysql-connector-j" }
 mybatis-dynamic-sql                           = { module = "org.mybatis.dynamic-sql:mybatis-dynamic-sql", version.ref = "mybatis-dynamic-sql" }
+netty-bom                                     = { module = "io.netty:netty-bom", version.ref = "netty" }
+netty-codec-http                              = { module = "io.netty:netty-codec-http", version.ref = "netty" }
+netty-codec-http2                             = { module = "io.netty:netty-codec-http2", version.ref = "netty" }
 ow2-asm                                       = { module = "org.ow2.asm:asm", version.ref = "ow2-asm" }
 postgresql                                    = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+protobuf-bom                                  = { module = "com.google.protobuf:protobuf-bom", version.ref = "protobuf" }
+protobuf-java                                 = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
 r2dbc-h2                                      = { module = "io.r2dbc:r2dbc-h2", version.ref = "r2dbc-h2" }
 reactor-bom                                   = { module = "io.projectreactor:reactor-bom", version.ref = "reactor-bom" }
 redisson                                      = { module = "org.redisson:redisson", version.ref = "redisson" }
@@ -158,6 +170,10 @@ springdoc-openapi-starter-webmvc-ui           = { module = "org.springdoc:spring
 timefold-solver-bom                           = { module = "ai.timefold.solver:timefold-solver-bom", version.ref = "timefold-solver" }
 tomcat-embed-core                             = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat" }
 tomcat-jdbc                                   = { module = "org.apache.tomcat:tomcat-jdbc", version.ref = "tomcat" }
+vertx4-core                                   = { module = "io.vertx:vertx-core", version.ref = "vertx4" }
+vertx4-dependencies                           = { module = "io.vertx:vertx-dependencies", version.ref = "vertx4" }
+vertx-core                                    = { module = "io.vertx:vertx-core", version.ref = "vertx" }
+vertx-dependencies                            = { module = "io.vertx:vertx-dependencies", version.ref = "vertx" }
 zstd-jni                                      = { module = "com.github.luben:zstd-jni", version.ref = "zstd-jni" }
 # </external-managed-modules by dependency governance>
 
