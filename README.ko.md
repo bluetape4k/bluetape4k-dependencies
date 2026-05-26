@@ -411,13 +411,13 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 
 ```toml
 [versions]
-bluetape4k-core   = "1.9.0"
+bluetape4k-core   = "1.9.2"
 bluetape4k-aws    = "0.2.0"
 bluetape4k-image  = "0.1.1"
 bluetape4k-text   = "0.1.1"
 bluetape4k-graph  = "0.4.0"
 bluetape4k-leader = "0.2.0"
-bluetape4k-exposed = "1.9.0"
+bluetape4k-exposed = "1.9.2"
 bluetape4k-javers = "0.1.1"
 ```
 
