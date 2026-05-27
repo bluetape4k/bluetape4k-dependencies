@@ -20,6 +20,10 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   published `1.9.2` release.
 - Promoted the managed `bluetape4k-exposed` BOM from `1.9.2-SNAPSHOT` to the
   published `1.9.2` release.
+- Promoted the managed `bluetape4k-leader` BOM from `0.2.2-SNAPSHOT` to the
+  published `0.2.2` release.
+- Synced generated Javers aliases and BOM constraints for `javers-ddd` and
+  `javers-exposed`.
 
 ## [1.1.2] - 2026-05-23
 
