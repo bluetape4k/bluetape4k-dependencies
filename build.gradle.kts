@@ -264,6 +264,8 @@ dependencies {
 
         // -- bluetape4k-javers modules --
         api(libs.bluetape4k.javers.core)
+        api(libs.bluetape4k.javers.ddd)
+        api(libs.bluetape4k.javers.exposed)
         api(libs.bluetape4k.javers.persistence.kafka)
         api(libs.bluetape4k.javers.persistence.redis)
 
