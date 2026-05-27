@@ -107,3 +107,15 @@ Publishing credentials come from `resolveCentralPublishingConfig()`. Use
   Consumers should still import `bluetape4k-dependencies` as a platform when
   they need dependency resolution alignment.
 - CI runs `./gradlew build` for pushes/PRs against `develop` and `main`.
+
+## Cross-Repo Lesson Guards
+
+- Before catalog, BOM, release-train, workflow, or downstream sync work, query
+  GNO for `bluetape4k-dependencies` in both `bluetape4k-github` and
+  `bluetape4k-docs`; repeated downstream PRs are governance evidence.
+- Treat module additions, removals, artifact renames, and compatibility-line
+  changes as cross-repo work: update managed catalog generation, downstream
+  shared-version sync, Dependabot ignore sync, README/runbook references, and
+  tests in the same pass.
+- Release and snapshot dispatch stays audit-first: read declared workflow
+  inputs from YAML and pass only supported inputs.
