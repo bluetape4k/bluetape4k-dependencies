@@ -141,6 +141,11 @@ dependencies {
         api(libs.bluetape4k.kafka)
         api(libs.bluetape4k.kafka.logback)
         api(libs.bluetape4k.kafka4)
+        api(libs.bluetape4k.ktor.core)
+        api(libs.bluetape4k.ktor.observability)
+        api(libs.bluetape4k.ktor.openapi)
+        api(libs.bluetape4k.ktor.resilience4j)
+        api(libs.bluetape4k.ktor.testing)
         api(libs.bluetape4k.lettuce)
         api(libs.bluetape4k.logging)
         api(libs.bluetape4k.math)
@@ -187,6 +192,7 @@ dependencies {
 
         // -- bluetape4k-image modules --
         api(libs.bluetape4k.images)
+        api(libs.bluetape4k.images.ktor)
         api(libs.bluetape4k.images.spring.boot)
         api(libs.bluetape4k.images.vips.api)
         api(libs.bluetape4k.images.vips.java21)
