@@ -26,8 +26,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   release.
 - Promoted the managed `bluetape4k-leader` BOM to the published `0.3.0`
   release.
-- Kept `bluetape4k-exposed` on the published `1.9.2` release because the
-  `1.10.0` milestone still has open epic scope.
+- Promoted the managed `bluetape4k-exposed` BOM to the published `1.10.0`
+  release for the 1.2.0 minor train.
 - Promoted the managed `bluetape4k-javers` BOM to the published `0.2.0`
   release, including generated catalog and BOM coverage for `javers-ddd` and
   `javers-exposed`.
