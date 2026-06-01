@@ -7,10 +7,30 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-01
+
 ### Added
 
 - Added centrally governed Netty 4.1/4.2, Protobuf, Fabric8, and Vert.x
   catalog lines plus BOM constraints where a single compatible line is safe.
+
+### Changed
+
+- Promoted the managed `bluetape4k-projects` BOM to the published `1.10.0`
+  release for the 1.2.0 minor train.
+- Promoted the managed `bluetape4k-aws` BOM to the published `0.3.0` release.
+- Promoted the managed `bluetape4k-image` BOM to the published `0.2.0`
+  release, including generated catalog and BOM coverage for `bluetape4k-images-ktor`.
+- Promoted the managed `bluetape4k-text` BOM to the published `0.2.0` release.
+- Promoted the managed `bluetape4k-graph` BOM to the published `0.5.0`
+  release.
+- Promoted the managed `bluetape4k-leader` BOM to the published `0.3.0`
+  release.
+- Kept `bluetape4k-exposed` on the published `1.9.2` release because the
+  `1.10.0` milestone still has open epic scope.
+- Promoted the managed `bluetape4k-javers` BOM to the published `0.2.0`
+  release, including generated catalog and BOM coverage for `javers-ddd` and
+  `javers-exposed`.
 
 ## [1.1.4] - 2026-06-01
 
