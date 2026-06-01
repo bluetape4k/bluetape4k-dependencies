@@ -12,7 +12,7 @@ The 1.2.0 BOM should include only Maven Central-visible stable upstream BOMs:
 
 - `bluetape4k-bom:1.10.0`
 - `bluetape4k-aws-bom:0.3.0`
-- `bluetape4k-exposed-bom:1.9.2`
+- `bluetape4k-exposed-bom:1.10.0`
 - `bluetape4k-graph-bom:0.5.0`
 - `bluetape4k-image-bom:0.2.0`
 - `bluetape4k-javers-bom:0.2.0`
@@ -23,8 +23,9 @@ The 1.2.0 BOM should include only Maven Central-visible stable upstream BOMs:
 
 - `bluetape4k-graph:0.5.0` was newly published for this train and is Maven
   Central-visible.
-- `bluetape4k-exposed:1.10.0` is intentionally excluded because Maven Central
-  still returns 404 and the 1.10.0 epic remains open.
+- `bluetape4k-exposed:1.10.0` was newly published for this train and is Maven
+  Central-visible before downstream `aws`, `javers`, or `leader` release
+  dispatch.
 - Generated managed aliases and BOM constraints must be regenerated after the
   BOM version selection so newly published modules such as `bluetape4k-images-ktor`,
   `javers-ddd`, and `javers-exposed` are included only when their selected BOMs
@@ -34,7 +35,8 @@ The 1.2.0 BOM should include only Maven Central-visible stable upstream BOMs:
 
 - Maven Central returned HTTP 200 for every retained or promoted upstream BOM in
   the 1.2.0 matrix.
-- `bluetape4k-exposed-bom:1.10.0` returned HTTP 404 and is not included.
+- `bluetape4k-exposed-bom:1.10.0` returned HTTP 200 after release workflow
+  `https://github.com/bluetape4k/bluetape4k-exposed/actions/runs/26736279613`.
 - `bluetape4k-graph-bom:0.5.0` returned HTTP 200 after release workflow
   `https://github.com/bluetape4k/bluetape4k-graph/actions/runs/26734244764`.
 
