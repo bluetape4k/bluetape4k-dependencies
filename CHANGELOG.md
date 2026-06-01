@@ -12,12 +12,21 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Added centrally governed Netty 4.1/4.2, Protobuf, Fabric8, and Vert.x
   catalog lines plus BOM constraints where a single compatible line is safe.
 
-## [1.1.4] - 2026-05-26
+## [1.1.4] - 2026-06-01
 
 ### Changed
 
+- Kept `bluetape4k-aws`, `bluetape4k-image`, `bluetape4k-text`,
+  `bluetape4k-graph`, and `bluetape4k-javers` on the published
+  `bluetape4k-dependencies:1.1.3` baseline for the 1.1.4 patch train.
+- Excluded `bluetape4k-ktor-*`, `javers-ddd`, and `javers-exposed` aliases and
+  constraints from 1.1.4 because they require the next repository BOM lines.
+- Excluded the unreleased `bluetape4k-images-ktor` catalog alias and BOM
+  constraint from the 1.1.4 stable matrix until a stable image release
+  publishes it.
 - Promoted the managed `bluetape4k-projects` BOM from `1.9.2-SNAPSHOT` to the
-  published `1.9.2` release.
+  published `1.9.2` release while leaving `1.10.0` for the next minor
+  dependencies train.
 - Promoted the managed `bluetape4k-exposed` BOM from `1.9.2-SNAPSHOT` to the
   published `1.9.2` release.
 - Promoted the managed `bluetape4k-leader` BOM from `0.2.2-SNAPSHOT` to the

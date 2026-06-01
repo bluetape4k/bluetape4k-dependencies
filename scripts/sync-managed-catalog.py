@@ -64,6 +64,7 @@ class ManagedRepo:
     alias_mode: str
     exclude_path_fragments: tuple[str, ...] = ()
     exclude_name_suffixes: tuple[str, ...] = ()
+    minimum_versions: tuple[tuple[str, str], ...] = ()
 
     @property
     def root_dir(self) -> str:
@@ -85,6 +86,13 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
             "-mock-web-server",
             "-mock-webflux-server",
         ),
+        minimum_versions=(
+            ("bluetape4k-ktor-core", "1.10.0"),
+            ("bluetape4k-ktor-observability", "1.10.0"),
+            ("bluetape4k-ktor-openapi", "1.10.0"),
+            ("bluetape4k-ktor-resilience4j", "1.10.0"),
+            ("bluetape4k-ktor-testing", "1.10.0"),
+        ),
     ),
     ManagedRepo(
         label="bluetape4k-aws",
@@ -103,6 +111,7 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         alias_mode="prefix",
         exclude_path_fragments=("examples", "benchmark"),
         exclude_name_suffixes=("-demo", "-examples", "-benchmark", "-captcha"),
+        minimum_versions=(("bluetape4k-images-ktor", "0.2.0"),),
     ),
     ManagedRepo(
         label="bluetape4k-text",
@@ -148,6 +157,7 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         alias_mode="prefix",
         exclude_path_fragments=("examples", "benchmark"),
         exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
+        minimum_versions=(("javers-ddd", "0.2.0"), ("javers-exposed", "0.2.0")),
     ),
 )
 
@@ -332,11 +342,40 @@ def is_bom(artifact_id: str) -> bool:
     return artifact_id.endswith("-bom")
 
 
-def include_module(repo: ManagedRepo, artifact_id: str, relative_path: str) -> bool:
+def normalized_version(version: str) -> tuple[int, int, int]:
+    base = version.removeprefix("v").removesuffix("-SNAPSHOT")
+    parts = base.split(".")
+    if len(parts) != 3 or not all(part.isdigit() for part in parts):
+        raise RuntimeError(f"Unsupported semantic version: {version}")
+    return tuple(int(part) for part in parts)
+
+
+def module_minimum_version(repo: ManagedRepo, artifact_id: str) -> str | None:
+    for candidate, version in repo.minimum_versions:
+        if artifact_id == candidate:
+            return version
+    return None
+
+
+def is_available_in_selected_version(repo: ManagedRepo, artifact_id: str, selected_version: str | None) -> bool:
+    minimum_version = module_minimum_version(repo, artifact_id)
+    if minimum_version is None or selected_version is None:
+        return True
+    return normalized_version(selected_version) >= normalized_version(minimum_version)
+
+
+def include_module(
+    repo: ManagedRepo,
+    artifact_id: str,
+    relative_path: str,
+    selected_version: str | None = None,
+) -> bool:
     path_parts = set(relative_path.split("/"))
     if any(fragment in path_parts for fragment in repo.exclude_path_fragments):
         return False
-    return not any(artifact_id.endswith(suffix) for suffix in repo.exclude_name_suffixes)
+    if any(artifact_id.endswith(suffix) for suffix in repo.exclude_name_suffixes):
+        return False
+    return is_available_in_selected_version(repo, artifact_id, selected_version)
 
 
 def direct_include_relative_path(root: Path, project_name: str, overrides: dict[str, str]) -> str | None:
@@ -353,7 +392,22 @@ def direct_include_relative_path(root: Path, project_name: str, overrides: dict[
     return None
 
 
-def discover_repo_modules(workspace_root: Path, repo: ManagedRepo) -> list[Module]:
+def parse_catalog_versions(catalog_file: Path) -> dict[str, str]:
+    text = catalog_file.read_text(encoding="utf-8")
+    return dict(
+        re.findall(
+            r'^([A-Za-z0-9_.-]+)\s*=\s*"([^"]+)"',
+            text,
+            flags=re.MULTILINE,
+        )
+    )
+
+
+def discover_repo_modules(
+    workspace_root: Path,
+    repo: ManagedRepo,
+    selected_versions: dict[str, str] | None = None,
+) -> list[Module]:
     root = (workspace_root / repo.root_dir).resolve()
     settings_file = root / "settings.gradle.kts"
     if not settings_file.is_file():
@@ -361,6 +415,7 @@ def discover_repo_modules(workspace_root: Path, repo: ManagedRepo) -> list[Modul
 
     modules: dict[str, Module] = {}
     overrides = parse_project_dir_overrides(settings_file)
+    selected_version = selected_versions.get(repo.version_ref) if selected_versions is not None else None
 
     for project_path in parse_direct_includes(settings_file):
         project_name = project_path.split(":")[-1]
@@ -369,7 +424,7 @@ def discover_repo_modules(workspace_root: Path, repo: ManagedRepo) -> list[Modul
             relative_path = direct_include_relative_path(root, project_name, overrides)
         if relative_path is None:
             continue
-        if not include_module(repo, project_name, relative_path):
+        if not include_module(repo, project_name, relative_path, selected_version):
             continue
 
         modules[project_name] = Module(
@@ -397,7 +452,7 @@ def discover_repo_modules(workspace_root: Path, repo: ManagedRepo) -> list[Modul
 
             project_name = module_name(config, module_dir.name)
             relative_path = module_dir.relative_to(root).as_posix()
-            if not include_module(repo, project_name, relative_path):
+            if not include_module(repo, project_name, relative_path, selected_version):
                 continue
 
             modules[project_name] = Module(
@@ -418,7 +473,7 @@ def discover_repo_modules(workspace_root: Path, repo: ManagedRepo) -> list[Modul
 
         project_name = mapped_include.project_name
         relative_path = module_dir.relative_to(root).as_posix()
-        if not include_module(repo, project_name, relative_path):
+        if not include_module(repo, project_name, relative_path, selected_version):
             continue
 
         modules[project_name] = Module(
@@ -438,8 +493,14 @@ def discover_repo_modules(workspace_root: Path, repo: ManagedRepo) -> list[Modul
     return sorted(modules.values(), key=lambda module: module.alias)
 
 
-def discover_all(workspace_root: Path) -> dict[ManagedRepo, list[Module]]:
-    discovered = {repo: discover_repo_modules(workspace_root, repo) for repo in MANAGED_REPOS}
+def discover_all(
+    workspace_root: Path,
+    selected_versions: dict[str, str] | None = None,
+) -> dict[ManagedRepo, list[Module]]:
+    discovered = {
+        repo: discover_repo_modules(workspace_root, repo, selected_versions)
+        for repo in MANAGED_REPOS
+    }
     validate_discovered(discovered)
     return discovered
 
@@ -639,7 +700,8 @@ def main() -> int:
     if not workspace_root.is_absolute():
         workspace_root = (repo_root / workspace_root).resolve()
 
-    discovered = discover_all(workspace_root)
+    selected_versions = parse_catalog_versions(repo_root / "gradle" / "libs.versions.toml")
+    discovered = discover_all(workspace_root, selected_versions)
 
     if args.write:
         catalog_text, build_text = synced_text(repo_root, discovered)

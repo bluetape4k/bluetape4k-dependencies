@@ -7,20 +7,20 @@
 bluetape4k-dependencies = "1.1.3"  # Latest released catalog/BOM for downstream consumers; update after release.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "1.10.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
+bluetape4k-bom     = "1.9.2"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
-bluetape4k-aws-bom = "0.2.2-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
+bluetape4k-aws-bom = "0.2.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "0.1.3-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
+bluetape4k-image-bom   = "0.1.2"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "0.1.3-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
+bluetape4k-text-bom    = "0.1.2"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "0.4.2-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
+bluetape4k-graph-bom   = "0.4.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
 
 # https://github.com/bluetape4k/bluetape4k-leader
 bluetape4k-leader-bom  = "0.2.2"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
@@ -29,7 +29,7 @@ bluetape4k-leader-bom  = "0.2.2"  # https://mvnrepository.com/artifact/io.github
 bluetape4k-exposed-bom = "1.9.2"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/exposed-bom
 
 # https://github.com/bluetape4k/bluetape4k-javers
-bluetape4k-javers-bom  = "0.1.3-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
+bluetape4k-javers-bom  = "0.1.2"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.3.21"  # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-bom
@@ -213,11 +213,6 @@ bluetape4k-jwt                                 = { module = "io.github.bluetape4
 bluetape4k-kafka                               = { module = "io.github.bluetape4k:bluetape4k-kafka", version.ref = "bluetape4k-bom" }
 bluetape4k-kafka-logback                       = { module = "io.github.bluetape4k:bluetape4k-kafka-logback", version.ref = "bluetape4k-bom" }
 bluetape4k-kafka4                              = { module = "io.github.bluetape4k:bluetape4k-kafka4", version.ref = "bluetape4k-bom" }
-bluetape4k-ktor-core                           = { module = "io.github.bluetape4k:bluetape4k-ktor-core", version.ref = "bluetape4k-bom" }
-bluetape4k-ktor-observability                  = { module = "io.github.bluetape4k:bluetape4k-ktor-observability", version.ref = "bluetape4k-bom" }
-bluetape4k-ktor-openapi                        = { module = "io.github.bluetape4k:bluetape4k-ktor-openapi", version.ref = "bluetape4k-bom" }
-bluetape4k-ktor-resilience4j                   = { module = "io.github.bluetape4k:bluetape4k-ktor-resilience4j", version.ref = "bluetape4k-bom" }
-bluetape4k-ktor-testing                        = { module = "io.github.bluetape4k:bluetape4k-ktor-testing", version.ref = "bluetape4k-bom" }
 bluetape4k-lettuce                             = { module = "io.github.bluetape4k:bluetape4k-lettuce", version.ref = "bluetape4k-bom" }
 bluetape4k-logging                             = { module = "io.github.bluetape4k:bluetape4k-logging", version.ref = "bluetape4k-bom" }
 bluetape4k-math                                = { module = "io.github.bluetape4k:bluetape4k-math", version.ref = "bluetape4k-bom" }
@@ -266,7 +261,6 @@ bluetape4k-aws-spring-boot                     = { module = "io.github.bluetape4
 # -- bluetape4k-image modules --
 bluetape4k-image-bom                           = { module = "io.github.bluetape4k.image:bluetape4k-image-bom", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images                              = { module = "io.github.bluetape4k.image:bluetape4k-images", version.ref = "bluetape4k-image-bom" }
-bluetape4k-images-ktor                         = { module = "io.github.bluetape4k.image:bluetape4k-images-ktor", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-spring-boot                  = { module = "io.github.bluetape4k.image:bluetape4k-images-spring-boot", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-vips-api                     = { module = "io.github.bluetape4k.image:bluetape4k-images-vips-api", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-vips-java21                  = { module = "io.github.bluetape4k.image:bluetape4k-images-vips-java21", version.ref = "bluetape4k-image-bom" }
@@ -349,8 +343,6 @@ bluetape4k-exposed-trino                       = { module = "io.github.bluetape4
 # -- bluetape4k-javers modules --
 bluetape4k-javers-bom                          = { module = "io.github.bluetape4k.javers:bluetape4k-javers-bom", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-core                         = { module = "io.github.bluetape4k.javers:javers-core", version.ref = "bluetape4k-javers-bom" }
-bluetape4k-javers-ddd                          = { module = "io.github.bluetape4k.javers:javers-ddd", version.ref = "bluetape4k-javers-bom" }
-bluetape4k-javers-exposed                      = { module = "io.github.bluetape4k.javers:javers-exposed", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-kafka            = { module = "io.github.bluetape4k.javers:javers-persistence-kafka", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-redis            = { module = "io.github.bluetape4k.javers:javers-persistence-redis", version.ref = "bluetape4k-javers-bom" }
 
