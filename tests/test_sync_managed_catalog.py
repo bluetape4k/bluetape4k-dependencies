@@ -215,6 +215,8 @@ class SyncManagedCatalogTest(unittest.TestCase):
             sync.include_module(repo, "bluetape4k-mock-webflux-server", "testing/mock-webflux-server")
         )
         self.assertTrue(sync.include_module(repo, "bluetape4k-testcontainers", "testing/testcontainers"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.9.2"))
+        self.assertTrue(sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.10.0"))
 
     def test_image_repo_delegates_unpublished_captcha_version_to_image_bom(self) -> None:
         repo = next(
@@ -225,6 +227,20 @@ class SyncManagedCatalogTest(unittest.TestCase):
 
         self.assertFalse(sync.include_module(repo, "bluetape4k-images-captcha", "images-captcha"))
         self.assertTrue(sync.include_module(repo, "bluetape4k-images", "images"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.1.2"))
+        self.assertTrue(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.2.0"))
+
+    def test_javers_repo_gates_new_modules_by_selected_bom_version(self) -> None:
+        repo = next(
+            managed_repo
+            for managed_repo in sync.MANAGED_REPOS
+            if managed_repo.label == "bluetape4k-javers"
+        )
+
+        self.assertFalse(sync.include_module(repo, "javers-ddd", "javers-ddd", "0.1.2"))
+        self.assertFalse(sync.include_module(repo, "javers-exposed", "javers-exposed", "0.1.2"))
+        self.assertTrue(sync.include_module(repo, "javers-ddd", "javers-ddd", "0.2.0"))
+        self.assertTrue(sync.include_module(repo, "javers-exposed", "javers-exposed", "0.2.0"))
 
     def test_validate_discovered_rejects_duplicate_aliases(self) -> None:
         repo = sync.MANAGED_REPOS[0]
