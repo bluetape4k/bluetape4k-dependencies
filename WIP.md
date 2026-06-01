@@ -1,14 +1,16 @@
 # WIP - bluetape4k-dependencies
 
 Snapshot: 2026-06-01 KST
-Scope: dependencies 1.2.0 release train.
+Scope: dependencies 1.3.0 development line.
 Open count: 0 repository issues.
 
 ## Current Direction
 
-Prepare and publish `1.2.0` as the next minor dependencies train.
+`1.2.0` is published. Keep `develop` open for the next dependencies train and
+use the released `1.2.0` BOM as the downstream consumer baseline.
 
-The 1.2.0 BOM should include only Maven Central-visible stable upstream BOMs:
+The published `1.2.0` BOM includes these Maven Central-visible stable upstream
+BOMs:
 
 - `bluetape4k-bom:1.10.0`
 - `bluetape4k-aws-bom:0.3.1`
@@ -21,6 +23,7 @@ The 1.2.0 BOM should include only Maven Central-visible stable upstream BOMs:
 
 ## Release Gate
 
+- `bluetape4k-dependencies:1.2.0` is published and Maven Central-visible.
 - `bluetape4k-graph:0.5.0` was newly published for this train and is Maven
   Central-visible.
 - `bluetape4k-exposed:1.10.0` was newly published for this train and is Maven
@@ -52,4 +55,4 @@ No assigned open issues are required for this release train.
 
 | Lane | Limit | Current next |
 |---|---:|---|
-| Release | 1 | Finish 1.2.0 before starting the next dependencies governance train. |
+| Release | 1 | Triage the next dependencies governance train before selecting 1.3.0 inputs. |
