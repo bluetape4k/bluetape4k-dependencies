@@ -18,13 +18,13 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Promoted the managed `bluetape4k-projects` BOM to the published `1.10.0`
   release for the 1.2.0 minor train.
-- Promoted the managed `bluetape4k-aws` BOM to the published `0.3.0` release.
+- Promoted the managed `bluetape4k-aws` BOM to the published `0.3.1` release.
 - Promoted the managed `bluetape4k-image` BOM to the published `0.2.0`
   release, including generated catalog and BOM coverage for `bluetape4k-images-ktor`.
 - Promoted the managed `bluetape4k-text` BOM to the published `0.2.0` release.
 - Promoted the managed `bluetape4k-graph` BOM to the published `0.5.0`
   release.
-- Promoted the managed `bluetape4k-leader` BOM to the published `0.3.0`
+- Promoted the managed `bluetape4k-leader` BOM to the published `0.3.1`
   release.
 - Promoted the managed `bluetape4k-exposed` BOM to the published `1.10.0`
   release for the 1.2.0 minor train.

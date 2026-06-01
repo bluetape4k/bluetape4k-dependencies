@@ -11,12 +11,12 @@ Prepare and publish `1.2.0` as the next minor dependencies train.
 The 1.2.0 BOM should include only Maven Central-visible stable upstream BOMs:
 
 - `bluetape4k-bom:1.10.0`
-- `bluetape4k-aws-bom:0.3.0`
+- `bluetape4k-aws-bom:0.3.1`
 - `bluetape4k-exposed-bom:1.10.0`
 - `bluetape4k-graph-bom:0.5.0`
 - `bluetape4k-image-bom:0.2.0`
 - `bluetape4k-javers-bom:0.2.0`
-- `bluetape4k-leader-bom:0.3.0`
+- `bluetape4k-leader-bom:0.3.1`
 - `bluetape4k-text-bom:0.2.0`
 
 ## Release Gate
@@ -39,6 +39,10 @@ The 1.2.0 BOM should include only Maven Central-visible stable upstream BOMs:
   `https://github.com/bluetape4k/bluetape4k-exposed/actions/runs/26736279613`.
 - `bluetape4k-graph-bom:0.5.0` returned HTTP 200 after release workflow
   `https://github.com/bluetape4k/bluetape4k-graph/actions/runs/26734244764`.
+- `bluetape4k-aws-bom:0.3.1` returned HTTP 200 after release workflow
+  `https://github.com/bluetape4k/bluetape4k-aws/actions/runs/26737796498`.
+- `bluetape4k-leader-bom:0.3.1` returned HTTP 200 after release workflow
+  `https://github.com/bluetape4k/bluetape4k-leader/actions/runs/26754212311`.
 
 ## Priority Queue
 
