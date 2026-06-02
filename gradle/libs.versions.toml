@@ -7,29 +7,29 @@
 bluetape4k-dependencies = "1.2.0"  # Latest released catalog/BOM for downstream consumers.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "1.10.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
+bluetape4k-bom     = "1.11.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
-bluetape4k-aws-bom = "0.3.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
+bluetape4k-aws-bom = "0.4.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "0.2.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
+bluetape4k-image-bom   = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "0.2.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
+bluetape4k-text-bom    = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "0.5.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
+bluetape4k-graph-bom   = "0.6.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
 
 # https://github.com/bluetape4k/bluetape4k-leader
-bluetape4k-leader-bom  = "0.3.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
+bluetape4k-leader-bom  = "0.4.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "1.10.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/exposed-bom
+bluetape4k-exposed-bom = "1.11.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/exposed-bom
 
 # https://github.com/bluetape4k/bluetape4k-javers
-bluetape4k-javers-bom  = "0.2.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
+bluetape4k-javers-bom  = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.3.21"  # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-bom
