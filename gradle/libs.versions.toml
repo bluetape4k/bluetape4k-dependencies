@@ -43,9 +43,9 @@ spring-boot3      = "3.5.14"  # https://mvnrepository.com/artifact/org.springfra
 spring-boot4      = "4.0.6"  # https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-dependencies
 coroutines        = "1.11.0"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-bom
 kotlinx-coroutines = "1.11.0"  # downstream alias compatibility for kotlinx-coroutines-bom
-jackson           = "2.21.3"  # https://mvnrepository.com/artifact/com.fasterxml.jackson/jackson-bom
-jackson2          = "2.21.3"  # Jackson 2 compatibility line
-jackson3          = "3.1.3"  # Jackson 3 compatibility line
+jackson           = "2.21.4"  # https://mvnrepository.com/artifact/com.fasterxml.jackson/jackson-bom
+jackson2          = "2.21.4"  # Jackson 2 compatibility line
+jackson3          = "3.1.4"  # Jackson 3 compatibility line
 lettuce           = "6.8.2.RELEASE"  # https://mvnrepository.com/artifact/io.lettuce/lettuce-core
 exposed           = "1.3.0"  # https://mvnrepository.com/artifact/org.jetbrains.exposed/exposed-bom
 ignite            = "2.18.0"  # Apache Ignite 2 compatibility line
@@ -60,7 +60,7 @@ fory              = "1.1.0"  # https://mvnrepository.com/artifact/org.apache.for
 fory-kotlin       = "1.0.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
-aws2              = "2.45.1"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
+aws2              = "2.46.0"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
 aws-kotlin        = "1.6.80"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.7.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
 ktor              = "3.5.0"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
