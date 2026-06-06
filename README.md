@@ -232,6 +232,14 @@ Dependabot. Add new central dependency names to `CENTRAL_DEPENDENCY_IGNORES` in
 `scripts/sync-dependabot-ignores.py`, then sync downstream `.github/dependabot.yml`
 files with the command above.
 
+Downstream workflows that consume active bluetape4k `-SNAPSHOT` artifacts should
+avoid `--refresh-dependencies`, keep a bounded changing-module cache, and use
+`scripts/retry-snapshot-resolution.sh` around snapshot-heavy Gradle warm-up
+commands. The wrapper retries only Central snapshot metadata/artifact `403`
+signatures and lets real build or test failures fail immediately. The Korean
+runbook in [`docs/version-management.ko.md`](docs/version-management.ko.md)
+contains the full CI/Nightly/Examples guidance.
+
 Dependabot security alerts are triaged by ownership, not by the repository that
 displays the alert. Use `scripts/triage-dependabot-alerts.py` to classify open
 alerts as:
@@ -353,7 +361,11 @@ The table below lists every managed `bluetape4k-projects` artifact currently gen
 
 | Artifact | Description |
 |---|---|
+| `bluetape4k-image-bom` | Image module BOM |
 | `images` | Core image processing utilities |
+| `images-ktor` | Ktor integration for image modules |
+| `images-ocr` | OCR integration for image modules |
+| `images-spring-boot` | Spring Boot integration for image modules |
 | `images-vips-api` | libvips API abstraction |
 | `images-vips-java21` | libvips bindings for Java 21 |
 | `images-vips-java25` | libvips bindings for Java 25 |

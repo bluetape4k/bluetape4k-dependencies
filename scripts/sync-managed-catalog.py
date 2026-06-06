@@ -148,6 +148,10 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         alias_mode="identity",
         exclude_path_fragments=("examples", "benchmark"),
         exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
+        minimum_versions=(
+            ("bluetape4k-exposed-cockroachdb", "1.12.0"),
+            ("bluetape4k-exposed-starrocks", "1.12.0"),
+        ),
     ),
     ManagedRepo(
         label="bluetape4k-javers",

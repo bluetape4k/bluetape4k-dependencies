@@ -178,6 +178,50 @@ Snapshot 배포 시에는 다음 값을 유지합니다.
 
 Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot repository를 가리켜도 됩니다.
 
+### Downstream snapshot resolution 403 대응
+
+Central snapshot repository는 같은 `-SNAPSHOT` version의 `maven-metadata.xml`을
+짧은 시간에 여러 job이 동시에 조회할 때 일시적으로 `HEAD 403` 또는 `GET 403`을
+반환할 수 있습니다. `1.11.0-SNAPSHOT`처럼 여러 downstream repo가 같은 snapshot
+train을 소비하는 기간에는 이 오류를 test failure로 보지 말고 dependency resolution
+transient로 분리합니다.
+
+Downstream repo의 CI/Nightly/Examples workflow는 다음 순서로 대응합니다.
+
+1. `--refresh-dependencies`를 기본 workflow에서 제거합니다. 강제 refresh는 모든
+   snapshot metadata를 다시 조회하므로 403 빈도를 높입니다.
+2. `build.gradle.kts`의 `configurations.all`에서 snapshot/changing module cache를
+   최소 1일로 둡니다. 예: `resolutionStrategy.cacheChangingModulesFor(1, TimeUnit.DAYS)`.
+3. snapshot-heavy workflow는 test matrix 전에 compile-only warm-up job을 둡니다.
+   warm-up job은 Gradle dependency cache를 채우는 목적이므로 대표 `compileKotlin` 또는
+   `compileTestKotlin` task만 실행합니다.
+4. warm-up 또는 snapshot-heavy Gradle command는
+   `scripts/retry-snapshot-resolution.sh`와 같은 wrapper로 감쌉니다. 이 wrapper는
+   Central snapshot metadata/artifact `403` signature에서만 재시도하고, test assertion
+   failure나 binary incompatibility failure는 재시도하지 않습니다.
+5. `bluetape4k-dependencies`의 snapshot artifact availability check는 404를 계속
+   missing artifact로 실패시키되, snapshot metadata `403`은 bounded retry 후
+   transient로 분리합니다. Release line 검증에서는 snapshot이 허용되지 않으므로 이
+   완화가 적용되지 않습니다.
+6. 대표 workflow_dispatch rerun으로 최종 상태를 확인합니다. 남은 실패가
+   `NoSuchMethodError`, test failure, container failure처럼 snapshot resolution과
+   무관하면 별도 repo-local issue로 분리합니다.
+
+예시:
+
+```bash
+SNAPSHOT_RESOLUTION_ATTEMPTS=5 \
+SNAPSHOT_RESOLUTION_DELAY_SECONDS=30 \
+scripts/retry-snapshot-resolution.sh \
+  ./gradlew :examples:ktor-app:compileTestKotlin \
+  --no-configuration-cache \
+  --no-daemon
+```
+
+Issue #104 기준 대표 재검증에서는 `bluetape4k-javers` Nightly와
+`bluetape4k-exposed` Nightly가 최종 success가 되었고, `bluetape4k-leader` Examples의
+남은 실패는 Vert.x/Fabric8 `NoSuchMethodError`로 snapshot 403과 분리되었습니다.
+
 ### 공식 릴리즈 원칙
 
 공식 릴리즈 BOM은 snapshot artifact를 가리키면 안 됩니다. `bluetape4k-dependencies`를 release로 배포할 때는 BOM이 관리하는 `bluetape4k-*` upstream version ref에서 `-SNAPSHOT`을 제거해야 합니다.

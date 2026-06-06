@@ -193,6 +193,7 @@ dependencies {
         // -- bluetape4k-image modules --
         api(libs.bluetape4k.images)
         api(libs.bluetape4k.images.ktor)
+        api(libs.bluetape4k.images.ocr)
         api(libs.bluetape4k.images.spring.boot)
         api(libs.bluetape4k.images.vips.api)
         api(libs.bluetape4k.images.vips.java21)
