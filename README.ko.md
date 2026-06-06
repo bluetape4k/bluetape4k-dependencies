@@ -233,6 +233,14 @@ Downstream 레포지토리의 Dependabot도 중앙에서 관리하는 dependency
 `CENTRAL_DEPENDENCY_IGNORES`에 dependency name을 추가하고, 위 명령으로
 downstream `.github/dependabot.yml`을 동기화합니다.
 
+Active bluetape4k `-SNAPSHOT` artifact를 소비하는 downstream workflow는
+`--refresh-dependencies`를 기본값에서 제거하고, bounded changing-module cache를 유지하며,
+snapshot-heavy Gradle warm-up command를 `scripts/retry-snapshot-resolution.sh`로
+감쌉니다. 이 wrapper는 Central snapshot metadata/artifact `403` signature에서만
+재시도하고 실제 build/test failure는 즉시 실패시킵니다. 자세한 CI/Nightly/Examples
+운영 절차는 [`docs/version-management.ko.md`](docs/version-management.ko.md)에
+정리되어 있습니다.
+
 Dependabot security alert은 alert이 보이는 레포지토리가 아니라 dependency owner 기준으로
 분류합니다. `scripts/triage-dependabot-alerts.py`로 open alert을 다음 route로 나눕니다.
 
@@ -352,7 +360,11 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 
 | 아티팩트 | 설명 |
 |---|---|
+| `bluetape4k-image-bom` | 이미지 모듈 BOM |
 | `images` | 이미지 처리 핵심 유틸리티 |
+| `images-ktor` | 이미지 모듈 Ktor 통합 |
+| `images-ocr` | 이미지 모듈 OCR 통합 |
+| `images-spring-boot` | 이미지 모듈 Spring Boot 통합 |
 | `images-vips-api` | libvips API 추상화 |
 | `images-vips-java21` | Java 21용 libvips 바인딩 |
 | `images-vips-java25` | Java 25용 libvips 바인딩 |

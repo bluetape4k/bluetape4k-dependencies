@@ -267,6 +267,7 @@ bluetape4k-aws-spring-boot                     = { module = "io.github.bluetape4
 bluetape4k-image-bom                           = { module = "io.github.bluetape4k.image:bluetape4k-image-bom", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images                              = { module = "io.github.bluetape4k.image:bluetape4k-images", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-ktor                         = { module = "io.github.bluetape4k.image:bluetape4k-images-ktor", version.ref = "bluetape4k-image-bom" }
+bluetape4k-images-ocr                          = { module = "io.github.bluetape4k.image:bluetape4k-images-ocr", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-spring-boot                  = { module = "io.github.bluetape4k.image:bluetape4k-images-spring-boot", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-vips-api                     = { module = "io.github.bluetape4k.image:bluetape4k-images-vips-api", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-vips-java21                  = { module = "io.github.bluetape4k.image:bluetape4k-images-vips-java21", version.ref = "bluetape4k-image-bom" }

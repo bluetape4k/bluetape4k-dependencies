@@ -13,6 +13,12 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   development lines: projects `1.11.0-SNAPSHOT`, AWS `0.4.0-SNAPSHOT`, image
   `0.3.0-SNAPSHOT`, text `0.3.0-SNAPSHOT`, graph `0.6.0-SNAPSHOT`, leader
   `0.4.0-SNAPSHOT`, exposed `1.11.0-SNAPSHOT`, and javers `0.3.0-SNAPSHOT`.
+- Documented the downstream snapshot dependency resolution strategy, added a
+  reusable retry wrapper, and hardened snapshot artifact availability checks for
+  transient Central snapshot `403` responses.
+- Synced generated managed catalog aliases and BOM constraints for
+  `bluetape4k-images-ocr`, while keeping unpublished Exposed database modules
+  gated until their first published line.
 
 ## [1.2.0] - 2026-06-01
 

@@ -126,6 +126,91 @@ class VerifyManagedArtifactsTest(unittest.TestCase):
             1.0,
         )
 
+    def test_verify_artifacts_retries_snapshot_403_then_passes(self) -> None:
+        artifact = verify.ManagedArtifact(
+            alias="bluetape4k-core",
+            group_id="io.github.bluetape4k",
+            artifact_id="bluetape4k-core",
+            version="1.9.2-SNAPSHOT",
+        )
+
+        with mock.patch.object(verify, "artifact_exists", side_effect=[(False, "403"), (True, "200")]) as exists:
+            with mock.patch.object(verify.time, "sleep") as sleep:
+                errors = verify.verify_artifacts(
+                    [artifact],
+                    "https://repo1.maven.org/maven2",
+                    1.0,
+                    True,
+                    "https://central.sonatype.com/repository/maven-snapshots",
+                    snapshot_403_attempts=2,
+                    snapshot_403_delay_seconds=0.5,
+                )
+
+        self.assertEqual(errors, [])
+        self.assertEqual(exists.call_count, 2)
+        sleep.assert_called_once_with(0.5)
+
+    def test_verify_artifacts_treats_snapshot_403_as_transient_after_retry_budget(self) -> None:
+        artifact = verify.ManagedArtifact(
+            alias="bluetape4k-core",
+            group_id="io.github.bluetape4k",
+            artifact_id="bluetape4k-core",
+            version="1.9.2-SNAPSHOT",
+        )
+
+        with mock.patch.object(verify, "artifact_exists", return_value=(False, "403")) as exists:
+            with mock.patch.object(verify.time, "sleep"):
+                errors = verify.verify_artifacts(
+                    [artifact],
+                    "https://repo1.maven.org/maven2",
+                    1.0,
+                    True,
+                    "https://central.sonatype.com/repository/maven-snapshots",
+                    snapshot_403_attempts=2,
+                    snapshot_403_delay_seconds=0.0,
+                )
+
+        self.assertEqual(errors, [])
+        self.assertEqual(exists.call_count, 2)
+
+    def test_verify_artifacts_keeps_snapshot_404_as_missing(self) -> None:
+        artifact = verify.ManagedArtifact(
+            alias="bluetape4k-core",
+            group_id="io.github.bluetape4k",
+            artifact_id="bluetape4k-core",
+            version="1.9.2-SNAPSHOT",
+        )
+
+        with mock.patch.object(verify, "artifact_exists", return_value=(False, "404")):
+            errors = verify.verify_artifacts(
+                [artifact],
+                "https://repo1.maven.org/maven2",
+                1.0,
+                True,
+                "https://central.sonatype.com/repository/maven-snapshots",
+            )
+
+        self.assertEqual(
+            errors,
+            ["Missing managed artifact (404): bluetape4k-core -> io.github.bluetape4k:bluetape4k-core:1.9.2-SNAPSHOT"],
+        )
+
+    def test_verify_artifacts_keeps_release_403_as_missing(self) -> None:
+        artifact = verify.ManagedArtifact(
+            alias="bluetape4k-core",
+            group_id="io.github.bluetape4k",
+            artifact_id="bluetape4k-core",
+            version="1.9.2",
+        )
+
+        with mock.patch.object(verify, "artifact_exists", return_value=(False, "403")):
+            errors = verify.verify_artifacts([artifact], "https://repo1.maven.org/maven2", 1.0, False)
+
+        self.assertEqual(
+            errors,
+            ["Missing managed artifact (403): bluetape4k-core -> io.github.bluetape4k:bluetape4k-core:1.9.2"],
+        )
+
     def test_verify_artifacts_reports_missing_aliases(self) -> None:
         artifact = verify.ManagedArtifact(
             alias="bluetape4k-core",

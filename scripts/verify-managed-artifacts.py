@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -14,6 +16,8 @@ from pathlib import Path
 
 DEFAULT_REPOSITORY_URL = "https://repo1.maven.org/maven2"
 DEFAULT_SNAPSHOT_REPOSITORY_URL = "https://central.sonatype.com/repository/maven-snapshots"
+DEFAULT_SNAPSHOT_403_ATTEMPTS = 2
+DEFAULT_SNAPSHOT_403_DELAY_SECONDS = 0.2
 SELF_ALIAS = "bluetape4k-dependencies"
 
 
@@ -140,12 +144,35 @@ def artifact_exists(url: str, timeout: float) -> tuple[bool, str]:
         return False, "timeout"
 
 
+def artifact_exists_with_snapshot_403_retry(
+    url: str,
+    timeout: float,
+    is_snapshot: bool,
+    allow_snapshots: bool,
+    attempts: int,
+    delay_seconds: float,
+) -> tuple[bool, str]:
+    safe_attempts = max(1, attempts)
+
+    for attempt in range(1, safe_attempts + 1):
+        exists, status = artifact_exists(url, timeout)
+        if exists:
+            return exists, status
+        if not (is_snapshot and allow_snapshots and status == "403" and attempt < safe_attempts):
+            return exists, status
+        time.sleep(max(0.0, delay_seconds))
+
+    return False, "403"
+
+
 def verify_artifacts(
     artifacts: list[ManagedArtifact],
     repository_url: str,
     timeout: float,
     allow_snapshots: bool,
     snapshot_repository_url: str = DEFAULT_SNAPSHOT_REPOSITORY_URL,
+    snapshot_403_attempts: int = DEFAULT_SNAPSHOT_403_ATTEMPTS,
+    snapshot_403_delay_seconds: float = DEFAULT_SNAPSHOT_403_DELAY_SECONDS,
 ) -> list[str]:
     errors: list[str] = []
 
@@ -156,11 +183,41 @@ def verify_artifacts(
             continue
 
         url = metadata_url(snapshot_repository_url, artifact) if is_snapshot else pom_url(repository_url, artifact)
-        exists, status = artifact_exists(url, timeout)
+        exists, status = artifact_exists_with_snapshot_403_retry(
+            url=url,
+            timeout=timeout,
+            is_snapshot=is_snapshot,
+            allow_snapshots=allow_snapshots,
+            attempts=snapshot_403_attempts,
+            delay_seconds=snapshot_403_delay_seconds,
+        )
         if not exists:
+            if is_snapshot and allow_snapshots and status == "403":
+                print(f"Transient snapshot artifact check skipped after 403: {artifact.alias} -> {artifact.gav}")
+                continue
             errors.append(f"Missing managed artifact ({status}): {artifact.alias} -> {artifact.gav}")
 
     return errors
+
+
+def env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        raise RuntimeError(f"{name} must be an integer: {value}") from None
+
+
+def env_float(name: str, default: float) -> float:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        raise RuntimeError(f"{name} must be a number: {value}") from None
 
 
 def main() -> int:
@@ -192,6 +249,18 @@ def main() -> int:
         action="store_true",
         help="Allow -SNAPSHOT managed versions instead of failing fast",
     )
+    parser.add_argument(
+        "--snapshot-403-attempts",
+        type=int,
+        default=env_int("SNAPSHOT_ARTIFACT_CHECK_ATTEMPTS", DEFAULT_SNAPSHOT_403_ATTEMPTS),
+        help="Attempts for transient snapshot 403 artifact checks",
+    )
+    parser.add_argument(
+        "--snapshot-403-delay-seconds",
+        type=float,
+        default=env_float("SNAPSHOT_ARTIFACT_CHECK_DELAY_SECONDS", DEFAULT_SNAPSHOT_403_DELAY_SECONDS),
+        help="Delay between transient snapshot 403 artifact check attempts",
+    )
     parser.add_argument("--summary", action="store_true", help="Print verification summary")
     args = parser.parse_args()
 
@@ -202,6 +271,8 @@ def main() -> int:
         timeout=args.timeout,
         allow_snapshots=args.allow_snapshots,
         snapshot_repository_url=args.snapshot_repository_url,
+        snapshot_403_attempts=args.snapshot_403_attempts,
+        snapshot_403_delay_seconds=args.snapshot_403_delay_seconds,
     )
 
     if args.summary:

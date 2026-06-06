@@ -242,6 +242,26 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertTrue(sync.include_module(repo, "javers-ddd", "javers-ddd", "0.2.0"))
         self.assertTrue(sync.include_module(repo, "javers-exposed", "javers-exposed", "0.2.0"))
 
+    def test_exposed_repo_gates_unpublished_database_modules_by_selected_bom_version(self) -> None:
+        repo = next(
+            managed_repo
+            for managed_repo in sync.MANAGED_REPOS
+            if managed_repo.label == "bluetape4k-exposed"
+        )
+
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-exposed-cockroachdb", "exposed/exposed-cockroachdb", "1.11.0")
+        )
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-exposed-starrocks", "exposed/exposed-starrocks", "1.11.0")
+        )
+        self.assertTrue(
+            sync.include_module(repo, "bluetape4k-exposed-cockroachdb", "exposed/exposed-cockroachdb", "1.12.0")
+        )
+        self.assertTrue(
+            sync.include_module(repo, "bluetape4k-exposed-starrocks", "exposed/exposed-starrocks", "1.12.0")
+        )
+
     def test_validate_discovered_rejects_duplicate_aliases(self) -> None:
         repo = sync.MANAGED_REPOS[0]
         module = sync.Module(
