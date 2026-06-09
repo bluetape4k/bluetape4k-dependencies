@@ -95,7 +95,7 @@ class SyncSharedVersionsTest(unittest.TestCase):
                         "[versions]",
                         'ignored = "0.1.0"',
                         sync.SOURCE_START,
-                        'kotlin = "2.3.21"  # central',
+                        'kotlin = "2.4.0"  # central',
                         sync.SOURCE_END,
                         "",
                     ],
@@ -106,7 +106,7 @@ class SyncSharedVersionsTest(unittest.TestCase):
             versions = sync.read_source_versions(catalog)
 
         self.assertEqual(set(versions), {"kotlin"})
-        self.assertEqual(versions["kotlin"].version, "2.3.21")
+        self.assertEqual(versions["kotlin"].version, "2.4.0")
 
     def test_read_source_versions_keeps_mavenrepository_group_hint(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -131,7 +131,7 @@ class SyncSharedVersionsTest(unittest.TestCase):
     def test_read_source_versions_requires_marked_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"
-            catalog.write_text("[versions]\nkotlin = \"2.3.21\"\n", encoding="utf-8")
+            catalog.write_text("[versions]\nkotlin = \"2.4.0\"\n", encoding="utf-8")
 
             with self.assertRaisesRegex(RuntimeError, "missing source-of-truth markers"):
                 sync.read_source_versions(catalog)
@@ -155,14 +155,14 @@ class SyncSharedVersionsTest(unittest.TestCase):
             source = {
                 "kotlin": sync.SourceVersion(
                     alias="kotlin",
-                    version="2.3.21",
-                    line='kotlin = "2.3.21"  # central',
+                    version="2.4.0",
+                    line='kotlin = "2.4.0"  # central',
                 ),
             }
 
             synced_text, changes = sync.sync_catalog(catalog, source)
 
-        self.assertIn('kotlin = "2.3.21"', synced_text)
+        self.assertIn('kotlin = "2.4.0"', synced_text)
         self.assertIn('repo-only = "1.0.0"', synced_text)
         self.assertEqual(len(changes), 1)
         self.assertEqual(changes[0].alias, "kotlin")
@@ -172,13 +172,13 @@ class SyncSharedVersionsTest(unittest.TestCase):
             repo = Path(tmp) / "sample"
             catalog = repo / "gradle" / "libs.versions.toml"
             catalog.parent.mkdir(parents=True)
-            original = '[versions]\nkotlin = "2.3.21"  # local comment\n'
+            original = '[versions]\nkotlin = "2.4.0"  # local comment\n'
             catalog.write_text(original, encoding="utf-8")
             source = {
                 "kotlin": sync.SourceVersion(
                     alias="kotlin",
-                    version="2.3.21",
-                    line='kotlin = "2.3.21"  # central comment',
+                    version="2.4.0",
+                    line='kotlin = "2.4.0"  # central comment',
                 ),
             }
 
