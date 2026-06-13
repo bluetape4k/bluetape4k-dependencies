@@ -1,5 +1,10 @@
 # AGENTS.md - bluetape4k-dependencies
 
+This repository inherits the workspace guidance from `../AGENTS.md`.
+Read and follow the workspace root guide first. This file only adds
+repo-specific layout, commands, domain rules, and local exceptions.
+
+
 This repository is the centralized dependency-governance project for the
 bluetape4k ecosystem. It publishes a Gradle `java-platform` BOM. Its
 `gradle/libs.versions.toml` is also the internal build catalog source consumed
@@ -108,14 +113,11 @@ Publishing credentials come from `resolveCentralPublishingConfig()`. Use
   they need dependency resolution alignment.
 - CI runs `./gradlew build` for pushes/PRs against `develop` and `main`.
 
-## Cross-Repo Lesson Guards
+## Repo-Specific Guards
 
-- Before catalog, BOM, release-train, workflow, or downstream sync work, query
-  GNO for `bluetape4k-dependencies` in both `bluetape4k-github` and
-  `bluetape4k-docs`; repeated downstream PRs are governance evidence.
 - Treat module additions, removals, artifact renames, and compatibility-line
-  changes as cross-repo work: update managed catalog generation, downstream
-  shared-version sync, Dependabot ignore sync, README/runbook references, and
-  tests in the same pass.
-- Release and snapshot dispatch stays audit-first: read declared workflow
-  inputs from YAML and pass only supported inputs.
+  changes as cross-repo catalog work: update managed catalog generation,
+  downstream shared-version sync, Dependabot ignore sync, README/runbook
+  references, and tests in the same pass.
+- Release and snapshot dispatch stays audit-first: read declared workflow inputs
+  from YAML and pass only supported inputs.
