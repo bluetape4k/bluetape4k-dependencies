@@ -6,9 +6,10 @@ settings.gradle.kts. This script follows those include rules, applies the same
 high-level BOM inclusion policy used by each upstream repository, and keeps:
 
 * gradle/libs.versions.toml library aliases
-* build.gradle.kts java-platform constraints
+* build.gradle.kts generated managed-module placeholder
 
-aligned with the actual sibling repositories.
+aligned with the actual sibling repositories. Artifact versions are delegated to
+the imported sub-BOM platform dependencies in build.gradle.kts.
 """
 
 from __future__ import annotations
@@ -52,7 +53,6 @@ class Module:
     version_ref: str
     project_path: str
     relative_path: str
-    include_constraint: bool
 
 
 @dataclasses.dataclass(frozen=True)
@@ -363,8 +363,10 @@ def module_minimum_version(repo: ManagedRepo, artifact_id: str) -> str | None:
 
 def is_available_in_selected_version(repo: ManagedRepo, artifact_id: str, selected_version: str | None) -> bool:
     minimum_version = module_minimum_version(repo, artifact_id)
-    if minimum_version is None or selected_version is None:
+    if minimum_version is None:
         return True
+    if selected_version is None:
+        return False
     return normalized_version(selected_version) >= normalized_version(minimum_version)
 
 
@@ -439,7 +441,6 @@ def discover_repo_modules(
             version_ref=repo.version_ref,
             project_path=f":{project_path}",
             relative_path=relative_path,
-            include_constraint=not is_bom(project_name),
         )
 
     for config in parse_include_configs(settings_file):
@@ -467,7 +468,6 @@ def discover_repo_modules(
                 version_ref=repo.version_ref,
                 project_path=f":{project_name}",
                 relative_path=relative_path,
-                include_constraint=not is_bom(project_name),
             )
 
     for mapped_include in parse_mapped_includes(settings_file):
@@ -488,7 +488,6 @@ def discover_repo_modules(
             version_ref=repo.version_ref,
             project_path=f":{project_name}",
             relative_path=relative_path,
-            include_constraint=not is_bom(project_name),
         )
 
     if not modules:
@@ -559,16 +558,11 @@ def render_catalog_section(discovered: dict[ManagedRepo, list[Module]]) -> str:
 
 
 def render_constraint_section(discovered: dict[ManagedRepo, list[Module]]) -> str:
-    lines = [CONSTRAINT_START]
-
-    for repo in MANAGED_REPOS:
-        lines.append(f"        // -- {repo.label} modules --")
-        for module in discovered[repo]:
-            if module.include_constraint:
-                lines.append(f"        api(libs.{to_libs_accessor(module.alias)})")
-        lines.append("")
-
-    lines.append(CONSTRAINT_END)
+    lines = [
+        CONSTRAINT_START,
+        "        // Managed bluetape4k artifact versions are delegated to the sub-BOM platform imports above.",
+        CONSTRAINT_END,
+    ]
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -653,15 +647,6 @@ def verify(repo_root: Path, discovered: dict[ManagedRepo, list[Module]]) -> list
     if missing_aliases:
         errors.append("Missing catalog aliases:\n  " + "\n  ".join(missing_aliases))
 
-    missing_constraints = sorted(
-        module.alias
-        for repo in MANAGED_REPOS
-        for module in discovered[repo]
-        if module.include_constraint and to_libs_accessor(module.alias) not in build_accessors
-    )
-    if missing_constraints:
-        errors.append("Missing build.gradle.kts constraints:\n  " + "\n  ".join(missing_constraints))
-
     missing_platforms = sorted(
         module.alias
         for repo in MANAGED_REPOS
@@ -682,8 +667,8 @@ def verify(repo_root: Path, discovered: dict[ManagedRepo, list[Module]]) -> list
 
 def print_summary(discovered: dict[ManagedRepo, list[Module]]) -> None:
     for repo in MANAGED_REPOS:
-        constrained = sum(1 for module in discovered[repo] if module.include_constraint)
-        print(f"{repo.label}: aliases={len(discovered[repo])}, constraints={constrained}")
+        sub_boms = sum(1 for module in discovered[repo] if is_bom(module.artifact_id))
+        print(f"{repo.label}: aliases={len(discovered[repo])}, sub-boms={sub_boms}")
 
 
 def main() -> int:
@@ -724,13 +709,10 @@ def main() -> int:
                 print(error, file=sys.stderr)
             return 1
         total_aliases = sum(len(discovered[repo]) for repo in MANAGED_REPOS)
-        total_constraints = sum(
-            1
-            for repo in MANAGED_REPOS
-            for module in discovered[repo]
-            if module.include_constraint
+        total_sub_boms = sum(
+            1 for repo in MANAGED_REPOS for module in discovered[repo] if is_bom(module.artifact_id)
         )
-        print(f"Verified managed modules: aliases={total_aliases}, constraints={total_constraints}")
+        print(f"Verified managed modules: aliases={total_aliases}, sub-boms={total_sub_boms}")
 
     return 0
 

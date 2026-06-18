@@ -19,6 +19,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Synced generated managed catalog aliases and BOM constraints for
   `bluetape4k-images-ocr`, while keeping unpublished Exposed database modules
   gated until their first published line.
+- Delegated generated bluetape4k artifact version management to imported
+  sub-BOMs instead of repeating every artifact as an individual BOM constraint.
 
 ## [1.2.0] - 2026-06-01
 

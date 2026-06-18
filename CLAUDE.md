@@ -27,15 +27,16 @@ consistent, pre-coordinated versions for every bluetape4k module — no per-depe
 ## How It Works
 
 `build.gradle.kts` declares a `java-platform` project.
-`bluetape4k-bom`, `bluetape4k-graph-bom`, `leader-bom` are imported as `api(platform(...))` so
+All bluetape4k ecosystem sub-BOMs are imported as `api(platform(...))` so
 all modules in each repo are version-managed for consumers automatically.
-Other ecosystem repos (aws, image, text, exposed) are listed as explicit `constraints`.
+Generated module aliases stay in `libs.versions.toml` for Gradle build ergonomics;
+they are not repeated as individual BOM constraints.
 
 ```
-bluetape4k-bom    ──platform import──▶  ALL bluetape4k-projects versions
-bluetape4k-graph-bom  ──platform import──▶  ALL graph module versions
-leader-bom        ──platform import──▶  ALL leader module versions
-libs.versions.toml  ──version refs──▶  explicit constraints for aws/image/text/exposed
+bluetape4k-bom          ──platform import──▶  ALL bluetape4k-projects versions
+bluetape4k-graph-bom    ──platform import──▶  ALL graph module versions
+bluetape4k-exposed-bom  ──platform import──▶  ALL exposed module versions
+libs.versions.toml      ──version refs──────▶  Gradle aliases for downstream builds
 ```
 
 Consumers use `platform(...)` to import the BOM:
@@ -60,13 +61,12 @@ dependencies {
    bluetape4k-graph  = "0.4.0-SNAPSHOT"
    ```
 
-2. **Verify constraints** in `build.gradle.kts` — all `api(libs.bluetape4k.*)` entries for that repo
-   automatically pick up the new version via the catalog ref. No manual edit of `build.gradle.kts` is needed
-   unless you are **adding** a brand-new artifact.
+2. **Verify the sub-BOM import** in `build.gradle.kts` — the imported BOM owns the
+   artifact versions. No per-artifact `api(libs.bluetape4k.*)` constraint is needed.
 
 3. **Add a new artifact** (when a repo publishes a new module):
    - Add a `[libraries]` entry in `libs.versions.toml` pointing to the correct module coordinate and version ref.
-   - Add a corresponding `api(libs.<alias>)` line inside `dependencies { constraints { } }` in `build.gradle.kts`.
+   - Do not add a corresponding `api(libs.<alias>)` constraint when an imported sub-BOM governs the artifact.
 
 4. **Run `./gradlew build`** to validate the platform resolves correctly.
 
@@ -110,5 +110,5 @@ dependencies {
 - **No source code lives here.** This is a pure `java-platform` BOM project.
 - **`allowDependencies()`** is enabled to allow `api(platform(...))` declarations alongside `constraints {}`.
 - `bluetape4k-bom` is imported via `api(platform(...))` — this propagates ALL `bluetape4k-projects` module versions to consumers. Do NOT put it back inside `constraints {}`.
-- Individual constraints for aws, image, text, graph, leader, exposed remain explicit because those repos don't have sub-BOMs imported here.
+- Individual bluetape4k artifact constraints are intentionally omitted when an imported sub-BOM governs the repo.
 - The CI workflow (`ci.yml`) runs `./gradlew build` on every push/PR against `develop` and `main`.

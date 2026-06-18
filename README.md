@@ -194,8 +194,9 @@ Use versionless `spring-boot` artifact names for Spring Boot 4 integrations:
 
 ## Managed Modules
 
-Managed catalog aliases and BOM constraints are generated from sibling
-repository `settings.gradle.kts` module includes:
+Managed catalog aliases are generated from sibling repository
+`settings.gradle.kts` module includes. Published artifact versions are delegated
+to the imported bluetape4k sub-BOMs:
 
 ```bash
 scripts/sync-managed-catalog.py --check --summary
@@ -208,7 +209,7 @@ For the Korean operating procedure used by the bluetape4k maintainers, see
 [`docs/version-management.ko.md`](docs/version-management.ko.md).
 
 `gradle/libs.versions.toml` is the source of truth for the exact generated
-artifact list, BOM constraints, and published Gradle Version Catalog. The sections below summarize the main
+artifact alias list and published Gradle Version Catalog. The sections below summarize the main
 public module families.
 
 Shared dependency and plugin version aliases in this repository are also the source of truth for sibling
