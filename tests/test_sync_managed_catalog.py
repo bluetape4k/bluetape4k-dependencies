@@ -156,17 +156,14 @@ class SyncManagedCatalogTest(unittest.TestCase):
                 "bluetape4k-exposed-spring-boot-jdbc",
             ],
         )
-        self.assertFalse(aliases["bluetape4k-exposed-bom"].include_constraint)
-        self.assertTrue(aliases["bluetape4k-exposed-core"].include_constraint)
-        self.assertTrue(aliases["bluetape4k-exposed-spring-boot-jdbc"].include_constraint)
-
         catalog = sync.render_catalog_section(discovered)
         constraints = sync.render_constraint_section(discovered)
 
         self.assertIn('bluetape4k-exposed-bom', catalog)
         self.assertIn('module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-boot-jdbc"', catalog)
-        self.assertIn("api(libs.bluetape4k.exposed.core)", constraints)
-        self.assertIn("api(libs.bluetape4k.exposed.spring.boot.jdbc)", constraints)
+        self.assertIn("delegated to the sub-BOM platform imports", constraints)
+        self.assertNotIn("api(libs.bluetape4k.exposed.core)", constraints)
+        self.assertNotIn("api(libs.bluetape4k.exposed.spring.boot.jdbc)", constraints)
         self.assertNotIn("api(libs.bluetape4k.exposed.bom)", constraints)
 
     def test_parse_direct_includes_ignores_include_modules_calls(self) -> None:
@@ -218,7 +215,20 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.9.2"))
         self.assertTrue(sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.10.0"))
 
-    def test_image_repo_delegates_unpublished_captcha_version_to_image_bom(self) -> None:
+    def test_projects_repo_excludes_unpublished_ktor_modules(self) -> None:
+        repo = next(
+            managed_repo
+            for managed_repo in sync.MANAGED_REPOS
+            if managed_repo.label == "bluetape4k-projects"
+        )
+
+        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-core", "io/ktor/ktor-core"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-observability", "io/ktor/ktor-observability"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-openapi", "io/ktor/ktor-openapi"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-resilience4j", "io/ktor/ktor-resilience4j"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-testing", "io/ktor/ktor-testing"))
+
+    def test_image_repo_excludes_unpublished_captcha_and_ktor_modules(self) -> None:
         repo = next(
             managed_repo
             for managed_repo in sync.MANAGED_REPOS
@@ -226,6 +236,7 @@ class SyncManagedCatalogTest(unittest.TestCase):
         )
 
         self.assertFalse(sync.include_module(repo, "bluetape4k-images-captcha", "images-captcha"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor"))
         self.assertTrue(sync.include_module(repo, "bluetape4k-images", "images"))
         self.assertFalse(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.1.2"))
         self.assertTrue(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.2.0"))
@@ -262,6 +273,17 @@ class SyncManagedCatalogTest(unittest.TestCase):
             sync.include_module(repo, "bluetape4k-exposed-starrocks", "exposed/exposed-starrocks", "1.12.0")
         )
 
+    def test_exposed_repo_excludes_unpublished_database_modules(self) -> None:
+        repo = next(
+            managed_repo
+            for managed_repo in sync.MANAGED_REPOS
+            if managed_repo.label == "bluetape4k-exposed"
+        )
+
+        self.assertFalse(sync.include_module(repo, "bluetape4k-exposed-cockroachdb", "exposed/cockroachdb"))
+        self.assertFalse(sync.include_module(repo, "bluetape4k-exposed-starrocks", "exposed/starrocks"))
+        self.assertTrue(sync.include_module(repo, "bluetape4k-exposed-core", "exposed/core"))
+
     def test_validate_discovered_rejects_duplicate_aliases(self) -> None:
         repo = sync.MANAGED_REPOS[0]
         module = sync.Module(
@@ -272,7 +294,6 @@ class SyncManagedCatalogTest(unittest.TestCase):
             version_ref="bluetape4k-bom",
             project_path=":sample",
             relative_path="sample",
-            include_constraint=True,
         )
         discovered = {managed_repo: [] for managed_repo in sync.MANAGED_REPOS}
         discovered[repo] = [module, module]

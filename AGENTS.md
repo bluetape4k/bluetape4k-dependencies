@@ -37,8 +37,9 @@ production source code.
 ## How It Works
 
 `gradle/libs.versions.toml` owns version refs, library aliases, and plugin
-aliases. `build.gradle.kts` declares `dependencies { constraints { ... } }` for
-the `bluetape4k-dependencies` BOM. Other `bluetape4k-*` repositories read this
+aliases. `build.gradle.kts` imports bluetape4k sub-BOMs with
+`api(platform(...))`; those sub-BOMs provide the Maven dependency-management
+contract for bluetape4k artifacts. Other `bluetape4k-*` repositories read this
 catalog from a checked-out `bluetape4k-dependencies` ref; it is not a Maven
 Central publication.
 
@@ -65,10 +66,10 @@ source for Gradle build aliases and plugin/tooling versions.
    versions.
 4. For managed repository module additions/removals, run
    `scripts/sync-managed-catalog.py --write --check`; do not edit
-   generated catalog/constraint blocks by hand.
-5. Verify existing constraints pick up the version through the catalog alias.
+   generated catalog blocks by hand.
+5. Verify the matching sub-BOM import exists in `build.gradle.kts`.
 6. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
-   matching `api(libs.<alias>)` constraint.
+   matching `api(libs.<alias>)` constraint only if no imported BOM governs it.
 7. Run `./gradlew build`.
 
 ## Commands

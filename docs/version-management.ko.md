@@ -127,7 +127,7 @@ scripts/sync-managed-catalog.py --write --check --summary
 | 파일 | 갱신 내용 |
 |---|---|
 | `gradle/libs.versions.toml` | bluetape4k artifact catalog alias |
-| `build.gradle.kts` | java-platform `api(...)` constraints |
+| `build.gradle.kts` | sub-BOM delegation placeholder |
 
 `README.md`와 `README.ko.md`의 managed module 표도 generated catalog와 맞춰 갱신합니다.
 

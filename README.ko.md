@@ -194,8 +194,9 @@ Spring Boot 4 통합은 versionless `spring-boot` 아티팩트 이름을 사용�
 
 ## 관리 모듈 목록
 
-관리 catalog alias와 BOM constraint는 sibling repository의
-`settings.gradle.kts` 모듈 include 목록에서 생성합니다:
+관리 catalog alias는 sibling repository의 `settings.gradle.kts` 모듈 include
+목록에서 생성합니다. Published artifact version은 import된 bluetape4k sub-BOM에
+위임합니다:
 
 ```bash
 scripts/sync-managed-catalog.py --check --summary
@@ -207,7 +208,7 @@ python3 -m unittest tests/test_sync_managed_catalog.py
 bluetape4k 유지보수자를 위한 상세 버전 관리 절차는
 [`docs/version-management.ko.md`](docs/version-management.ko.md)를 참고하세요.
 
-정확한 생성 아티팩트 목록, BOM constraint, published Gradle Version Catalog의 기준은
+정확한 생성 아티팩트 alias 목록과 published Gradle Version Catalog의 기준은
 `gradle/libs.versions.toml`입니다.
 아래 섹션은 주요 public module family를 요약합니다.
 
