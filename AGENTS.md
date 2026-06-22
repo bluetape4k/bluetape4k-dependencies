@@ -51,7 +51,7 @@ source for Gradle build aliases and plugin/tooling versions.
 - `baseVersion` is the semantic version of the user-facing
   `bluetape4k-dependencies` BOM.
 - Shared catalog source refs use date-stamped train tags such as
-  `catalog/2026-05-23-00`. Do not publish the internal catalog as a Maven
+  `catalog/2026-06-09-01`. Do not publish the internal catalog as a Maven
   Central artifact.
 
 ## Updating Versions
@@ -107,7 +107,7 @@ Publishing credentials come from `resolveCentralPublishingConfig()`. Use
   `repo-local`.
 - The BOM version is bumped when a coordinated upstream version set is promoted.
 - The build/contributor catalog is cut by tagging this repo, for example
-  `catalog/2026-05-23-00`; it does not have to match the BOM version.
+  `catalog/2026-06-09-01`; it does not have to match the BOM version.
 - `allowDependencies()` is enabled so constraints can reference external BOMs.
 - The version catalog source is a Gradle build contract, not a substitute for the BOM.
   Consumers should still import `bluetape4k-dependencies` as a platform when
