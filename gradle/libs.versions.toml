@@ -75,6 +75,9 @@ netty4            = "4.1.135.Final"  # https://mvnrepository.com/artifact/io.net
 netty             = "4.2.15.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
 netty-tcnative    = "2.0.77.Final"  # https://mvnrepository.com/artifact/io.netty/netty-tcnative-classes
 opentelemetry     = "1.63.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
+opentelemetry-alpha = "1.63.0-alpha"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom-alpha
+opentelemetry-instrumentation-alpha = "2.29.0-alpha"  # https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-instrumentation-bom-alpha
+opentelemetry-javaagent = "2.29.0"  # https://mvnrepository.com/artifact/io.opentelemetry.javaagent/opentelemetry-javaagent
 protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
 log4j             = "2.26.0"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
@@ -199,8 +202,11 @@ netty-tcnative-classes                        = { module = "io.netty:netty-tcnat
 ow2-asm                                       = { module = "org.ow2.asm:asm", version.ref = "ow2-asm" }
 okio                                          = { module = "com.squareup.okio:okio", version.ref = "okio" }
 opentelemetry-bom                             = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
+opentelemetry-alpha-bom                       = { module = "io.opentelemetry:opentelemetry-bom-alpha", version.ref = "opentelemetry-alpha" }
+opentelemetry-instrumentation-bom-alpha       = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
 opentelemetry-api                             = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
 opentelemetry-extension-trace-propagators     = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version.ref = "opentelemetry" }
+opentelemetry-javaagent                       = { module = "io.opentelemetry.javaagent:opentelemetry-javaagent", version.ref = "opentelemetry-javaagent" }
 postgresql                                    = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 protobuf-bom                                  = { module = "com.google.protobuf:protobuf-bom", version.ref = "protobuf" }
 protobuf-java                                 = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
