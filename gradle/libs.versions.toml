@@ -70,6 +70,7 @@ fabric8-kubernetes-client = "7.7.0"  # https://mvnrepository.com/artifact/io.fab
 ktor              = "3.5.0"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
 netty4            = "4.1.135.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
 netty             = "4.2.15.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
+netty-tcnative    = "2.0.77.Final"  # https://mvnrepository.com/artifact/io.netty/netty-tcnative-classes
 opentelemetry     = "1.63.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
 protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
@@ -174,6 +175,7 @@ mybatis-dynamic-sql                           = { module = "org.mybatis.dynamic-
 netty-bom                                     = { module = "io.netty:netty-bom", version.ref = "netty" }
 netty-codec-http                              = { module = "io.netty:netty-codec-http", version.ref = "netty" }
 netty-codec-http2                             = { module = "io.netty:netty-codec-http2", version.ref = "netty" }
+netty-tcnative-classes                        = { module = "io.netty:netty-tcnative-classes", version.ref = "netty-tcnative" }
 ow2-asm                                       = { module = "org.ow2.asm:asm", version.ref = "ow2-asm" }
 opentelemetry-bom                             = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
 opentelemetry-api                             = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }

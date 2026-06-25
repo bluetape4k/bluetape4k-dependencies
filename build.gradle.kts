@@ -100,6 +100,7 @@ dependencies {
         api(libs.mybatis.dynamic.sql)
         api(libs.netty.codec.http)
         api(libs.netty.codec.http2)
+        api(libs.netty.tcnative.classes)
         api(libs.ow2.asm)
         api(libs.opentelemetry.api)
         api(libs.opentelemetry.extension.trace.propagators)
