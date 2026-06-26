@@ -301,6 +301,158 @@ class SyncManagedCatalogTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Duplicate catalog aliases"):
             sync.validate_discovered(discovered)
 
+    def test_catalog_reference_errors_rejects_unreferenced_versions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog_file = Path(tmp) / "libs.versions.toml"
+            catalog_file.write_text(
+                """
+                [versions]
+                used = "1.0.0"
+                orphan = "2.0.0"
+
+                [libraries]
+                sample = { module = "example:sample", version.ref = "used" }
+                """,
+                encoding="utf-8",
+            )
+
+            errors = sync.catalog_reference_errors(catalog_file, allowed_version_only_aliases={})
+
+        self.assertEqual(errors, ["Unreferenced catalog version aliases:\n  orphan"])
+
+    def test_catalog_reference_errors_ignores_commented_version_refs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog_file = Path(tmp) / "libs.versions.toml"
+            catalog_file.write_text(
+                """
+                [versions]
+                orphan = "2.0.0"
+
+                [libraries]
+                # disabled = { module = "example:disabled", version.ref = "orphan" }
+                """,
+                encoding="utf-8",
+            )
+
+            errors = sync.catalog_reference_errors(catalog_file, allowed_version_only_aliases={})
+
+        self.assertEqual(errors, ["Unreferenced catalog version aliases:\n  orphan"])
+
+    def test_catalog_reference_errors_allows_reasoned_version_only_aliases(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog_file = Path(tmp) / "libs.versions.toml"
+            catalog_file.write_text(
+                """
+                [versions]
+                used = "1.0.0"
+                tool-line = "2.0.0"
+
+                [libraries]
+                sample = { module = "example:sample", version.ref = "used" }
+                """,
+                encoding="utf-8",
+            )
+
+            errors = sync.catalog_reference_errors(
+                catalog_file,
+                allowed_version_only_aliases={
+                    "tool-line": "external tool version consumed directly by Gradle build logic",
+                },
+            )
+
+        self.assertEqual(errors, [])
+
+    def test_catalog_reference_errors_allows_downstream_referenced_aliases(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog_file = Path(tmp) / "libs.versions.toml"
+            catalog_file.write_text(
+                """
+                [versions]
+                used = "1.0.0"
+                downstream-only = "2.0.0"
+
+                [libraries]
+                sample = { module = "example:sample", version.ref = "used" }
+                """,
+                encoding="utf-8",
+            )
+
+            errors = sync.catalog_reference_errors(
+                catalog_file,
+                allowed_version_only_aliases={},
+                additional_referenced_aliases={"downstream-only"},
+            )
+
+        self.assertEqual(errors, [])
+
+    def test_downstream_bt4k_version_errors_rejects_missing_catalog_versions(self) -> None:
+        repo = sync.ManagedRepo(
+            label="sample-repo",
+            root_name="sample-repo",
+            group_id="io.github.bluetape4k.sample",
+            version_ref="sample-bom",
+            alias_mode="prefix",
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace_root = Path(tmp)
+            repo_root = workspace_root / repo.root_name
+            repo_root.mkdir()
+            (repo_root / "settings.gradle.kts").write_text("", encoding="utf-8")
+            (repo_root / "build.gradle.kts").write_text(
+                """
+                fun bt4kVersion(alias: String): String = alias
+
+                dependencies {
+                    implementation("example:present:${bt4kVersion("present")}")
+                    implementation("example:missing:${bt4kVersion("missing")}")
+                }
+                """,
+                encoding="utf-8",
+            )
+
+            errors = sync.downstream_bt4k_version_errors(
+                workspace_root,
+                catalog_versions={"present": "1.0.0"},
+                managed_repos=(repo,),
+            )
+
+        self.assertEqual(
+            errors,
+            ["Downstream bt4kVersion aliases missing from catalog versions:\n  sample-repo: missing"],
+        )
+
+    def test_downstream_bt4k_version_errors_ignores_commented_references(self) -> None:
+        repo = sync.ManagedRepo(
+            label="sample-repo",
+            root_name="sample-repo",
+            group_id="io.github.bluetape4k.sample",
+            version_ref="sample-bom",
+            alias_mode="prefix",
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace_root = Path(tmp)
+            repo_root = workspace_root / repo.root_name
+            repo_root.mkdir()
+            (repo_root / "build.gradle.kts").write_text(
+                """
+                dependencies {
+                    // implementation("example:missing:${bt4kVersion("missing")}")
+                    implementation("example:present:${bt4kVersion("present")}")
+                }
+                """,
+                encoding="utf-8",
+            )
+
+            errors = sync.downstream_bt4k_version_errors(
+                workspace_root,
+                catalog_versions={"present": "1.0.0"},
+                managed_repos=(repo,),
+            )
+
+        self.assertEqual(errors, [])
+
 
 if __name__ == "__main__":
     unittest.main()
