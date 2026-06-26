@@ -43,7 +43,7 @@ pinned to the stable version.
 | `bluetape4k-aws-bom` | `0.3.1` | `0.4.0` | Pending stable release. |
 | `bluetape4k-image-bom` | `0.2.0` | `0.3.0` | Pending stable release. |
 | `bluetape4k-text-bom` | `0.2.0` | `0.2.1` | Patch train; do not substitute `0.3.0-SNAPSHOT`. |
-| `bluetape4k-graph-bom` | `0.5.0` | `0.6.0` | Pending stable release. |
+| `bluetape4k-graph-bom` | `0.5.0` | `0.5.1` | Patch train; `0.6.0` is the next development line, not this stable input. |
 | `bluetape4k-leader-bom` | `0.3.1` | `0.4.0` | Pending stable release. |
 | `bluetape4k-exposed-bom` | `1.10.0` | `1.11.0` | Pending stable release. |
 | `bluetape4k-javers-bom` | `0.2.0` | `0.2.1` | Patch train; `0.3.0` is the next development line, not this stable input. |
