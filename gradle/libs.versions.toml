@@ -353,6 +353,7 @@ bluetape4k-exposed-jdbc-caffeine               = { module = "io.github.bluetape4
 bluetape4k-exposed-jdbc-lettuce                = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-jdbc-lettuce", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-jdbc-redisson               = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-jdbc-redisson", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-jdbc-tests                  = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-jdbc-tests", version.ref = "bluetape4k-exposed-bom" }
+bluetape4k-exposed-ktor                        = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-ktor", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-measured                    = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-measured", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-mysql8                      = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-mysql8", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-postgresql                  = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-postgresql", version.ref = "bluetape4k-exposed-bom" }
@@ -376,5 +377,6 @@ bluetape4k-javers-ddd                          = { module = "io.github.bluetape4
 bluetape4k-javers-exposed                      = { module = "io.github.bluetape4k.javers:javers-exposed", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-kafka            = { module = "io.github.bluetape4k.javers:javers-persistence-kafka", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-redis            = { module = "io.github.bluetape4k.javers:javers-persistence-redis", version.ref = "bluetape4k-javers-bom" }
+bluetape4k-javers-spring-boot4-autoconfigure   = { module = "io.github.bluetape4k.javers:javers-spring-boot4-autoconfigure", version.ref = "bluetape4k-javers-bom" }
 
 # </generated-managed-modules>
