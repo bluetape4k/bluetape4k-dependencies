@@ -27,6 +27,30 @@ CATALOG_END = f"# </generated-managed-modules>"
 CONSTRAINT_START = f"        // <generated-managed-modules by {SCRIPT_NAME}>"
 CONSTRAINT_END = "        // </generated-managed-modules>"
 MIN_CATALOG_ALIAS_WIDTH = 46
+VERSION_ONLY_ALIASES: dict[str, str] = {
+    "coroutines": "legacy compatibility alias; kotlinx-coroutines is the governed catalog alias",
+    "ignite": "Apache Ignite 2 compatibility line selected by downstream build logic",
+    "ignite3": "Apache Ignite 3 compatibility line selected by downstream build logic",
+    "jackson": "default Jackson BOM line selected by downstream build logic",
+    "jackson2": "Jackson 2 BOM compatibility line selected by downstream build logic",
+    "jackson3": "Jackson 3 compatibility line selected by downstream build logic",
+    "kafka3": "Kafka 3 compatibility line selected by downstream build logic",
+    "kafka4": "Kafka 4 compatibility line selected by downstream build logic",
+    "kotlinx-coroutines": "downstream compatibility alias for kotlinx-coroutines-bom",
+    "kover": "Gradle plugin version consumed by downstream pluginManagement/build logic",
+    "lettuce": "lettuce-core compatibility line selected by downstream build logic",
+    "netty4": "Netty 4.1 compatibility line for Vert.x 4/Fabric8 consumers",
+    "postgresql-driver": "downstream compatibility alias for PostgreSQL JDBC",
+    "shadow": "Gradle plugin version consumed by downstream pluginManagement/build logic",
+    "spring-boot": "default Spring Boot BOM line selected by downstream build logic",
+    "spring-boot3": "Spring Boot 3 compatibility line selected by downstream build logic",
+    "spring-boot4": "Spring Boot 4 compatibility line selected by downstream build logic",
+    "spring-kafka": "Spring Kafka 3 compatibility line selected by downstream build logic",
+    "spring-kafka4": "Spring Kafka 4 compatibility line selected by downstream build logic",
+    "testcontainers": "Testcontainers BOM line selected by downstream build logic",
+    "zstd": "legacy zstd-jni compatibility line; zstd-jni is the governed catalog alias",
+}
+SKIPPED_GRADLE_SCAN_DIRS = {".git", ".gradle", ".worktrees", "build"}
 
 
 @dataclasses.dataclass(frozen=True)
@@ -402,11 +426,116 @@ def parse_catalog_versions(catalog_file: Path) -> dict[str, str]:
     text = catalog_file.read_text(encoding="utf-8")
     return dict(
         re.findall(
-            r'^([A-Za-z0-9_.-]+)\s*=\s*"([^"]+)"',
+            r'^\s*([A-Za-z0-9_.-]+)\s*=\s*"([^"]+)"',
             text,
             flags=re.MULTILINE,
         )
     )
+
+
+def strip_line_comments(text: str, marker: str) -> str:
+    stripped_lines: list[str] = []
+
+    for line in text.splitlines():
+        in_string = False
+        escaped = False
+        cursor = 0
+        while cursor < len(line):
+            char = line[cursor]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+            else:
+                if char == '"':
+                    in_string = True
+                elif line.startswith(marker, cursor):
+                    line = line[:cursor]
+                    break
+            cursor += 1
+        stripped_lines.append(line)
+
+    return "\n".join(stripped_lines)
+
+
+def catalog_version_refs(catalog_file: Path) -> set[str]:
+    text = strip_line_comments(catalog_file.read_text(encoding="utf-8"), "#")
+    return set(re.findall(r'version\.ref\s*=\s*"([^"]+)"', text))
+
+
+def catalog_reference_errors(
+    catalog_file: Path,
+    allowed_version_only_aliases: dict[str, str],
+    additional_referenced_aliases: set[str] | None = None,
+) -> list[str]:
+    catalog_versions = parse_catalog_versions(catalog_file)
+    referenced_aliases = catalog_version_refs(catalog_file)
+    if additional_referenced_aliases is not None:
+        referenced_aliases |= additional_referenced_aliases
+
+    unreferenced_aliases = sorted(
+        set(catalog_versions)
+        - referenced_aliases
+        - set(allowed_version_only_aliases)
+    )
+    if not unreferenced_aliases:
+        return []
+
+    return ["Unreferenced catalog version aliases:\n  " + "\n  ".join(unreferenced_aliases)]
+
+
+def bt4k_version_aliases_in_file(path: Path) -> set[str]:
+    text = strip_line_comments(path.read_text(encoding="utf-8"), "//")
+    return set(re.findall(r'bt4kVersion\s*\(\s*"([^"]+)"\s*\)', text))
+
+
+def gradle_kts_files(root: Path) -> list[Path]:
+    if not root.is_dir():
+        return []
+
+    return sorted(
+        path
+        for path in root.rglob("*.gradle.kts")
+        if not (set(path.relative_to(root).parts) & SKIPPED_GRADLE_SCAN_DIRS)
+    )
+
+
+def downstream_bt4k_version_aliases(
+    workspace_root: Path,
+    managed_repos: tuple[ManagedRepo, ...] = MANAGED_REPOS,
+) -> dict[str, set[str]]:
+    aliases_by_repo: dict[str, set[str]] = {}
+
+    for repo in managed_repos:
+        repo_root = workspace_root / repo.root_dir
+        aliases: set[str] = set()
+        for gradle_file in gradle_kts_files(repo_root):
+            aliases |= bt4k_version_aliases_in_file(gradle_file)
+        if aliases:
+            aliases_by_repo[repo.label] = aliases
+
+    return aliases_by_repo
+
+
+def downstream_bt4k_version_errors(
+    workspace_root: Path,
+    catalog_versions: dict[str, str],
+    managed_repos: tuple[ManagedRepo, ...] = MANAGED_REPOS,
+) -> list[str]:
+    missing: list[str] = []
+
+    aliases_by_repo = downstream_bt4k_version_aliases(workspace_root, managed_repos)
+    for repo_label, aliases in sorted(aliases_by_repo.items()):
+        for alias in sorted(aliases - set(catalog_versions)):
+            missing.append(f"{repo_label}: {alias}")
+
+    if not missing:
+        return []
+
+    return ["Downstream bt4kVersion aliases missing from catalog versions:\n  " + "\n  ".join(missing)]
 
 
 def discover_repo_modules(
@@ -635,17 +764,38 @@ def parse_build_accessors(build_file: Path) -> set[str]:
     return set(re.findall(r"(?:api|platform)\(libs\.([A-Za-z0-9_.]+)\)", text))
 
 
-def verify(repo_root: Path, discovered: dict[ManagedRepo, list[Module]]) -> list[str]:
+def verify(
+    repo_root: Path,
+    discovered: dict[ManagedRepo, list[Module]],
+    workspace_root: Path,
+) -> list[str]:
     catalog_file = repo_root / "gradle" / "libs.versions.toml"
     build_file = repo_root / "build.gradle.kts"
     errors: list[str] = []
     expected_aliases = {module.alias for repo in MANAGED_REPOS for module in discovered[repo]}
     catalog_aliases = parse_catalog_aliases(catalog_file)
     build_accessors = parse_build_accessors(build_file)
+    catalog_versions = parse_catalog_versions(catalog_file)
+    downstream_aliases_by_repo = downstream_bt4k_version_aliases(workspace_root)
+    downstream_referenced_aliases = {
+        alias
+        for aliases in downstream_aliases_by_repo.values()
+        for alias in aliases
+        if alias in catalog_versions
+    }
 
     missing_aliases = sorted(expected_aliases - catalog_aliases)
     if missing_aliases:
         errors.append("Missing catalog aliases:\n  " + "\n  ".join(missing_aliases))
+
+    errors.extend(
+        catalog_reference_errors(
+            catalog_file,
+            allowed_version_only_aliases=VERSION_ONLY_ALIASES,
+            additional_referenced_aliases=downstream_referenced_aliases,
+        )
+    )
+    errors.extend(downstream_bt4k_version_errors(workspace_root, catalog_versions))
 
     missing_platforms = sorted(
         module.alias
@@ -703,7 +853,7 @@ def main() -> int:
         print_summary(discovered)
 
     if args.check or not args.write:
-        errors = verify(repo_root, discovered)
+        errors = verify(repo_root, discovered, workspace_root)
         if errors:
             for error in errors:
                 print(error, file=sys.stderr)
