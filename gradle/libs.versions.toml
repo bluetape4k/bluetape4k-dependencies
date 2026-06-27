@@ -29,7 +29,7 @@ bluetape4k-leader-bom  = "0.4.0-SNAPSHOT"  # https://mvnrepository.com/artifact/
 bluetape4k-exposed-bom = "1.11.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
 
 # https://github.com/bluetape4k/bluetape4k-javers
-bluetape4k-javers-bom  = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
+bluetape4k-javers-bom  = "0.2.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.4.0"  # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-bom
@@ -377,6 +377,5 @@ bluetape4k-javers-ddd                          = { module = "io.github.bluetape4
 bluetape4k-javers-exposed                      = { module = "io.github.bluetape4k.javers:javers-exposed", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-kafka            = { module = "io.github.bluetape4k.javers:javers-persistence-kafka", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-redis            = { module = "io.github.bluetape4k.javers:javers-persistence-redis", version.ref = "bluetape4k-javers-bom" }
-bluetape4k-javers-spring-boot4-autoconfigure   = { module = "io.github.bluetape4k.javers:javers-spring-boot4-autoconfigure", version.ref = "bluetape4k-javers-bom" }
 
 # </generated-managed-modules>
