@@ -7,12 +7,13 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-06-27
+
 ### Changed
 
-- Opened the `1.3.0` snapshot train with managed upstream BOM refs on the next
-  development lines: projects `1.11.0-SNAPSHOT`, AWS `0.4.0-SNAPSHOT`, image
-  `0.3.0-SNAPSHOT`, text `0.3.0-SNAPSHOT`, graph `0.6.0-SNAPSHOT`, leader
-  `0.4.0-SNAPSHOT`, exposed `1.11.0-SNAPSHOT`, and javers `0.3.0-SNAPSHOT`.
+- Prepared the `1.3.0` minor train to consume the coordinated internal BOM
+  release set: projects `1.11.0`, exposed `1.11.0`, AWS `0.4.0`, image
+  `0.3.0`, text `0.2.1`, graph `0.5.1`, leader `0.4.0`, and javers `0.2.1`.
 - Documented the downstream snapshot dependency resolution strategy, added a
   reusable retry wrapper, and hardened snapshot artifact availability checks for
   transient Central snapshot `403` responses.
@@ -21,6 +22,10 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   gated until their first published line.
 - Delegated generated bluetape4k artifact version management to imported
   sub-BOMs instead of repeating every artifact as an individual BOM constraint.
+- Cut the shared dependency catalog for projects-side Dependabot remediation
+  without treating `bluetape4k-dependencies 1.3.0` as the whole release train;
+  it remains the final BOM/catalog artifact after internal repo releases
+  ([#101](https://github.com/bluetape4k/bluetape4k-dependencies/issues/101)).
 
 ## [1.2.0] - 2026-06-01
 
