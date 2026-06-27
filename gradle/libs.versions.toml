@@ -23,7 +23,7 @@ bluetape4k-text-bom    = "0.2.1"  # https://mvnrepository.com/artifact/io.github
 bluetape4k-graph-bom   = "0.5.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
 
 # https://github.com/bluetape4k/bluetape4k-leader
-bluetape4k-leader-bom  = "0.4.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
+bluetape4k-leader-bom  = "0.4.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
 
 # https://github.com/bluetape4k/bluetape4k-exposed
 bluetape4k-exposed-bom = "1.11.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
