@@ -185,7 +185,11 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         alias_mode="prefix",
         exclude_path_fragments=("examples", "benchmark"),
         exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
-        minimum_versions=(("javers-ddd", "0.2.0"), ("javers-exposed", "0.2.0")),
+        minimum_versions=(
+            ("javers-ddd", "0.2.0"),
+            ("javers-exposed", "0.2.0"),
+            ("javers-spring-boot4-autoconfigure", "0.3.0"),
+        ),
     ),
 )
 
