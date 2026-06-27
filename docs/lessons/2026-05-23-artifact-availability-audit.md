@@ -37,9 +37,10 @@ The release was published and then consumed by downstream synchronization PRs:
 - `scripts/verify-managed-artifacts.py --include-self --summary` checked 153
   managed bluetape4k artifacts.
 - GitHub Actions release run 26323169412 completed successfully.
-- Maven Central `repo1.maven.org` returned 200 for both
-  `bluetape4k-dependencies/1.1.1` and
-  `bluetape4k-version-catalog/1.1.1` POMs.
+- Maven Central `repo1.maven.org` returned 200 for
+  `bluetape4k-dependencies/1.1.1`.
+- The shared version catalog source was available from the corresponding git
+  ref for downstream sync.
 - Downstream sync PRs #57, #208, #130, #85, and #96 were merged after CI passed.
 - `scripts/sync-shared-versions.py --workspace .. --check --summary`
 

@@ -1,4 +1,4 @@
-# Published Gradle version catalog
+# Gradle version catalog source
 
 ## Context
 
@@ -8,25 +8,24 @@ Gradle build aliases, plugin versions, or compatibility-line names such as
 
 ## Decision
 
-Publish `gradle/libs.versions.toml` as a separate
-`bluetape4k-version-catalog` artifact from the same repository that publishes
-the `bluetape4k-dependencies` BOM.
+Keep `gradle/libs.versions.toml` in this repository as the shared Gradle
+catalog source consumed from checked-out git refs or catalog tags. Do not
+publish it as a Maven Central artifact.
 
 ## Outcome
 
 The BOM remains the dependency-resolution contract. The version catalog becomes
-the Gradle build contract for shared aliases, plugin versions, and managed
-module coordinates.
+the git-ref build contract for shared aliases, plugin versions, and managed
+module coordinates used by ecosystem repositories.
 
 ## Verification
 
 - `./gradlew build publishToMavenLocal --no-daemon`
-- `./gradlew publishAllPublicationsToCentralPortal --dry-run --no-daemon`
-- Local smoke project importing
-  `io.github.bluetape4k:bluetape4k-version-catalog:1.0.0-SNAPSHOT`
+- Downstream smoke checks that read this repository's
+  `gradle/libs.versions.toml` from a checked-out ref or catalog tag.
 
 ## Future Guard
 
-Do not replace the BOM with the version catalog. Consumers should import the
-catalog for Gradle build aliases and still import `bluetape4k-dependencies` as
-a platform for dependency resolution alignment.
+Do not replace the BOM with the version catalog. Consumers should read the
+catalog source for Gradle build aliases and still import
+`bluetape4k-dependencies` as a platform for dependency resolution alignment.

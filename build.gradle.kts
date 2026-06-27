@@ -18,9 +18,9 @@ val centralSnapshotsParallelism: Int = providers
     .orElse(1)
     .get()
 
-val projectGroup: String by project
-val baseVersion: String by project
-val snapshotVersion: String by project
+val projectGroup: String = providers.gradleProperty("projectGroup").get()
+val baseVersion: String = providers.gradleProperty("baseVersion").get()
+val snapshotVersion: String = providers.gradleProperty("snapshotVersion").get()
 
 group = projectGroup
 version = baseVersion + snapshotVersion
@@ -146,8 +146,8 @@ publishing {
                 url.set("https://github.com/bluetape4k/bluetape4k-dependencies")
                 licenses {
                     license {
-                        name.set("The Apache License, Version 2.0")
-                        url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        name.set("MIT License")
+                        url.set("https://opensource.org/licenses/MIT")
                     }
                 }
                 developers {

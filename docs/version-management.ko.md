@@ -334,7 +334,8 @@ Release policy:
 - [ ] `scripts/sync-managed-catalog.py --check --summary`를 실행합니다.
 - [ ] `scripts/verify-managed-artifacts.py --summary`로 self artifact를 제외한 managed `bluetape4k-*` GAV가 Central에 존재하는지 확인합니다.
 - [ ] `scripts/sync-shared-versions.py --workspace .. --check --summary`를 실행합니다.
-- [ ] `./gradlew build publishToMavenLocal --no-daemon`로 로컬 release BOM/catalog를 검증합니다.
+- [ ] `./gradlew build publishToMavenLocal --no-daemon`로 로컬 release BOM을 검증합니다.
+- [ ] `gradle/libs.versions.toml`이 downstream repo에서 참조할 git ref/catalog tag 기준으로 최신인지 확인합니다.
 
 #### 5. PR, CI, 배포
 
@@ -343,7 +344,8 @@ Release policy:
 - [ ] PR을 merge하고 로컬 `develop`을 동기화합니다.
 - [ ] `bluetape4k-dependencies` GitHub Actions `Publish Release` workflow를 실행합니다.
 - [ ] release workflow가 green인지 확인합니다.
-- [ ] release BOM과 version catalog가 Central에서 조회되는지 확인합니다.
+- [ ] release BOM이 Central에서 조회되는지 확인합니다.
+- [ ] version catalog는 Central artifact가 아니라 git ref/catalog tag로 참조되는 source contract임을 확인합니다.
 
 #### 6. 다음 개발 사이클 준비
 
