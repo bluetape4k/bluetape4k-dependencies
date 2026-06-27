@@ -7,6 +7,17 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-06-28
+
+### Fixed
+
+- Corrected generated POM license metadata to MIT License, matching the
+  repository license and bluetape4k ecosystem policy.
+- Corrected release guidance that described the Gradle version catalog as a
+  Maven Central publication. The catalog remains a git-ref build contract for
+  ecosystem repositories; the Maven Central artifact is the
+  `bluetape4k-dependencies` BOM.
+
 ## [1.3.0] - 2026-06-27
 
 ### Changed

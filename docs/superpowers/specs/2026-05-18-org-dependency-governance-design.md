@@ -16,8 +16,8 @@ example moving `spring-kafka4` from the Spring Kafka 4 line to the 3 line.
   are checked against that source.
 - Fail CI when compatibility-line aliases drift across major lines.
 - Reduce duplicated repository lists between scripts and CI.
-- Keep the design compatible with the existing BOM and published version catalog
-  artifacts.
+- Keep the design compatible with the existing BOM and git-ref version catalog
+  source.
 
 ## Non-Goals
 
@@ -27,12 +27,12 @@ example moving `spring-kafka4` from the Spring Kafka 4 line to the 3 line.
 
 ## Design
 
-`bluetape4k-dependencies` remains the authority and publishes two contracts:
+`bluetape4k-dependencies` remains the authority and exposes two contracts:
 
 | Contract | Purpose |
 |---|---|
-| `bluetape4k-dependencies` BOM | Dependency resolution alignment |
-| `bluetape4k-version-catalog` | Gradle alias and plugin authoring |
+| `bluetape4k-dependencies` BOM | Maven dependency resolution alignment |
+| `gradle/libs.versions.toml` at a checked-out ref | Gradle alias and plugin authoring |
 
 Downstream repositories will continue to carry local catalogs during migration,
 but CI in `bluetape4k-dependencies` will treat them as synchronized materialized
@@ -65,8 +65,9 @@ Compatibility-line validation is intentionally major-line based:
 
 1. Add the stronger central governance gate in `bluetape4k-dependencies`.
 2. Merge downstream drift fixes first when central CI detects existing drift.
-3. Move downstream repositories toward importing
-   `io.github.bluetape4k:bluetape4k-version-catalog` as `bt4k`.
+3. Move downstream repositories toward reading
+   `bluetape4k-dependencies/gradle/libs.versions.toml` from a checked-out
+   catalog ref.
 4. Add a shared convention plugin or repo convention that imports
    `io.github.bluetape4k:bluetape4k-dependencies` as a platform on standard
    configurations.

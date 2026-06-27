@@ -28,4 +28,5 @@ the deferred leader release publishes them.
 ## Future Notes
 
 Do not promote the next governance or major dependency-upgrade lane until the
-1.0.1 BOM and version catalog are visible in Maven Central.
+1.0.1 BOM is visible in Maven Central and the corresponding version catalog
+source is available from the intended git ref.
