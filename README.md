@@ -425,14 +425,14 @@ Each upstream repository maintains its **own independent version**, tracked in `
 
 ```toml
 [versions]
-bluetape4k-core   = "1.9.2"
-bluetape4k-aws    = "0.2.0"
-bluetape4k-image  = "0.1.1"
-bluetape4k-text   = "0.1.1"
-bluetape4k-graph  = "0.4.0"
-bluetape4k-leader = "0.2.0"
-bluetape4k-exposed = "1.9.2"
-bluetape4k-javers = "0.1.1"
+bluetape4k-core    = "1.11.0"
+bluetape4k-aws     = "0.4.0"
+bluetape4k-image   = "0.3.0"
+bluetape4k-text    = "0.2.1"
+bluetape4k-graph   = "0.5.1"
+bluetape4k-leader  = "0.4.0"
+bluetape4k-exposed = "1.11.0"
+bluetape4k-javers  = "0.2.1"
 ```
 
 To align a new upstream release, edit the version in `libs.versions.toml` and publish a new BOM version.
