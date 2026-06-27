@@ -252,6 +252,22 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertFalse(sync.include_module(repo, "javers-exposed", "javers-exposed", "0.1.2"))
         self.assertTrue(sync.include_module(repo, "javers-ddd", "javers-ddd", "0.2.0"))
         self.assertTrue(sync.include_module(repo, "javers-exposed", "javers-exposed", "0.2.0"))
+        self.assertFalse(
+            sync.include_module(
+                repo,
+                "javers-spring-boot4-autoconfigure",
+                "javers-spring-boot4-autoconfigure",
+                "0.2.1",
+            )
+        )
+        self.assertTrue(
+            sync.include_module(
+                repo,
+                "javers-spring-boot4-autoconfigure",
+                "javers-spring-boot4-autoconfigure",
+                "0.3.0",
+            )
+        )
 
     def test_exposed_repo_gates_unpublished_database_modules_by_selected_bom_version(self) -> None:
         repo = next(
