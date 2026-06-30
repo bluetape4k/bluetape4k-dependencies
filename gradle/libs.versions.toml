@@ -4,32 +4,32 @@
 [versions]
 # <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
-bluetape4k-dependencies = "1.2.0"  # Latest released catalog/BOM for downstream consumers; update after release.
+bluetape4k-dependencies = "1.3.1"  # Latest released catalog/BOM for downstream consumers; update after release.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "1.11.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
+bluetape4k-bom     = "1.11.1-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
-bluetape4k-aws-bom = "0.4.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
+bluetape4k-aws-bom = "0.5.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "0.3.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
+bluetape4k-image-bom   = "0.4.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "0.2.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
+bluetape4k-text-bom    = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "0.5.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
+bluetape4k-graph-bom   = "0.6.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
 
 # https://github.com/bluetape4k/bluetape4k-leader
-bluetape4k-leader-bom  = "0.4.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
+bluetape4k-leader-bom  = "0.5.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "1.11.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
+bluetape4k-exposed-bom = "1.12.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
 
 # https://github.com/bluetape4k/bluetape4k-javers
-bluetape4k-javers-bom  = "0.2.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
+bluetape4k-javers-bom  = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.4.0"  # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-bom
@@ -342,6 +342,7 @@ bluetape4k-exposed-bigquery                    = { module = "io.github.bluetape4
 bluetape4k-exposed-bom                         = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-bom", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-cache                       = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-cache", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-clickhouse                  = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-clickhouse", version.ref = "bluetape4k-exposed-bom" }
+bluetape4k-exposed-cockroachdb                 = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-cockroachdb", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-core                        = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-core", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-dao                         = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-dao", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-duckdb                      = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-duckdb", version.ref = "bluetape4k-exposed-bom" }
@@ -366,6 +367,7 @@ bluetape4k-exposed-spring-boot-batch           = { module = "io.github.bluetape4
 bluetape4k-exposed-spring-boot-jdbc            = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-boot-jdbc", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-spring-boot-r2dbc           = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-boot-r2dbc", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-spring-modulith             = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-modulith", version.ref = "bluetape4k-exposed-bom" }
+bluetape4k-exposed-starrocks                   = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-starrocks", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-timefold-solver-persistence = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-timefold-solver-persistence", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-tink                        = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-tink", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-trino                       = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-trino", version.ref = "bluetape4k-exposed-bom" }
@@ -377,5 +379,6 @@ bluetape4k-javers-ddd                          = { module = "io.github.bluetape4
 bluetape4k-javers-exposed                      = { module = "io.github.bluetape4k.javers:javers-exposed", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-kafka            = { module = "io.github.bluetape4k.javers:javers-persistence-kafka", version.ref = "bluetape4k-javers-bom" }
 bluetape4k-javers-persistence-redis            = { module = "io.github.bluetape4k.javers:javers-persistence-redis", version.ref = "bluetape4k-javers-bom" }
+bluetape4k-javers-spring-boot4-autoconfigure   = { module = "io.github.bluetape4k.javers:javers-spring-boot4-autoconfigure", version.ref = "bluetape4k-javers-bom" }
 
 # </generated-managed-modules>
