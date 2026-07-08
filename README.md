@@ -1,5 +1,7 @@
 # bluetape4k-dependencies
 
+English | [한국어](README.ko.md)
+
 [![CI](https://github.com/bluetape4k/bluetape4k-dependencies/actions/workflows/ci.yml/badge.svg)](https://github.com/bluetape4k/bluetape4k-dependencies/actions/workflows/ci.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.bluetape4k/bluetape4k-dependencies)](https://central.sonatype.com/artifact/io.github.bluetape4k/bluetape4k-dependencies)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7F52FF?logo=kotlin)](https://kotlinlang.org)
@@ -16,8 +18,6 @@ module versions are aligned automatically — no per-artifact version declaratio
 
 The same repository also owns `gradle/libs.versions.toml`, the internal Gradle Version Catalog source for
 shared plugin versions, library aliases, and bluetape4k module coordinates.
-
-Also available in [Korean / 한국어](README.ko.md).
 
 ---
 
@@ -46,10 +46,6 @@ constraints and Gradle build aliases in one place.
 ## Overview Diagram
 
 ![Bluetape4k Dependencies overview diagram](docs/images/readme-diagrams/root-readme-overview-01.png)
-
-## Module Composition Chart
-
-![Bluetape4k Dependencies module composition chart](docs/images/readme-charts/root-readme-module-chart-01.png)
 <!-- README_VISUAL_OVERVIEW:END -->
 
 ## Architecture
