@@ -33,6 +33,7 @@ bluetape4k-javers-bom  = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.4.0"  # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-bom
+byte-buddy         = "1.18.11"  # https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-gradle-plugin
 nmcp               = "1.6.0"  # https://mvnrepository.com/artifact/com.gradleup.nmcp/nmcp
 dokka              = "2.2.0"  # https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
 dependency-management = "1.1.7"  # https://mvnrepository.com/artifact/io.spring.gradle/dependency-management-plugin
@@ -68,6 +69,7 @@ ktor              = "3.5.0"  # https://mvnrepository.com/artifact/io.ktor/ktor-b
 netty4            = "4.1.133.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
 netty             = "4.2.15.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
 opentelemetry     = "1.63.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
+opentelemetry-instrumentation-alpha = "2.30.0-alpha-SNAPSHOT"  # https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-instrumentation-bom-alpha
 protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
 log4j             = "2.26.1"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
@@ -83,6 +85,9 @@ tomcat            = "11.0.22"  # https://mvnrepository.com/artifact/org.apache.t
 zookeeper         = "3.9.5"  # https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper
 avro              = "1.12.1"  # https://mvnrepository.com/artifact/org.apache.avro/avro
 guava             = "33.6.0-jre"  # https://mvnrepository.com/artifact/com.google.guava/guava
+httpclient5       = "5.6.2"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5
+httpcore5         = "5.4.3"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5
+hibernate         = "7.4.4.Final"  # https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core
 reflectasm        = "1.11.9"  # https://mvnrepository.com/artifact/com.esotericsoftware/reflectasm
 ow2-asm           = "9.10.1"  # https://mvnrepository.com/artifact/org.ow2.asm/asm
 zstd              = "1.5.7-8"  # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
@@ -102,6 +107,7 @@ r2dbc-h2          = "1.1.0.RELEASE"  # https://mvnrepository.com/artifact/io.r2d
 reactor-bom       = "2025.0.6"  # https://mvnrepository.com/artifact/io.projectreactor/reactor-bom
 gatling           = "3.15.1"  # https://mvnrepository.com/artifact/io.gatling/gatling-app
 logcaptor         = "2.12.6"  # https://mvnrepository.com/artifact/io.github.hakky54/logcaptor
+hikaricp          = "7.1.0"  # https://mvnrepository.com/artifact/com.zaxxer/HikariCP
 agroal            = "3.2"  # https://mvnrepository.com/artifact/io.agroal/agroal-pool
 javamoney-moneta  = "1.4.5"  # https://mvnrepository.com/artifact/org.javamoney/moneta
 mybatis-dynamic-sql = "2.0.0"  # https://mvnrepository.com/artifact/org.mybatis.dynamic-sql/mybatis-dynamic-sql
@@ -121,6 +127,7 @@ random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.bena
 # ────────────────────────────────────────────────────────────────────────────
 [plugins]
 kotlin-jvm            = { id = "org.jetbrains.kotlin.jvm",            version.ref = "kotlin" }
+byte-buddy-gradle     = { id = "net.bytebuddy.byte-buddy-gradle-plugin", version.ref = "byte-buddy" }
 dependency-management = { id = "io.spring.dependency-management",     version.ref = "dependency-management" }
 dokka                 = { id = "org.jetbrains.dokka",                  version.ref = "dokka" }
 nmcp                  = { id = "com.gradleup.nmcp",                    version.ref = "nmcp" }
@@ -163,6 +170,13 @@ fory-kotlin                                   = { module = "org.apache.fory:fory
 gatling-app                                   = { module = "io.gatling:gatling-app", version.ref = "gatling" }
 guava                                         = { module = "com.google.guava:guava", version.ref = "guava" }
 hazelcast                                     = { module = "com.hazelcast:hazelcast", version.ref = "hazelcast" }
+hikaricp                                      = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+hibernate-core                                = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate" }
+hibernate-jcache                              = { module = "org.hibernate.orm:hibernate-jcache", version.ref = "hibernate" }
+httpclient5                                   = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
+httpcore5-h2                                  = { module = "org.apache.httpcomponents.core5:httpcore5-h2", version.ref = "httpcore5" }
+httpcore5-lib                                 = { module = "org.apache.httpcomponents.core5:httpcore5", version.ref = "httpcore5" }
+httpcore5-reactive                            = { module = "org.apache.httpcomponents.core5:httpcore5-reactive", version.ref = "httpcore5" }
 jakarta-activation-api                        = { module = "jakarta.activation:jakarta.activation-api", version.ref = "jakarta-activation" }
 jakarta-xml-bind                              = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
 javamoney-moneta                              = { module = "org.javamoney:moneta", version.ref = "javamoney-moneta" }
@@ -179,6 +193,7 @@ ow2-asm                                       = { module = "org.ow2.asm:asm", ve
 opentelemetry-bom                             = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry" }
 opentelemetry-api                             = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
 opentelemetry-extension-trace-propagators     = { module = "io.opentelemetry:opentelemetry-extension-trace-propagators", version.ref = "opentelemetry" }
+opentelemetry-instrumentation-bom-alpha       = { module = "io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha", version.ref = "opentelemetry-instrumentation-alpha" }
 postgresql                                    = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 protobuf-bom                                  = { module = "com.google.protobuf:protobuf-bom", version.ref = "protobuf" }
 protobuf-java                                 = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
