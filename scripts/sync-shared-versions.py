@@ -25,13 +25,15 @@ INLINE_VERSION_LINE = re.compile(r'^([A-Za-z0-9_.-]+)\s*=\s*\{.*\bversion\s*=\s*
 DEFAULT_REPOSITORIES = (
     "bluetape4k-projects",
     "bluetape4k-aws",
-    "bluetape4k-experimental",
     "bluetape4k-exposed",
     "bluetape4k-graph",
     "bluetape4k-image",
     "bluetape4k-javers",
     "bluetape4k-leader",
     "bluetape4k-text",
+)
+
+EXAMPLE_REPOSITORIES = (
     "bluetape4k-workshop",
     "clinic-appointment",
     "exposed-r2dbc-workshop",
