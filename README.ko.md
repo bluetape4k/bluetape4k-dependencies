@@ -1,13 +1,11 @@
 # bluetape4k-dependencies
 
+[English](README.md) | 한국어
+
 <!-- README_VISUAL_OVERVIEW:START -->
 ## Overview Diagram
 
 ![Bluetape4k Dependencies overview diagram](docs/images/readme-diagrams/root-readme-overview-01.png)
-
-## Module Composition Chart
-
-![Bluetape4k Dependencies module composition chart](docs/images/readme-charts/root-readme-module-chart-01.png)
 <!-- README_VISUAL_OVERVIEW:END -->
 
 
@@ -27,8 +25,6 @@
 
 같은 레포지토리의 `gradle/libs.versions.toml`은 내부 Gradle Version Catalog source입니다.
 공통 plugin version, library alias, bluetape4k 모듈 좌표를 제공합니다.
-
-영어 버전은 [README.md](README.md)를 참고하세요.
 
 ---
 

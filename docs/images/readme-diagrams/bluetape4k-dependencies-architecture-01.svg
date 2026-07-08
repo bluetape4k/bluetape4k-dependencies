@@ -1,138 +1,123 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1378" height="1024" viewBox="0 0 1378 1024" role="img" aria-label="dependencies Architecture">
-<defs>
-  <filter id="shadow" x="-8%" y="-8%" width="116%" height="116%"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#1f2937" flood-opacity="0.10"/></filter>
-  <marker id="openArrow" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M 1 1 L 10 5 L 1 9" fill="none" stroke="#758297" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
-  <marker id="inherit" markerWidth="14" markerHeight="12" refX="12" refY="6" orient="auto" markerUnits="strokeWidth"><path d="M 0 1 L 12 6 L 0 11 Z" fill="#ffffff" stroke="#758297" stroke-width="1.8"/></marker>
-  <style>
-    .canvas{fill:#f7f9fc}.frame{fill:#fff;stroke:#d8e0ea;stroke-width:1.5}
-    .title{font-family:"Architects Daughter","Comic Sans MS","Comic Sans",cursive;font-size:43px;font-weight:400;fill:#102033}
-    .subtitle{font-family:"Comic Sans MS","Comic Sans","Comic Neue",Arial,sans-serif;font-size:15px;font-weight:400;fill:#536273}
-    .label{font-family:"Architects Daughter","Comic Sans MS","Comic Sans",cursive;font-size:25px;font-weight:400;fill:#102033}
-    .smallLabel{font-family:"Architects Daughter","Comic Sans MS","Comic Sans",cursive;font-size:21px;font-weight:400;fill:#102033}
-    .mono{font-family:"Comic Sans MS","Comic Sans","Comic Neue",Arial,sans-serif;font-size:12px;font-weight:400;fill:#102033}
-    .small{font-family:"Comic Sans MS","Comic Sans","Comic Neue",Arial,sans-serif;font-size:12px;font-weight:400;fill:#536273}
-    .strong{font-family:"Comic Sans MS","Comic Sans","Comic Neue",Arial,sans-serif;font-size:13px;font-weight:400;fill:#102033}
-    .card{stroke-width:2.1;filter:url(#shadow)}.compartment{stroke-width:1.5;fill:none}
-    .line{stroke:#758297;stroke-width:2.1;fill:none;marker-end:url(#openArrow)}
-    .plainLine{stroke:#758297;stroke-width:2.1;fill:none}
-    .dashed{stroke:#758297;stroke-width:2.1;stroke-dasharray:7 6;fill:none;marker-end:url(#openArrow)}
-    .inheritLine{stroke:#758297;stroke-width:2.2;fill:none;marker-end:url(#inherit)}
-    .implLine{stroke:#758297;stroke-width:2.2;stroke-dasharray:8 7;fill:none;marker-end:url(#inherit)}
-  </style>
-</defs>
-<rect class="canvas" width="1378" height="1024"/>
-<rect class="frame" x="32" y="28" width="1314" height="968" rx="28"/>
-<text class="title" x="66" y="82">dependencies Architecture</text>
-<text class="subtitle" x="70" y="118">Architecture nodes and edges from the original Mermaid source</text>
-<path class="line" d="M338 386 C338 635 706 635 706 884"/>
-<path class="line" d="M188 446 C188 635 522 635 522 824"/>
-<path class="line" d="M1190 280 C1190 469 1190 469 1190 658"/>
-<path class="line" d="M1190 280 C1190 469 856 469 856 658"/>
-<path class="line" d="M1040 220 C1040 469 672 469 672 718"/>
-<path class="line" d="M1040 220 C1040 469 338 469 338 718"/>
-<path class="line" d="M1190 280 C1190 386 1190 386 1190 492"/>
-<path class="line" d="M1040 220 C1040 386 1006 386 1006 552"/>
-<path class="line" d="M338 220 C338 386 372 386 372 552"/>
-<path class="line" d="M188 280 C188 386 188 386 188 492"/>
-<path class="line" d="M338 220 C338 303 1040 303 1040 386"/>
-<path class="line" d="M338 220 C338 303 706 303 706 386"/>
-<path class="line" d="M338 220 C338 303 372 303 372 386"/>
-<path class="line" d="M188 280 C188 303 188 303 188 326"/>
-<path class="line" d="M338 220 C338 220 1040 220 1040 220"/>
-<path class="line" d="M706 220 C706 220 672 220 672 220"/>
-<path class="line" d="M706 220 C706 220 338 220 338 220"/>
-<g transform="translate(48,170)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#E8F3FF" stroke="#5B8DEF"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-dependenc</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">ies (java-platform</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">BOM)</text>
-</g>
-<g transform="translate(382,170)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#EAF7EF" stroke="#58A978"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-version-c</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">atalog (Gradle</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">Version Catalog)</text>
-</g>
-<g transform="translate(716,170)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#FFF3D9" stroke="#D6A441"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">gradle/libs.versions</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">.toml (single</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">managed source)</text>
-</g>
-<g transform="translate(1050,170)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#FDECEF" stroke="#DC6B82"/>
-  <text class="smallLabel" x="140" y="33" text-anchor="middle">bluetape4k-projects</text>
-<text class="smallLabel" x="140" y="59" text-anchor="middle">io.github.bluetape4k</text>
-</g>
-<g transform="translate(48,336)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#E9F7F6" stroke="#45A7A1"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-aws</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">io.github.bluetape4k</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">.aws</text>
-</g>
-<g transform="translate(382,336)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#F1ECFF" stroke="#8A72D6"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-image</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">io.github.bluetape4k</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">.image</text>
-</g>
-<g transform="translate(716,336)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#F7F1E7" stroke="#B88A44"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-text</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">io.github.bluetape4k</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">.text</text>
-</g>
-<g transform="translate(1050,336)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#EEF6D9" stroke="#8BA84D"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-leader</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">io.github.bluetape4k</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">.leader</text>
-</g>
-<g transform="translate(48,502)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#E8F3FF" stroke="#5B8DEF"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-exposed</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">io.github.bluetape4k</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">.exposed</text>
-</g>
-<g transform="translate(382,502)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#EAF7EF" stroke="#58A978"/>
-  <text class="smallLabel" x="140" y="21" text-anchor="middle">bluetape4k-javers</text>
-<text class="smallLabel" x="140" y="47" text-anchor="middle">io.github.bluetape4k</text>
-<text class="smallLabel" x="140" y="73" text-anchor="middle">.javers</text>
-</g>
-<g transform="translate(716,502)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#FFF3D9" stroke="#D6A441"/>
-  <text class="smallLabel" x="140" y="45" text-anchor="middle">bluetape4k-core</text>
-</g>
-<g transform="translate(1050,502)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#FDECEF" stroke="#DC6B82"/>
-  <text class="smallLabel" x="140" y="33" text-anchor="middle">bluetape4k-coroutine</text>
-<text class="smallLabel" x="140" y="59" text-anchor="middle">s</text>
-</g>
-<g transform="translate(48,668)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#E9F7F6" stroke="#45A7A1"/>
-  <text class="smallLabel" x="140" y="45" text-anchor="middle">bluetape4k-logging</text>
-</g>
-<g transform="translate(382,668)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#F1ECFF" stroke="#8A72D6"/>
-  <text class="smallLabel" x="140" y="33" text-anchor="middle">bluetape4k-jackson2</text>
-<text class="smallLabel" x="140" y="59" text-anchor="middle">/ jackson3</text>
-</g>
-<g transform="translate(716,668)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#F7F1E7" stroke="#B88A44"/>
-  <text class="smallLabel" x="140" y="33" text-anchor="middle">bluetape4k-junit5 /</text>
-<text class="smallLabel" x="140" y="59" text-anchor="middle">testcontainers</text>
-</g>
-<g transform="translate(1050,668)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#EEF6D9" stroke="#8BA84D"/>
-  <text class="smallLabel" x="140" y="45" text-anchor="middle">... and more</text>
-</g>
-<g transform="translate(382,834)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#E8F3FF" stroke="#5B8DEF"/>
-  <text class="smallLabel" x="140" y="45" text-anchor="middle">aws</text>
-</g>
-<g transform="translate(716,834)">
-  <rect class="card" x="0" y="0" width="280" height="100" rx="14" fill="#EAF7EF" stroke="#58A978"/>
-  <text class="smallLabel" x="140" y="45" text-anchor="middle">aws-kotlin</text>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860" role="img" aria-labelledby="title desc">
+  <title id="title">bluetape4k-dependencies architecture</title>
+  <desc id="desc">Static architecture map for the BOM, Gradle version catalog, publishing path, and consumer usage contracts.</desc>
+  <defs>
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="116%">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#203040" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow-blue" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 1 1 L 12 7 L 1 13 Z" fill="#2F6DB5"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 1 1 L 12 7 L 1 13 Z" fill="#2E8B57"/>
+    </marker>
+    <marker id="arrow-slate" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 1 1 L 9 5 L 1 9 Z" fill="#65758A"/>
+    </marker>
+    <style>
+      .canvas{fill:#F6F9FC}
+      .frame{fill:#FFFFFF;stroke:#D7E2EC;stroke-width:2}
+      .title{font-family:"Architects Daughter","Comic Sans MS","Comic Sans",cursive;font-size:42px;fill:#1D2E43;font-weight:400}
+      .subtitle{font-family:"Comic Mono","Comic Sans MS","Comic Sans",Arial,sans-serif;font-size:16px;fill:#586A7F;font-weight:400}
+      .section{font-family:"Architects Daughter","Comic Sans MS","Comic Sans",cursive;font-size:25px;fill:#23384F;font-weight:400}
+      .cardTitle{font-family:"Architects Daughter","Comic Sans MS","Comic Sans",cursive;font-size:22px;fill:#1D2E43;font-weight:400}
+      .label{font-family:"Comic Mono","Comic Sans MS","Comic Sans",Arial,sans-serif;font-size:14px;fill:#33465D;font-weight:400}
+      .small{font-family:"Comic Mono","Comic Sans MS","Comic Sans",Arial,sans-serif;font-size:12px;fill:#607186;font-weight:400}
+      .tiny{font-family:"Comic Mono","Comic Sans MS","Comic Sans",Arial,sans-serif;font-size:11px;fill:#607186;font-weight:400}
+      .lane{stroke-width:2;filter:url(#shadow)}
+      .card{stroke-width:2;filter:url(#shadow)}
+      .pill{stroke-width:1.5}
+      .connectorBlue{stroke:#2F6DB5;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-blue)}
+      .connectorGreen{stroke:#2E8B57;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-green)}
+      .connectorSlate{stroke:#65758A;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-slate)}
+      .connectorDotted{stroke:#65758A;stroke-width:2.2;fill:none;stroke-dasharray:7 7;stroke-linecap:round;stroke-linejoin:round;marker-end:url(#arrow-slate)}
+    </style>
+  </defs>
+
+  <rect class="canvas" width="1400" height="860"/>
+  <rect class="frame" x="34" y="28" width="1332" height="804" rx="26"/>
+
+  <text class="title" x="72" y="84">bluetape4k-dependencies architecture</text>
+  <text class="subtitle" x="76" y="116">One repository publishes the BOM contract and also supplies the checked-out Gradle catalog used by producers.</text>
+
+  <g transform="translate(70,156)">
+    <rect class="lane" x="0" y="0" width="338" height="566" rx="22" fill="#EAF3FF" stroke="#74A7E8"/>
+    <text class="section" x="30" y="42">Source of truth</text>
+    <g transform="translate(38,82)">
+      <rect class="card" x="0" y="0" width="262" height="132" rx="16" fill="#FFFFFF" stroke="#3E7EC8"/>
+      <text class="cardTitle" x="131" y="38" text-anchor="middle">gradle/libs.versions.toml</text>
+      <text class="label" x="131" y="70" text-anchor="middle">versions, plugins, libraries</text>
+      <text class="label" x="131" y="96" text-anchor="middle">and bluetape4k coordinates</text>
+    </g>
+    <g transform="translate(38,252)">
+      <rect class="card" x="0" y="0" width="262" height="106" rx="15" fill="#F7FBFF" stroke="#74A7E8"/>
+      <text class="cardTitle" x="131" y="35" text-anchor="middle">Governance scripts</text>
+      <text class="label" x="131" y="66" text-anchor="middle">sync managed catalog aliases</text>
+      <text class="small" x="131" y="88" text-anchor="middle">keep generated sections bounded</text>
+    </g>
+    <g transform="translate(38,398)">
+      <rect class="card" x="0" y="0" width="262" height="108" rx="15" fill="#F7FBFF" stroke="#74A7E8"/>
+      <text class="cardTitle" x="131" y="35" text-anchor="middle">Release train input</text>
+      <text class="label" x="131" y="66" text-anchor="middle">date-tagged catalog ref</text>
+      <text class="small" x="131" y="88" text-anchor="middle">separate from BOM artifact version</text>
+    </g>
+  </g>
+
+  <g transform="translate(520,166)">
+    <rect class="card" x="0" y="0" width="364" height="174" rx="18" fill="#EEF8F1" stroke="#58A978"/>
+    <text class="cardTitle" x="182" y="42" text-anchor="middle">java-platform BOM publication</text>
+    <text class="label" x="182" y="76" text-anchor="middle">bluetape4k-dependencies artifact</text>
+    <text class="label" x="182" y="102" text-anchor="middle">imports sub-BOM platforms</text>
+    <text class="small" x="182" y="128" text-anchor="middle">projects, aws, image, text, graph</text>
+    <text class="small" x="182" y="152" text-anchor="middle">leader, exposed, javers</text>
+  </g>
+
+  <g transform="translate(528,454)">
+    <rect class="card" x="0" y="0" width="348" height="174" rx="18" fill="#FFF6DF" stroke="#D6A441"/>
+    <text class="cardTitle" x="174" y="42" text-anchor="middle">Gradle catalog checkout</text>
+    <text class="label" x="174" y="76" text-anchor="middle">shared authoring vocabulary</text>
+    <text class="label" x="174" y="102" text-anchor="middle">plugin aliases and coordinates</text>
+    <text class="small" x="174" y="130" text-anchor="middle">does not replace dependency resolution</text>
+  </g>
+
+  <g transform="translate(994,150)">
+    <rect class="card" x="0" y="0" width="294" height="130" rx="18" fill="#F0F8EA" stroke="#88AB4A"/>
+    <text class="cardTitle" x="147" y="39" text-anchor="middle">Library repositories</text>
+    <text class="label" x="147" y="73" text-anchor="middle">publish their own sub-BOMs</text>
+    <text class="small" x="147" y="99" text-anchor="middle">independent release cadence</text>
+  </g>
+
+  <g transform="translate(1010,336)">
+    <rect class="card" x="0" y="0" width="278" height="144" rx="18" fill="#FDEEF2" stroke="#D86B83"/>
+    <text class="cardTitle" x="139" y="40" text-anchor="middle">Workshop and apps</text>
+    <text class="label" x="139" y="76" text-anchor="middle">consume published BOM only</text>
+    <text class="small" x="139" y="104" text-anchor="middle">do not chase catalog alias bumps</text>
+  </g>
+
+  <g transform="translate(994,548)">
+    <rect class="card" x="0" y="0" width="294" height="138" rx="18" fill="#EBF7F6" stroke="#45A7A1"/>
+    <text class="cardTitle" x="147" y="40" text-anchor="middle">Internal builds</text>
+    <text class="label" x="147" y="76" text-anchor="middle">read the checked-out catalog</text>
+    <text class="small" x="147" y="104" text-anchor="middle">same names, explicit repo ref</text>
+  </g>
+
+  <g transform="translate(452,706)">
+    <rect class="pill" x="0" y="0" width="520" height="64" rx="18" fill="#F8FAFC" stroke="#C9D6E2"/>
+    <text class="label" x="260" y="27" text-anchor="middle">Contract split: BOM aligns resolved versions; catalog helps Gradle authors write consistent builds.</text>
+    <text class="tiny" x="260" y="49" text-anchor="middle">Consumers import the artifact version. Producers may pin a date-tagged catalog checkout.</text>
+  </g>
+
+  <path class="connector connectorBlue" d="M 370 300 H 448 Q 468 300 468 280 V 274 Q 468 254 488 254 H 520"/>
+  <path class="connector connectorGreen" d="M 370 324 H 442 Q 462 324 462 344 V 516 Q 462 536 482 536 H 528"/>
+  <path class="connector connectorSlate" d="M 884 254 H 944 Q 964 254 964 234 V 215 Q 964 195 984 195 H 994"/>
+  <path class="connector connectorBlue" d="M 884 292 H 936 Q 956 292 956 352 V 408 Q 956 428 976 428 H 1010"/>
+  <path class="connector connectorGreen" d="M 876 536 H 936 Q 956 536 956 597 Q 956 617 976 617 H 994"/>
+
+  <g transform="translate(516,376)">
+    <rect class="pill" x="0" y="0" width="374" height="48" rx="16" fill="#FFFFFF" stroke="#C9D6E2"/>
+    <circle cx="28" cy="24" r="8" fill="#2F6DB5"/>
+    <text class="small" x="48" y="21">published dependency contract</text>
+    <circle cx="230" cy="24" r="8" fill="#2E8B57"/>
+    <text class="small" x="250" y="21">authoring catalog contract</text>
+  </g>
 </svg>
