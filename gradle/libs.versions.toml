@@ -70,7 +70,7 @@ netty             = "4.2.15.Final"  # https://mvnrepository.com/artifact/io.nett
 opentelemetry     = "1.63.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
 protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
-log4j             = "2.26.0"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
+log4j             = "2.26.1"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
 vertx4            = "5.1.0"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
 vertx             = "5.1.3"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
 redisson          = "4.6.1"  # https://mvnrepository.com/artifact/org.redisson/redisson
@@ -288,6 +288,8 @@ bluetape4k-aws-spring-boot                     = { module = "io.github.bluetape4
 # -- bluetape4k-image modules --
 bluetape4k-image-bom                           = { module = "io.github.bluetape4k.image:bluetape4k-image-bom", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images                              = { module = "io.github.bluetape4k.image:bluetape4k-images", version.ref = "bluetape4k-image-bom" }
+bluetape4k-images-barcode-api                  = { module = "io.github.bluetape4k.image:bluetape4k-images-barcode-api", version.ref = "bluetape4k-image-bom" }
+bluetape4k-images-barcode-zxing                = { module = "io.github.bluetape4k.image:bluetape4k-images-barcode-zxing", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-ktor                         = { module = "io.github.bluetape4k.image:bluetape4k-images-ktor", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-ocr                          = { module = "io.github.bluetape4k.image:bluetape4k-images-ocr", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-spring-boot                  = { module = "io.github.bluetape4k.image:bluetape4k-images-spring-boot", version.ref = "bluetape4k-image-bom" }
@@ -345,6 +347,7 @@ bluetape4k-exposed-clickhouse                  = { module = "io.github.bluetape4
 bluetape4k-exposed-cockroachdb                 = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-cockroachdb", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-core                        = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-core", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-dao                         = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-dao", version.ref = "bluetape4k-exposed-bom" }
+bluetape4k-exposed-druid                       = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-druid", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-duckdb                      = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-duckdb", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-fastjson2                   = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-fastjson2", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-jackson2                    = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-jackson2", version.ref = "bluetape4k-exposed-bom" }
