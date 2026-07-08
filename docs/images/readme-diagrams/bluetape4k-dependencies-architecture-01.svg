@@ -101,10 +101,11 @@
     <text class="small" x="147" y="104" text-anchor="middle">same names, explicit repo ref</text>
   </g>
 
-  <g transform="translate(452,706)">
-    <rect class="pill" x="0" y="0" width="520" height="64" rx="18" fill="#F8FAFC" stroke="#C9D6E2"/>
-    <text class="label" x="260" y="27" text-anchor="middle">Contract split: BOM aligns resolved versions; catalog helps Gradle authors write consistent builds.</text>
-    <text class="tiny" x="260" y="49" text-anchor="middle">Consumers import the artifact version. Producers may pin a date-tagged catalog checkout.</text>
+  <g transform="translate(430,700)">
+    <rect class="pill" x="0" y="0" width="660" height="78" rx="18" fill="#F8FAFC" stroke="#C9D6E2"/>
+    <text class="label" x="330" y="25" text-anchor="middle">Contract split: BOM aligns resolved versions.</text>
+    <text class="label" x="330" y="47" text-anchor="middle">Catalog helps Gradle authors write consistent builds.</text>
+    <text class="tiny" x="330" y="67" text-anchor="middle">Consumers import the artifact version. Producers may pin a date-tagged catalog checkout.</text>
   </g>
 
   <path class="connector connectorBlue" d="M 370 300 H 448 Q 468 300 468 280 V 274 Q 468 254 488 254 H 520"/>
@@ -113,11 +114,11 @@
   <path class="connector connectorBlue" d="M 884 292 H 936 Q 956 292 956 352 V 408 Q 956 428 976 428 H 1010"/>
   <path class="connector connectorGreen" d="M 876 536 H 936 Q 956 536 956 597 Q 956 617 976 617 H 994"/>
 
-  <g transform="translate(516,376)">
-    <rect class="pill" x="0" y="0" width="374" height="48" rx="16" fill="#FFFFFF" stroke="#C9D6E2"/>
+  <g transform="translate(440,632)">
+    <rect class="pill" x="0" y="0" width="506" height="48" rx="16" fill="#FFFFFF" stroke="#C9D6E2"/>
     <circle cx="28" cy="24" r="8" fill="#2F6DB5"/>
     <text class="small" x="48" y="21">published dependency contract</text>
-    <circle cx="230" cy="24" r="8" fill="#2E8B57"/>
-    <text class="small" x="250" y="21">authoring catalog contract</text>
+    <circle cx="304" cy="24" r="8" fill="#2E8B57"/>
+    <text class="small" x="324" y="21">authoring catalog contract</text>
   </g>
 </svg>
