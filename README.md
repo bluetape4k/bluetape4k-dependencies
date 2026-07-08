@@ -208,8 +208,8 @@ For the Korean operating procedure used by the bluetape4k maintainers, see
 artifact alias list and published Gradle Version Catalog. The sections below summarize the main
 public module families.
 
-Shared dependency and plugin version aliases in this repository are also the source of truth for sibling
-repositories. Sync downstream local catalogs after changing those aliases:
+Shared dependency and plugin version aliases in this repository are also the source of truth for governed
+library repositories. Sync downstream local catalogs after changing those aliases:
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
@@ -219,12 +219,16 @@ scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 ```
 
-This is currently a **materialized sync** workflow for local catalogs. During
+This is currently a **materialized sync** workflow for library local catalogs. During
 the migration to the published catalog, `bluetape4k-dependencies/gradle/libs.versions.toml`
 owns the approved versions, and `scripts/sync-shared-versions.py` rewrites the matching
-aliases in each target repository's `gradle/libs.versions.toml`.
+aliases in each governed library repository's `gradle/libs.versions.toml`.
 
-Downstream repositories also ignore centrally governed dependency names in
+Workshop and example repositories are not catalog-sync targets. They consume the
+published `bluetape4k-dependencies` BOM artifact version and should not chase
+central catalog alias bumps directly.
+
+Governed downstream library repositories also ignore centrally governed dependency names in
 Dependabot. Add new central dependency names to `CENTRAL_DEPENDENCY_IGNORES` in
 `scripts/sync-dependabot-ignores.py`, then sync downstream `.github/dependabot.yml`
 files with the command above.
@@ -260,9 +264,9 @@ The expected release flow is:
 2. Run `scripts/sync-shared-versions.py --workspace .. --write --check --summary`.
 3. Run `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
    when the change adds or removes centrally governed dependency names.
-4. Open, verify, and merge PRs for the downstream repositories that changed.
+4. Open, verify, and merge PRs for the governed downstream library repositories that changed.
 5. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
-   that no shared-version drift remains across the configured organization repositories.
+   that no shared-version drift remains across the configured governed library repositories.
 
 Compatibility-line aliases are intentionally separate. Do not collapse aliases such as `kafka3`/`kafka4`,
 `jackson2`/`jackson3`, `spring-boot3`/`spring-boot4`, or `spring-kafka`/`spring-kafka4` during automated

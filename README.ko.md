@@ -208,7 +208,7 @@ bluetape4k 유지보수자를 위한 상세 버전 관리 절차는
 `gradle/libs.versions.toml`입니다.
 아래 섹션은 주요 public module family를 요약합니다.
 
-이 레포지토리의 shared dependency/plugin version alias는 sibling 레포지토리의
+이 레포지토리의 shared dependency/plugin version alias는 관리 대상 library 레포지토리의
 source of truth이기도 합니다. 해당 alias를 변경한 뒤에는 downstream local catalog를 동기화합니다:
 
 ```bash
@@ -219,13 +219,17 @@ scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 ```
 
-현재 방식은 local catalog를 위한 **materialized sync**입니다.
+현재 방식은 library local catalog를 위한 **materialized sync**입니다.
 Published catalog로 완전히 이행하기 전까지
 `bluetape4k-dependencies/gradle/libs.versions.toml`이 승인된 버전을 소유하고,
-`scripts/sync-shared-versions.py`가 각 대상 레포지토리의 `gradle/libs.versions.toml`에서
+`scripts/sync-shared-versions.py`가 각 관리 대상 library 레포지토리의 `gradle/libs.versions.toml`에서
 같은 alias를 물리적으로 갱신합니다.
 
-Downstream 레포지토리의 Dependabot도 중앙에서 관리하는 dependency name을 ignore해야 합니다.
+Workshop과 example 레포지토리는 catalog sync 대상이 아닙니다. 이 레포지토리들은
+배포된 `bluetape4k-dependencies` BOM artifact version을 소비해야 하며, central catalog
+alias bump를 직접 따라가지 않습니다.
+
+관리 대상 downstream library 레포지토리의 Dependabot도 중앙에서 관리하는 dependency name을 ignore해야 합니다.
 새 shared dependency line을 추가하면 `scripts/sync-dependabot-ignores.py`의
 `CENTRAL_DEPENDENCY_IGNORES`에 dependency name을 추가하고, 위 명령으로
 downstream `.github/dependabot.yml`을 동기화합니다.
@@ -259,9 +263,9 @@ repository convention plugin을 통해 `bluetape4k-dependencies` BOM을 platform
 2. `scripts/sync-shared-versions.py --workspace .. --write --check --summary`를 실행합니다.
 3. 중앙 관리 dependency name이 추가/삭제되면
    `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`를 실행합니다.
-4. 변경된 downstream 레포지토리 PR을 열고 CI 검증 후 머지합니다.
+4. 변경된 관리 대상 downstream library 레포지토리 PR을 열고 CI 검증 후 머지합니다.
 5. 마지막으로 `bluetape4k-dependencies` PR을 머지합니다. 이 PR의 CI는 downstream `develop` branch를
-   다시 clone해서 설정된 조직 레포지토리 전체에 shared-version drift가 남아 있는지 검사합니다.
+   다시 clone해서 설정된 관리 대상 library 레포지토리에 shared-version drift가 남아 있는지 검사합니다.
 
 Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 중 `kafka3`/`kafka4`,
 `jackson2`/`jackson3`, `spring-boot3`/`spring-boot4`, `spring-kafka`/`spring-kafka4` 같은 alias를

@@ -20,9 +20,10 @@ SPEC.loader.exec_module(sync)
 class SyncSharedVersionsTest(unittest.TestCase):
     def test_default_repositories_include_active_gradle_repos(self) -> None:
         self.assertIn("bluetape4k-projects", sync.DEFAULT_REPOSITORIES)
-        self.assertIn("bluetape4k-experimental", sync.DEFAULT_REPOSITORIES)
-        self.assertIn("bluetape4k-workshop", sync.DEFAULT_REPOSITORIES)
-        self.assertIn("exposed-workshop", sync.DEFAULT_REPOSITORIES)
+        self.assertIn("bluetape4k-exposed", sync.DEFAULT_REPOSITORIES)
+        self.assertNotIn("bluetape4k-experimental", sync.DEFAULT_REPOSITORIES)
+        for repo in sync.EXAMPLE_REPOSITORIES:
+            self.assertNotIn(repo, sync.DEFAULT_REPOSITORIES)
 
     def test_compatibility_line_errors_detect_wrong_major(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -84,7 +85,8 @@ class SyncSharedVersionsTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("bluetape4k-projects", result.stdout)
-        self.assertIn("exposed-workshop", result.stdout)
+        self.assertIn("bluetape4k-exposed", result.stdout)
+        self.assertNotIn("exposed-workshop", result.stdout)
 
     def test_read_source_versions_reads_only_marked_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
