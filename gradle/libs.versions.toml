@@ -62,7 +62,7 @@ fory              = "1.3.0"  # https://mvnrepository.com/artifact/org.apache.for
 fory-kotlin       = "1.3.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
-aws2              = "2.47.1"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
+aws2              = "2.47.5"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
 aws-kotlin        = "1.8.0"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.8.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
 ktor              = "3.5.1"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
