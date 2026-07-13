@@ -51,6 +51,7 @@ dependencies {
     api(platform(libs.bluetape4k.javers.bom))
     api(platform(libs.aws2.bom))
     api(platform(libs.ktor.bom))
+    api(platform(libs.kotlinx.serialization.bom))
     api(platform(libs.log4j.bom))
     api(platform(libs.netty.bom))
     api(platform(libs.opentelemetry.bom))

@@ -7,6 +7,11 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Added centrally governed Kotlinx Serialization 1.11.0 BOM and JSON catalog
+  aliases, and imported the matching BOM into the dependency platform.
+
 ## [1.3.1] - 2026-06-28
 
 ### Fixed
