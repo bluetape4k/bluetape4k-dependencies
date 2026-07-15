@@ -71,7 +71,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Clone managed repositories for catalog script checks
-        if: ${{ github.event_name != 'pull_request' }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

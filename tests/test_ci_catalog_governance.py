@@ -13,14 +13,15 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
-    def test_pull_requests_use_repo_local_fixture_without_cloning_siblings(self) -> None:
+    def test_pull_requests_use_repo_local_fixture_for_the_adoption_guard(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
         clone_step = workflow.split(
             "      - name: Clone managed repositories for catalog script checks\n",
             1,
         )[1].split("      - name:", 1)[0]
-        self.assertIn("if: ${{ github.event_name != 'pull_request' }}", clone_step)
+        self.assertNotIn("if: ${{ github.event_name != 'pull_request' }}", clone_step)
+        self.assertIn("scripts/sync-shared-versions.py --print-default-repositories", clone_step)
 
         fixture_step = workflow.split(
             "      - name: Verify PR-safe catalog adoption guard\n",
