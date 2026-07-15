@@ -90,6 +90,51 @@ class SyncSharedVersionsTest(unittest.TestCase):
 
         self.assertEqual(gaps, [])
 
+    def test_catalog_loader_gaps_detect_implicit_sibling_and_missing_safety_contracts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "bluetape4k-sample"
+            catalog = repo / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir(parents=True)
+            catalog.write_text("[versions]\n", encoding="utf-8")
+            (repo / "settings.gradle.kts").write_text(
+                'val sibling = "../bluetape4k-dependencies/gradle/libs.versions.toml"\n'
+                'uri(url).toURL().openStream()\n',
+                encoding="utf-8",
+            )
+
+            gaps = sync.find_catalog_loader_gaps("bluetape4k-sample", catalog)
+
+        self.assertIn("implicit-sibling-fallback", {gap.key for gap in gaps})
+        self.assertIn("explicit-regular-file", {gap.key for gap in gaps})
+        self.assertIn("immutable-ref", {gap.key for gap in gaps})
+        self.assertIn("bounded-download", {gap.key for gap in gaps})
+        self.assertIn("catalog-structure", {gap.key for gap in gaps})
+
+    def test_catalog_loader_gaps_accept_complete_loader_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "bluetape4k-sample"
+            catalog = repo / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir(parents=True)
+            catalog.write_text("[versions]\n", encoding="utf-8")
+            (repo / "settings.gradle.kts").write_text(
+                "\n".join(
+                    [
+                        "bluetape4kDependenciesCatalogRef.matches(Regex(immutableRefPattern))",
+                        "java.nio.file.Files.isSymbolicLink(catalogFile.toPath())",
+                        "connection.connectTimeout = 10_000",
+                        "connection.readTimeout = 30_000",
+                        "fun downloadCatalogFile(url: String, target: File, maxBytes: Long)",
+                        "fun validateCatalogStructure(catalogFile: File)",
+                        "",
+                    ],
+                ),
+                encoding="utf-8",
+            )
+
+            gaps = sync.find_catalog_loader_gaps("bluetape4k-sample", catalog)
+
+        self.assertEqual(gaps, [])
+
     def test_real_catalog_centrally_governs_complete_exposed_family(self) -> None:
         catalog_path = SCRIPT_PATH.parents[1] / "gradle" / "libs.versions.toml"
         libraries = sync.read_catalog(catalog_path).libraries

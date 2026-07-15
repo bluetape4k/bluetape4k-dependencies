@@ -223,9 +223,9 @@ scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 수정하지 않는 read-only adoption guard이며, 중앙 version/coordinate/plugin id를 local catalog가
 다시 소유하면 실패합니다. 기존 `--write` option은 호환성 때문에 인식하지만 파일을 변경하지 않습니다.
 
-PR CI는 sibling repository를 clone하지 않고 `tests/fixtures/catalog-adoption-clean`의 clean fixture에
-실제 adoption guard를 실행합니다. Push와 수동 CI에서만 모든 관리 repository를 clone해 전체 workspace
-감사를 수행합니다. `gradle/libs.versions.toml.sha256`은 immutable catalog ref의 portable integrity
+PR CI는 sibling-dependent managed-catalog 및 artifact 검사를 위해 관리 repository를 clone하지만,
+adoption guard 자체는 `tests/fixtures/catalog-adoption-clean`의 clean fixture에 실행합니다. Push와 수동
+CI는 같은 clone을 사용해 전체 workspace adoption 감사도 수행합니다. `gradle/libs.versions.toml.sha256`은 immutable catalog ref의 portable integrity
 sidecar이므로 catalog 변경 때마다 다시 생성해야 합니다. 중앙 채택 과정에서 의도한 버전 변화는
 `config/central-catalog-version-deltas.json`에 기록하고, migration 전후 dependency report가 확인하기
 전까지 `pending-resolved-graph`로 유지합니다.

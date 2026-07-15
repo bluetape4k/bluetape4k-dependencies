@@ -45,10 +45,10 @@ bluetape4k-dependencies/gradle/libs.versions.toml
 | `bluetape4k-text` | Text/tokenizer 통합 |
 Workshop과 예제 애플리케이션은 기본 검사 대상에서 제외합니다.
 
-PR CI는 sibling checkout에 의존하지 않습니다. repository 내부 clean fixture에 실제 guard CLI를 실행해
-parser, exception, fail-fast 계약을 검증합니다. Push와 수동 CI에서만 이 표를 별도로 복사하지 않고
-`scripts/sync-shared-versions.py --print-default-repositories`의 출력을 사용해 모든 관리 repository를
-clone한 뒤 전체 workspace 감사를 수행합니다.
+PR CI도 sibling-dependent managed-catalog 및 artifact 검사를 위해
+`scripts/sync-shared-versions.py --print-default-repositories`의 출력으로 모든 관리 repository를 clone합니다.
+단, adoption guard는 repository 내부 clean fixture에 실제 CLI를 실행해 parser, exception, fail-fast 계약을
+검증합니다. Push와 수동 CI는 같은 clone을 사용해 전체 workspace adoption 감사도 수행합니다.
 
 ## 버전 변경 절차
 

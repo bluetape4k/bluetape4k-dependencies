@@ -172,6 +172,18 @@ WORKFLOW_CATALOG_REF = re.compile(
     r'^\s*BLUETAPE4K_DEPENDENCIES_CATALOG_REF:\s*[\'\"]?([0-9a-f]{40}|[0-9a-f]{64})[\'\"]?\s*$',
     re.MULTILINE,
 )
+IMPLICIT_SIBLING_CATALOG_PATHS = (
+    "../bluetape4k-dependencies/gradle/libs.versions.toml",
+    "bluetape4k-dependencies/gradle/libs.versions.toml",
+)
+CATALOG_LOADER_CONTRACTS = {
+    "explicit-regular-file": "Files.isSymbolicLink(catalogFile.toPath())",
+    "immutable-ref": "bluetape4kDependenciesCatalogRef.matches(",
+    "connect-timeout": "connection.connectTimeout",
+    "read-timeout": "connection.readTimeout",
+    "bounded-download": "maxBytes: Long",
+    "catalog-structure": "validateCatalogStructure(catalogFile: File)",
+}
 
 
 def _inline_string(value: str, field: str) -> str | None:
@@ -471,6 +483,39 @@ def find_catalog_ref_gaps(repository: str, catalog: Path) -> list[AdoptionGap]:
             workflow_ref,
         ),
     ]
+
+
+def find_catalog_loader_gaps(repository: str, catalog: Path) -> list[AdoptionGap]:
+    """Report catalog loaders that can bypass or weaken the immutable ref contract."""
+    settings_path = catalog.parents[1] / "settings.gradle.kts"
+    settings_text = settings_path.read_text(encoding="utf-8") if settings_path.is_file() else ""
+    gaps: list[AdoptionGap] = []
+
+    for sibling_path in IMPLICIT_SIBLING_CATALOG_PATHS:
+        if sibling_path in settings_text:
+            gaps.append(
+                AdoptionGap(
+                    repository,
+                    "catalog-loader-contract",
+                    "implicit-sibling-fallback",
+                    sibling_path,
+                    "<none>",
+                ),
+            )
+            break
+
+    for contract, marker in CATALOG_LOADER_CONTRACTS.items():
+        if marker not in settings_text:
+            gaps.append(
+                AdoptionGap(
+                    repository,
+                    "catalog-loader-contract",
+                    contract,
+                    "<missing>",
+                    marker,
+                ),
+            )
+    return gaps
 
 
 def load_repository_map(
@@ -784,6 +829,7 @@ def main() -> int:
         compatibility_errors.extend(compatibility_line_errors(catalog, repository))
         adoption_gaps.extend(find_adoption_gaps(repository, read_catalog(catalog), source_data, exceptions))
         adoption_gaps.extend(find_catalog_ref_gaps(repository, catalog))
+        adoption_gaps.extend(find_catalog_loader_gaps(repository, catalog))
 
     if args.format == "json":
         print(

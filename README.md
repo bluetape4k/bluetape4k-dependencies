@@ -226,9 +226,10 @@ dependency-management constraint obtains the version from `bt4k.versions`.
 Compatibility pins use clearly local keys such as `jackson3-compat`; they must not shadow
 central version keys.
 
-Pull-request CI runs the real adoption guard against the checked-in clean fixture under
-`tests/fixtures/catalog-adoption-clean`; it does not clone sibling repositories. Push and
-manual CI runs clone all governed repositories and perform the full workspace audit.
+Pull-request CI clones governed repositories for sibling-dependent managed-catalog and
+artifact checks, while the adoption guard itself runs against the checked-in clean fixture
+under `tests/fixtures/catalog-adoption-clean`. Push and manual CI use the clones for the full
+workspace adoption audit as well.
 `gradle/libs.versions.toml.sha256` is the portable integrity sidecar for immutable catalog
 refs. Regenerate it whenever the catalog changes. Intentional migration-time version changes
 are recorded in `config/central-catalog-version-deltas.json`; entries remain
