@@ -46,6 +46,16 @@
     {
       "repository": "bluetape4k-experimental",
       "kind": "platform",
+      "coordinate": "org.jetbrains.exposed:exposed-bom",
+      "before": "1.3.0",
+      "after": "1.3.1",
+      "classification": "compatibility-bugfix",
+      "verification": "verified",
+      "reason": "Align the complete Exposed family with the central catalog to eliminate the mixed 1.3.0/1.3.1 NoSuchMethodError."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "platform",
       "coordinate": "io.netty:netty-bom",
       "before": "4.2.15.Final",
       "after": "4.2.16.Final",

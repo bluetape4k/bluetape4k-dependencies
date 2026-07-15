@@ -59,6 +59,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             ("bluetape4k-projects", "org.flywaydb:flyway-core", "11.20.3", "12.10.0"),
             ("bluetape4k-projects", "org.apache.tomcat:tomcat-jdbc", "11.0.18", "11.0.24"),
             ("bluetape4k-experimental", "com.gradleup.shadow", "9.4.2", "9.5.1"),
+            ("bluetape4k-experimental", "org.jetbrains.exposed:exposed-bom", "1.3.0", "1.3.1"),
             ("bluetape4k-experimental", "io.netty:netty-bom", "4.2.15.Final", "4.2.16.Final"),
             ("bluetape4k-experimental", "org.apache.logging.log4j:log4j-bom", "2.26.0", "2.26.1"),
             ("bluetape4k-experimental", "com.zaxxer:HikariCP", "7.0.2", "7.1.0"),

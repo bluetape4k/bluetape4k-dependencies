@@ -21,6 +21,29 @@ SPEC.loader.exec_module(sync)
 
 
 class SyncSharedVersionsTest(unittest.TestCase):
+    def test_real_catalog_centrally_governs_complete_exposed_family(self) -> None:
+        catalog_path = SCRIPT_PATH.parents[1] / "gradle" / "libs.versions.toml"
+        libraries = sync.read_catalog(catalog_path).libraries
+
+        expected_modules = {
+            "exposed-bom": "org.jetbrains.exposed:exposed-bom",
+            "exposed-core": "org.jetbrains.exposed:exposed-core",
+            "exposed-dao": "org.jetbrains.exposed:exposed-dao",
+            "exposed-java-time": "org.jetbrains.exposed:exposed-java-time",
+            "exposed-jdbc": "org.jetbrains.exposed:exposed-jdbc",
+            "exposed-json": "org.jetbrains.exposed:exposed-json",
+            "exposed-migration-jdbc": "org.jetbrains.exposed:exposed-migration-jdbc",
+            "exposed-migration-r2dbc": "org.jetbrains.exposed:exposed-migration-r2dbc",
+            "exposed-r2dbc": "org.jetbrains.exposed:exposed-r2dbc",
+            "exposed-spring7-transaction": "org.jetbrains.exposed:spring7-transaction",
+            "exposed-spring-boot4-starter": "org.jetbrains.exposed:exposed-spring-boot4-starter",
+        }
+
+        for alias, module in expected_modules.items():
+            with self.subTest(alias=alias):
+                self.assertEqual(libraries[alias].module, module)
+                self.assertEqual(libraries[alias].version_ref, "exposed")
+
     def test_default_repositories_include_active_gradle_repos(self) -> None:
         self.assertIn("bluetape4k-projects", sync.DEFAULT_REPOSITORIES)
         self.assertIn("bluetape4k-exposed", sync.DEFAULT_REPOSITORIES)
