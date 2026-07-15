@@ -1,0 +1,4 @@
+# Compatibility exceptions to direct central catalog adoption.
+# Keep this list empty unless a repository intentionally stays on a different
+# compatibility family and has an owner, review date, and tracking issue.
+exception = []

@@ -209,21 +209,26 @@ bluetape4k 유지보수자를 위한 상세 버전 관리 절차는
 아래 섹션은 주요 public module family를 요약합니다.
 
 이 레포지토리의 shared dependency/plugin version alias는 관리 대상 library 레포지토리의
-source of truth이기도 합니다. 해당 alias를 변경한 뒤에는 downstream local catalog를 동기화합니다:
+source of truth이기도 합니다. 해당 alias를 변경한 뒤에는 downstream의 중앙 catalog adoption을 검증합니다:
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
-scripts/sync-shared-versions.py --workspace .. --write --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 ```
 
-현재 방식은 library local catalog를 위한 **materialized sync**입니다.
-Published catalog로 완전히 이행하기 전까지
-`bluetape4k-dependencies/gradle/libs.versions.toml`이 승인된 버전을 소유하고,
-`scripts/sync-shared-versions.py`가 각 관리 대상 library 레포지토리의 `gradle/libs.versions.toml`에서
-같은 alias를 물리적으로 갱신합니다.
+현재 방식은 `bluetape4k-dependencies/gradle/libs.versions.toml`을 `bt4k` catalog로
+직접 import하는 중앙 관리 방식입니다. `scripts/sync-shared-versions.py`는 downstream 파일을
+수정하지 않는 read-only adoption guard이며, 중앙 version/coordinate/plugin id를 local catalog가
+다시 소유하면 실패합니다. 기존 `--write` option은 호환성 때문에 인식하지만 파일을 변경하지 않습니다.
+
+PR CI는 sibling repository를 clone하지 않고 `tests/fixtures/catalog-adoption-clean`의 clean fixture에
+실제 adoption guard를 실행합니다. Push와 수동 CI에서만 모든 관리 repository를 clone해 전체 workspace
+감사를 수행합니다. `gradle/libs.versions.toml.sha256`은 immutable catalog ref의 portable integrity
+sidecar이므로 catalog 변경 때마다 다시 생성해야 합니다. 중앙 채택 과정에서 의도한 버전 변화는
+`config/central-catalog-version-deltas.json`에 기록하고, migration 전후 dependency report가 확인하기
+전까지 `pending-resolved-graph`로 유지합니다.
 
 Workshop과 example 레포지토리는 catalog sync 대상이 아닙니다. 이 레포지토리들은
 배포된 `bluetape4k-dependencies` BOM artifact version을 소비해야 하며, central catalog
@@ -247,20 +252,20 @@ Dependabot security alert은 alert이 보이는 레포지토리가 아니라 dep
 
 | Route | Owner | Action |
 |---|---|---|
-| `central-catalog` | `bluetape4k-dependencies` | source-of-truth catalog를 먼저 갱신하고 downstream 레포지토리를 sync합니다. |
-| `central-bom-transitive` | `spring-boot` 같은 central BOM line | patched BOM이 있으면 BOM line을 올리고, 없으면 central override를 추가하거나 유지한 뒤 downstream sync합니다. |
+| `central-catalog` | `bluetape4k-dependencies` | source-of-truth catalog를 먼저 갱신하고 downstream adoption guard를 실행합니다. |
+| `central-bom-transitive` | `spring-boot` 같은 central BOM line | patched BOM이 있으면 BOM line을 올리고, 없으면 central override를 추가하거나 유지한 뒤 downstream resolution을 검증합니다. |
 | `repo-tooling` | alert 레포지토리 | Gradle/plugin/settings tooling을 해당 레포에서 고치되, 공통이면 central governance로 승격합니다. |
 | `repo-local` | alert 레포지토리 | manifest를 소유한 레포에서 직접 고칩니다. |
 
-장기적으로 downstream 레포지토리는 checkout된
-`bluetape4k-dependencies/gradle/libs.versions.toml`을 `bt4k` catalog로 import하고,
+관리 대상 downstream 레포지토리는 checkout된
+`bluetape4k-dependencies/gradle/libs.versions.toml`을 `bt4k` catalog로 import하며,
 repository convention plugin을 통해 `bluetape4k-dependencies` BOM을 platform으로 import해야
 합니다. BOM은 dependency resolution 계약이고, catalog는 Gradle authoring 계약입니다.
 
 권장 릴리즈 흐름은 다음과 같습니다:
 
 1. 이 레포지토리의 source-of-truth block을 수정합니다.
-2. `scripts/sync-shared-versions.py --workspace .. --write --check --summary`를 실행합니다.
+2. `scripts/sync-shared-versions.py --workspace .. --check --summary`로 downstream 중복 권한이 없는지 확인합니다.
 3. 중앙 관리 dependency name이 추가/삭제되면
    `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`를 실행합니다.
 4. 변경된 관리 대상 downstream library 레포지토리 PR을 열고 CI 검증 후 머지합니다.

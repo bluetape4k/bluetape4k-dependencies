@@ -70,11 +70,11 @@ ktor              = "3.5.1"  # https://mvnrepository.com/artifact/io.ktor/ktor-b
 netty4            = "4.1.133.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
 netty             = "4.2.16.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
 opentelemetry     = "1.63.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
-opentelemetry-instrumentation-alpha = "2.30.0-alpha-SNAPSHOT"  # https://mvnrepository.com/artifact/io.opentelemetry.instrumentation/opentelemetry-instrumentation-bom-alpha
+opentelemetry-instrumentation-alpha = "2.29.0-alpha"  # Stable compatibility line used by bluetape4k-projects
 protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
 log4j             = "2.26.1"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
-vertx4            = "5.1.4"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
+vertx4            = "4.5.27"  # Vert.x 4 compatibility line required by Fabric8
 vertx             = "5.1.4"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
 redisson          = "4.6.1"  # https://mvnrepository.com/artifact/org.redisson/redisson
 querydsl          = "7.4.0"  # https://mvnrepository.com/artifact/io.github.openfeign.querydsl/querydsl-apt
@@ -128,12 +128,24 @@ random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.bena
 # ────────────────────────────────────────────────────────────────────────────
 [plugins]
 kotlin-jvm            = { id = "org.jetbrains.kotlin.jvm",            version.ref = "kotlin" }
+kotlin-allopen        = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
+kotlin-jpa            = { id = "org.jetbrains.kotlin.plugin.jpa",     version.ref = "kotlin" }
+kotlin-kapt           = { id = "org.jetbrains.kotlin.kapt",           version.ref = "kotlin" }
+kotlin-noarg          = { id = "org.jetbrains.kotlin.plugin.noarg",   version.ref = "kotlin" }
+kotlin-serialization  = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-spring         = { id = "org.jetbrains.kotlin.plugin.spring",  version.ref = "kotlin" }
 byte-buddy-gradle     = { id = "net.bytebuddy.byte-buddy-gradle-plugin", version.ref = "byte-buddy" }
 dependency-management = { id = "io.spring.dependency-management",     version.ref = "dependency-management" }
 dokka                 = { id = "org.jetbrains.dokka",                  version.ref = "dokka" }
+gatling               = { id = "io.gatling.gradle",                    version.ref = "gatling" }
+kover                 = { id = "org.jetbrains.kotlinx.kover",          version.ref = "kover" }
 nmcp                  = { id = "com.gradleup.nmcp",                    version.ref = "nmcp" }
 nmcp-aggregation      = { id = "com.gradleup.nmcp.aggregation",        version.ref = "nmcp" }
 exposed-plugin        = { id = "org.jetbrains.exposed.plugin",         version.ref = "exposed" }
+shadow                = { id = "com.gradleup.shadow",                  version.ref = "shadow" }
+spring-boot           = { id = "org.springframework.boot",             version.ref = "spring-boot" }
+spring-boot3          = { id = "org.springframework.boot",             version.ref = "spring-boot3" }
+spring-boot4          = { id = "org.springframework.boot",             version.ref = "spring-boot4" }
 
 # ────────────────────────────────────────────────────────────────────────────
 [libraries]
@@ -165,6 +177,7 @@ exposed-migration-jdbc                        = { module = "org.jetbrains.expose
 exposed-spring7-transaction                   = { module = "org.jetbrains.exposed:spring7-transaction", version.ref = "exposed" }
 exposed-spring-boot4-starter                  = { module = "org.jetbrains.exposed:exposed-spring-boot4-starter", version.ref = "exposed" }
 fabric8-kubernetes-client                     = { module = "io.fabric8:kubernetes-client", version.ref = "fabric8-kubernetes-client" }
+fabric8-kubernetes-client-bom                 = { module = "io.fabric8:kubernetes-client-bom", version.ref = "fabric8-kubernetes-client" }
 flyway-core                                   = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 fory-core                                     = { module = "org.apache.fory:fory-core", version.ref = "fory" }
 fory-kotlin                                   = { module = "org.apache.fory:fory-kotlin", version.ref = "fory-kotlin" }
@@ -174,6 +187,10 @@ hazelcast                                     = { module = "com.hazelcast:hazelc
 hikaricp                                      = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 hibernate-core                                = { module = "org.hibernate.orm:hibernate-core", version.ref = "hibernate" }
 hibernate-jcache                              = { module = "org.hibernate.orm:hibernate-jcache", version.ref = "hibernate" }
+ignite-client                                 = { module = "org.apache.ignite:ignite-client", version.ref = "ignite" }
+ignite-core                                   = { module = "org.apache.ignite:ignite-core", version.ref = "ignite" }
+ignite3-client                                = { module = "org.apache.ignite:ignite-client", version.ref = "ignite3" }
+ignite3-core                                  = { module = "org.apache.ignite:ignite-core", version.ref = "ignite3" }
 httpclient5                                   = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
 httpcore5-h2                                  = { module = "org.apache.httpcomponents.core5:httpcore5-h2", version.ref = "httpcore5" }
 httpcore5-lib                                 = { module = "org.apache.httpcomponents.core5:httpcore5", version.ref = "httpcore5" }
@@ -181,6 +198,26 @@ httpcore5-reactive                            = { module = "org.apache.httpcompo
 jakarta-activation-api                        = { module = "jakarta.activation:jakarta.activation-api", version.ref = "jakarta-activation" }
 jakarta-xml-bind                              = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
 javamoney-moneta                              = { module = "org.javamoney:moneta", version.ref = "javamoney-moneta" }
+kafka-clients                                 = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka3" }
+kafka-generator                               = { module = "org.apache.kafka:generator", version.ref = "kafka3" }
+kafka-metadata                                = { module = "org.apache.kafka:kafka-metadata", version.ref = "kafka3" }
+kafka-raft                                    = { module = "org.apache.kafka:kafka-raft", version.ref = "kafka3" }
+kafka-scala213                                = { module = "org.apache.kafka:kafka_2.13", version.ref = "kafka3" }
+kafka-server-common                           = { module = "org.apache.kafka:kafka-server-common", version.ref = "kafka3" }
+kafka-storage                                 = { module = "org.apache.kafka:kafka-storage", version.ref = "kafka3" }
+kafka-storage-api                             = { module = "org.apache.kafka:kafka-storage-api", version.ref = "kafka3" }
+kafka-streams                                 = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka3" }
+kafka-streams-test-utils                      = { module = "org.apache.kafka:kafka-streams-test-utils", version.ref = "kafka3" }
+kafka4-clients                                = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka4" }
+kafka4-generator                              = { module = "org.apache.kafka:generator", version.ref = "kafka4" }
+kafka4-metadata                               = { module = "org.apache.kafka:kafka-metadata", version.ref = "kafka4" }
+kafka4-raft                                   = { module = "org.apache.kafka:kafka-raft", version.ref = "kafka4" }
+kafka4-scala213                               = { module = "org.apache.kafka:kafka_2.13", version.ref = "kafka4" }
+kafka4-server-common                          = { module = "org.apache.kafka:kafka-server-common", version.ref = "kafka4" }
+kafka4-storage                                = { module = "org.apache.kafka:kafka-storage", version.ref = "kafka4" }
+kafka4-storage-api                            = { module = "org.apache.kafka:kafka-storage-api", version.ref = "kafka4" }
+kafka4-streams                                = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka4" }
+kafka4-streams-test-utils                     = { module = "org.apache.kafka:kafka-streams-test-utils", version.ref = "kafka4" }
 ktor-bom                                      = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
 kotlinx-serialization-bom                     = { module = "org.jetbrains.kotlinx:kotlinx-serialization-bom", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json                    = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
@@ -209,6 +246,12 @@ reactor-bom                                   = { module = "io.projectreactor:re
 redisson                                      = { module = "org.redisson:redisson", version.ref = "redisson" }
 scrimage-core                                 = { module = "com.sksamuel.scrimage:scrimage-core", version.ref = "scrimage" }
 slf4j-api                                     = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+spring-boot3-dependencies                     = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot3" }
+spring-boot4-dependencies                     = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot4" }
+spring-kafka                                  = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka" }
+spring-kafka-test                             = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "spring-kafka" }
+spring-kafka4                                 = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka4" }
+spring-kafka4-test                            = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "spring-kafka4" }
 springdoc-openapi-starter-webmvc-ui           = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 timefold-solver-bom                           = { module = "ai.timefold.solver:timefold-solver-bom", version.ref = "timefold-solver" }
 tomcat-embed-core                             = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat" }

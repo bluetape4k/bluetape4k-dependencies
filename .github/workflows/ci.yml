@@ -71,6 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Clone managed repositories for catalog script checks
+        if: ${{ github.event_name != 'pull_request' }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -91,6 +92,10 @@ jobs:
           else
             scripts/verify-managed-artifacts.py --summary --allow-snapshots
           fi
+
+      - name: Verify PR-safe catalog adoption guard
+        if: ${{ github.event_name == 'pull_request' }}
+        run: scripts/sync-shared-versions.py --workspace tests/fixtures/catalog-adoption-clean --repo bluetape4k-projects --check --summary
 
       - name: Verify downstream repository sync
         if: ${{ github.event_name != 'pull_request' }}

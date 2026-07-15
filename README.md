@@ -208,21 +208,31 @@ For the Korean operating procedure used by the bluetape4k maintainers, see
 artifact alias list and published Gradle Version Catalog. The sections below summarize the main
 public module families.
 
-Shared dependency and plugin version aliases in this repository are also the source of truth for governed
-library repositories. Sync downstream local catalogs after changing those aliases:
+Shared dependency and plugin aliases in this repository are also the source of truth for governed
+library repositories. Downstream builds import this file as the `bt4k` catalog. Check adoption after
+changing central aliases:
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
-scripts/sync-shared-versions.py --workspace .. --write --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 ```
 
-This is currently a **materialized sync** workflow for library local catalogs. During
-the migration to the published catalog, `bluetape4k-dependencies/gradle/libs.versions.toml`
-owns the approved versions, and `scripts/sync-shared-versions.py` rewrites the matching
-aliases in each governed library repository's `gradle/libs.versions.toml`.
+The checker is report-only: `--write` is retained as a deprecated compatibility flag and
+never edits downstream repositories. A governed repository should use `bt4k.<alias>`
+directly. A repository-specific alias may remain only when it is versionless and its
+dependency-management constraint obtains the version from `bt4k.versions`.
+Compatibility pins use clearly local keys such as `jackson3-compat`; they must not shadow
+central version keys.
+
+Pull-request CI runs the real adoption guard against the checked-in clean fixture under
+`tests/fixtures/catalog-adoption-clean`; it does not clone sibling repositories. Push and
+manual CI runs clone all governed repositories and perform the full workspace audit.
+`gradle/libs.versions.toml.sha256` is the portable integrity sidecar for immutable catalog
+refs. Regenerate it whenever the catalog changes. Intentional migration-time version changes
+are recorded in `config/central-catalog-version-deltas.json`; entries remain
+`pending-resolved-graph` until before/after dependency reports verify them.
 
 Workshop and example repositories are not catalog-sync targets. They consume the
 published `bluetape4k-dependencies` BOM artifact version and should not chase
@@ -252,7 +262,7 @@ alerts as:
 | `repo-tooling` | Alert repository | Fix local Gradle/plugin/settings tooling unless the package is promoted to central governance. |
 | `repo-local` | Alert repository | Fix the repository-owned dependency directly. |
 
-Long-term, downstream repositories should import the checked-out
+Downstream repositories import the checked-out
 `bluetape4k-dependencies/gradle/libs.versions.toml` file as a `bt4k` catalog
 and import `bluetape4k-dependencies` as a platform through their repository
 convention plugin. The BOM remains the dependency-resolution contract; the
@@ -261,11 +271,12 @@ catalog remains the Gradle authoring contract.
 The expected release flow is:
 
 1. Update the source-of-truth block in this repository.
-2. Run `scripts/sync-shared-versions.py --workspace .. --write --check --summary`.
-3. Run `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
+2. Update downstream builds to use the new `bt4k` alias or a versionless local alias.
+3. Run `scripts/sync-shared-versions.py --workspace .. --check --summary`.
+4. Run `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
    when the change adds or removes centrally governed dependency names.
-4. Open, verify, and merge PRs for the governed downstream library repositories that changed.
-5. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
+5. Open, verify, and merge PRs for the governed downstream library repositories that changed.
+6. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
    that no shared-version drift remains across the configured governed library repositories.
 
 Compatibility-line aliases are intentionally separate. Do not collapse aliases such as `kafka3`/`kafka4`,

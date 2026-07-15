@@ -56,21 +56,27 @@ source for Gradle build aliases and plugin/tooling versions.
 
 ## Updating Versions
 
-1. Update the relevant version ref in `gradle/libs.versions.toml`.
-2. For shared dependency/plugin version changes, run
-   `scripts/sync-shared-versions.py --workspace .. --write --check --summary`
-   so downstream `bluetape4k-*` catalogs stay aligned with this source.
-3. For centrally managed dependency names, run
+1. Update the relevant version ref in `gradle/libs.versions.toml`, then refresh
+   the portable `gradle/libs.versions.toml.sha256` sidecar.
+2. Record intentional adoption-time resolved-version changes in
+   `config/central-catalog-version-deltas.json`. Keep entries pending until
+   before/after dependency reports verify them; do not record preserved
+   compatibility lines as deltas.
+3. For shared dependency/plugin version changes, update downstream builds to
+   use the imported `bt4k` alias directly, or keep only a versionless local
+   alias whose dependency-management version comes from `bt4k.versions`.
+   Then run `scripts/sync-shared-versions.py --workspace .. --check --summary`.
+4. For centrally managed dependency names, run
    `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
    so downstream Dependabot does not open repo-local PRs for source-of-truth
    versions.
-4. For managed repository module additions/removals, run
+5. For managed repository module additions/removals, run
    `scripts/sync-managed-catalog.py --write --check`; do not edit
    generated catalog blocks by hand.
-5. Verify the matching sub-BOM import exists in `build.gradle.kts`.
-6. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
+6. Verify the matching sub-BOM import exists in `build.gradle.kts`.
+7. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
    matching `api(libs.<alias>)` constraint only if no imported BOM governs it.
-7. Run `./gradlew build`.
+8. Run `./gradlew build`.
 
 ## Commands
 
@@ -78,12 +84,12 @@ source for Gradle build aliases and plugin/tooling versions.
 scripts/sync-managed-catalog.py --check --summary
 scripts/sync-managed-catalog.py --write --check --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
-scripts/sync-shared-versions.py --workspace .. --write --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 python3 -m unittest tests/test_sync_managed_catalog.py
 python3 -m unittest tests/test_sync_shared_versions.py
+python3 -m unittest tests/test_catalog_checksum.py tests/test_central_catalog_version_deltas.py tests/test_ci_catalog_governance.py
 python3 -m unittest tests/test_sync_dependabot_ignores.py
 python3 -m unittest tests/test_triage_dependabot_alerts.py
 ./gradlew build
