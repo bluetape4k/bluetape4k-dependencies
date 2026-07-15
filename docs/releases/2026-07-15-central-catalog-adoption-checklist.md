@@ -23,17 +23,17 @@
 
 - [x] **CAT-03 — Complete catalog governance implementation**
   - **Action:** Add PR-time guard enforcement, declared-ref integrity, and an intentional resolved-version delta ledger.
-  - **Evidence:** Central report-only fail-closed guard, strict exception schema, PR fixture/full workspace CI split, catalog SHA-256 sidecar, verified version-delta ledger, and nine consumer exact-SHA/checksum/atomic-cache CI integrations are implemented.
+  - **Evidence:** Central report-only fail-closed guard, strict exception schema, settings/workflow ref parity, immutable loader contract checks, PR fixture/full workspace CI split, catalog SHA-256 sidecar, verified version-delta ledger, and nine consumer exact-SHA/checksum/bounded-download/atomic-cache CI integrations are implemented.
   - **Failure:** Do not commit an incomplete governance contract.
 
 - [x] **CAT-04 — Prove the exact candidate state**
   - **Action:** Run central tests/build/guard, every consumer build, k8sTest, and whitespace/static checks from the exact candidate worktrees.
-  - **Evidence:** Central 82-test suite/build/actionlint/checksum passed; exact repository-map guard was clean; all nine consumers passed no-override `help`, `build -x test`, actionlint, and diff checks; `k8sTest --rerun-tasks` produced 9 tests with 0 failures/errors.
+  - **Evidence:** Central 88-test suite/build/actionlint/checksum passed; exact repository-map guard was clean; all nine consumers passed no-override `help`, actionlint, and diff checks; representative symbolic-ref, symlink, and malformed-catalog rejection passed; text full build and failing example compile tasks passed; `k8sTest --rerun-tasks` produced 9 tests with 0 failures/errors.
   - **Failure:** Repair and rerun affected checks before commit.
 
 - [x] **CAT-05 — Commit with Lore decision records**
   - **Action:** Stage only scoped files and create an intentional Lore commit set per repository.
-  - **Evidence:** Central content head `c11c363f3ca945d4ef3ed92f98ce85ecf7c53bc6`; consumer SHAs recorded below; all ten candidate worktrees were clean after commit and validation.
+  - **Evidence:** Central content head `2646d2cd2d4ecc09654c2ac6ef11cfd6679f1086`; consumer SHAs recorded below; all ten candidate worktrees were clean after commit and validation.
   - **Failure:** Stop before push if unrelated files are staged.
 
 - [x] **CAT-06 — Push candidate branches**
@@ -46,9 +46,9 @@
   - **Evidence:** Ready PRs: dependencies #159, projects #1025, experimental #80, aws #374, exposed #380, graph #388, image #291, javers #243, leader #609, text #163. All target `develop`, use the expected head branch, and end with `## DoD Status`.
   - **Failure:** Repair malformed or incorrectly targeted PRs before CI wait.
 
-- [ ] **CAT-08 — Reach merge-ready state**
+- [x] **CAT-08 — Reach merge-ready state**
   - **Action:** Wait for required CI, reviews, and unresolved threads on all PRs.
-  - **Evidence:** Live check/review/thread status per PR.
+  - **Evidence:** Exact-head GitHub checks passed 202/202: dependencies 5/5, projects 19/19, experimental 6/6, aws 17/17, exposed 36/36, graph 18/18, image 25/25, javers 17/17, leader 46/46, text 13/13. All ten PRs were OPEN, non-draft, MERGEABLE, with 0 reviews and 0 unresolved threads. Independent exact-diff re-review returned GO with P0=0/P1=0/P2=0.
   - **Failure:** Fix failures and rerun until green; normal CI wait remains PENDING.
 
 - [ ] **CAT-09 — Obtain fresh merge-ready approval**
@@ -85,20 +85,20 @@
 
 | Repository | Base | Candidate SHA | PR | Merge SHA |
 |---|---|---|---|---|
-| bluetape4k-dependencies | `3131b9f006ca819fed908f56384db392de5500e8` | `c11c363f3ca945d4ef3ed92f98ce85ecf7c53bc6` (content head before checklist-only commit) | #159 | pending |
-| bluetape4k-projects | `66607608065293eb46a54a2a0d4172de23517a9d` | `f0a3dfd04e0ba36819a1ef97771227811278d310` | #1025 | pending |
-| bluetape4k-experimental | `1b0167ae9fc91d206202b04c93ff5540c3db2cf5` | `01c1df278e342a7b52add51aae4d5db61804661b` | #80 | pending |
-| bluetape4k-aws | `cf9f7a4ed610f85b4af440bcdabedcab55f47bd1` | `a02afb87c28a429e3cce8f21a39a94d710693cbe` | #374 | pending |
-| bluetape4k-exposed | `a4964171d6668cc5de0734184dff7daf4e7b7221` | `8fb8ee303b3dd52caa8010f184e44f1e0e19233c` | #380 | pending |
-| bluetape4k-graph | `d6f42b3c80c2dce9e298ec2b8506ef2f879cb7d5` | `c4f85c61a397e9e1fe6917431c5597fdd3c802a0` | #388 | pending |
-| bluetape4k-image | `b68aaa17465015e4ee3a7c5a3b709eb129e4a4c9` | `473c2342886fe27e7d614e2871aa0a9484ef2e1f` | #291 | pending |
-| bluetape4k-javers | `5cbe876a7164ccc1587f4cfcf792aeba55166276` | `362435be1c81632470ddb2b899beb099f8ee16cc` | #243 | pending |
-| bluetape4k-leader | `0ba2ddee92b6ac6c3831c571489002fb7b459c8d` | `cb60543136621a607961a6ab1980f5ca7a911e8c` | #609 | pending |
-| bluetape4k-text | `6283d3737185f8a60dfa9840502fcd8ed7b1b71c` | `639ac6d88fdd5199602ca75be63ce09e691b7484` | #163 | pending |
+| bluetape4k-dependencies | `3131b9f006ca819fed908f56384db392de5500e8` | `2646d2cd2d4ecc09654c2ac6ef11cfd6679f1086` (content head before checklist-only commit) | #159 | pending |
+| bluetape4k-projects | `66607608065293eb46a54a2a0d4172de23517a9d` | `f40d594d6f4c0c9512fcddfa80f1b909efe2cf9c` | #1025 | pending |
+| bluetape4k-experimental | `1b0167ae9fc91d206202b04c93ff5540c3db2cf5` | `fc1fdef0d31eef44f4b0f94c1f69ffdec45b3507` | #80 | pending |
+| bluetape4k-aws | `cf9f7a4ed610f85b4af440bcdabedcab55f47bd1` | `4a3ee278c01d451751222ad4b48b4a027a47c984` | #374 | pending |
+| bluetape4k-exposed | `a4964171d6668cc5de0734184dff7daf4e7b7221` | `d4e542e7ea97bc71f3488a030a60f08feffdc944` | #380 | pending |
+| bluetape4k-graph | `d6f42b3c80c2dce9e298ec2b8506ef2f879cb7d5` | `5492e782dba85136a45194545e348e123e7a274f` | #388 | pending |
+| bluetape4k-image | `b68aaa17465015e4ee3a7c5a3b709eb129e4a4c9` | `d5208e056e17a9b1d10845536d0edde3e3690114` | #291 | pending |
+| bluetape4k-javers | `5cbe876a7164ccc1587f4cfcf792aeba55166276` | `8676738b1d2797551fdd39fcc884c2153c74c605` | #243 | pending |
+| bluetape4k-leader | `0ba2ddee92b6ac6c3831c571489002fb7b459c8d` | `a38657dce7234e8ad9971eeaf9a98ca36bfdfbd9` | #609 | pending |
+| bluetape4k-text | `6283d3737185f8a60dfa9840502fcd8ed7b1b71c` | `59ffbb214cdc41665f254ac016666af9cdc22864` | #163 | pending |
 
 ## Validation Evidence
 
-- Central: 82 Python tests, Gradle build, actionlint, SHA-256 verification, PR #159 all checks green.
-- Consumers: exact-SHA remote catalog fetch and checksum cache verification 9/9; `build -x test` 9/9; actionlint 9/9; `git diff --check` 9/9.
+- Central: 88 Python tests, Gradle build, actionlint, SHA-256 verification, exact repository-map guard, PR #159 all checks green.
+- Consumers: immutable exact-SHA remote catalog fetch, bounded download, checksum/structure cache verification 9/9; Gradle `help` 9/9; actionlint 9/9; `git diff --check` 9/9; GitHub checks 197/197 across consumer PRs.
 - Resolved graph: Fabric8 7.8.0, Tomcat JDBC 11.0.24, HikariCP 7.1.0, Flyway 12.10.0, Shadow 9.5.1.
 - Regression: `:bluetape4k-testcontainers:k8sTest --rerun-tasks`, 9 tests, 0 failures, 0 errors.
