@@ -11,17 +11,22 @@
 | BOM | bluetape4k artifact dependency resolution | `io.github.bluetape4k:bluetape4k-dependencies` |
 | Version catalog source | Gradle plugin/library alias와 bluetape4k artifact alias | `gradle/libs.versions.toml` pinned by git ref |
 
-중요한 점은 shared version alias가 동적으로 참조되는 구조가 아니라는 것입니다.
+공통 버전은 downstream catalog에 복사하지 않습니다. 각 라이브러리 repo가 중앙
+catalog를 `bt4k`라는 이름으로 import하고 직접 참조합니다.
 
 ```text
 bluetape4k-dependencies/gradle/libs.versions.toml
         |
-        | scripts/sync-shared-versions.py --write
+        | settings.gradle.kts: versionCatalogs.create("bt4k")
         v
-각 대상 repo의 gradle/libs.versions.toml
+각 대상 repo의 build.gradle.kts: bt4k.<alias>, bt4k.versions.<key>
 ```
 
-즉, `bluetape4k-dependencies`가 source of truth이고, 대상 레포지토리들의 `libs.versions.toml`은 sync script로 갱신되는 materialized copy입니다.
+대상 repo의 `libs.versions.toml`에는 repo 전용 alias만 둡니다. 중앙과 같은 좌표를
+로컬 이름으로 유지해야 하면 version을 쓰지 않고, root dependency-management가
+`bt4k.versions`에서 버전을 공급해야 합니다. 호환성 고정 버전은
+`jackson3-compat`처럼 중앙 key를 가리지 않는 이름을 사용합니다.
+`scripts/sync-shared-versions.py`는 이 규칙을 검사할 뿐 파일을 수정하지 않습니다.
 
 ## 관리 대상
 
@@ -31,23 +36,19 @@ bluetape4k-dependencies/gradle/libs.versions.toml
 |---|---|
 | `bluetape4k-projects` | 핵심 라이브러리 기준 repo |
 | `bluetape4k-aws` | AWS 통합 |
-| `bluetape4k-experimental` | 실험 repo, sync 대상에는 포함 |
+| `bluetape4k-experimental` | 실험 repo, 중앙 catalog 검사 대상에 포함 |
 | `bluetape4k-exposed` | Exposed 통합 |
 | `bluetape4k-graph` | Graph 통합 |
 | `bluetape4k-image` | Image 통합 |
 | `bluetape4k-javers` | Javers 통합 |
 | `bluetape4k-leader` | Leader election 통합 |
 | `bluetape4k-text` | Text/tokenizer 통합 |
-| `bluetape4k-workshop` | workshop 중 sync 대상 |
-| `clinic-appointment` | 예제 애플리케이션 |
-| `exposed-r2dbc-workshop` | Exposed R2DBC workshop |
-| `exposed-workshop` | Exposed workshop |
-| `timefold-workshop` | Timefold workshop |
+Workshop과 예제 애플리케이션은 기본 검사 대상에서 제외합니다.
 
-`.github`, `demo-repository`, `ocean-workshop`, `kotlin-dev-agent`는 기본 sync 대상에서 제외합니다.
-
-CI는 이 표를 별도로 복사하지 않고 `scripts/sync-shared-versions.py --print-default-repositories`의
-출력을 사용해 clone 대상을 결정합니다.
+PR CI도 sibling-dependent managed-catalog 및 artifact 검사를 위해
+`scripts/sync-shared-versions.py --print-default-repositories`의 출력으로 모든 관리 repository를 clone합니다.
+단, adoption guard는 repository 내부 clean fixture에 실제 CLI를 실행해 parser, exception, fail-fast 계약을
+검증합니다. Push와 수동 CI는 같은 clone을 사용해 전체 workspace adoption 감사도 수행합니다.
 
 ## 버전 변경 절차
 
@@ -55,23 +56,30 @@ CI는 이 표를 별도로 복사하지 않고 `scripts/sync-shared-versions.py 
 
 1. `bluetape4k-dependencies`에서 새 브랜치를 만듭니다.
 2. `gradle/libs.versions.toml`의 source-of-truth block을 수정합니다.
-3. 대상 레포지토리 catalog를 갱신합니다.
-
-```bash
-scripts/sync-shared-versions.py --workspace .. --write --check --summary
-```
-
-4. 변경된 downstream repo마다 PR을 만들고 CI를 확인합니다.
-5. downstream PR을 먼저 모두 머지합니다.
-6. `bluetape4k-dependencies`에서 다시 drift check를 실행합니다.
+   같은 변경에서 `gradle/libs.versions.toml.sha256`도 새 catalog SHA-256으로 갱신합니다.
+3. 대상 repo에서 중앙 alias를 `bt4k.<alias>`로 직접 사용하도록 바꿉니다.
+   로컬 alias가 필요하면 versionless로 만들고 중앙 버전을 dependency-management에 연결합니다.
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
 ```
 
-7. `bluetape4k-dependencies` PR을 마지막에 만들고 머지합니다.
+4. 의도한 resolved-version 변화는 `config/central-catalog-version-deltas.json`에 기록합니다.
+   migration 전후 dependency report로 확인하기 전에는 `pending-resolved-graph`, 확인한 뒤에는
+   `verified`로 표시합니다. 보존한 compatibility line과 resolved graph에 영향이 없는 미사용 alias 삭제는
+   delta로 기록하지 않습니다.
+5. 변경된 downstream repo마다 PR을 만들고 CI를 확인합니다.
+6. downstream PR을 먼저 모두 머지합니다.
+7. `bluetape4k-dependencies`에서 다시 drift check를 실행합니다.
 
-이 순서가 중요한 이유는 `bluetape4k-dependencies` CI가 downstream `develop` branch를 다시 clone해서 drift를 검사하기 때문입니다. downstream PR이 먼저 머지되지 않으면 central PR은 실패하는 것이 정상입니다.
+```bash
+scripts/sync-shared-versions.py --workspace .. --check --summary
+```
+
+8. `bluetape4k-dependencies` PR을 마지막에 만들고 머지합니다.
+
+PR CI 자체는 local fixture만 검사합니다. downstream 전체 상태는 central branch의 push 또는 수동 CI에서
+다시 clone해 감사하므로, rollout 완료 전에는 해당 non-PR audit 결과를 통합 gate로 확인해야 합니다.
 
 ## 검증 명령
 
@@ -80,6 +88,7 @@ scripts/sync-shared-versions.py --workspace .. --check --summary
 ```bash
 python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/verify-managed-artifacts.py tests/*.py
 python3 -m unittest discover -s tests -p 'test_*.py'
+python3 -m unittest tests/test_catalog_checksum.py tests/test_central_catalog_version_deltas.py tests/test_ci_catalog_governance.py
 scripts/sync-managed-catalog.py --check --summary
 scripts/verify-managed-artifacts.py --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
@@ -138,7 +147,7 @@ Dependabot PR은 자동으로 맞다고 가정하지 않습니다.
 1. compatibility-line alias가 깨졌는지 먼저 확인합니다.
 2. `scripts/triage-dependabot-alerts.py --repo <repo>`로 alert owner를 분류합니다.
 3. 같은 alias가 여러 repo에 있으면 `bluetape4k-dependencies` source-of-truth에서 먼저 결정합니다.
-4. source-of-truth 변경 후 sync script로 downstream repo PR을 일괄 생성합니다.
+4. source-of-truth 변경 후 downstream repo가 중앙 alias를 참조하도록 각각 수정합니다.
 5. 중앙에서 관리하기로 한 dependency name은 `scripts/sync-dependabot-ignores.py`에 추가하고,
    downstream `.github/dependabot.yml`도 같은 PR에서 갱신합니다.
 6. PR별 CI를 확인합니다.
@@ -156,8 +165,8 @@ Alert route는 다음 기준으로 결정합니다.
 특정 repo 하나에만 Dependabot PR이 생기고 `bluetape4k-projects` 또는 source-of-truth에는 없으면, 그 PR만 단독 머지하지 말고 shared alias인지 먼저 확인합니다.
 
 중앙 관리 대상 dependency는 downstream Dependabot PR을 머지하지 않습니다. 대신 central
-catalog에서 버전을 올리고 `scripts/sync-shared-versions.py`와
-`scripts/sync-dependabot-ignores.py`를 같이 실행합니다.
+catalog에서 버전을 올리고 downstream의 `bt4k` 참조를 검증한 뒤
+`scripts/sync-shared-versions.py`와 `scripts/sync-dependabot-ignores.py`를 같이 실행합니다.
 
 ## Snapshot 배포와 공식 릴리즈
 
@@ -481,9 +490,9 @@ snapshotVersion=
 | 증상 | 대응 |
 |---|---|
 | central PR CI에서 shared-version drift 실패 | downstream PR이 먼저 머지되었는지 확인 |
-| 특정 repo만 drift가 남음 | 해당 repo가 sync 대상인지, alias 이름이 같은지 확인 |
+| 특정 repo만 drift가 남음 | 해당 repo가 검사 대상인지, 로컬 version/좌표/plugin 중복이 남았는지 확인 |
 | Dependabot이 compatibility alias를 잘못 올림 | PR을 닫고 올바른 major-line alias를 갱신 |
 | downstream Dependabot이 중앙 관리 dependency PR을 계속 생성 | `CENTRAL_DEPENDENCY_IGNORES`와 downstream dependabot.yml sync 여부 확인 |
 | generated module이 README에 없음 | `gradle/libs.versions.toml` generated section과 README 표를 비교 |
-| `--write --check`가 실패 | sync script regression 가능성이 있으므로 unittest fixture 추가 후 수정 |
+| `--check`가 실패 | 출력된 중복 version/좌표/plugin을 `bt4k` 직접 참조 또는 versionless alias로 전환 |
 | release BOM이 snapshot artifact를 참조 | upstream release 완료 여부 확인 후 `libs.versions.toml` ref에서 `-SNAPSHOT` 제거 |

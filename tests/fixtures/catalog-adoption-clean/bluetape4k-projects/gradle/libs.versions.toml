@@ -1,0 +1,5 @@
+[versions]
+fixture-only = "1.0.0"
+
+[libraries]
+fixture-only = { module = "example.fixture:fixture-only", version.ref = "fixture-only" }

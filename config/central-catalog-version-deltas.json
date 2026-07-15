@@ -1,0 +1,107 @@
+{
+  "schema-version": 1,
+  "rollout": "2026-07-15-central-catalog-adoption",
+  "status": "verified",
+  "delta": [
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "platform",
+      "coordinate": "io.fabric8:kubernetes-client-bom",
+      "before": "7.7.0",
+      "after": "7.8.0",
+      "classification": "compatibility-bugfix",
+      "verification": "verified",
+      "reason": "Align Fabric8 with the central catalog and the Vert.x 4 compatibility line used by k8sTest."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "org.flywaydb:flyway-core",
+      "before": "11.20.3",
+      "after": "12.10.0",
+      "classification": "central-adoption",
+      "verification": "verified",
+      "reason": "Adopt the existing central Flyway version instead of retaining repository-local authority."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "org.apache.tomcat:tomcat-jdbc",
+      "before": "11.0.18",
+      "after": "11.0.24",
+      "classification": "central-adoption",
+      "verification": "verified",
+      "reason": "Adopt the existing central Tomcat version instead of retaining repository-local authority."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "plugin",
+      "coordinate": "com.gradleup.shadow",
+      "before": "9.4.2",
+      "after": "9.5.1",
+      "classification": "central-adoption",
+      "verification": "verified",
+      "reason": "Adopt the shared central Shadow plugin version."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "platform",
+      "coordinate": "org.jetbrains.exposed:exposed-bom",
+      "before": "1.3.0",
+      "after": "1.3.1",
+      "classification": "compatibility-bugfix",
+      "verification": "verified",
+      "reason": "Align the complete Exposed family with the central catalog to eliminate the mixed 1.3.0/1.3.1 NoSuchMethodError."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "platform",
+      "coordinate": "io.netty:netty-bom",
+      "before": "4.2.15.Final",
+      "after": "4.2.16.Final",
+      "classification": "central-adoption",
+      "verification": "verified",
+      "reason": "Adopt the shared central Netty BOM version."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "platform",
+      "coordinate": "org.apache.logging.log4j:log4j-bom",
+      "before": "2.26.0",
+      "after": "2.26.1",
+      "classification": "central-adoption",
+      "verification": "verified",
+      "reason": "Adopt the shared central Log4j BOM version."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "library",
+      "coordinate": "com.zaxxer:HikariCP",
+      "before": "7.0.2",
+      "after": "7.1.0",
+      "classification": "central-adoption",
+      "verification": "verified",
+      "reason": "Adopt the shared central HikariCP version."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "library",
+      "coordinate": "org.flywaydb:flyway-core",
+      "before": "12.6.0",
+      "after": "12.10.0",
+      "classification": "central-adoption",
+      "verification": "verified",
+      "reason": "Adopt the shared central Flyway version."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "platform",
+      "coordinate": "io.github.bluetape4k:bluetape4k-dependencies",
+      "before": "1.4.0-SNAPSHOT",
+      "after": "1.3.1",
+      "classification": "released-bom-alignment",
+      "verification": "verified",
+      "reason": "Use the centrally declared latest released BOM instead of a repository-local snapshot line."
+    }
+  ]
+}
