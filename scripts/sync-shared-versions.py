@@ -167,6 +167,11 @@ EXCEPTION_KINDS = frozenset({"version", "library-version", "library-identity", "
 ISSUE_URL = re.compile(r"^https://github\.com/bluetape4k/([A-Za-z0-9_.-]+)/issues/([1-9][0-9]*)$")
 GIT_HEAD = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 STRING_ASSIGNMENT = re.compile(r'^([A-Za-z0-9_.-]+)\s*=\s*"([^"]*)"\s*(?:#.*)?$')
+SETTINGS_CATALOG_REF = re.compile(r'\.orElse\("([0-9a-f]{40}|[0-9a-f]{64})"\)')
+WORKFLOW_CATALOG_REF = re.compile(
+    r'^\s*BLUETAPE4K_DEPENDENCIES_CATALOG_REF:\s*[\'\"]?([0-9a-f]{40}|[0-9a-f]{64})[\'\"]?\s*$',
+    re.MULTILINE,
+)
 
 
 def _inline_string(value: str, field: str) -> str | None:
@@ -440,6 +445,32 @@ def find_adoption_gaps(
                 AdoptionGap(repository, "plugin-id-duplicate", alias, plugin.plugin_id, central_same_id.alias),
             )
     return gaps
+
+
+def find_catalog_ref_gaps(repository: str, catalog: Path) -> list[AdoptionGap]:
+    """Report when local Gradle and CI resolve different central catalog commits."""
+    repository_root = catalog.parents[1]
+    settings_path = repository_root / "settings.gradle.kts"
+    workflow_path = repository_root / ".github" / "workflows" / "ci.yml"
+
+    settings_text = settings_path.read_text(encoding="utf-8") if settings_path.is_file() else ""
+    workflow_text = workflow_path.read_text(encoding="utf-8") if workflow_path.is_file() else ""
+    settings_match = SETTINGS_CATALOG_REF.search(settings_text)
+    workflow_match = WORKFLOW_CATALOG_REF.search(workflow_text)
+    settings_ref = settings_match.group(1) if settings_match else "<missing>"
+    workflow_ref = workflow_match.group(1) if workflow_match else "<missing>"
+
+    if settings_ref == workflow_ref and settings_ref != "<missing>":
+        return []
+    return [
+        AdoptionGap(
+            repository,
+            "catalog-ref-mismatch",
+            "BLUETAPE4K_DEPENDENCIES_CATALOG_REF",
+            settings_ref,
+            workflow_ref,
+        ),
+    ]
 
 
 def load_repository_map(
@@ -752,6 +783,7 @@ def main() -> int:
     for repository, catalog in catalog_entries:
         compatibility_errors.extend(compatibility_line_errors(catalog, repository))
         adoption_gaps.extend(find_adoption_gaps(repository, read_catalog(catalog), source_data, exceptions))
+        adoption_gaps.extend(find_catalog_ref_gaps(repository, catalog))
 
     if args.format == "json":
         print(

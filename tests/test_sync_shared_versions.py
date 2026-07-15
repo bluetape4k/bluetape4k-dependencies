@@ -21,6 +21,75 @@ SPEC.loader.exec_module(sync)
 
 
 class SyncSharedVersionsTest(unittest.TestCase):
+    def test_real_catalog_centrally_governs_slf4j_bridges(self) -> None:
+        catalog_path = SCRIPT_PATH.parents[1] / "gradle" / "libs.versions.toml"
+        libraries = sync.read_catalog(catalog_path).libraries
+
+        expected_modules = {
+            "jcl-over-slf4j": "org.slf4j:jcl-over-slf4j",
+            "jul-to-slf4j": "org.slf4j:jul-to-slf4j",
+            "log4j-over-slf4j": "org.slf4j:log4j-over-slf4j",
+        }
+
+        for alias, module in expected_modules.items():
+            with self.subTest(alias=alias):
+                self.assertEqual(libraries[alias].module, module)
+                self.assertEqual(libraries[alias].version_ref, "slf4j")
+
+    def test_catalog_ref_gaps_detect_settings_and_ci_workflow_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "bluetape4k-sample"
+            catalog = repo / "gradle" / "libs.versions.toml"
+            workflow = repo / ".github" / "workflows" / "ci.yml"
+            catalog.parent.mkdir(parents=True)
+            workflow.parent.mkdir(parents=True)
+            catalog.write_text("[versions]\n", encoding="utf-8")
+            (repo / "settings.gradle.kts").write_text(
+                'val catalogRef = providers.gradleProperty("catalogRef").orElse("' + "a" * 40 + '")\n',
+                encoding="utf-8",
+            )
+            workflow.write_text(
+                "env:\n  BLUETAPE4K_DEPENDENCIES_CATALOG_REF: '" + "b" * 40 + "'\n",
+                encoding="utf-8",
+            )
+
+            gaps = sync.find_catalog_ref_gaps("bluetape4k-sample", catalog)
+
+        self.assertEqual(
+            gaps,
+            [
+                sync.AdoptionGap(
+                    "bluetape4k-sample",
+                    "catalog-ref-mismatch",
+                    "BLUETAPE4K_DEPENDENCIES_CATALOG_REF",
+                    "a" * 40,
+                    "b" * 40,
+                ),
+            ],
+        )
+
+    def test_catalog_ref_gaps_accept_matching_settings_and_ci_workflow_refs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "bluetape4k-sample"
+            catalog = repo / "gradle" / "libs.versions.toml"
+            workflow = repo / ".github" / "workflows" / "ci.yml"
+            catalog.parent.mkdir(parents=True)
+            workflow.parent.mkdir(parents=True)
+            catalog.write_text("[versions]\n", encoding="utf-8")
+            expected_ref = "c" * 40
+            (repo / "settings.gradle.kts").write_text(
+                f'val catalogRef = providers.gradleProperty("catalogRef").orElse("{expected_ref}")\n',
+                encoding="utf-8",
+            )
+            workflow.write_text(
+                f"env:\n  BLUETAPE4K_DEPENDENCIES_CATALOG_REF: '{expected_ref}'\n",
+                encoding="utf-8",
+            )
+
+            gaps = sync.find_catalog_ref_gaps("bluetape4k-sample", catalog)
+
+        self.assertEqual(gaps, [])
+
     def test_real_catalog_centrally_governs_complete_exposed_family(self) -> None:
         catalog_path = SCRIPT_PATH.parents[1] / "gradle" / "libs.versions.toml"
         libraries = sync.read_catalog(catalog_path).libraries
