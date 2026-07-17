@@ -64,19 +64,31 @@ PR CI도 sibling-dependent managed-catalog 및 artifact 검사를 위해
 scripts/sync-shared-versions.py --workspace .. --check --summary
 ```
 
-4. 의도한 resolved-version 변화는 `config/central-catalog-version-deltas.json`에 기록합니다.
+4. 같은 중앙 catalog 후보로 모든 library publisher의 POM을 생성하고 Maven 소비 모델을 검증합니다.
+
+```bash
+scripts/verify-publication-poms.py --workspace .. --summary
+```
+
+dependency-management의 BOM import를 포함한 모든 항목에는 version이 있어야 합니다.
+일반 dependency는 같은 POM의 dependency-management 또는 versioned BOM import가 실제로
+관리하는 경우에만 version을 생략할 수 있습니다. 구조 검사 후 Maven effective-model 검사가
+imported BOM과 dependency 좌표의 실제 관리 관계를 확인합니다.
+
+5. 의도한 resolved-version 변화는 `config/central-catalog-version-deltas.json`에 기록합니다.
    migration 전후 dependency report로 확인하기 전에는 `pending-resolved-graph`, 확인한 뒤에는
    `verified`로 표시합니다. 보존한 compatibility line과 resolved graph에 영향이 없는 미사용 alias 삭제는
    delta로 기록하지 않습니다.
-5. 변경된 downstream repo마다 PR을 만들고 CI를 확인합니다.
-6. downstream PR을 먼저 모두 머지합니다.
-7. `bluetape4k-dependencies`에서 다시 drift check를 실행합니다.
+6. 변경된 downstream repo마다 PR을 만들고 CI를 확인합니다.
+7. downstream PR을 먼저 모두 머지합니다.
+8. `bluetape4k-dependencies`에서 다시 drift check와 publication POM 검사를 실행합니다.
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/verify-publication-poms.py --workspace .. --summary
 ```
 
-8. `bluetape4k-dependencies` PR을 마지막에 만들고 머지합니다.
+9. `bluetape4k-dependencies` PR을 마지막에 만들고 머지합니다.
 
 PR CI 자체는 local fixture만 검사합니다. downstream 전체 상태는 central branch의 push 또는 수동 CI에서
 다시 clone해 감사하므로, rollout 완료 전에는 해당 non-PR audit 결과를 통합 gate로 확인해야 합니다.
@@ -86,12 +98,13 @@ PR CI 자체는 local fixture만 검사합니다. downstream 전체 상태는 ce
 스크립트는 반복 운영 도구이므로, 변경 시 다음 검증을 기본으로 수행합니다.
 
 ```bash
-python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/verify-managed-artifacts.py tests/*.py
+python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/verify-managed-artifacts.py scripts/verify-publication-poms.py tests/*.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 python3 -m unittest tests/test_catalog_checksum.py tests/test_central_catalog_version_deltas.py tests/test_ci_catalog_governance.py
 scripts/sync-managed-catalog.py --check --summary
 scripts/verify-managed-artifacts.py --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/verify-publication-poms.py --workspace .. --summary
 ./gradlew build publishToMavenLocal --no-daemon
 ```
 

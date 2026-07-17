@@ -214,6 +214,7 @@ changing central aliases:
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/verify-publication-poms.py --workspace .. --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
@@ -225,6 +226,13 @@ directly. A repository-specific alias may remain only when it is versionless and
 dependency-management constraint obtains the version from `bt4k.versions`.
 Compatibility pins use clearly local keys such as `jackson3-compat`; they must not shadow
 central version keys.
+
+Catalog adoption is not proven by Gradle resolution alone. The publication guard configures
+all nine library publishers against the candidate central catalog, generates every publication
+POM, rejects versionless dependency-management entries, and builds all Maven effective models.
+Regular dependencies may omit a direct version only when the same POM's dependency management
+or a versioned imported BOM supplies it. Maven performs the final check that an imported BOM
+actually manages the dependency coordinate.
 
 Pull-request CI clones governed repositories for sibling-dependent managed-catalog and
 artifact checks, while the adoption guard itself runs against the checked-in clean fixture
@@ -274,10 +282,12 @@ The expected release flow is:
 1. Update the source-of-truth block in this repository.
 2. Update downstream builds to use the new `bt4k` alias or a versionless local alias.
 3. Run `scripts/sync-shared-versions.py --workspace .. --check --summary`.
-4. Run `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
+4. Run `scripts/verify-publication-poms.py --workspace .. --summary` and require every
+   generated POM and Maven effective model to pass.
+5. Run `scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary`
    when the change adds or removes centrally governed dependency names.
-5. Open, verify, and merge PRs for the governed downstream library repositories that changed.
-6. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
+6. Open, verify, and merge PRs for the governed downstream library repositories that changed.
+7. Merge the `bluetape4k-dependencies` PR last, where CI re-clones downstream `develop` branches and checks
    that no shared-version drift remains across the configured governed library repositories.
 
 Compatibility-line aliases are intentionally separate. Do not collapse aliases such as `kafka3`/`kafka4`,

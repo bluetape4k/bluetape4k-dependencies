@@ -150,6 +150,7 @@ versionless alias 또는 compatibility family가 representative module 밖에서
 ```bash
 python3 -m unittest discover -s tests -p 'test_*.py'
 scripts/sync-shared-versions.py --repository-map <candidate-worktrees.json> --check --summary
+scripts/verify-publication-poms.py --repository-map <candidate-worktrees.json> --summary
 scripts/sync-dependabot-ignores.py --workspace /Users/debop/work/bluetape4k --check --summary
 ./gradlew build --no-daemon --no-configuration-cache --console=plain
 ```
@@ -167,10 +168,11 @@ BLUETAPE4K_DEPENDENCIES_CATALOG_PATH=<central-worktree>/gradle/libs.versions.tom
 
 1. 중앙 guard summary/JSON에서 허용되지 않은 version/coordinate/plugin 중복 0건을 확인한다.
 2. 9개 downstream `help`가 모두 exit 0인지 확인한다.
-3. targeted/full build와 dependency resolution 비교 결과의 fresh exit status를 기록한다.
-4. rollout ledger에 10개 worktree의 path, branch, base/head SHA, declared ref, candidate catalog SHA, guard/help/build 결과, rollback SHA를 기록한다.
-5. 모든 entry가 같은 catalog SHA를 사용하지 않으면 `partial`로 판정하고 enforcement를 활성화하지 않는다.
-6. 의도한 파일 외 변경, generated noise, credential 또는 publish side effect가 없는지 검토한다.
+3. 9개 publisher가 생성한 모든 POM에서 dependency-management version 누락이 0건이고 Maven effective-model 검증이 모두 통과하는지 확인한다.
+4. targeted/full build와 dependency resolution 비교 결과의 fresh exit status를 기록한다.
+5. rollout ledger에 10개 worktree의 path, branch, base/head SHA, declared ref, candidate catalog SHA, guard/help/build/POM 결과, rollback SHA를 기록한다.
+6. 모든 entry가 같은 catalog SHA를 사용하지 않으면 `partial`로 판정하고 enforcement를 활성화하지 않는다.
+7. 의도한 파일 외 변경, generated noise, credential 또는 publish side effect가 없는지 검토한다.
 
 ## Task 10: 배포 경계, 독립 리뷰와 로컬 handoff
 
