@@ -45,6 +45,11 @@ live snapshot-publish workflows, and rejects publication POM profiles. Profiles
 are fail-closed because inactive Maven profiles would otherwise escape the
 default effective-model reactor.
 
+When a repository map selects a candidate root below an ancestor `.worktrees`
+directory, POM discovery evaluates exclusions relative to that selected root.
+This includes the candidate's own publication output while still excluding any
+nested `.worktrees` checkout below it.
+
 ## Verification
 
 - `python3 -m unittest tests/test_verify_publication_poms.py tests/test_ci_catalog_governance.py`
@@ -57,4 +62,6 @@ default effective-model reactor.
 Do not interpret “this train does not publish” as “Maven validation is N/A.” If
 the candidate catalog can affect a downstream publisher, generated publication
 metadata is part of the train's Definition of Done. Run the exact-candidate
-gate with `--repository-map` when worktrees or candidate branches are involved.
+gate with `--repository-map` when worktrees or candidate branches are involved,
+and keep worktree exclusions relative to each mapped repository root rather
+than its absolute filesystem path.

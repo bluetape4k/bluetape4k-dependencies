@@ -145,7 +145,7 @@ def publication_pom_paths(repository_root: Path) -> list[Path]:
     return sorted(
         path.resolve()
         for path in repository_root.rglob("pom-default.xml")
-        if ".worktrees" not in path.parts
+        if ".worktrees" not in path.relative_to(repository_root).parts
         and path.parent.parent.name == "publications"
         and path.parent.parent.parent.name == "build"
         and path.is_file()
