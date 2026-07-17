@@ -83,7 +83,7 @@ jobs:
           done
       - name: Verify catalog scripts
         run: |
-          python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-managed-artifacts.py tests/*.py
+          python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-managed-artifacts.py scripts/verify-publication-poms.py tests/*.py
           python3 -m unittest discover -s tests -p 'test_*.py'
           scripts/sync-managed-catalog.py --check --summary
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && "${GITHUB_BASE_REF}" == "main" ]]; then
@@ -114,6 +114,35 @@ jobs:
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
+  publication-pom-contract:
+    name: Cross-repository Publication POM Contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: validate-wrapper
+    steps:
+      - uses: actions/checkout@v7
+      - name: Clone publisher repositories
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_LFS_SKIP_SMUDGE: "1"
+        run: |
+          set -euo pipefail
+          mapfile -t repos < <(scripts/verify-publication-poms.py --print-default-repositories)
+          for repo in "${repos[@]}"; do
+            gh repo clone "bluetape4k/${repo}" "../${repo}" -- --depth 1
+          done
+      - uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: wrapper
+          cache-read-only: true
+      - name: Generate and validate publication POMs
+        run: scripts/verify-publication-poms.py --workspace .. --summary
+
   ci-status:
     name: CI Status
     runs-on: ubuntu-latest
@@ -121,6 +150,7 @@ jobs:
     needs:
       - gitleaks
       - build
+      - publication-pom-contract
     if: always()
     steps:
       - name: Check all jobs

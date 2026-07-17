@@ -8,7 +8,8 @@
 - Consumer branches: `build/central-catalog-adoption`
 - Base branch: remote default branch per repository, expected `develop`
 - Consumer scope: `bluetape4k-projects`, `bluetape4k-experimental`, `bluetape4k-aws`, `bluetape4k-exposed`, `bluetape4k-graph`, `bluetape4k-image`, `bluetape4k-javers`, `bluetape4k-leader`, `bluetape4k-text`
-- Artifact/BOM matrix: N/A — this train publishes no Maven artifacts
+- Artifact/BOM publication side effect: N/A — this train publishes no Maven artifacts
+- Downstream publication metadata impact: required audit — the catalog can change generated Maven POMs
 - Side-effect authority: user explicitly requested all PR creation and merges on 2026-07-15, gave the fresh merge-ready approval after CAT-08, and approved catalog-train closeout/tagging on 2026-07-16
 
 - [x] **CAT-01 — Pin repository identities**
@@ -103,3 +104,22 @@
 - Resolved graph: Fabric8 7.8.0, Tomcat JDBC 11.0.24, HikariCP 7.1.0, Flyway 12.10.0, Shadow 9.5.1.
 - Regression: `:bluetape4k-testcontainers:k8sTest --rerun-tasks`, 9 tests, 0 failures, 0 errors.
 - Closeout: remote annotated tag `catalog/2026-07-15-01` peels to central merge `510d78be2b7c8c3d2377492ad37937ef8687b4d0`; post-merge central guard and local/remote default-branch parity checks passed.
+
+## 2026-07-17 post-train correction
+
+The original CAT-14 closeout treated the Maven artifact/BOM row as entirely
+N/A because the catalog train itself published no artifact. That conclusion
+missed a separate contract: the catalog supplies versions used while downstream
+library repositories generate Maven publication metadata. Gradle `help`, build,
+and dependency-resolution checks do not prove that the generated POM is a valid
+Maven consumer model.
+
+- [x] **CAT-15 — Reclassify downstream publication metadata as train scope**
+  - **Action:** Distinguish publication side effects from generated-POM impact and require the latter for every library publisher.
+  - **Evidence:** The Exposed/Javers failure demonstrated that a versionless catalog alias could configure and resolve in Gradle while producing a dependency-management entry without a Maven version.
+  - **Failure:** Do not mark the catalog candidate ready based only on Gradle resolution.
+
+- [x] **CAT-16 — Add cross-repository publication POM gate**
+  - **Action:** Generate publisher POMs with the candidate central catalog, audit their dependency structure, and validate all Maven effective models before catalog-train closeout.
+  - **Evidence:** `scripts/verify-publication-poms.py --workspace .. --summary` passed 9 publishers, 175 freshly regenerated POM files, 46,009 dependency entries, and 175 Maven effective models. CI now runs the same gate in a required `publication-pom-contract` job.
+  - **Failure:** Stop the train on missing dependency-management versions, unmanaged regular dependencies, invalid XML, Gradle generation failure, or Maven model failure.

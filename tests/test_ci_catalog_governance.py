@@ -63,6 +63,19 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("sync-shared-versions.py --workspace .. --check --summary", audit_step)
         self.assertIn("sync-dependabot-ignores.py --workspace .. --check --summary", audit_step)
 
+    def test_ci_runs_cross_repository_publication_pom_contract(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        job = workflow.split("  publication-pom-contract:\n", 1)[1].split("  ci-status:\n", 1)[0]
+
+        self.assertIn("timeout-minutes: 30", job)
+        self.assertIn("scripts/verify-publication-poms.py --print-default-repositories", job)
+        self.assertIn("scripts/verify-publication-poms.py --workspace .. --summary", job)
+        self.assertIn("uses: actions/setup-java@v5", job)
+        self.assertIn("uses: gradle/actions/setup-gradle@v6", job)
+
+        status_job = workflow.split("  ci-status:\n", 1)[1]
+        self.assertIn("- publication-pom-contract", status_job)
+
 
 if __name__ == "__main__":
     unittest.main()

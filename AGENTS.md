@@ -74,9 +74,12 @@ source for Gradle build aliases and plugin/tooling versions.
    `scripts/sync-managed-catalog.py --write --check`; do not edit
    generated catalog blocks by hand.
 6. Verify the matching sub-BOM import exists in `build.gradle.kts`.
-7. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
+7. Generate and validate every library repository's publication POM with
+   `scripts/verify-publication-poms.py --workspace .. --summary`. A catalog
+   train is not complete merely because Gradle dependency resolution passes.
+8. When adding a new published artifact outside generated blocks, add both a `[libraries]` alias and a
    matching `api(libs.<alias>)` constraint only if no imported BOM governs it.
-8. Run `./gradlew build`.
+9. Run `./gradlew build`.
 
 ## Commands
 
@@ -84,6 +87,7 @@ source for Gradle build aliases and plugin/tooling versions.
 scripts/sync-managed-catalog.py --check --summary
 scripts/sync-managed-catalog.py --write --check --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/verify-publication-poms.py --workspace .. --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
@@ -128,3 +132,10 @@ Publishing credentials come from `resolveCentralPublishingConfig()`. Use
   references, and tests in the same pass.
 - Release and snapshot dispatch stays audit-first: read declared workflow inputs
   from YAML and pass only supported inputs.
+- Every catalog train that can affect library publications must generate POMs
+  for all entries in `scripts/verify-publication-poms.py`, require versions on
+  every dependency-management entry, and pass Maven effective-model validation.
+  Versionless regular dependencies are valid only when the same POM's
+  dependency management or a versioned imported BOM actually manages them.
+  Publisher registry/workflow drift, stale POM output, and publication POM
+  profiles fail the gate.
