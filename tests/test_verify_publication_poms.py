@@ -224,6 +224,15 @@ class VerifyPublicationPomsTest(unittest.TestCase):
             self.assertTrue(unrelated.exists())
             self.assertTrue(nested_worktree.exists())
 
+    def test_publication_pom_paths_supports_repository_root_inside_worktrees(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / ".worktrees" / "candidate"
+            current = root / "module" / "build" / "publications" / "main" / "pom-default.xml"
+            current.parent.mkdir(parents=True)
+            current.write_text(pom("candidate"), encoding="utf-8")
+
+            self.assertEqual(verify.publication_pom_paths(root), [current.resolve()])
+
     def test_reactor_copy_normalizes_gradle_version_catalog_packaging_only(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
