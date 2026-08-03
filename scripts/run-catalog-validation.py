@@ -80,6 +80,17 @@ INSIGHT_REASONS = frozenset(
         "changed-normalized-graph",
     }
 )
+DOWNSTREAM_REPOSITORIES = (
+    "bluetape4k-projects",
+    "bluetape4k-aws",
+    "bluetape4k-experimental",
+    "bluetape4k-exposed",
+    "bluetape4k-graph",
+    "bluetape4k-image",
+    "bluetape4k-javers",
+    "bluetape4k-leader",
+    "bluetape4k-text",
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -206,11 +217,28 @@ def sandbox_profile(
 ) -> str:
     read_filters = _sandbox_filter("literal", readable_files)
     write_filters = _sandbox_filter("subpath", writable_roots)
-    exec_filters = _sandbox_filter("literal", executable_files)
+    resolved_executables = tuple(
+        dict.fromkeys(
+            path
+            for executable in executable_files
+            for path in (executable, executable.resolve())
+        )
+    )
+    exec_filters = _sandbox_filter("literal", resolved_executables)
+    homebrew_python_roots = tuple(
+        ancestor
+        for executable in resolved_executables
+        for ancestor in executable.parents
+        if ancestor.parent.name == "Cellar" and ancestor.name.startswith("python@")
+    )
+    homebrew_exec_filters = _sandbox_filter(
+        "subpath", tuple(dict.fromkeys(homebrew_python_roots))
+    )
     return "\n".join(
         (
             "(version 1)",
             "(deny default)",
+            '(import "system.sb")',
             "(deny network*)",
             "(allow process-fork)",
             "(allow signal (target self))",
@@ -218,9 +246,18 @@ def sandbox_profile(
             "(allow file-read*",
             f'  (subpath {json.dumps(str(workspace))})',
             f'  (subpath {json.dumps(str(java_home))})',
+            '  (subpath "/Applications/Xcode.app/Contents")',
+            '  (subpath "/System")',
+            '  (subpath "/usr/lib")',
+            '  (subpath "/opt/homebrew")',
             f"  {read_filters})",
             f"(allow file-write* {write_filters})",
-            f"(allow process-exec {exec_filters})",
+            "(allow process-exec",
+            f"  {exec_filters}",
+            f"  {homebrew_exec_filters}",
+            '  (subpath "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework")',
+            '  (subpath "/Applications/Xcode.app/Contents/Developer/usr/bin")',
+            '  (subpath "/Applications/Xcode.app/Contents/Developer/usr/libexec/git-core"))',
             "",
         )
     )
@@ -501,7 +538,7 @@ def _candidate_module():
 
 
 def sanitized_environment(
-    source: Mapping[str, str], home: Path, gradle_home: Path
+    source: Mapping[str, str], home: Path, gradle_home: Path, runtime_temp: Path
 ) -> dict[str, str]:
     result = {
         key: source[key]
@@ -510,6 +547,7 @@ def sanitized_environment(
     }
     result["HOME"] = str(home)
     result["GRADLE_USER_HOME"] = str(gradle_home)
+    result["TMPDIR"] = str(runtime_temp)
     return result
 
 
@@ -599,6 +637,89 @@ def insight_command(insight: Mapping[str, str]) -> tuple[str, ...]:
             insight["configuration"],
         )
     )
+
+
+def preflight_stage_commands(
+    manifest: Mapping[str, object], root: Path
+) -> dict[Stage, tuple[tuple[str, ...], ...]]:
+    try:
+        workspace = Path(str(manifest["workspace"]))
+        central = Path(str(manifest["central_root"]))
+        repository_map = Path(str(manifest["repository_map"]["path"]))
+        dispositions = Path(str(manifest["disposition"]["path"]))
+    except (KeyError, TypeError) as exc:
+        raise RuntimeError("manifest is missing preflight command bindings") from exc
+    expected_parent = central / "build" / "catalog-authority"
+    if (
+        root.parent != expected_parent
+        or FULL_SHA256.fullmatch(root.name) is None
+        or root.name == "baseline"
+    ):
+        raise RuntimeError("preflight evidence root is not catalog-SHA canonical")
+    sync_shared = central / "scripts" / "sync-shared-versions.py"
+    sync_managed = central / "scripts" / "sync-managed-catalog.py"
+    sync_dependabot = central / "scripts" / "sync-dependabot-ignores.py"
+    python = sys.executable
+    shared_base = (
+        python,
+        "-B",
+        str(sync_shared),
+        "--workspace",
+        str(workspace),
+        "--repository-map",
+        str(repository_map),
+    )
+    g3 = (
+        *shared_base,
+        "--inventory-out",
+        str(root / "inventory.json.pending"),
+        "--summary-out",
+        str(root / "summary.json.pending"),
+        "--dispositions",
+        str(dispositions),
+        "--format",
+        "json",
+    )
+    g4 = (*shared_base, "--check", "--summary")
+    g5_managed = (
+        python,
+        "-B",
+        str(sync_managed),
+        "--repository-map",
+        str(repository_map),
+        "--check",
+        "--summary",
+    )
+    dependabot_repositories = tuple(
+        token
+        for repository in DOWNSTREAM_REPOSITORIES
+        for token in ("--repo", repository)
+    )
+    g5_dependabot = (
+        python,
+        "-B",
+        str(sync_dependabot),
+        "--workspace",
+        str(workspace),
+        "--repository-map",
+        str(repository_map),
+        *dependabot_repositories,
+        "--check",
+        "--summary",
+    )
+    commands = {
+        Stage.G3: (g3,),
+        Stage.G4: (g4,),
+        Stage.G5: (g5_managed, g4, g5_dependabot),
+    }
+    if any(
+        FORBIDDEN_TASK.search(token)
+        for stage_commands in commands.values()
+        for command in stage_commands
+        for token in command
+    ):
+        raise RuntimeError("forbidden publish/sign/upload command in preflight stage")
+    return commands
 
 
 def validate_build_text(text: str) -> None:
@@ -776,6 +897,110 @@ def _g2_catalog_lock(manifest: Mapping[str, object]) -> dict[str, object]:
     }
 
 
+def _promote_pending_json(pending: Path, destination: Path, label: str) -> str:
+    if destination.exists() or destination.is_symlink():
+        raise RuntimeError(f"immutable {label} already exists: {destination}")
+    document = _load_secure_json(pending, f"pending {label}")
+    payload = canonical_bytes(document)
+    _candidate_module().write_atomic(destination, payload)
+    return sha256_file(destination)
+
+
+def _execute_preflight_stage(
+    manifest: Mapping[str, object],
+    manifest_sha256: str,
+    cache_sources: Sequence[CacheSource],
+    stage: Stage,
+    root: Path,
+) -> dict[str, object]:
+    if stage not in {Stage.G3, Stage.G4, Stage.G5}:
+        raise RuntimeError(f"{stage.value} is not a preflight execution stage")
+    commands = preflight_stage_commands(manifest, root)[stage]
+    runtime = root / "runtime" / stage.value
+    home = runtime / "home"
+    gradle_home = runtime / "gradle"
+    temporary = runtime / "tmp"
+    for directory in (home, gradle_home, temporary):
+        directory.mkdir(parents=True, exist_ok=True)
+    profile_path = root / "profiles" / f"{stage.value}.sb"
+    if profile_path.exists() or profile_path.is_symlink():
+        raise RuntimeError(f"immutable sandbox profile already exists: {profile_path}")
+    java_home = Path(
+        os.environ.get("JAVA_HOME", "/Library/Java/JavaVirtualMachines")
+    ).resolve()
+    profile = sandbox_profile(
+        workspace=Path(str(manifest["workspace"])),
+        java_home=java_home,
+        readable_files=tuple(source.path for source in cache_sources),
+        writable_roots=(root, runtime),
+        executable_files=(
+            Path(sys.executable),
+            Path("/usr/bin/git"),
+            Path("/usr/bin/xcrun"),
+        ),
+    )
+    _candidate_module().write_atomic(profile_path, profile.encode())
+    environment = sanitized_environment(
+        os.environ, home, gradle_home, temporary
+    )
+    sandbox_executable = shutil.which("sandbox-exec")
+    if sandbox_executable is None:
+        raise RuntimeError("sandbox-exec is unavailable")
+    bindings = {
+        "manifest_sha256": manifest_sha256,
+        "catalog_sha256": str(
+            manifest["catalog_lock"]["catalogs"]["central"]["sha256"]
+        ),
+        "cache_manifest_sha256": str(manifest["cache_manifest"]["sha256"]),
+    }
+    receipt_bindings: list[dict[str, str]] = []
+    status = "PASS"
+    for index, command in enumerate(commands, start=1):
+        job = f"preflight-{index:02d}"
+        receipt_path = root / "receipts" / stage.value / f"{job}.json"
+        log_path = root / "logs" / stage.value / f"{job}.log"
+        result = execute_job(
+            command=(sandbox_executable, "-f", str(profile_path), *command),
+            cwd=Path(str(manifest["central_root"])),
+            environment=environment,
+            timeout_seconds=STAGE_BUDGET_SECONDS[stage],
+            terminate_grace_seconds=5,
+            drain_seconds=30,
+            log_path=log_path,
+            receipt_path=receipt_path,
+            identity={"stage": stage.value, "job": job},
+            bindings=bindings,
+        )
+        receipt_bindings.append(
+            {"path": str(receipt_path), "sha256": sha256_file(receipt_path)}
+        )
+        if result["status"] != "PASS":
+            status = "FAIL"
+            break
+    details: dict[str, object] = {
+        "status": status,
+        "child_launch_count": len(receipt_bindings),
+        "sandbox_profile_sha256": sha256_file(profile_path),
+        "job_receipts": receipt_bindings,
+    }
+    if stage is Stage.G3 and status == "PASS":
+        inventory = root / "inventory.json"
+        summary = root / "summary.json"
+        details.update(
+            {
+                "inventory_sha256": _promote_pending_json(
+                    root / "inventory.json.pending", inventory, "inventory"
+                ),
+                "summary_sha256": _promote_pending_json(
+                    root / "summary.json.pending", summary, "summary"
+                ),
+                "inventory": str(inventory),
+                "summary": str(summary),
+            }
+        )
+    return details
+
+
 def run_stage(manifest: dict[str, object], manifest_sha256: str, stage: Stage) -> int:
     root = evidence_root(manifest)
     receipts = root / "receipts" / stage.value
@@ -834,6 +1059,17 @@ def run_stage(manifest: dict[str, object], manifest_sha256: str, stage: Stage) -
                 if status == "PARTIAL_HOLD"
                 else "catalog path/SHA/ref locks pass"
             )
+        elif stage in {Stage.G3, Stage.G4, Stage.G5}:
+            stage_result = _execute_preflight_stage(
+                manifest, manifest_sha256, cache_sources, stage, root
+            )
+            details.update(stage_result)
+            status = str(details.pop("status"))
+            reason = (
+                f"{stage.value} manifest-bound preflight passed"
+                if status == "PASS"
+                else f"{stage.value} manifest-bound preflight failed"
+            )
         else:
             raise RuntimeError(
                 f"{stage.value} execution is not implemented; zero-child fail-closed hold"
@@ -850,8 +1086,8 @@ def run_stage(manifest: dict[str, object], manifest_sha256: str, stage: Stage) -
         .get("central", {})
         .get("sha256"),
         "cache_manifest_sha256": manifest.get("cache_manifest", {}).get("sha256"),
-        "zero_child_launch": True,
-        "child_launch_count": 0,
+        "zero_child_launch": details.get("child_launch_count", 0) == 0,
+        "child_launch_count": details.pop("child_launch_count", 0),
         "reason": reason,
         **details,
     }

@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[1] / "scripts" / "run-catalog-validation.py"
@@ -208,6 +209,42 @@ class RunCatalogValidationTest(unittest.TestCase):
         self.assertIn('(literal "/cache/a.jar")', profile)
         self.assertIn('(subpath "/tmp/home")', profile)
         self.assertNotIn("allow default", profile)
+
+    @unittest.skipUnless(shutil.which("sandbox-exec"), "sandbox-exec unavailable")
+    def test_production_sandbox_profile_runs_harmless_python_without_network(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            runtime = Path(directory).resolve()
+            profile = runtime / "profile.sb"
+            profile.write_text(
+                runner.sandbox_profile(
+                    workspace=Path.cwd().resolve(),
+                    java_home=Path("/Library/Java/JavaVirtualMachines"),
+                    readable_files=(),
+                    writable_roots=(runtime,),
+                    executable_files=(Path(sys.executable),),
+                ),
+                encoding="utf-8",
+            )
+            environment = runner.sanitized_environment(
+                os.environ, runtime / "home", runtime / "gradle", runtime
+            )
+            result = subprocess.run(
+                [
+                    "sandbox-exec",
+                    "-f",
+                    str(profile),
+                    sys.executable,
+                    "-B",
+                    "-c",
+                    'print("sandbox-pass")',
+                ],
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, "sandbox-pass\n")
 
     @unittest.skipUnless(shutil.which("sandbox-exec"), "sandbox-exec unavailable")
     def test_sandbox_exec_network_denial_is_proven(self) -> None:
@@ -418,10 +455,14 @@ class RunCatalogValidationTest(unittest.TestCase):
             "GRADLE_OPTS": "-I evil.gradle",
         }
         sanitized = runner.sanitized_environment(
-            source, Path("/tmp/home"), Path("/tmp/gradle")
+            source,
+            Path("/tmp/home"),
+            Path("/tmp/gradle"),
+            Path("/tmp/runtime"),
         )
         self.assertEqual(
-            set(sanitized), {"PATH", "JAVA_HOME", "LANG", "HOME", "GRADLE_USER_HOME"}
+            set(sanitized),
+            {"PATH", "JAVA_HOME", "LANG", "HOME", "GRADLE_USER_HOME", "TMPDIR"},
         )
 
     def test_gradle_command_is_offline_and_rejects_publish_tasks(self) -> None:
@@ -592,6 +633,100 @@ class RunCatalogValidationTest(unittest.TestCase):
             runner.validate_g7_insights(
                 [valid, valid], required_authorities={(authority, "default")}
             )
+
+    def test_g3_g5_commands_are_manifest_bound_and_never_use_baseline(self) -> None:
+        manifest = {
+            "workspace": "/workspace",
+            "central_root": "/workspace/central",
+            "repository_map": {"path": "/workspace/map.json", "sha256": "a" * 64},
+            "disposition": {
+                "path": "/workspace/central/config/dispositions.json",
+                "sha256": "b" * 64,
+            },
+        }
+        root = Path("/workspace/central/build/catalog-authority") / ("c" * 64)
+
+        commands = runner.preflight_stage_commands(manifest, root)
+
+        self.assertEqual(set(commands), {runner.Stage.G3, runner.Stage.G4, runner.Stage.G5})
+        g3 = commands[runner.Stage.G3]
+        self.assertEqual(len(g3), 1)
+        self.assertIn(str(root / "inventory.json.pending"), g3[0])
+        self.assertIn(str(root / "summary.json.pending"), g3[0])
+        flattened = "\n".join(" ".join(command) for stage in commands.values() for command in stage)
+        self.assertNotIn("baseline/", flattened)
+        self.assertNotRegex(flattened, r"(?i)\b(?:publish|sign|upload)\w*\b")
+        self.assertIn("--repository-map /workspace/map.json", flattened)
+        self.assertIn("--check --summary", flattened)
+
+    def test_preflight_commands_reject_noncanonical_evidence_root(self) -> None:
+        manifest = {
+            "workspace": "/workspace",
+            "central_root": "/workspace/central",
+            "repository_map": {"path": "/workspace/map.json", "sha256": "a" * 64},
+            "disposition": {"path": "/workspace/dispositions.json", "sha256": "b" * 64},
+        }
+        with self.assertRaisesRegex(RuntimeError, "evidence root"):
+            runner.preflight_stage_commands(
+                manifest, Path("/workspace/central/build/catalog-authority/baseline")
+            )
+
+    def test_g5_stops_scheduling_after_first_failed_job(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            central = workspace / "central"
+            central.mkdir()
+            root = central / "build" / "catalog-authority" / ("c" * 64)
+            manifest = {
+                "workspace": str(workspace),
+                "central_root": str(central),
+                "repository_map": {
+                    "path": str(workspace / "map.json"),
+                    "sha256": "a" * 64,
+                },
+                "disposition": {
+                    "path": str(central / "dispositions.json"),
+                    "sha256": "b" * 64,
+                },
+                "catalog_lock": {
+                    "catalogs": {"central": {"sha256": "c" * 64}}
+                },
+                "cache_manifest": {"sha256": "d" * 64},
+            }
+
+            def fail_first(**kwargs: object) -> dict[str, object]:
+                receipt_path = kwargs["receipt_path"]
+                assert isinstance(receipt_path, Path)
+                receipt_path.parent.mkdir(parents=True, exist_ok=True)
+                receipt_path.write_text('{"status":"FAIL"}\n', encoding="utf-8")
+                return {"status": "FAIL"}
+
+            with mock.patch.object(
+                runner, "execute_job", side_effect=fail_first
+            ) as execute:
+                result = runner._execute_preflight_stage(
+                    manifest, "e" * 64, (), runner.Stage.G5, root
+                )
+
+            self.assertEqual(result["status"], "FAIL")
+            self.assertEqual(result["child_launch_count"], 1)
+            self.assertEqual(execute.call_count, 1)
+
+    def test_pending_inventory_is_canonicalized_before_promotion(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            pending = root / "inventory.json.pending"
+            destination = root / "inventory.json"
+            pending.write_text('{"z":1,"a":2}', encoding="utf-8")
+
+            digest = runner._promote_pending_json(
+                pending, destination, "inventory"
+            )
+
+            self.assertEqual(destination.read_bytes(), b'{"a":2,"z":1}\n')
+            self.assertEqual(digest, runner.sha256_file(destination))
+            with self.assertRaisesRegex(RuntimeError, "immutable"):
+                runner._promote_pending_json(pending, destination, "inventory")
 
 
 if __name__ == "__main__":
