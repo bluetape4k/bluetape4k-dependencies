@@ -1,0 +1,1 @@
+{"records":[{"authority-id":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","disposition":"central-direct","evidence":{"path":"gradle/libs.versions.toml","type":"catalog-alias"},"line-id":"default","owner":"dependency-governance","status":"pending"}],"schema-version":1}

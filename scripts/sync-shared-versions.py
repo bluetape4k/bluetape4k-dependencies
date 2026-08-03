@@ -13,14 +13,15 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import hashlib
+import importlib.util
 import json
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
-
 
 SOURCE_START = "# <shared-version-source-of-truth by scripts/sync-shared-versions.py>"
 SOURCE_END = "# </shared-version-source-of-truth>"
@@ -60,6 +61,24 @@ COMPATIBILITY_MAJOR_LINES = {
     "spring-kafka": "3",
     "spring-kafka4": "4",
 }
+
+DISPOSITION_EVIDENCE_TYPES = {
+    "central-direct": frozenset({"catalog-alias"}),
+    "central-version-local-alias": frozenset({"catalog-version"}),
+    "bom-managed-versionless": frozenset({"publication-pom"}),
+    "compatibility-line": frozenset({"compatibility-review"}),
+    "structural-repo-owned": frozenset({"settings-evaluation"}),
+}
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
+LINE_ID = re.compile(r"^(?:default|[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$")
+HARD_CODED_LIBRARY = re.compile(
+    r'(?P<quote>["\'])(?P<group>[A-Za-z0-9_.-]+):(?P<artifact>[A-Za-z0-9_.-]+):'
+    r'(?P<version>[^"\'\s$]+)(?P=quote)'
+)
+HARD_CODED_PLUGIN = re.compile(
+    r'\bid\(\s*["\'](?P<plugin>[^"\']+)["\']\s*\)\s*version\s*'
+    r'(?:\(\s*)?["\'](?P<version>[^"\'$]+)["\']'
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -701,7 +720,6 @@ def sync_catalog(catalog: Path, source_versions: dict[str, SourceVersion]) -> tu
             updated.append(raw_line)
             continue
 
-        prefix = raw_line[: len(raw_line) - len(raw_line.lstrip())]
         match = VERSION_LINE.match(stripped) if in_versions else INLINE_VERSION_LINE.match(stripped)
         if not match:
             updated.append(raw_line)
@@ -746,6 +764,343 @@ def target_catalogs(workspace: Path, repositories: tuple[str, ...]) -> list[Path
     return catalogs
 
 
+def canonical_json_bytes(value: object) -> bytes:
+    text = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return (text + "\n").encode("utf-8")
+
+
+def write_report(path: Path, value: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(canonical_json_bytes(value))
+
+
+def _catalog_authority_module() -> Any:
+    script = Path(__file__).resolve().with_name("catalog_authority.py")
+    spec = importlib.util.spec_from_file_location("catalog_authority_inventory", script)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load catalog authority module: {script}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _section_source_lines(catalog: Path, target_section: str) -> dict[str, int]:
+    lines: dict[str, int] = {}
+    section = ""
+    for line_number, raw_line in enumerate(
+        catalog.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        stripped = raw_line.strip()
+        if stripped.startswith("[") and stripped.endswith("]"):
+            section = stripped[1:-1]
+            continue
+        if section != target_section or not stripped or stripped.startswith("#"):
+            continue
+        match = re.match(r"^([A-Za-z0-9_.-]+)\s*=", stripped)
+        if match:
+            lines[match.group(1)] = line_number
+    return lines
+
+
+def catalog_authority_records(
+    workspace: Path,
+    central_catalog: Path,
+    repositories: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    authority = _catalog_authority_module()
+    central_data = read_catalog(central_catalog)
+    central_coordinates = {library.module for library in central_data.libraries.values()}
+    central_plugin_ids = {plugin.plugin_id for plugin in central_data.plugins.values()}
+    pending: list[dict[str, Any]] = []
+    subject_repositories: dict[tuple[str, str], set[str]] = {}
+
+    for repository in repositories:
+        catalog = workspace / repository / "gradle" / "libs.versions.toml"
+        data = read_catalog(catalog)
+        library_source_lines = _section_source_lines(catalog, "libraries")
+        for alias, library in data.libraries.items():
+            if library.module.startswith("io.github.bluetape4k:"):
+                continue
+            if library.module in central_coordinates:
+                continue
+            if library.version is None and library.version_ref is None:
+                continue
+            declared_version = library.version
+            if declared_version is None and library.version_ref is not None:
+                declared_version = data.versions.get(library.version_ref)
+            if not declared_version:
+                raise RuntimeError(
+                    f"explicit library authority has no declared version: {repository}:{alias}"
+                )
+            stable_id = authority.authority_id(repository, "library", library.module)
+            line_id = "default"
+            source_path = "gradle/libs.versions.toml"
+            source_line = library_source_lines.get(alias)
+            if source_line is None:
+                raise RuntimeError(f"missing source line for catalog alias: {repository}:{alias}")
+            occurrence_payload = "\0".join(
+                (stable_id, line_id, alias, source_path, str(source_line))
+            ).encode("utf-8")
+            pending.append(
+                {
+                    "alias": alias,
+                    "authority-id": stable_id,
+                    "coordinate-or-plugin-id": library.module,
+                    "declaration-form": "catalog",
+                    "declared-version": declared_version,
+                    "disposition": None,
+                    "evidence": None,
+                    "line-id": line_id,
+                    "occurrence-id": hashlib.sha256(occurrence_payload).hexdigest(),
+                    "owner": None,
+                    "repository": repository,
+                    "repository-count": 0,
+                    "resolved-version": None,
+                    "source-line": source_line,
+                    "source-path": source_path,
+                    "subject-kind": "library",
+                }
+            )
+            subject_repositories.setdefault(("library", library.module), set()).add(
+                repository
+            )
+
+        plugin_source_lines = _section_source_lines(catalog, "plugins")
+        for alias, plugin in data.plugins.items():
+            if plugin.plugin_id in central_plugin_ids:
+                continue
+            if plugin.version is None and plugin.version_ref is None:
+                continue
+            declared_version = plugin.version
+            if declared_version is None and plugin.version_ref is not None:
+                declared_version = data.versions.get(plugin.version_ref)
+            if not declared_version:
+                raise RuntimeError(
+                    f"explicit plugin authority has no declared version: {repository}:{alias}"
+                )
+            stable_id = authority.authority_id(repository, "plugin", plugin.plugin_id)
+            line_id = "default"
+            source_path = "gradle/libs.versions.toml"
+            source_line = plugin_source_lines.get(alias)
+            if source_line is None:
+                raise RuntimeError(f"missing source line for plugin alias: {repository}:{alias}")
+            occurrence_payload = "\0".join(
+                (stable_id, line_id, alias, source_path, str(source_line))
+            ).encode("utf-8")
+            pending.append(
+                {
+                    "alias": alias,
+                    "authority-id": stable_id,
+                    "coordinate-or-plugin-id": plugin.plugin_id,
+                    "declaration-form": "catalog",
+                    "declared-version": declared_version,
+                    "disposition": None,
+                    "evidence": None,
+                    "line-id": line_id,
+                    "occurrence-id": hashlib.sha256(occurrence_payload).hexdigest(),
+                    "owner": None,
+                    "repository": repository,
+                    "repository-count": 0,
+                    "resolved-version": None,
+                    "source-line": source_line,
+                    "source-path": source_path,
+                    "subject-kind": "plugin",
+                }
+            )
+            subject_repositories.setdefault(("plugin", plugin.plugin_id), set()).add(
+                repository
+            )
+
+    for record in pending:
+        record["repository-count"] = len(
+            subject_repositories[
+                (record["subject-kind"], record["coordinate-or-plugin-id"])
+            ]
+        )
+    return sorted(
+        pending,
+        key=lambda item: (
+            item["repository"],
+            item["source-path"],
+            item["source-line"],
+            item["alias"],
+        ),
+    )
+
+
+def hard_coded_authority_records(
+    workspace: Path, repositories: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    authority = _catalog_authority_module()
+    pending: list[dict[str, Any]] = []
+    subject_repositories: dict[tuple[str, str], set[str]] = {}
+    excluded_parts = frozenset({".git", ".gradle", ".worktrees", "build"})
+
+    for repository in repositories:
+        repository_root = workspace / repository
+        for source in sorted(repository_root.rglob("*.gradle.kts")):
+            relative = source.relative_to(repository_root)
+            if excluded_parts.intersection(relative.parts):
+                continue
+            for source_line, raw_line in enumerate(
+                source.read_text(encoding="utf-8").splitlines(), start=1
+            ):
+                if raw_line.lstrip().startswith("//"):
+                    continue
+                matches: list[tuple[str, str, str, str]] = []
+                for match in HARD_CODED_LIBRARY.finditer(raw_line):
+                    group = match.group("group")
+                    if group in {"jdbc", "scm"} or group == "io.github.bluetape4k":
+                        continue
+                    coordinate = f"{group}:{match.group('artifact')}"
+                    matches.append(
+                        ("library", coordinate, coordinate, match.group("version"))
+                    )
+                for match in HARD_CODED_PLUGIN.finditer(raw_line):
+                    plugin_id = match.group("plugin")
+                    matches.append(
+                        ("plugin", plugin_id, plugin_id, match.group("version"))
+                    )
+
+                for subject_kind, subject, alias, declared_version in matches:
+                    stable_id = authority.authority_id(
+                        repository, subject_kind, subject
+                    )
+                    line_id = "default"
+                    source_path = relative.as_posix()
+                    occurrence_payload = "\0".join(
+                        (stable_id, line_id, alias, source_path, str(source_line))
+                    ).encode("utf-8")
+                    pending.append(
+                        {
+                            "alias": alias,
+                            "authority-id": stable_id,
+                            "coordinate-or-plugin-id": subject,
+                            "declaration-form": "hard-coded",
+                            "declared-version": declared_version,
+                            "disposition": None,
+                            "evidence": None,
+                            "line-id": line_id,
+                            "occurrence-id": hashlib.sha256(
+                                occurrence_payload
+                            ).hexdigest(),
+                            "owner": None,
+                            "repository": repository,
+                            "repository-count": 0,
+                            "resolved-version": None,
+                            "source-line": source_line,
+                            "source-path": source_path,
+                            "subject-kind": subject_kind,
+                        }
+                    )
+                    subject_repositories.setdefault(
+                        (subject_kind, subject), set()
+                    ).add(repository)
+
+    for record in pending:
+        record["repository-count"] = len(
+            subject_repositories[
+                (record["subject-kind"], record["coordinate-or-plugin-id"])
+            ]
+        )
+    return sorted(
+        pending,
+        key=lambda item: (
+            item["repository"],
+            item["source-path"],
+            item["source-line"],
+            item["alias"],
+        ),
+    )
+
+
+def load_dispositions(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"invalid disposition manifest: {path}") from exc
+    if not isinstance(value, dict):
+        raise TypeError("disposition manifest must be an object")
+    return value
+
+
+def validate_dispositions(
+    manifest: dict[str, Any],
+    expected_pairs: set[tuple[str, str]],
+    *,
+    today: date | None = None,
+) -> None:
+    if set(manifest) != {"schema-version", "records"} or manifest.get("schema-version") != 1:
+        raise RuntimeError("invalid disposition manifest schema")
+    records = manifest.get("records")
+    if not isinstance(records, list):
+        raise TypeError("disposition records must be a list")
+
+    actual_pairs: set[tuple[str, str]] = set()
+    for index, record in enumerate(records):
+        if not isinstance(record, dict):
+            raise TypeError(f"invalid disposition record at index {index}")
+        authority_id = record.get("authority-id")
+        line_id = record.get("line-id")
+        if not isinstance(authority_id, str) or SHA256.fullmatch(authority_id) is None:
+            raise RuntimeError(f"invalid authority-id at disposition index {index}")
+        if not isinstance(line_id, str) or LINE_ID.fullmatch(line_id) is None:
+            raise RuntimeError(f"invalid line-id at disposition index {index}")
+        pair = (authority_id, line_id)
+        if pair in actual_pairs:
+            raise RuntimeError(f"duplicate disposition pair: {authority_id}:{line_id}")
+        actual_pairs.add(pair)
+
+        disposition = record.get("disposition")
+        allowed_evidence = DISPOSITION_EVIDENCE_TYPES.get(disposition)
+        if allowed_evidence is None:
+            raise RuntimeError(f"invalid disposition at index {index}: {disposition}")
+        evidence = record.get("evidence")
+        if not isinstance(evidence, dict) or evidence.get("type") not in allowed_evidence:
+            expected = ", ".join(sorted(allowed_evidence))
+            raise RuntimeError(
+                f"invalid evidence for {disposition}; expected {expected}"
+            )
+        if not isinstance(evidence.get("path"), str) or not evidence["path"]:
+            raise RuntimeError(f"missing evidence path at disposition index {index}")
+        if record.get("status") not in {"pending", "verified"}:
+            raise RuntimeError(f"invalid disposition status at index {index}")
+        if not isinstance(record.get("owner"), str) or not record["owner"]:
+            raise RuntimeError(f"missing disposition owner at index {index}")
+        if disposition == "structural-repo-owned":
+            repository = record.get("repository")
+            issue = record.get("issue")
+            match = ISSUE_URL.fullmatch(issue) if isinstance(issue, str) else None
+            if (
+                not isinstance(repository, str)
+                or match is None
+                or match.group(1) != repository
+            ):
+                raise RuntimeError(
+                    f"structural disposition requires a same-repository issue at index {index}"
+                )
+            review_by = record.get("review-by")
+            try:
+                review_date = date.fromisoformat(review_by)
+            except (TypeError, ValueError) as exc:
+                raise RuntimeError(
+                    f"invalid structural review-by at index {index}"
+                ) from exc
+            observed = today or datetime.now(timezone.utc).date()
+            if review_date <= observed:
+                raise RuntimeError(
+                    f"expired structural review at disposition index {index}"
+                )
+
+    orphan = sorted(actual_pairs - expected_pairs)
+    missing = sorted(expected_pairs - actual_pairs)
+    if orphan:
+        raise RuntimeError(f"orphan disposition pairs: {len(orphan)}")
+    if missing:
+        raise RuntimeError(f"missing disposition pairs: {len(missing)}")
+
+
 def print_default_repositories() -> None:
     for repo in DEFAULT_REPOSITORIES:
         print(repo)
@@ -776,6 +1131,21 @@ def main() -> int:
         help="Compatibility exception TOML. Defaults to config/central-catalog-exceptions.toml.",
     )
     parser.add_argument(
+        "--inventory-out",
+        type=Path,
+        help="Write the deterministic external authority inventory as canonical JSON.",
+    )
+    parser.add_argument(
+        "--summary-out",
+        type=Path,
+        help="Write the deterministic external authority summary as canonical JSON.",
+    )
+    parser.add_argument(
+        "--dispositions",
+        type=Path,
+        help="Source-controlled one-to-one authority disposition manifest.",
+    )
+    parser.add_argument(
         "--write",
         action="store_true",
         help="Deprecated compatibility flag. Adoption gaps are never rewritten automatically.",
@@ -802,6 +1172,65 @@ def main() -> int:
         print(f"Unknown managed repositories: {', '.join(unknown_repositories)}", file=sys.stderr)
         return 2
     source_catalog = repo_root / "gradle" / "libs.versions.toml"
+    if bool(args.inventory_out) != bool(args.summary_out):
+        print("--inventory-out and --summary-out must be supplied together", file=sys.stderr)
+        return 2
+    if args.inventory_out:
+        try:
+            catalog_inventory = catalog_authority_records(
+                workspace, source_catalog, repositories
+            )
+            hard_coded_inventory = hard_coded_authority_records(
+                workspace, repositories
+            )
+            inventory = sorted(
+                catalog_inventory + hard_coded_inventory,
+                key=lambda item: (
+                    item["repository"],
+                    item["source-path"],
+                    item["source-line"],
+                    item["alias"],
+                ),
+            )
+            summary = {
+                "catalog-library-occurrences": sum(
+                    item["declaration-form"] == "catalog"
+                    and item["subject-kind"] == "library"
+                    for item in inventory
+                ),
+                "catalog-plugin-occurrences": sum(
+                    item["declaration-form"] == "catalog"
+                    and item["subject-kind"] == "plugin"
+                    for item in inventory
+                ),
+                "external-plugin-ids": len(
+                    {
+                        item["coordinate-or-plugin-id"]
+                        for item in catalog_inventory
+                        if item["subject-kind"] == "plugin"
+                    }
+                ),
+                "hard-coded-candidates": len(hard_coded_inventory),
+                "repository-count": len(repositories),
+                "total-occurrences": len(inventory),
+                "unique-authority-pairs": len(
+                    {(item["authority-id"], item["line-id"]) for item in inventory}
+                ),
+            }
+            write_report(args.inventory_out, inventory)
+            write_report(args.summary_out, summary)
+            disposition_path = (
+                args.dispositions
+                or repo_root / "config" / "central-catalog-authority-dispositions.json"
+            )
+            dispositions = load_dispositions(disposition_path)
+            validate_dispositions(
+                dispositions,
+                {(item["authority-id"], item["line-id"]) for item in inventory},
+            )
+        except (ImportError, RuntimeError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
     source_versions = read_source_versions(source_catalog)
     verify_self_version_alias(source_versions)
     source_data = read_catalog(source_catalog)

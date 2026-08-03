@@ -10,7 +10,6 @@ from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
-
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "sync-shared-versions.py"
 SPEC = importlib.util.spec_from_file_location("sync_shared_versions", SCRIPT_PATH)
 assert SPEC is not None
@@ -227,6 +226,183 @@ class SyncSharedVersionsTest(unittest.TestCase):
         self.assertIn("bluetape4k-projects", result.stdout)
         self.assertIn("bluetape4k-exposed", result.stdout)
         self.assertNotIn("exposed-workshop", result.stdout)
+
+    def test_inventory_cli_accepts_report_and_disposition_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_PATH),
+                    "--print-default-repositories",
+                    "--inventory-out",
+                    str(Path(tmp) / "inventory.json"),
+                    "--summary-out",
+                    str(Path(tmp) / "summary.json"),
+                    "--dispositions",
+                    str(Path(tmp) / "dispositions.json"),
+                    "--format",
+                    "json",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_canonical_json_bytes_is_sorted_and_newline_terminated(self) -> None:
+        self.assertEqual(
+            sync.canonical_json_bytes({"z": 1, "a": {"한글": 2}}),
+            '{"a":{"한글":2},"z":1}\n'.encode(),
+        )
+
+    def test_dispositions_require_exact_inventory_pair_set(self) -> None:
+        fixture_root = (
+            Path(__file__).resolve().parent / "fixtures" / "catalog-authority"
+        )
+        expected_pairs = {("a" * 64, "default")}
+
+        valid = sync.load_dispositions(fixture_root / "dispositions-valid.json")
+        sync.validate_dispositions(valid, expected_pairs)
+
+        orphan = sync.load_dispositions(fixture_root / "dispositions-orphan.json")
+        with self.assertRaisesRegex(RuntimeError, "orphan"):
+            sync.validate_dispositions(orphan, expected_pairs)
+
+    def test_dispositions_reject_invalid_evidence_combination(self) -> None:
+        invalid = {
+            "schema-version": 1,
+            "records": [
+                {
+                    "authority-id": "a" * 64,
+                    "line-id": "default",
+                    "disposition": "bom-managed-versionless",
+                    "evidence": {
+                        "type": "catalog-alias",
+                        "path": "gradle/libs.versions.toml",
+                    },
+                    "status": "pending",
+                    "owner": "dependency-governance",
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "publication-pom"):
+            sync.validate_dispositions(invalid, {("a" * 64, "default")})
+
+    def test_dispositions_reject_missing_and_duplicate_pairs(self) -> None:
+        fixture_root = (
+            Path(__file__).resolve().parent / "fixtures" / "catalog-authority"
+        )
+        valid = sync.load_dispositions(fixture_root / "dispositions-valid.json")
+        with self.assertRaisesRegex(RuntimeError, "missing"):
+            sync.validate_dispositions(
+                valid, {("a" * 64, "default"), ("b" * 64, "default")}
+            )
+
+        duplicate = {**valid, "records": valid["records"] * 2}
+        with self.assertRaisesRegex(RuntimeError, "duplicate"):
+            sync.validate_dispositions(duplicate, {("a" * 64, "default")})
+
+    def test_structural_disposition_requires_same_repository_issue_and_review_date(self) -> None:
+        record = {
+            "authority-id": "a" * 64,
+            "line-id": "default",
+            "disposition": "structural-repo-owned",
+            "evidence": {
+                "type": "settings-evaluation",
+                "path": "settings.gradle.kts",
+            },
+            "status": "pending",
+            "owner": "dependency-governance",
+            "repository": "bluetape4k-projects",
+            "issue": "https://github.com/bluetape4k/bluetape4k-aws/issues/1",
+            "review-by": "2026-12-01",
+        }
+        manifest = {"schema-version": 1, "records": [record]}
+
+        with self.assertRaisesRegex(RuntimeError, "same-repository issue"):
+            sync.validate_dispositions(
+                manifest, {("a" * 64, "default")}, today=date(2026, 8, 4)
+            )
+
+        record["issue"] = (
+            "https://github.com/bluetape4k/bluetape4k-projects/issues/1"
+        )
+        record["review-by"] = "2026-08-04"
+        with self.assertRaisesRegex(RuntimeError, "expired structural review"):
+            sync.validate_dispositions(
+                manifest, {("a" * 64, "default")}, today=date(2026, 8, 4)
+            )
+
+    def test_real_workspace_has_approved_explicit_external_library_baseline(self) -> None:
+        if sys.version_info < (3, 11):
+            self.skipTest("catalog authority inventory requires stdlib tomllib")
+        workspace = SCRIPT_PATH.parents[4]
+        if not all((workspace / repo / "gradle" / "libs.versions.toml").is_file() for repo in sync.DEFAULT_REPOSITORIES):
+            self.skipTest("managed sibling repositories are unavailable")
+
+        records = sync.catalog_authority_records(
+            workspace,
+            SCRIPT_PATH.parents[1] / "gradle" / "libs.versions.toml",
+            sync.DEFAULT_REPOSITORIES,
+        )
+
+        self.assertEqual(
+            sum(record["subject-kind"] == "library" for record in records), 864
+        )
+        self.assertEqual(
+            sum(record["subject-kind"] == "plugin" for record in records), 44
+        )
+        self.assertEqual(
+            len(
+                {
+                    record["coordinate-or-plugin-id"]
+                    for record in records
+                    if record["subject-kind"] == "plugin"
+                }
+            ),
+            9,
+        )
+        self.assertEqual(
+            records,
+            sorted(
+                records,
+                key=lambda item: (
+                    item["repository"],
+                    item["source-path"],
+                    item["source-line"],
+                    item["alias"],
+                ),
+            ),
+        )
+
+    def test_real_workspace_has_approved_hard_coded_candidate_baseline(self) -> None:
+        if sys.version_info < (3, 11):
+            self.skipTest("catalog authority inventory requires stdlib tomllib")
+        workspace = SCRIPT_PATH.parents[4]
+        if not all((workspace / repo).is_dir() for repo in sync.DEFAULT_REPOSITORIES):
+            self.skipTest("managed sibling repositories are unavailable")
+
+        records = sync.hard_coded_authority_records(
+            workspace, sync.DEFAULT_REPOSITORIES
+        )
+
+        self.assertEqual(len(records), 43)
+        self.assertEqual(
+            sum(
+                record["coordinate-or-plugin-id"]
+                == "org.gradle.toolchains.foojay-resolver-convention"
+                for record in records
+            ),
+            9,
+        )
+        self.assertFalse(
+            any(
+                record["coordinate-or-plugin-id"].startswith(("scm:", "jdbc:"))
+                for record in records
+            )
+        )
 
     def test_read_source_versions_reads_only_marked_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
