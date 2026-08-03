@@ -15,8 +15,12 @@ import importlib.util
 import sys
 from pathlib import Path
 
-SYNC_SHARED_VERSIONS_PATH = Path(__file__).resolve().with_name("sync-shared-versions.py")
-SYNC_SHARED_SPEC = importlib.util.spec_from_file_location("sync_shared_versions", SYNC_SHARED_VERSIONS_PATH)
+SYNC_SHARED_VERSIONS_PATH = (
+    Path(__file__).resolve().with_name("sync-shared-versions.py")
+)
+SYNC_SHARED_SPEC = importlib.util.spec_from_file_location(
+    "sync_shared_versions", SYNC_SHARED_VERSIONS_PATH
+)
 if SYNC_SHARED_SPEC is None or SYNC_SHARED_SPEC.loader is None:
     raise RuntimeError(f"Cannot load {SYNC_SHARED_VERSIONS_PATH}")
 sync_shared_versions = importlib.util.module_from_spec(SYNC_SHARED_SPEC)
@@ -25,7 +29,9 @@ SYNC_SHARED_SPEC.loader.exec_module(sync_shared_versions)
 DEFAULT_REPOSITORIES = sync_shared_versions.DEFAULT_REPOSITORIES
 
 
-MARKER_START = "      # <central-dependency-ignore by scripts/sync-dependabot-ignores.py>"
+MARKER_START = (
+    "      # <central-dependency-ignore by scripts/sync-dependabot-ignores.py>"
+)
 MARKER_END = "      # </central-dependency-ignore>"
 
 CENTRAL_DEPENDENCY_IGNORES = (
@@ -132,7 +138,11 @@ def remove_existing_block(lines: list[str]) -> list[str]:
 def sync_text(text: str) -> str:
     lines = remove_existing_block(text.splitlines())
     gradle_update_start = next(
-        (index for index, line in enumerate(lines) if line == '  - package-ecosystem: "gradle"'),
+        (
+            index
+            for index, line in enumerate(lines)
+            if line == '  - package-ecosystem: "gradle"'
+        ),
         None,
     )
     if gradle_update_start is None:
@@ -147,7 +157,11 @@ def sync_text(text: str) -> str:
         len(lines),
     )
     ignore_index = next(
-        (index for index in range(gradle_update_start, next_update) if lines[index] == "    ignore:"),
+        (
+            index
+            for index in range(gradle_update_start, next_update)
+            if lines[index] == "    ignore:"
+        ),
         None,
     )
 
@@ -156,7 +170,7 @@ def sync_text(text: str) -> str:
         insert_index = next_update
         lines[insert_index:insert_index] = ["    ignore:", *block]
     else:
-        lines[ignore_index + 1:ignore_index + 1] = block
+        lines[ignore_index + 1 : ignore_index + 1] = block
     return "\n".join(lines) + "\n"
 
 
@@ -167,6 +181,19 @@ def target_files(workspace: Path, repositories: tuple[str, ...]) -> list[Path]:
         if config.exists():
             files.append(config)
     return files
+
+
+def candidate_dependabot_file(repository_root: Path) -> Path | None:
+    config = repository_root / ".github" / "dependabot.yml"
+    if not config.exists() and not config.is_symlink():
+        return None
+    if config.is_symlink() or not config.is_file() or config.resolve() != config:
+        raise RuntimeError(f"candidate Dependabot config must be a regular non-symlink file: {config}")
+    try:
+        config.relative_to(repository_root)
+    except ValueError as exc:
+        raise RuntimeError(f"candidate Dependabot config escapes repository root: {config}") from exc
+    return config
 
 
 def main() -> int:
@@ -183,18 +210,57 @@ def main() -> int:
         action="append",
         help="Repository directory to sync. May be passed multiple times.",
     )
-    parser.add_argument("--write", action="store_true", help="Rewrite downstream dependabot.yml files.")
-    parser.add_argument("--check", action="store_true", help="Fail when files are not synced.")
+    parser.add_argument(
+        "--repository-map",
+        type=Path,
+        help="Strict v1 candidate repository map; disables sibling discovery.",
+    )
+    parser.add_argument(
+        "--write", action="store_true", help="Rewrite downstream dependabot.yml files."
+    )
+    parser.add_argument(
+        "--check", action="store_true", help="Fail when files are not synced."
+    )
     parser.add_argument("--summary", action="store_true", help="Print changed files.")
-    parser.add_argument("--diff", action="store_true", help="Print unified diffs for required changes.")
+    parser.add_argument(
+        "--diff", action="store_true", help="Print unified diffs for required changes."
+    )
     args = parser.parse_args()
 
     workspace = args.workspace.resolve()
-    repositories = tuple(args.repositories) if args.repositories else DEFAULT_REPOSITORIES
-    files = target_files(workspace, repositories)
+    repositories = (
+        tuple(args.repositories) if args.repositories else DEFAULT_REPOSITORIES
+    )
+    if args.repository_map:
+        unknown = sorted(set(repositories) - set(DEFAULT_REPOSITORIES))
+        if unknown:
+            print(
+                f"Unknown managed repositories: {', '.join(unknown)}",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            mapped = sync_shared_versions.load_repository_map(
+                args.repository_map, workspace, DEFAULT_REPOSITORIES
+            )
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        try:
+            targets = []
+            for repo in repositories:
+                config = candidate_dependabot_file(mapped[repo].catalog.parents[2])
+                if config is not None:
+                    targets.append((repo, config))
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+    else:
+        files = target_files(workspace, repositories)
+        targets = [(config.parents[1].name, config) for config in files]
     changes: list[DependabotChange] = []
 
-    if not files:
+    if not targets:
         print(
             "No downstream Dependabot files found. "
             f"Check --workspace ({workspace}) and --repo filters.",
@@ -202,12 +268,12 @@ def main() -> int:
         )
         return 1 if args.check else 0
 
-    for config in files:
+    for repository, config in targets:
         before = config.read_text(encoding="utf-8")
         after = sync_text(before)
         if before == after:
             continue
-        changes.append(DependabotChange(repo=config.parents[1].name, path=config))
+        changes.append(DependabotChange(repo=repository, path=config))
         if args.diff:
             sys.stdout.writelines(
                 difflib.unified_diff(
@@ -218,14 +284,22 @@ def main() -> int:
                 ),
             )
         if args.write:
-            config.write_text(after, encoding="utf-8")
+            if args.repository_map:
+                sync_shared_versions.catalog_candidate.write_atomic(
+                    config, after.encode("utf-8")
+                )
+            else:
+                config.write_text(after, encoding="utf-8")
 
     if args.summary or changes:
         for change in changes:
             print(f"{change.repo}: {change.path}")
 
     if args.check and changes and not args.write:
-        print(f"Dependabot ignore drift detected: {len(changes)} files require updates.", file=sys.stderr)
+        print(
+            f"Dependabot ignore drift detected: {len(changes)} files require updates.",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

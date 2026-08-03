@@ -10,7 +10,9 @@ from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "sync-shared-versions.py"
+SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1] / "scripts" / "sync-shared-versions.py"
+)
 SPEC = importlib.util.spec_from_file_location("sync_shared_versions", SCRIPT_PATH)
 assert SPEC is not None
 sync = importlib.util.module_from_spec(SPEC)
@@ -44,7 +46,9 @@ class SyncSharedVersionsTest(unittest.TestCase):
             workflow.parent.mkdir(parents=True)
             catalog.write_text("[versions]\n", encoding="utf-8")
             (repo / "settings.gradle.kts").write_text(
-                'val catalogRef = providers.gradleProperty("catalogRef").orElse("' + "a" * 40 + '")\n',
+                'val catalogRef = providers.gradleProperty("catalogRef").orElse("'
+                + "a" * 40
+                + '")\n',
                 encoding="utf-8",
             )
             workflow.write_text(
@@ -67,7 +71,9 @@ class SyncSharedVersionsTest(unittest.TestCase):
             ],
         )
 
-    def test_catalog_ref_gaps_accept_matching_settings_and_ci_workflow_refs(self) -> None:
+    def test_catalog_ref_gaps_accept_matching_settings_and_ci_workflow_refs(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "bluetape4k-sample"
             catalog = repo / "gradle" / "libs.versions.toml"
@@ -89,7 +95,9 @@ class SyncSharedVersionsTest(unittest.TestCase):
 
         self.assertEqual(gaps, [])
 
-    def test_catalog_loader_gaps_detect_implicit_sibling_and_missing_safety_contracts(self) -> None:
+    def test_catalog_loader_gaps_detect_implicit_sibling_and_missing_safety_contracts(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "bluetape4k-sample"
             catalog = repo / "gradle" / "libs.versions.toml"
@@ -97,7 +105,7 @@ class SyncSharedVersionsTest(unittest.TestCase):
             catalog.write_text("[versions]\n", encoding="utf-8")
             (repo / "settings.gradle.kts").write_text(
                 'val sibling = "../bluetape4k-dependencies/gradle/libs.versions.toml"\n'
-                'uri(url).toURL().openStream()\n',
+                "uri(url).toURL().openStream()\n",
                 encoding="utf-8",
             )
 
@@ -304,7 +312,9 @@ class SyncSharedVersionsTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "duplicate"):
             sync.validate_dispositions(duplicate, {("a" * 64, "default")})
 
-    def test_structural_disposition_requires_same_repository_issue_and_review_date(self) -> None:
+    def test_structural_disposition_requires_same_repository_issue_and_review_date(
+        self,
+    ) -> None:
         record = {
             "authority-id": "a" * 64,
             "line-id": "default",
@@ -326,20 +336,23 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 manifest, {("a" * 64, "default")}, today=date(2026, 8, 4)
             )
 
-        record["issue"] = (
-            "https://github.com/bluetape4k/bluetape4k-projects/issues/1"
-        )
+        record["issue"] = "https://github.com/bluetape4k/bluetape4k-projects/issues/1"
         record["review-by"] = "2026-08-04"
         with self.assertRaisesRegex(RuntimeError, "expired structural review"):
             sync.validate_dispositions(
                 manifest, {("a" * 64, "default")}, today=date(2026, 8, 4)
             )
 
-    def test_real_workspace_has_approved_explicit_external_library_baseline(self) -> None:
+    def test_real_workspace_has_approved_explicit_external_library_baseline(
+        self,
+    ) -> None:
         if sys.version_info < (3, 11):
             self.skipTest("catalog authority inventory requires stdlib tomllib")
         workspace = SCRIPT_PATH.parents[4]
-        if not all((workspace / repo / "gradle" / "libs.versions.toml").is_file() for repo in sync.DEFAULT_REPOSITORIES):
+        if not all(
+            (workspace / repo / "gradle" / "libs.versions.toml").is_file()
+            for repo in sync.DEFAULT_REPOSITORIES
+        ):
             self.skipTest("managed sibling repositories are unavailable")
 
         records = sync.catalog_authority_records(
@@ -444,25 +457,34 @@ class SyncSharedVersionsTest(unittest.TestCase):
 
             versions = sync.read_source_versions(catalog)
 
-        self.assertEqual(versions["jackson"].module_groups, frozenset({"com.fasterxml.jackson"}))
+        self.assertEqual(
+            versions["jackson"].module_groups, frozenset({"com.fasterxml.jackson"})
+        )
 
     def test_read_source_versions_requires_marked_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"
-            catalog.write_text("[versions]\nkotlin = \"2.4.0\"\n", encoding="utf-8")
+            catalog.write_text('[versions]\nkotlin = "2.4.0"\n', encoding="utf-8")
 
-            with self.assertRaisesRegex(RuntimeError, "missing source-of-truth markers"):
+            with self.assertRaisesRegex(
+                RuntimeError, "missing source-of-truth markers"
+            ):
                 sync.read_source_versions(catalog)
 
     def test_central_catalog_exposes_all_shared_plugin_ids(self) -> None:
-        catalog = sync.read_catalog(Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml")
+        catalog = sync.read_catalog(
+            Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml"
+        )
 
         expected = {
             "kotlin-allopen": ("org.jetbrains.kotlin.plugin.allopen", "kotlin"),
             "kotlin-jpa": ("org.jetbrains.kotlin.plugin.jpa", "kotlin"),
             "kotlin-kapt": ("org.jetbrains.kotlin.kapt", "kotlin"),
             "kotlin-noarg": ("org.jetbrains.kotlin.plugin.noarg", "kotlin"),
-            "kotlin-serialization": ("org.jetbrains.kotlin.plugin.serialization", "kotlin"),
+            "kotlin-serialization": (
+                "org.jetbrains.kotlin.plugin.serialization",
+                "kotlin",
+            ),
             "kotlin-spring": ("org.jetbrains.kotlin.plugin.spring", "kotlin"),
             "gatling": ("io.gatling.gradle", "gatling"),
             "kover": ("org.jetbrains.kotlinx.kover", "kover"),
@@ -485,8 +507,8 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 "\n".join(
                     [
                         "[versions]",
-                        "kotlin = \"2.3.20\"",
-                        "repo-only = \"1.0.0\"",
+                        'kotlin = "2.3.20"',
+                        'repo-only = "1.0.0"',
                         "",
                     ],
                 ),
@@ -604,7 +626,9 @@ class SyncSharedVersionsTest(unittest.TestCase):
     def test_cli_check_rejects_duplicate_and_write_does_not_mutate_it(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)
-            catalog = workspace / "bluetape4k-projects" / "gradle" / "libs.versions.toml"
+            catalog = (
+                workspace / "bluetape4k-projects" / "gradle" / "libs.versions.toml"
+            )
             catalog.parent.mkdir(parents=True)
             catalog.write_text('[versions]\nkotlin = "0.0.0"\n', encoding="utf-8")
 
@@ -667,7 +691,9 @@ class SyncSharedVersionsTest(unittest.TestCase):
             self.assertNotEqual(recheck.returncode, 0)
 
     def test_equal_central_version_is_still_an_adoption_gap(self) -> None:
-        source_catalog = sync.read_catalog(Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml")
+        source_catalog = sync.read_catalog(
+            Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml"
+        )
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"
             catalog.write_text('[versions]\nkotlin = "2.4.0"\n', encoding="utf-8")
@@ -679,10 +705,16 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 (),
             )
 
-        self.assertTrue(any(gap.kind == "version-duplicate" and gap.key == "kotlin" for gap in gaps))
+        self.assertTrue(
+            any(gap.kind == "version-duplicate" and gap.key == "kotlin" for gap in gaps)
+        )
 
-    def test_exact_coordinate_duplicate_and_alias_identity_conflict_are_reported(self) -> None:
-        source_catalog = sync.read_catalog(Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml")
+    def test_exact_coordinate_duplicate_and_alias_identity_conflict_are_reported(
+        self,
+    ) -> None:
+        source_catalog = sync.read_catalog(
+            Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml"
+        )
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"
             catalog.write_text(
@@ -707,11 +739,26 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 (),
             )
 
-        self.assertTrue(any(gap.kind == "library-coordinate-duplicate" and gap.key == "local-classgraph" for gap in gaps))
-        self.assertTrue(any(gap.kind == "library-identity-conflict" and gap.key == "classgraph" for gap in gaps))
+        self.assertTrue(
+            any(
+                gap.kind == "library-coordinate-duplicate"
+                and gap.key == "local-classgraph"
+                for gap in gaps
+            )
+        )
+        self.assertTrue(
+            any(
+                gap.kind == "library-identity-conflict" and gap.key == "classgraph"
+                for gap in gaps
+            )
+        )
 
-    def test_versionless_local_alias_is_allowed_but_inline_version_is_reported(self) -> None:
-        source_catalog = sync.read_catalog(Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml")
+    def test_versionless_local_alias_is_allowed_but_inline_version_is_reported(
+        self,
+    ) -> None:
+        source_catalog = sync.read_catalog(
+            Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml"
+        )
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"
             catalog.write_text(
@@ -739,11 +786,26 @@ class SyncSharedVersionsTest(unittest.TestCase):
 
         self.assertFalse(any(gap.key == "managed-classgraph" for gap in gaps))
         self.assertFalse(any(gap.key == "managed-kotlin" for gap in gaps))
-        self.assertTrue(any(gap.kind == "library-coordinate-duplicate" and gap.key == "pinned-classgraph" for gap in gaps))
-        self.assertTrue(any(gap.kind == "plugin-id-duplicate" and gap.key == "pinned-kotlin" for gap in gaps))
+        self.assertTrue(
+            any(
+                gap.kind == "library-coordinate-duplicate"
+                and gap.key == "pinned-classgraph"
+                for gap in gaps
+            )
+        )
+        self.assertTrue(
+            any(
+                gap.kind == "plugin-id-duplicate" and gap.key == "pinned-kotlin"
+                for gap in gaps
+            )
+        )
 
-    def test_exact_plugin_id_duplicate_and_plugin_id_conflict_are_reported(self) -> None:
-        source_catalog = sync.read_catalog(Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml")
+    def test_exact_plugin_id_duplicate_and_plugin_id_conflict_are_reported(
+        self,
+    ) -> None:
+        source_catalog = sync.read_catalog(
+            Path(__file__).resolve().parents[1] / "gradle" / "libs.versions.toml"
+        )
         with tempfile.TemporaryDirectory() as tmp:
             catalog = Path(tmp) / "libs.versions.toml"
             catalog.write_text(
@@ -768,8 +830,18 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 (),
             )
 
-        self.assertTrue(any(gap.kind == "plugin-id-duplicate" and gap.key == "local-kotlin" for gap in gaps))
-        self.assertTrue(any(gap.kind == "plugin-identity-conflict" and gap.key == "kotlin-jvm" for gap in gaps))
+        self.assertTrue(
+            any(
+                gap.kind == "plugin-id-duplicate" and gap.key == "local-kotlin"
+                for gap in gaps
+            )
+        )
+        self.assertTrue(
+            any(
+                gap.kind == "plugin-identity-conflict" and gap.key == "kotlin-jvm"
+                for gap in gaps
+            )
+        )
 
     def test_valid_exception_preserves_compatibility_pin(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -844,7 +916,10 @@ class SyncSharedVersionsTest(unittest.TestCase):
             resolution_condition="Remove after QueryDSL migration.",
         )
 
-        self.assertEqual(sync.find_adoption_gaps("bluetape4k-exposed", local, central, (declared,)), [])
+        self.assertEqual(
+            sync.find_adoption_gaps("bluetape4k-exposed", local, central, (declared,)),
+            [],
+        )
         for changed in (
             replace(declared, kind="plugin-version"),
             replace(declared, coordinate="com.querydsl:not-querydsl-core"),
@@ -852,8 +927,12 @@ class SyncSharedVersionsTest(unittest.TestCase):
             replace(declared, compatibility_family="querydsl6"),
         ):
             with self.subTest(changed=changed):
-                gaps = sync.find_adoption_gaps("bluetape4k-exposed", local, central, (changed,))
-                self.assertTrue(any(gap.kind == "library-coordinate-duplicate" for gap in gaps))
+                gaps = sync.find_adoption_gaps(
+                    "bluetape4k-exposed", local, central, (changed,)
+                )
+                self.assertTrue(
+                    any(gap.kind == "library-coordinate-duplicate" for gap in gaps)
+                )
 
     def test_exception_schema_rejects_unknown_or_expired_entries(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -885,124 +964,42 @@ class SyncSharedVersionsTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "unknown|expired"):
                 sync.load_exceptions(exception_file, today=date(2026, 7, 15))
 
-    def test_repository_map_rejects_unknown_traversal_and_symlink_catalogs(self) -> None:
+    def test_repository_map_rejects_legacy_flat_envelope(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
-            real_repo = root / "bluetape4k-projects"
-            catalog = real_repo / "gradle" / "libs.versions.toml"
+            catalog = root / "bluetape4k-projects" / "gradle" / "libs.versions.toml"
             catalog.parent.mkdir(parents=True)
             catalog.write_text("[versions]\n", encoding="utf-8")
-            symlink = root / "catalog-link.toml"
-            symlink.symlink_to(catalog)
-
-            unknown_map = root / "unknown.json"
-            unknown_map.write_text(
-                json.dumps({"not-managed": {"catalog": str(catalog), "branch": "x", "expected_head": "a" * 40}}),
+            legacy_map = root / "legacy.json"
+            legacy_map.write_text(
+                json.dumps(
+                    {
+                        "not-managed": {
+                            "catalog": str(catalog),
+                            "branch": "x",
+                            "expected_head": "a" * 40,
+                        }
+                    }
+                ),
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(RuntimeError, "managed repository"):
-                sync.load_repository_map(unknown_map, root, sync.DEFAULT_REPOSITORIES)
-
-            traversal_map = root / "traversal.json"
-            traversal_map.write_text(
-                json.dumps({"bluetape4k-projects": {"catalog": str(root / ".." / "outside.toml"), "branch": "x", "expected_head": "a" * 40}}),
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(RuntimeError, "workspace|catalog"):
-                sync.load_repository_map(traversal_map, root, sync.DEFAULT_REPOSITORIES)
-
-            symlink_map = root / "symlink.json"
-            symlink_map.write_text(
-                json.dumps({"bluetape4k-projects": {"catalog": str(symlink), "branch": "x", "expected_head": "a" * 40}}),
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(RuntimeError, "symlink"):
-                sync.load_repository_map(symlink_map, root, sync.DEFAULT_REPOSITORIES)
+            with self.assertRaisesRegex(RuntimeError, "top-level fields"):
+                sync.load_repository_map(legacy_map, root, sync.DEFAULT_REPOSITORIES)
 
     def test_target_catalogs_rejects_missing_requested_repository(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(RuntimeError, "missing managed repository catalog"):
+            with self.assertRaisesRegex(
+                RuntimeError, "missing managed repository catalog"
+            ):
                 sync.target_catalogs(Path(tmp), ("bluetape4k-projects",))
 
-    def test_repository_map_pins_candidate_branch_and_head(self) -> None:
+    def test_repository_map_uses_shared_strict_v1_loader(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
-            repo = root / "bluetape4k-projects"
-            catalog = repo / "gradle" / "libs.versions.toml"
-            catalog.parent.mkdir(parents=True)
-            catalog.write_text("[versions]\n", encoding="utf-8")
-            subprocess.run(["git", "init", "-b", "candidate", str(repo)], check=True, capture_output=True)
-            subprocess.run(["git", "-C", str(repo), "add", "gradle/libs.versions.toml"], check=True)
-            subprocess.run(
-                [
-                    "git",
-                    "-C",
-                    str(repo),
-                    "-c",
-                    "user.name=Catalog Test",
-                    "-c",
-                    "user.email=catalog@example.invalid",
-                    "commit",
-                    "-m",
-                    "candidate",
-                ],
-                check=True,
-                capture_output=True,
-            )
-            head = subprocess.run(
-                ["git", "-C", str(repo), "rev-parse", "HEAD"],
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-
-            valid_map = root / "valid.json"
-            valid_map.write_text(
-                json.dumps(
-                    {
-                        "bluetape4k-projects": {
-                            "catalog": str(catalog),
-                            "branch": "candidate",
-                            "expected_head": head,
-                        },
-                    },
-                ),
-                encoding="utf-8",
-            )
-            targets = sync.load_repository_map(valid_map, root, sync.DEFAULT_REPOSITORIES)
-            self.assertEqual(targets["bluetape4k-projects"].expected_head, head)
-
-            wrong_branch = root / "wrong-branch.json"
-            wrong_branch.write_text(
-                json.dumps(
-                    {
-                        "bluetape4k-projects": {
-                            "catalog": str(catalog),
-                            "branch": "other",
-                            "expected_head": head,
-                        },
-                    },
-                ),
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(RuntimeError, "branch mismatch"):
-                sync.load_repository_map(wrong_branch, root, sync.DEFAULT_REPOSITORIES)
-
-            wrong_head = root / "wrong-head.json"
-            wrong_head.write_text(
-                json.dumps(
-                    {
-                        "bluetape4k-projects": {
-                            "catalog": str(catalog),
-                            "branch": "candidate",
-                            "expected_head": "a" * 40,
-                        },
-                    },
-                ),
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(RuntimeError, "HEAD mismatch"):
-                sync.load_repository_map(wrong_head, root, sync.DEFAULT_REPOSITORIES)
+            invalid = root / "invalid.json"
+            invalid.write_text('{"schema_version": 2}', encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "top-level fields"):
+                sync.load_repository_map(invalid, root, sync.DEFAULT_REPOSITORIES)
 
 
 if __name__ == "__main__":

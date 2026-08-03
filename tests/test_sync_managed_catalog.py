@@ -7,7 +7,9 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "sync-managed-catalog.py"
+SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1] / "scripts" / "sync-managed-catalog.py"
+)
 SPEC = importlib.util.spec_from_file_location("sync_managed_catalog", SCRIPT_PATH)
 assert SPEC is not None
 sync = importlib.util.module_from_spec(SPEC)
@@ -17,7 +19,19 @@ SPEC.loader.exec_module(sync)
 
 
 class SyncManagedCatalogTest(unittest.TestCase):
-    def test_function_call_args_handles_nested_parentheses_and_multiline_calls(self) -> None:
+    def test_cli_exposes_shared_strict_repository_map(self) -> None:
+        self.assertTrue(callable(sync.catalog_candidate.load_repository_map_v1))
+        result = __import__("subprocess").run(
+            [sys.executable, str(SCRIPT_PATH), "--help"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("--repository-map", result.stdout)
+
+    def test_function_call_args_handles_nested_parentheses_and_multiline_calls(
+        self,
+    ) -> None:
         text = """
             includeModules(
                 "graph-io",
@@ -78,7 +92,9 @@ class SyncManagedCatalogTest(unittest.TestCase):
         self.assertEqual(configs[0].base_dir, "exposed")
         self.assertFalse(configs[0].with_project_name)
         self.assertFalse(configs[0].with_base_dir)
-        self.assertEqual(sync.module_name(configs[0], "exposed-core"), "bluetape4k-exposed-core")
+        self.assertEqual(
+            sync.module_name(configs[0], "exposed-core"), "bluetape4k-exposed-core"
+        )
 
     def test_parse_mapped_includes_keeps_path_and_project_name(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -98,12 +114,18 @@ class SyncManagedCatalogTest(unittest.TestCase):
             mapped_includes,
             [
                 sync.MappedInclude("utils/batch", "exposed-batch"),
-                sync.MappedInclude("spring-boot/exposed-jdbc", "exposed-spring-boot-jdbc"),
-                sync.MappedInclude("exposed/bluetape4k-exposed-bom", "bluetape4k-exposed-bom"),
+                sync.MappedInclude(
+                    "spring-boot/exposed-jdbc", "exposed-spring-boot-jdbc"
+                ),
+                sync.MappedInclude(
+                    "exposed/bluetape4k-exposed-bom", "bluetape4k-exposed-bom"
+                ),
             ],
         )
 
-    def test_discover_repo_modules_renders_exposed_short_and_mapped_modules(self) -> None:
+    def test_discover_repo_modules_renders_exposed_short_and_mapped_modules(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace_root = Path(tmp)
             repo_root = workspace_root / "bluetape4k-exposed"
@@ -142,7 +164,11 @@ class SyncManagedCatalogTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            repo = next(managed_repo for managed_repo in sync.MANAGED_REPOS if managed_repo.label == "bluetape4k-exposed")
+            repo = next(
+                managed_repo
+                for managed_repo in sync.MANAGED_REPOS
+                if managed_repo.label == "bluetape4k-exposed"
+            )
             modules = sync.discover_repo_modules(workspace_root, repo)
 
         discovered = {repo: [] for repo in sync.MANAGED_REPOS}
@@ -159,8 +185,11 @@ class SyncManagedCatalogTest(unittest.TestCase):
         catalog = sync.render_catalog_section(discovered)
         constraints = sync.render_constraint_section(discovered)
 
-        self.assertIn('bluetape4k-exposed-bom', catalog)
-        self.assertIn('module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-boot-jdbc"', catalog)
+        self.assertIn("bluetape4k-exposed-bom", catalog)
+        self.assertIn(
+            'module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-boot-jdbc"',
+            catalog,
+        )
         self.assertIn("delegated to the sub-BOM platform imports", constraints)
         self.assertNotIn("api(libs.bluetape4k.exposed.core)", constraints)
         self.assertNotIn("api(libs.bluetape4k.exposed.spring.boot.jdbc)", constraints)
@@ -196,8 +225,12 @@ class SyncManagedCatalogTest(unittest.TestCase):
         )
 
         self.assertFalse(sync.include_module(repo, "sample-demo", "spring/sample-demo"))
-        self.assertFalse(sync.include_module(repo, "sample-examples", "examples/sample-examples"))
-        self.assertFalse(sync.include_module(repo, "sample-benchmark", "benchmark/sample-benchmark"))
+        self.assertFalse(
+            sync.include_module(repo, "sample-examples", "examples/sample-examples")
+        )
+        self.assertFalse(
+            sync.include_module(repo, "sample-benchmark", "benchmark/sample-benchmark")
+        )
         self.assertTrue(sync.include_module(repo, "sample-core", "sample-core"))
 
     def test_projects_repo_excludes_non_published_mock_web_apps(self) -> None:
@@ -207,13 +240,27 @@ class SyncManagedCatalogTest(unittest.TestCase):
             if managed_repo.label == "bluetape4k-projects"
         )
 
-        self.assertFalse(sync.include_module(repo, "bluetape4k-mock-web-server", "testing/mock-web-server"))
         self.assertFalse(
-            sync.include_module(repo, "bluetape4k-mock-webflux-server", "testing/mock-webflux-server")
+            sync.include_module(
+                repo, "bluetape4k-mock-web-server", "testing/mock-web-server"
+            )
         )
-        self.assertTrue(sync.include_module(repo, "bluetape4k-testcontainers", "testing/testcontainers"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.9.2"))
-        self.assertTrue(sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.10.0"))
+        self.assertFalse(
+            sync.include_module(
+                repo, "bluetape4k-mock-webflux-server", "testing/mock-webflux-server"
+            )
+        )
+        self.assertTrue(
+            sync.include_module(
+                repo, "bluetape4k-testcontainers", "testing/testcontainers"
+            )
+        )
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.9.2")
+        )
+        self.assertTrue(
+            sync.include_module(repo, "bluetape4k-ktor-core", "ktor/core", "1.10.0")
+        )
 
     def test_projects_repo_excludes_unpublished_ktor_modules(self) -> None:
         repo = next(
@@ -222,11 +269,25 @@ class SyncManagedCatalogTest(unittest.TestCase):
             if managed_repo.label == "bluetape4k-projects"
         )
 
-        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-core", "io/ktor/ktor-core"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-observability", "io/ktor/ktor-observability"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-openapi", "io/ktor/ktor-openapi"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-resilience4j", "io/ktor/ktor-resilience4j"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-ktor-testing", "io/ktor/ktor-testing"))
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-ktor-core", "io/ktor/ktor-core")
+        )
+        self.assertFalse(
+            sync.include_module(
+                repo, "bluetape4k-ktor-observability", "io/ktor/ktor-observability"
+            )
+        )
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-ktor-openapi", "io/ktor/ktor-openapi")
+        )
+        self.assertFalse(
+            sync.include_module(
+                repo, "bluetape4k-ktor-resilience4j", "io/ktor/ktor-resilience4j"
+            )
+        )
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-ktor-testing", "io/ktor/ktor-testing")
+        )
 
     def test_image_repo_excludes_unpublished_captcha_and_ktor_modules(self) -> None:
         repo = next(
@@ -235,11 +296,19 @@ class SyncManagedCatalogTest(unittest.TestCase):
             if managed_repo.label == "bluetape4k-image"
         )
 
-        self.assertFalse(sync.include_module(repo, "bluetape4k-images-captcha", "images-captcha"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor"))
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-images-captcha", "images-captcha")
+        )
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor")
+        )
         self.assertTrue(sync.include_module(repo, "bluetape4k-images", "images"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.1.2"))
-        self.assertTrue(sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.2.0"))
+        self.assertFalse(
+            sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.1.2")
+        )
+        self.assertTrue(
+            sync.include_module(repo, "bluetape4k-images-ktor", "images-ktor", "0.2.0")
+        )
 
     def test_javers_repo_gates_new_modules_by_selected_bom_version(self) -> None:
         repo = next(
@@ -249,9 +318,13 @@ class SyncManagedCatalogTest(unittest.TestCase):
         )
 
         self.assertFalse(sync.include_module(repo, "javers-ddd", "javers-ddd", "0.1.2"))
-        self.assertFalse(sync.include_module(repo, "javers-exposed", "javers-exposed", "0.1.2"))
+        self.assertFalse(
+            sync.include_module(repo, "javers-exposed", "javers-exposed", "0.1.2")
+        )
         self.assertTrue(sync.include_module(repo, "javers-ddd", "javers-ddd", "0.2.0"))
-        self.assertTrue(sync.include_module(repo, "javers-exposed", "javers-exposed", "0.2.0"))
+        self.assertTrue(
+            sync.include_module(repo, "javers-exposed", "javers-exposed", "0.2.0")
+        )
         self.assertFalse(
             sync.include_module(
                 repo,
@@ -269,7 +342,9 @@ class SyncManagedCatalogTest(unittest.TestCase):
             )
         )
 
-    def test_exposed_repo_gates_unpublished_database_modules_by_selected_bom_version(self) -> None:
+    def test_exposed_repo_gates_unpublished_database_modules_by_selected_bom_version(
+        self,
+    ) -> None:
         repo = next(
             managed_repo
             for managed_repo in sync.MANAGED_REPOS
@@ -277,16 +352,36 @@ class SyncManagedCatalogTest(unittest.TestCase):
         )
 
         self.assertFalse(
-            sync.include_module(repo, "bluetape4k-exposed-cockroachdb", "exposed/exposed-cockroachdb", "1.11.0")
+            sync.include_module(
+                repo,
+                "bluetape4k-exposed-cockroachdb",
+                "exposed/exposed-cockroachdb",
+                "1.11.0",
+            )
         )
         self.assertFalse(
-            sync.include_module(repo, "bluetape4k-exposed-starrocks", "exposed/exposed-starrocks", "1.11.0")
+            sync.include_module(
+                repo,
+                "bluetape4k-exposed-starrocks",
+                "exposed/exposed-starrocks",
+                "1.11.0",
+            )
         )
         self.assertTrue(
-            sync.include_module(repo, "bluetape4k-exposed-cockroachdb", "exposed/exposed-cockroachdb", "1.12.0")
+            sync.include_module(
+                repo,
+                "bluetape4k-exposed-cockroachdb",
+                "exposed/exposed-cockroachdb",
+                "1.12.0",
+            )
         )
         self.assertTrue(
-            sync.include_module(repo, "bluetape4k-exposed-starrocks", "exposed/exposed-starrocks", "1.12.0")
+            sync.include_module(
+                repo,
+                "bluetape4k-exposed-starrocks",
+                "exposed/exposed-starrocks",
+                "1.12.0",
+            )
         )
 
     def test_exposed_repo_excludes_unpublished_database_modules(self) -> None:
@@ -296,9 +391,19 @@ class SyncManagedCatalogTest(unittest.TestCase):
             if managed_repo.label == "bluetape4k-exposed"
         )
 
-        self.assertFalse(sync.include_module(repo, "bluetape4k-exposed-cockroachdb", "exposed/cockroachdb"))
-        self.assertFalse(sync.include_module(repo, "bluetape4k-exposed-starrocks", "exposed/starrocks"))
-        self.assertTrue(sync.include_module(repo, "bluetape4k-exposed-core", "exposed/core"))
+        self.assertFalse(
+            sync.include_module(
+                repo, "bluetape4k-exposed-cockroachdb", "exposed/cockroachdb"
+            )
+        )
+        self.assertFalse(
+            sync.include_module(
+                repo, "bluetape4k-exposed-starrocks", "exposed/starrocks"
+            )
+        )
+        self.assertTrue(
+            sync.include_module(repo, "bluetape4k-exposed-core", "exposed/core")
+        )
 
     def test_validate_discovered_rejects_duplicate_aliases(self) -> None:
         repo = sync.MANAGED_REPOS[0]
@@ -332,7 +437,9 @@ class SyncManagedCatalogTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            errors = sync.catalog_reference_errors(catalog_file, allowed_version_only_aliases={})
+            errors = sync.catalog_reference_errors(
+                catalog_file, allowed_version_only_aliases={}
+            )
 
         self.assertEqual(errors, ["Unreferenced catalog version aliases:\n  orphan"])
 
@@ -350,11 +457,15 @@ class SyncManagedCatalogTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            errors = sync.catalog_reference_errors(catalog_file, allowed_version_only_aliases={})
+            errors = sync.catalog_reference_errors(
+                catalog_file, allowed_version_only_aliases={}
+            )
 
         self.assertEqual(errors, ["Unreferenced catalog version aliases:\n  orphan"])
 
-    def test_catalog_reference_errors_allows_reasoned_version_only_aliases(self) -> None:
+    def test_catalog_reference_errors_allows_reasoned_version_only_aliases(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             catalog_file = Path(tmp) / "libs.versions.toml"
             catalog_file.write_text(
@@ -378,7 +489,9 @@ class SyncManagedCatalogTest(unittest.TestCase):
 
         self.assertEqual(errors, [])
 
-    def test_catalog_reference_errors_allows_downstream_referenced_aliases(self) -> None:
+    def test_catalog_reference_errors_allows_downstream_referenced_aliases(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             catalog_file = Path(tmp) / "libs.versions.toml"
             catalog_file.write_text(
@@ -401,7 +514,9 @@ class SyncManagedCatalogTest(unittest.TestCase):
 
         self.assertEqual(errors, [])
 
-    def test_downstream_bt4k_version_errors_rejects_missing_catalog_versions(self) -> None:
+    def test_downstream_bt4k_version_errors_rejects_missing_catalog_versions(
+        self,
+    ) -> None:
         repo = sync.ManagedRepo(
             label="sample-repo",
             root_name="sample-repo",
@@ -435,7 +550,9 @@ class SyncManagedCatalogTest(unittest.TestCase):
 
         self.assertEqual(
             errors,
-            ["Downstream bt4kVersion aliases missing from catalog versions:\n  sample-repo: missing"],
+            [
+                "Downstream bt4kVersion aliases missing from catalog versions:\n  sample-repo: missing"
+            ],
         )
 
     def test_downstream_bt4k_version_errors_ignores_commented_references(self) -> None:
