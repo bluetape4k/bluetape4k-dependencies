@@ -53,8 +53,32 @@ GRADLE_FLAGS = (
 )
 FORBIDDEN_TASK = re.compile(r"(?:publish|sign|upload)", re.IGNORECASE)
 FULL_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+COORDINATE = re.compile(r"^[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+$")
+PROJECT_PATH = re.compile(r"^:(?:[A-Za-z0-9_.-]+(?::[A-Za-z0-9_.-]+)*)?$")
+LINE_ID = re.compile(r"^(?:default|[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$")
 CACHE_KINDS = frozenset(
     {"gradle-cache-file", "gradle-distribution-file", "maven-local-file"}
+)
+INSIGHT_FIELDS = frozenset(
+    {
+        "authority_id",
+        "line_id",
+        "repository",
+        "project_path",
+        "coordinate",
+        "configuration",
+        "reason",
+        "expected_resolved_version",
+        "artifact_path",
+    }
+)
+INSIGHT_REASONS = frozenset(
+    {
+        "compatibility-line",
+        "bom-managed-versionless",
+        "intentional-version-delta",
+        "changed-normalized-graph",
+    }
 )
 
 
@@ -497,6 +521,84 @@ def gradle_command(tasks: Sequence[str]) -> tuple[str, ...]:
     if any(token in {"dependsOn", "finalizedBy"} for token in tasks):
         raise RuntimeError("forbidden task graph injection")
     return ("./gradlew", *tasks, *GRADLE_FLAGS)
+
+
+def validate_g7_insights(
+    values: Sequence[Mapping[str, object]],
+    *,
+    required_authorities: set[tuple[str, str]],
+) -> tuple[dict[str, str], ...]:
+    normalized: list[dict[str, str]] = []
+    keys: set[tuple[str, str, str, str, str]] = set()
+    observed_authorities: set[tuple[str, str]] = set()
+    for index, value in enumerate(values):
+        if set(value) != INSIGHT_FIELDS or not all(
+            isinstance(value[field], str) and value[field] for field in INSIGHT_FIELDS
+        ):
+            raise RuntimeError(f"invalid G7 insight fields at index {index}")
+        item = {field: str(value[field]) for field in INSIGHT_FIELDS}
+        if FULL_SHA256.fullmatch(item["authority_id"]) is None:
+            raise RuntimeError(f"invalid G7 authority_id at index {index}")
+        if LINE_ID.fullmatch(item["line_id"]) is None:
+            raise RuntimeError(f"invalid G7 line_id at index {index}")
+        if COORDINATE.fullmatch(item["coordinate"]) is None:
+            raise RuntimeError(f"invalid G7 exact coordinate at index {index}")
+        if PROJECT_PATH.fullmatch(item["project_path"]) is None:
+            raise RuntimeError(f"invalid G7 project_path at index {index}")
+        if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]*", item["configuration"]):
+            raise RuntimeError(f"invalid G7 configuration at index {index}")
+        if item["reason"] not in INSIGHT_REASONS:
+            raise RuntimeError(f"invalid G7 reason at index {index}")
+        if re.search(r"(?:\+|^latest\.|[\[\]()])", item["expected_resolved_version"]):
+            raise RuntimeError(f"invalid G7 expected resolved version at index {index}")
+        artifact_path = Path(item["artifact_path"])
+        if artifact_path.is_absolute() or ".." in artifact_path.parts:
+            raise RuntimeError(f"invalid G7 artifact_path at index {index}")
+        authority = (item["authority_id"], item["line_id"])
+        key = (
+            item["repository"],
+            item["authority_id"],
+            item["line_id"],
+            item["coordinate"],
+            item["configuration"],
+        )
+        if key in keys:
+            raise RuntimeError(f"duplicate G7 insight at index {index}")
+        keys.add(key)
+        observed_authorities.add(authority)
+        normalized.append(item)
+    missing = required_authorities - observed_authorities
+    extra = observed_authorities - required_authorities
+    if extra:
+        raise RuntimeError(f"extra G7 insights for {len(extra)} authority lines")
+    if missing:
+        raise RuntimeError(f"missing G7 insights for {len(missing)} authority lines")
+    return tuple(
+        sorted(
+            normalized,
+            key=lambda item: (
+                item["repository"],
+                item["authority_id"],
+                item["line_id"],
+                item["coordinate"],
+                item["configuration"],
+            ),
+        )
+    )
+
+
+def insight_command(insight: Mapping[str, str]) -> tuple[str, ...]:
+    project_path = insight["project_path"].rstrip(":")
+    task = f"{project_path}:dependencyInsight"
+    return gradle_command(
+        (
+            task,
+            "--dependency",
+            insight["coordinate"],
+            "--configuration",
+            insight["configuration"],
+        )
+    )
 
 
 def validate_build_text(text: str) -> None:

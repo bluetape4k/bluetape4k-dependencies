@@ -512,6 +512,87 @@ class RunCatalogValidationTest(unittest.TestCase):
             self.assertEqual(result["path_sha"], "PASS")
             self.assertEqual(result["declared_ref"], "BLOCKED_UNTIL_TAG")
 
+    def test_g7_insights_are_exact_sorted_deduplicated_gradle_commands(self) -> None:
+        authority_a = "a" * 64
+        authority_b = "b" * 64
+        records = [
+            {
+                "authority_id": authority_b,
+                "line_id": "default",
+                "repository": "bluetape4k-projects",
+                "project_path": ":module-b",
+                "coordinate": "org.example:beta",
+                "configuration": "compileClasspath",
+                "reason": "compatibility-line",
+                "expected_resolved_version": "2.0.0",
+                "artifact_path": "evidence/beta.txt",
+            },
+            {
+                "authority_id": authority_a,
+                "line_id": "spring-boot3",
+                "repository": "bluetape4k-aws",
+                "project_path": ":module-a",
+                "coordinate": "org.example:alpha",
+                "configuration": "compileClasspath",
+                "reason": "intentional-version-delta",
+                "expected_resolved_version": "1.2.3",
+                "artifact_path": "evidence/alpha.txt",
+            },
+        ]
+        normalized = runner.validate_g7_insights(
+            records,
+            required_authorities={
+                (authority_a, "spring-boot3"),
+                (authority_b, "default"),
+            },
+        )
+        self.assertEqual(
+            [item["authority_id"] for item in normalized], [authority_a, authority_b]
+        )
+        command = runner.insight_command(normalized[0])
+        self.assertEqual(
+            command[:6],
+            (
+                "./gradlew",
+                ":module-a:dependencyInsight",
+                "--dependency",
+                "org.example:alpha",
+                "--configuration",
+                "compileClasspath",
+            ),
+        )
+        for flag in runner.GRADLE_FLAGS:
+            self.assertIn(flag, command)
+
+    def test_g7_insights_reject_missing_extra_wildcard_and_duplicate(self) -> None:
+        authority = "a" * 64
+        valid = {
+            "authority_id": authority,
+            "line_id": "default",
+            "repository": "bluetape4k-projects",
+            "project_path": ":module",
+            "coordinate": "org.example:artifact",
+            "configuration": "compileClasspath",
+            "reason": "changed-normalized-graph",
+            "expected_resolved_version": "1.0.0",
+            "artifact_path": "evidence/artifact.txt",
+        }
+        with self.assertRaisesRegex(RuntimeError, "missing"):
+            runner.validate_g7_insights([], required_authorities={(authority, "default")})
+        with self.assertRaisesRegex(RuntimeError, "extra"):
+            runner.validate_g7_insights(
+                [valid], required_authorities={("b" * 64, "default")}
+            )
+        wildcard = {**valid, "coordinate": "org.example:*"}
+        with self.assertRaisesRegex(RuntimeError, "coordinate"):
+            runner.validate_g7_insights(
+                [wildcard], required_authorities={(authority, "default")}
+            )
+        with self.assertRaisesRegex(RuntimeError, "duplicate"):
+            runner.validate_g7_insights(
+                [valid, valid], required_authorities={(authority, "default")}
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
