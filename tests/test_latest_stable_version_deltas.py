@@ -101,7 +101,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertIn('jackson3          = "3.2.1"', catalog)
         self.assertIn('aws-kotlin        = "1.8.22"', catalog)
         self.assertIn('aws2              = "2.47.6"', catalog)
-        self.assertIn('aws2-crt          = "0.48.3"', catalog)
+        self.assertIn('aws2-crt          = "0.47.3"', catalog)
         for smithy_key in (
             "managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467",
             "managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5",
@@ -137,6 +137,44 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         build = BUILD.read_text(encoding="utf-8")
 
         self.assertIn("api(libs.aws2.aws.crt)", build)
+
+    def test_library_batch_two_matches_the_candidate_catalog(self) -> None:
+        catalog = CATALOG.read_text(encoding="utf-8")
+        expected_families = {
+            "managed-grpc-": "1.81.1",
+            "managed-cassandra-java-driver-": "4.19.3",
+            "managed-mongo": "5.7.1",
+            "managed-mutiny": "3.2.1",
+            "managed-rest-assured": "6.0.1",
+        }
+        excluded_keys = {
+            "managed-grpc-google-common-protos-h49f5a7d50588",
+            "managed-grpc-kotlin-stub-hb3943aafd993",
+            "managed-grpc-protoc-gen-grpc-kotlin-h8643385749ff",
+        }
+        for prefix, version in expected_families.items():
+            matching = [
+                line
+                for line in catalog.splitlines()
+                if line.startswith(prefix)
+                and line.split("=", 1)[0].strip() not in excluded_keys
+            ]
+            self.assertGreater(len(matching), 0, prefix)
+            self.assertTrue(
+                all(f'= "{version}"' in line for line in matching),
+                f"{prefix} family is not aligned to {version}",
+            )
+
+        for key, version in {
+            "managed-groovy-h1ef057f2b39e": "5.0.8",
+            "managed-groovy-jsr223-h7a8657ed8c7a": "5.0.8",
+            "managed-javers-core-had7b72eff626": "7.11.7",
+            "managed-r2dbc-mariadb-h5b11561e1948": "1.4.1",
+            "managed-r2dbc-mysql-hd139bc72be49": "1.4.3",
+            "managed-r2dbc-postgresql-h38255c5a2805": "1.1.2.RELEASE",
+            "managed-spring-cloud-dependencies-hfea315df9a2c": "2025.1.2",
+        }.items():
+            self.assertIn(f'{key} = "{version}"', catalog)
 
 
 if __name__ == "__main__":

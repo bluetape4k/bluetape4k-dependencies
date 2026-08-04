@@ -97,11 +97,11 @@
       "kind": "library",
       "coordinate": "software.amazon.awssdk.crt:aws-crt",
       "before": "versionless",
-      "after": "0.48.3",
+      "after": "0.47.3",
       "disposition": "adopt-latest",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/crt/aws-crt/maven-metadata.xml",
-      "reason": "The artifact is outside the AWS SDK v2 BOM and has no parent-POM coupling; adopt its latest stable standalone release explicitly."
+      "reason": "The artifact is outside the AWS SDK v2 BOM; pin the 0.47.3 version declared by the AWS SDK Java 2.47.6 parent and consumed by aws-crt-client."
     },
     {
       "authority-key": "aws-smithy-kotlin",
@@ -245,6 +245,127 @@
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/commons-codec/commons-codec/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Commons Codec 1.22 line."
+    },
+    {
+      "authority-key": "grpc-java",
+      "kind": "library-family",
+      "coordinate": "io.grpc:grpc-bom",
+      "before": "1.81.0",
+      "after": "1.81.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/grpc/grpc-bom/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch across the coordinated gRPC Java family."
+    },
+    {
+      "authority-key": "cassandra-java-driver",
+      "kind": "library-family",
+      "coordinate": "org.apache.cassandra:java-driver-core",
+      "before": "4.19.2",
+      "after": "4.19.3",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/apache/cassandra/java-driver-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch across the Cassandra Java driver family."
+    },
+    {
+      "authority-key": "groovy",
+      "kind": "library-family",
+      "coordinate": "org.apache.groovy:groovy",
+      "before": "5.0.6",
+      "after": "5.0.8",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/apache/groovy/groovy/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch across the Groovy 5.0 family."
+    },
+    {
+      "authority-key": "javers",
+      "kind": "library",
+      "coordinate": "org.javers:javers-core",
+      "before": "7.11.0",
+      "after": "7.11.7",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/javers/javers-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the JaVers 7.11 line."
+    },
+    {
+      "authority-key": "mongodb-driver",
+      "kind": "library-family",
+      "coordinate": "org.mongodb:mongodb-driver-core",
+      "before": "5.7.0",
+      "after": "5.7.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/mongodb/mongodb-driver-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch across the MongoDB Java driver family."
+    },
+    {
+      "authority-key": "mutiny",
+      "kind": "library-family",
+      "coordinate": "io.smallrye.reactive:mutiny",
+      "before": "3.2.0",
+      "after": "3.2.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/smallrye/reactive/mutiny/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch across the Mutiny Kotlin family."
+    },
+    {
+      "authority-key": "r2dbc-mariadb",
+      "kind": "library",
+      "coordinate": "org.mariadb:r2dbc-mariadb",
+      "before": "1.4.0",
+      "after": "1.4.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/mariadb/r2dbc-mariadb/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the R2DBC MariaDB 1.4 line."
+    },
+    {
+      "authority-key": "r2dbc-mysql",
+      "kind": "library",
+      "coordinate": "io.asyncer:r2dbc-mysql",
+      "before": "1.4.2",
+      "after": "1.4.3",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/asyncer/r2dbc-mysql/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the R2DBC MySQL 1.4 line."
+    },
+    {
+      "authority-key": "r2dbc-postgresql",
+      "kind": "library",
+      "coordinate": "org.postgresql:r2dbc-postgresql",
+      "before": "1.1.1.RELEASE",
+      "after": "1.1.2.RELEASE",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/postgresql/r2dbc-postgresql/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the R2DBC PostgreSQL 1.1 line."
+    },
+    {
+      "authority-key": "rest-assured",
+      "kind": "library-family",
+      "coordinate": "io.rest-assured:rest-assured",
+      "before": "6.0.0",
+      "after": "6.0.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/rest-assured/rest-assured/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch across the REST Assured 6.0 family."
+    },
+    {
+      "authority-key": "spring-cloud",
+      "kind": "platform",
+      "coordinate": "org.springframework.cloud:spring-cloud-dependencies",
+      "before": "2025.1.1",
+      "after": "2025.1.2",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/springframework/cloud/spring-cloud-dependencies/maven-metadata.xml",
+      "reason": "Adopt the latest stable service release in the Spring Cloud 2025.1 line."
     }
   ],
   "hold": [
