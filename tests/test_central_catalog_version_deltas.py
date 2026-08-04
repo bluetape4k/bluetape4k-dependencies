@@ -4,7 +4,6 @@ import json
 import unittest
 from pathlib import Path
 
-
 LEDGER = Path(__file__).resolve().parents[1] / "config" / "central-catalog-version-deltas.json"
 
 
@@ -13,7 +12,9 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
 
         self.assertEqual(document["schema-version"], 1)
-        self.assertEqual(document["rollout"], "2026-07-15-central-catalog-adoption")
+        self.assertEqual(
+            document["rollout"], "2026-08-03-issue-168-central-catalog-authority"
+        )
         self.assertIn(document["status"], {"pending-resolved-graph", "verified"})
         self.assertEqual(set(document), {"schema-version", "rollout", "status", "delta"})
 
@@ -27,10 +28,21 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             "verification",
             "reason",
         }
+        repositories = {
+            "bluetape4k-projects",
+            "bluetape4k-aws",
+            "bluetape4k-experimental",
+            "bluetape4k-exposed",
+            "bluetape4k-graph",
+            "bluetape4k-image",
+            "bluetape4k-javers",
+            "bluetape4k-leader",
+            "bluetape4k-text",
+        }
         identities: set[tuple[str, str]] = set()
         for delta in document["delta"]:
             self.assertEqual(set(delta), expected_fields)
-            self.assertIn(delta["repository"], {"bluetape4k-projects", "bluetape4k-experimental"})
+            self.assertIn(delta["repository"], repositories)
             self.assertIn(delta["kind"], {"library", "platform", "plugin"})
             self.assertIn(
                 delta["classification"],
@@ -43,7 +55,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             self.assertNotIn(identity, identities)
             identities.add(identity)
 
-    def test_ledger_records_only_the_audited_adoption_deltas(self) -> None:
+    def test_ledger_records_only_issue_168_reviewed_adoption_deltas(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         actual = {
             (
@@ -55,21 +67,40 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             for delta in document["delta"]
         }
         expected = {
-            ("bluetape4k-projects", "io.fabric8:kubernetes-client-bom", "7.7.0", "7.8.0"),
-            ("bluetape4k-projects", "org.flywaydb:flyway-core", "11.20.3", "12.10.0"),
-            ("bluetape4k-projects", "org.apache.tomcat:tomcat-jdbc", "11.0.18", "11.0.24"),
-            ("bluetape4k-experimental", "com.gradleup.shadow", "9.4.2", "9.5.1"),
-            ("bluetape4k-experimental", "org.jetbrains.exposed:exposed-bom", "1.3.0", "1.3.1"),
-            ("bluetape4k-experimental", "io.netty:netty-bom", "4.2.15.Final", "4.2.16.Final"),
-            ("bluetape4k-experimental", "org.apache.logging.log4j:log4j-bom", "2.26.0", "2.26.1"),
-            ("bluetape4k-experimental", "com.zaxxer:HikariCP", "7.0.2", "7.1.0"),
-            ("bluetape4k-experimental", "org.flywaydb:flyway-core", "12.6.0", "12.10.0"),
-            (
-                "bluetape4k-experimental",
-                "io.github.bluetape4k:bluetape4k-dependencies",
-                "1.4.0-SNAPSHOT",
-                "1.3.1",
-            ),
+            ("bluetape4k-aws", "ch.qos.logback:logback-classic", "1.5.32", "1.5.38"),
+            ("bluetape4k-aws", "tools.jackson:jackson-bom", "3.1.3", "3.2.0"),
+            ("bluetape4k-experimental", "at.yawk.lz4:lz4-java", "1.11.0", "1.11.1"),
+            ("bluetape4k-experimental", "ch.qos.logback:logback-classic", "1.5.32", "1.5.38"),
+            ("bluetape4k-experimental", "ch.qos.logback:logback-core", "1.5.32", "1.5.38"),
+            ("bluetape4k-experimental", "com.fasterxml.jackson:jackson-bom", "2.22.0", "2.22.1"),
+            ("bluetape4k-experimental", "jakarta.inject:jakarta.inject-api", "2.0.1.MR", "2.0.1"),
+            ("bluetape4k-exposed", "com.falkordb:jfalkordb", "0.7.0", "0.8.0"),
+            ("bluetape4k-exposed", "com.github.avro-kotlin.avro4k:avro4k-core", "2.10.0", "2.10.1"),
+            ("bluetape4k-exposed", "io.zipkin.brave:brave", "6.3.0", "6.3.1"),
+            ("bluetape4k-exposed", "io.zipkin.brave:brave-tests", "6.3.0", "6.3.1"),
+            ("bluetape4k-exposed", "org.duckdb:duckdb_jdbc", "1.1.3", "1.5.2.1"),
+            ("bluetape4k-exposed", "org.hibernate.reactive:hibernate-reactive-core", "4.3.3.Final", "4.5.0.Final"),
+            ("bluetape4k-exposed", "org.owasp.dependencycheck", "12.1.9", "12.2.2"),
+            ("bluetape4k-graph", "ch.qos.logback:logback-classic", "1.5.32", "1.5.38"),
+            ("bluetape4k-graph", "ch.qos.logback:logback-core", "1.5.32", "1.5.38"),
+            ("bluetape4k-graph", "org.apache.commons:commons-text", "1.13.1", "1.15.0"),
+            ("bluetape4k-graph", "dev.detekt", "2.0.0-alpha.3", "2.0.0-alpha.5"),
+            ("bluetape4k-image", "ch.qos.logback:logback-classic", "1.5.32", "1.5.38"),
+            ("bluetape4k-javers", "at.yawk.lz4:lz4-java", "1.11.0", "1.11.1"),
+            ("bluetape4k-javers", "ch.qos.logback:logback-classic", "1.5.32", "1.5.38"),
+            ("bluetape4k-leader", "ch.qos.logback:logback-classic", "1.5.32", "1.5.38"),
+            ("bluetape4k-projects", "ch.qos.logback:logback-classic", "1.5.37", "1.5.38"),
+            ("bluetape4k-projects", "ch.qos.logback:logback-core", "1.5.37", "1.5.38"),
+            ("bluetape4k-projects", "com.clickhouse:clickhouse-jdbc", "0.9.5", "0.9.8"),
+            ("bluetape4k-projects", "io.gatling.highcharts:gatling-charts-highcharts", "3.15.0", "3.15.1"),
+            ("bluetape4k-projects", "io.gatling:gatling-core-java", "3.15.0", "3.15.1"),
+            ("bluetape4k-projects", "io.gatling:gatling-http-java", "3.15.0", "3.15.1"),
+            ("bluetape4k-projects", "io.nats:jnats", "2.25.1", "2.25.3"),
+            ("bluetape4k-projects", "io.trino:trino-jdbc", "475", "480"),
+            ("bluetape4k-projects", "org.apache.commons:commons-rng-simple", "1.6", "1.7"),
+            ("bluetape4k-projects", "org.elasticmq:elasticmq-rest-sqs_2.13", "1.6.12", "1.7.1"),
+            ("bluetape4k-projects", "io.gatling.gradle", "3.15.0", "3.15.1"),
+            ("bluetape4k-text", "ch.qos.logback:logback-classic", "1.5.32", "1.5.38"),
         }
 
         self.assertEqual(actual, expected)
@@ -82,9 +113,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             ("bluetape4k-projects", "org.apache.kafka:kafka-clients"),
             ("bluetape4k-projects", "org.apache.ignite:ignite-core"),
             ("bluetape4k-projects", "org.springframework.kafka:spring-kafka"),
-            ("bluetape4k-experimental", "com.fasterxml.jackson:jackson-bom"),
             ("bluetape4k-experimental", "io.github.bluetape4k:bluetape4k-exposed-bom"),
-            ("bluetape4k-aws", "tools.jackson:jackson-bom"),
             ("bluetape4k-leader", "org.springframework.boot:spring-boot-dependencies"),
         }
 

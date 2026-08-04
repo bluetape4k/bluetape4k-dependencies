@@ -1,107 +1,347 @@
 {
   "schema-version": 1,
-  "rollout": "2026-07-15-central-catalog-adoption",
-  "status": "verified",
+  "rollout": "2026-08-03-issue-168-central-catalog-authority",
+  "status": "pending-resolved-graph",
   "delta": [
     {
-      "repository": "bluetape4k-projects",
+      "repository": "bluetape4k-aws",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.32",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-aws",
       "kind": "platform",
-      "coordinate": "io.fabric8:kubernetes-client-bom",
-      "before": "7.7.0",
-      "after": "7.8.0",
-      "classification": "compatibility-bugfix",
-      "verification": "verified",
-      "reason": "Align Fabric8 with the central catalog and the Vert.x 4 compatibility line used by k8sTest."
-    },
-    {
-      "repository": "bluetape4k-projects",
-      "kind": "library",
-      "coordinate": "org.flywaydb:flyway-core",
-      "before": "11.20.3",
-      "after": "12.10.0",
+      "coordinate": "tools.jackson:jackson-bom",
+      "before": "3.1.3",
+      "after": "3.2.0",
       "classification": "central-adoption",
-      "verification": "verified",
-      "reason": "Adopt the existing central Flyway version instead of retaining repository-local authority."
-    },
-    {
-      "repository": "bluetape4k-projects",
-      "kind": "library",
-      "coordinate": "org.apache.tomcat:tomcat-jdbc",
-      "before": "11.0.18",
-      "after": "11.0.24",
-      "classification": "central-adoption",
-      "verification": "verified",
-      "reason": "Adopt the existing central Tomcat version instead of retaining repository-local authority."
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
     },
     {
       "repository": "bluetape4k-experimental",
+      "kind": "library",
+      "coordinate": "at.yawk.lz4:lz4-java",
+      "before": "1.11.0",
+      "after": "1.11.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.32",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-core",
+      "before": "1.5.32",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "platform",
+      "coordinate": "com.fasterxml.jackson:jackson-bom",
+      "before": "2.22.0",
+      "after": "2.22.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "kind": "library",
+      "coordinate": "jakarta.inject:jakarta.inject-api",
+      "before": "2.0.1.MR",
+      "after": "2.0.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "kind": "library",
+      "coordinate": "com.falkordb:jfalkordb",
+      "before": "0.7.0",
+      "after": "0.8.0",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "kind": "library",
+      "coordinate": "com.github.avro-kotlin.avro4k:avro4k-core",
+      "before": "2.10.0",
+      "after": "2.10.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "kind": "library",
+      "coordinate": "io.zipkin.brave:brave",
+      "before": "6.3.0",
+      "after": "6.3.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "kind": "library",
+      "coordinate": "io.zipkin.brave:brave-tests",
+      "before": "6.3.0",
+      "after": "6.3.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "kind": "library",
+      "coordinate": "org.duckdb:duckdb_jdbc",
+      "before": "1.1.3",
+      "after": "1.5.2.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "kind": "library",
+      "coordinate": "org.hibernate.reactive:hibernate-reactive-core",
+      "before": "4.3.3.Final",
+      "after": "4.5.0.Final",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-exposed",
       "kind": "plugin",
-      "coordinate": "com.gradleup.shadow",
-      "before": "9.4.2",
-      "after": "9.5.1",
+      "coordinate": "org.owasp.dependencycheck",
+      "before": "12.1.9",
+      "after": "12.2.2",
       "classification": "central-adoption",
-      "verification": "verified",
-      "reason": "Adopt the shared central Shadow plugin version."
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
     },
     {
-      "repository": "bluetape4k-experimental",
-      "kind": "platform",
-      "coordinate": "org.jetbrains.exposed:exposed-bom",
-      "before": "1.3.0",
-      "after": "1.3.1",
-      "classification": "compatibility-bugfix",
-      "verification": "verified",
-      "reason": "Align the complete Exposed family with the central catalog to eliminate the mixed 1.3.0/1.3.1 NoSuchMethodError."
-    },
-    {
-      "repository": "bluetape4k-experimental",
-      "kind": "platform",
-      "coordinate": "io.netty:netty-bom",
-      "before": "4.2.15.Final",
-      "after": "4.2.16.Final",
-      "classification": "central-adoption",
-      "verification": "verified",
-      "reason": "Adopt the shared central Netty BOM version."
-    },
-    {
-      "repository": "bluetape4k-experimental",
-      "kind": "platform",
-      "coordinate": "org.apache.logging.log4j:log4j-bom",
-      "before": "2.26.0",
-      "after": "2.26.1",
-      "classification": "central-adoption",
-      "verification": "verified",
-      "reason": "Adopt the shared central Log4j BOM version."
-    },
-    {
-      "repository": "bluetape4k-experimental",
+      "repository": "bluetape4k-graph",
       "kind": "library",
-      "coordinate": "com.zaxxer:HikariCP",
-      "before": "7.0.2",
-      "after": "7.1.0",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.32",
+      "after": "1.5.38",
       "classification": "central-adoption",
-      "verification": "verified",
-      "reason": "Adopt the shared central HikariCP version."
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
     },
     {
-      "repository": "bluetape4k-experimental",
+      "repository": "bluetape4k-graph",
       "kind": "library",
-      "coordinate": "org.flywaydb:flyway-core",
-      "before": "12.6.0",
-      "after": "12.10.0",
+      "coordinate": "ch.qos.logback:logback-core",
+      "before": "1.5.32",
+      "after": "1.5.38",
       "classification": "central-adoption",
-      "verification": "verified",
-      "reason": "Adopt the shared central Flyway version."
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
     },
     {
-      "repository": "bluetape4k-experimental",
-      "kind": "platform",
-      "coordinate": "io.github.bluetape4k:bluetape4k-dependencies",
-      "before": "1.4.0-SNAPSHOT",
-      "after": "1.3.1",
-      "classification": "released-bom-alignment",
-      "verification": "verified",
-      "reason": "Use the centrally declared latest released BOM instead of a repository-local snapshot line."
+      "repository": "bluetape4k-graph",
+      "kind": "library",
+      "coordinate": "org.apache.commons:commons-text",
+      "before": "1.13.1",
+      "after": "1.15.0",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-graph",
+      "kind": "plugin",
+      "coordinate": "dev.detekt",
+      "before": "2.0.0-alpha.3",
+      "after": "2.0.0-alpha.5",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-image",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.32",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-javers",
+      "kind": "library",
+      "coordinate": "at.yawk.lz4:lz4-java",
+      "before": "1.11.0",
+      "after": "1.11.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-javers",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.32",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-leader",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.32",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.37",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-core",
+      "before": "1.5.37",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "com.clickhouse:clickhouse-jdbc",
+      "before": "0.9.5",
+      "after": "0.9.8",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "io.gatling.highcharts:gatling-charts-highcharts",
+      "before": "3.15.0",
+      "after": "3.15.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "io.gatling:gatling-core-java",
+      "before": "3.15.0",
+      "after": "3.15.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "io.gatling:gatling-http-java",
+      "before": "3.15.0",
+      "after": "3.15.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "io.nats:jnats",
+      "before": "2.25.1",
+      "after": "2.25.3",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "io.trino:trino-jdbc",
+      "before": "475",
+      "after": "480",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "org.apache.commons:commons-rng-simple",
+      "before": "1.6",
+      "after": "1.7",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "library",
+      "coordinate": "org.elasticmq:elasticmq-rest-sqs_2.13",
+      "before": "1.6.12",
+      "after": "1.7.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "kind": "plugin",
+      "coordinate": "io.gatling.gradle",
+      "before": "3.15.0",
+      "after": "3.15.1",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
+    },
+    {
+      "repository": "bluetape4k-text",
+      "kind": "library",
+      "coordinate": "ch.qos.logback:logback-classic",
+      "before": "1.5.32",
+      "after": "1.5.38",
+      "classification": "central-adoption",
+      "verification": "pending-resolved-graph",
+      "reason": "Adopt the reviewed Issue #168 central catalog line; verify the resolved graph before promotion."
     }
   ]
 }
