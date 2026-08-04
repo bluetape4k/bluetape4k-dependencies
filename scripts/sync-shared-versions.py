@@ -877,11 +877,7 @@ def catalog_authority_records(
     used_authority_lines: set[tuple[str, str, str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     authority = _catalog_authority_module()
-    central_data = read_catalog(central_catalog)
-    central_coordinates = {
-        library.module for library in central_data.libraries.values()
-    }
-    central_plugin_ids = {plugin.plugin_id for plugin in central_data.plugins.values()}
+    read_catalog(central_catalog)
     pending: list[dict[str, Any]] = []
     subject_repositories: dict[tuple[str, str], set[str]] = {}
 
@@ -894,8 +890,6 @@ def catalog_authority_records(
         library_source_lines = _section_source_lines(catalog, "libraries")
         for alias, library in data.libraries.items():
             if library.module.startswith("io.github.bluetape4k:"):
-                continue
-            if library.module in central_coordinates:
                 continue
             if library.version is None and library.version_ref is None:
                 continue
@@ -950,8 +944,6 @@ def catalog_authority_records(
 
         plugin_source_lines = _section_source_lines(catalog, "plugins")
         for alias, plugin in data.plugins.items():
-            if plugin.plugin_id in central_plugin_ids:
-                continue
             if plugin.version is None and plugin.version_ref is None:
                 continue
             declared_version = plugin.version

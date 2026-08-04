@@ -318,7 +318,14 @@ class SyncSharedVersionsTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             central = root / "central.toml"
-            central.write_text("[versions]\n[libraries]\n", encoding="utf-8")
+            central.write_text(
+                """[versions]
+h2-v2 = "2.4.240"
+[libraries]
+h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
+""",
+                encoding="utf-8",
+            )
             repository = root / "bluetape4k-projects"
             catalog = repository / "gradle" / "libs.versions.toml"
             catalog.parent.mkdir(parents=True)
