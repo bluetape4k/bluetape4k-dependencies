@@ -299,6 +299,70 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
         with self.assertRaisesRegex(migrate.MigrationError, "workspace"):
             migrate._load_repository_map(REPOSITORY_MAP_FIXTURE, Path("relative"))
 
+    def test_ambiguous_shared_version_keeps_all_catalog_aliases(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "gradle").mkdir()
+            catalog = root / "gradle/libs.versions.toml"
+            catalog.write_text(
+                "[versions]\n"
+                'shared = "1.2.3"\n'
+                "[plugins]\n"
+                "[libraries]\n"
+                'alpha-local = { module = "org.example:alpha", version.ref = "shared" }\n'
+                'beta-local = { module = "org.example:beta", version.ref = "shared" }\n',
+                encoding="utf-8",
+            )
+            (root / "build.gradle.kts").write_text(
+                "val shared = libs.versions.shared.get()\n", encoding="utf-8"
+            )
+            inventory = [
+                _record("a" * 64, alias="alpha-local", source_line=5),
+                _record(
+                    "b" * 64,
+                    coordinate="org.example:beta",
+                    alias="beta-local",
+                    source_line=6,
+                ),
+            ]
+            policy = {
+                "schema-version": 1,
+                "subjects": [
+                    _policy(central_alias="alpha")["subjects"][0],
+                    _policy(
+                        coordinate="org.example:beta",
+                        local_alias="beta-local",
+                        central_alias="beta",
+                    )["subjects"][0],
+                ],
+            }
+            policy["subjects"][0]["lines"][0]["version-key"] = "central-alpha"
+            policy["subjects"][1]["lines"][0]["version-key"] = "central-beta"
+            dispositions = {
+                "schema-version": 1,
+                "records": [
+                    _dispositions("a" * 64, ["alpha"])["records"][0],
+                    _dispositions("b" * 64, ["beta"])["records"][0],
+                ],
+            }
+            plan = migrate.plan_repository(
+                "bluetape4k-projects",
+                root,
+                catalog,
+                inventory,
+                policy,
+                dispositions,
+                migrate.CentralAliases(
+                    libraries={"alpha", "beta"},
+                    plugins=set(),
+                    versions={"central-alpha", "central-beta"},
+                ),
+            )
+            self.assertEqual(plan.removed_aliases, ())
+            self.assertTrue(
+                any("ambiguous local version" in blocker for blocker in plan.blockers)
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

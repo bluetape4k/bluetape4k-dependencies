@@ -854,11 +854,12 @@ def plan_repository(
         if local_alias_version_keys.get(mapping.local_alias) in ambiguous_version_keys
     }
     if any("ambiguous local version" in item for item in blockers):
-        catalog_removals.difference_update(
+        ambiguous_removals = {
             (section, alias)
             for section, alias in catalog_removals
             if alias in ambiguous_aliases
-        )
+        }
+        catalog_removals.difference_update(ambiguous_removals)
 
     for section, alias in sorted(catalog_removals):
         line_number = positions.get((section, alias))
