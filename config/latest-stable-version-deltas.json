@@ -75,11 +75,11 @@
       "kind": "platform",
       "coordinate": "software.amazon.awssdk:bom",
       "before": "2.47.1",
-      "after": "2.47.6",
+      "after": "2.50.3",
       "disposition": "adopt-latest",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/bom/maven-metadata.xml",
-      "reason": "Adopt the latest patch in the existing AWS SDK Java 2.47 compatibility line."
+      "reason": "Adopt the audit-cutoff latest stable AWS SDK Java 2.x BOM."
     },
     {
       "authority-key": "aws-kotlin",
@@ -97,11 +97,11 @@
       "kind": "library",
       "coordinate": "software.amazon.awssdk.crt:aws-crt",
       "before": "versionless",
-      "after": "0.47.3",
+      "after": "0.48.2",
       "disposition": "adopt-latest",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/crt/aws-crt/maven-metadata.xml",
-      "reason": "The artifact is outside the AWS SDK v2 BOM; pin the 0.47.3 version declared by the AWS SDK Java 2.47.6 parent and consumed by aws-crt-client."
+      "reason": "Pin the CRT version declared by the adopted AWS SDK Java 2.50.3 parent and consumed by aws-crt-client."
     },
     {
       "authority-key": "aws-smithy-kotlin",
@@ -251,11 +251,11 @@
       "kind": "library-family",
       "coordinate": "io.grpc:grpc-bom",
       "before": "1.81.0",
-      "after": "1.81.1",
+      "after": "1.83.1",
       "disposition": "adopt-latest",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/io/grpc/grpc-bom/maven-metadata.xml",
-      "reason": "Adopt the latest stable patch across the coordinated gRPC Java family."
+      "reason": "Adopt the latest stable gRPC Java 1.x release across the coordinated family."
     },
     {
       "authority-key": "cassandra-java-driver",
@@ -295,22 +295,22 @@
       "kind": "library-family",
       "coordinate": "org.mongodb:mongodb-driver-core",
       "before": "5.7.0",
-      "after": "5.7.1",
+      "after": "5.9.1",
       "disposition": "adopt-latest",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/org/mongodb/mongodb-driver-core/maven-metadata.xml",
-      "reason": "Adopt the latest stable patch across the MongoDB Java driver family."
+      "reason": "Adopt the latest stable MongoDB Java driver 5.x release across the coordinated family."
     },
     {
       "authority-key": "mutiny",
       "kind": "library-family",
       "coordinate": "io.smallrye.reactive:mutiny",
       "before": "3.2.0",
-      "after": "3.2.1",
+      "after": "3.3.0",
       "disposition": "adopt-latest",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/io/smallrye/reactive/mutiny/maven-metadata.xml",
-      "reason": "Adopt the latest stable patch across the Mutiny Kotlin family."
+      "reason": "Adopt the latest stable Mutiny 3.x release across the Kotlin family."
     },
     {
       "authority-key": "r2dbc-mariadb",
@@ -388,6 +388,26 @@
       "disposition": "defer-breaking-migration",
       "source": "https://plugins.gradle.org/m2/org/owasp/dependencycheck/org.owasp.dependencycheck.gradle.plugin/maven-metadata.xml",
       "reason": "The latest stable release crosses a major version boundary and requires a dedicated compatibility review before the 1.4.0 train can adopt it."
+    },
+    {
+      "authority-key": "aws2-crt-global",
+      "kind": "library",
+      "coordinate": "software.amazon.awssdk.crt:aws-crt",
+      "current": "0.48.2",
+      "latest": "0.48.3",
+      "disposition": "hold-compatibility",
+      "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/crt/aws-crt/maven-metadata.xml",
+      "reason": "AWS SDK Java 2.50.3 parent tests and aws-crt-client consume 0.48.2; hold the standalone one-patch lead until the SDK adopts it or ABI verification proves it."
+    },
+    {
+      "authority-key": "aws-smithy-kotlin-global",
+      "kind": "library-family",
+      "coordinate": "aws.smithy.kotlin:runtime-core",
+      "current": "1.7.4",
+      "latest": "1.7.5",
+      "disposition": "hold-compatibility",
+      "source": "https://repo.maven.apache.org/maven2/aws/smithy/kotlin/runtime-core/maven-metadata.xml",
+      "reason": "AWS SDK for Kotlin 1.8.22 directly pins Smithy 1.7.4; hold the one-patch lead until the SDK family adopts it."
     }
   ]
 }

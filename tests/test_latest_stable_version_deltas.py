@@ -8,9 +8,22 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 CATALOG = REPO_ROOT / "gradle" / "libs.versions.toml"
 LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
 BUILD = REPO_ROOT / "build.gradle.kts"
+GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
 
 
 class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
+    def test_catalog_self_version_matches_the_release_version(self) -> None:
+        properties = dict(
+            line.split("=", 1)
+            for line in GRADLE_PROPERTIES.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#") and "=" in line
+        )
+        expected = properties["baseVersion"] + properties["snapshotVersion"]
+        self.assertIn(
+            f'bluetape4k-dependencies = "{expected}"',
+            CATALOG.read_text(encoding="utf-8"),
+        )
+
     def test_ledger_has_strict_schema_and_unique_authority_keys(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
 
@@ -100,8 +113,8 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertIn('shadow            = "9.6.1"', catalog)
         self.assertIn('jackson3          = "3.2.1"', catalog)
         self.assertIn('aws-kotlin        = "1.8.22"', catalog)
-        self.assertIn('aws2              = "2.47.6"', catalog)
-        self.assertIn('aws2-crt          = "0.47.3"', catalog)
+        self.assertIn('aws2              = "2.50.3"', catalog)
+        self.assertIn('aws2-crt          = "0.48.2"', catalog)
         for smithy_key in (
             "managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467",
             "managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5",
@@ -138,13 +151,24 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
 
         self.assertIn("api(libs.aws2.aws.crt)", build)
 
+    def test_selected_family_ledger_matches_the_candidate(self) -> None:
+        ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
+        adopted = {entry["authority-key"]: entry["after"] for entry in ledger["delta"]}
+
+        self.assertEqual(adopted["aws2"], "2.50.3")
+        self.assertEqual(adopted["aws2-crt"], "0.48.2")
+        self.assertEqual(adopted["aws-smithy-kotlin"], "1.7.4")
+        self.assertEqual(adopted["grpc-java"], "1.83.1")
+        self.assertEqual(adopted["mongodb-driver"], "5.9.1")
+        self.assertEqual(adopted["mutiny"], "3.3.0")
+
     def test_library_batch_two_matches_the_candidate_catalog(self) -> None:
         catalog = CATALOG.read_text(encoding="utf-8")
         expected_families = {
-            "managed-grpc-": "1.81.1",
+            "managed-grpc-": "1.83.1",
             "managed-cassandra-java-driver-": "4.19.3",
-            "managed-mongo": "5.7.1",
-            "managed-mutiny": "3.2.1",
+            "managed-mongo": "5.9.1",
+            "managed-mutiny": "3.3.0",
             "managed-rest-assured": "6.0.1",
         }
         excluded_keys = {

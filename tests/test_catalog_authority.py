@@ -252,7 +252,7 @@ class CatalogAuthorityTest(unittest.TestCase):
 
         self.assertEqual(aws_crt["disposition"], "central-direct")
         self.assertEqual(aws_crt["version-key"], "aws2-crt")
-        self.assertEqual(aws_crt["version"], "0.47.3")
+        self.assertEqual(aws_crt["version"], "0.48.2")
         self.assertEqual(
             aws_crt["evidence"],
             {"path": "gradle/libs.versions.toml", "type": "catalog-alias"},

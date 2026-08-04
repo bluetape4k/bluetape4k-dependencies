@@ -6,9 +6,9 @@
 | authority key | 기존 | 후보 | 호환 line |
 | --- | ---: | ---: | --- |
 | `jackson3` | `3.2.0` | `3.2.1` | Jackson 3.2 |
-| `aws2` | `2.47.1` | `2.47.6` | AWS Java SDK 2.47 |
+| `aws2` | `2.47.1` | `2.50.3` | audit-cutoff latest AWS Java 2.x |
 | `aws-kotlin` | `1.8.0` | `1.8.22` | AWS Kotlin 1.8 |
-| `aws2-crt` | versionless | `0.47.3` | AWS SDK Java 2.47.6 parent-tested line |
+| `aws2-crt` | versionless | `0.48.2` | AWS SDK Java 2.50.3 parent-tested line |
 | `aws-smithy-kotlin` | `1.6.14` | `1.7.4` | AWS Kotlin 1.8.22 aligned |
 | `ktor` | `3.5.1` | `3.5.2` | Ktor 3.5 |
 | `netty4` | `4.1.133.Final` | `4.1.136.Final` | Netty 4.1 / Fabric8 |
@@ -23,15 +23,15 @@
 | `scrimage` | `4.6.5` | `4.6.7` | Scrimage 4.6 |
 | `commons-codec` | `1.22.0` | `1.22.1` | Commons Codec 1.22 |
 
-AWS SDK Java BOM의 최신 2.x minor train, BouncyCastle provider, Netty 4.2,
+AWS SDK Java BOM은 audit cutoff의 최신 2.x minor train까지 포함한다. BouncyCastle provider, Netty 4.2,
 Vert.x major 통합은 이 배치에 포함하지 않는다. 해당 변경은 별도 호환성 및 보안
 검증 없이 자동 적용할 수 없다.
 
 `software.amazon.awssdk.crt:aws-crt`는 AWS SDK v2 BOM에서 관리되지 않는다.
 기존 versionless alias는 full `testCompileClasspath`에서 빈 버전으로 실패했다.
-AWS CRT는 AWS SDK Java BOM의 direct constraint는 아니지만, `aws-sdk-java-pom:2.47.6`이
-`awscrt.version=0.47.3`을 선언하고 `aws-crt-client` POM이 이 값을 사용한다.
-따라서 독립 최신 `0.48.3`보다 parent-tested `0.47.3`을 중앙 key로 명시한다. 같은 원칙으로 AWS SDK for Kotlin
+AWS CRT는 AWS SDK Java BOM의 direct constraint는 아니지만, `aws-sdk-java-pom:2.50.3`이
+`awscrt.version=0.48.2`를 선언하고 `aws-crt-client` POM이 이 값을 사용한다.
+따라서 독립 최신 `0.48.3`보다 parent-tested `0.48.2`를 중앙 key로 명시한다. 같은 원칙으로 AWS SDK for Kotlin
 `1.8.22`가 요구하는 Smithy runtime `1.7.4`로 직접 alias 여섯 개를 정렬한다.
 
 정확한 metadata URL과 before/after 값은
