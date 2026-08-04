@@ -70,6 +70,13 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             rollout["authority-delta-ledger"],
             "config/latest-stable-version-deltas.json",
         )
+        receipt = json.loads(
+            (LEDGER.parents[1] / rollout["candidate-receipt"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(receipt["catalog"]["sha256"], rollout["catalog-sha256"])
+        self.assertEqual(receipt["publication-poms"]["failures"], 0)
         self.assertEqual(
             rollout["catalog-sha256"],
             (
@@ -77,7 +84,9 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             ).read_text(encoding="utf-8").split()[0],
         )
         pom = rollout["publication-pom-verification"]
-        self.assertEqual(pom["status"], "verified-local-candidate")
+        self.assertEqual(
+            pom["status"], "verified-local-candidate-with-intermittent-retry"
+        )
         self.assertEqual(pom["failures"], 0)
         self.assertEqual(pom["repositories"], 9)
 
@@ -90,6 +99,18 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertTrue(
             all(entry["verification"] == "verified-local-candidate" for entry in evidence)
         )
+        authority_ledger = json.loads(
+            (LEDGER.parents[1] / rollout["authority-delta-ledger"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        authority_deltas = {
+            entry["authority-key"]: entry for entry in authority_ledger["delta"]
+        }
+        for entry in evidence:
+            authority = authority_deltas[entry["authority-key"]]
+            self.assertEqual(entry["authority-before"], authority["before"])
+            self.assertEqual(entry["after"], authority["after"])
         self.assertEqual(
             rollout["remote-immutable-ref-verification"], "pending-central-push"
         )

@@ -53,12 +53,12 @@ Okio `3.17.0 -> 3.18.1`, Feign `13.12 -> 13.13`, Typesafe Config
 
 ## 호환성 보류와 deferred migration
 
-| 계열 | 현재 | upstream latest | disposition | 이유 |
+| 계열 | 현재 | upstream latest | 영향 범위 | disposition / 이유 |
 | --- | --- | --- | --- | --- |
-| Kotlin | `2.4.0` | `2.4.10` | hold-compatibility | detekt `2.0.0-alpha.5` 실행 호환성 실패 |
-| OWASP Dependency Check | `12.2.2` | `13.0.0` | defer-breaking-migration | major migration 별도 검토 필요 |
-| AWS CRT | `0.48.2` | `0.48.3` | hold-compatibility | AWS Java SDK `2.50.3` parent-tested 버전 유지 |
-| Smithy Kotlin | `1.7.4` | `1.7.5` | hold-compatibility | AWS Kotlin SDK `1.8.22` 직접 요구 버전 유지 |
+| Kotlin | `2.4.0` | `2.4.10` | projects/aws/exposed/graph/text의 `detekt*` task | hold-compatibility: detekt `2.0.0-alpha.5` 실행 호환성 실패 |
+| OWASP Dependency Check | `12.2.2` | `13.0.0` | projects/exposed의 `dependencyCheck*` task | defer-breaking-migration: major migration 별도 검토 필요 |
+| AWS CRT | `0.48.2` | `0.48.3` | aws `aws-java` compile/runtime, projects testcontainers test runtime | hold-compatibility: AWS Java SDK `2.50.3` parent-tested 버전 유지 |
+| Smithy Kotlin | `1.7.4` | `1.7.5` | aws `aws-kotlin` compile/runtime | hold-compatibility: AWS Kotlin SDK `1.8.22` 직접 요구 버전 유지 |
 
 UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 disposition이
 없는 stale key는 `hold-unavailable`로 간주하지 않는다. 근거 수집과 분류가 끝나기
@@ -66,17 +66,17 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 
 ## downstream 검증 상태
 
-| repository | catalog 적용 | 대표 compile/test | full build | remote immutable ref |
-| --- | --- | --- | --- | --- |
-| bluetape4k-projects | 완료 | gRPC, Cassandra, MongoDB, Mutiny 통과 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-aws | 완료 | 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-experimental | 완료 | 미실행 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-exposed | 완료 | R2DBC 통과 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-graph | 완료 | 관련 regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
-| bluetape4k-image | 완료 | benchmark contract regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
-| bluetape4k-javers | 완료 | JaVers core 통과 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-leader | 완료 | Netty native regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
-| bluetape4k-text | 완료 | 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
+| repository | candidate HEAD | catalog ref | 대표 compile/test | full build | remote immutable ref |
+| --- | --- | --- | --- | --- | --- |
+| bluetape4k-projects | `69e551c` | `d6898be` | gRPC, Cassandra, MongoDB, Mutiny 통과 | 미완료 | 중앙 push 전 PENDING |
+| bluetape4k-aws | `a1c068d` | `d6898be` | 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-experimental | `e4a7f66` | `d6898be` | 미실행 | 미완료 | 중앙 push 전 PENDING |
+| bluetape4k-exposed | `e4a9083` | `d6898be` | R2DBC 통과 | 미완료 | 중앙 push 전 PENDING |
+| bluetape4k-graph | `0a574e8` | `d6898be` | 관련 regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
+| bluetape4k-image | `b7d0884` | `d6898be` | benchmark contract regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
+| bluetape4k-javers | `770481c` | `d6898be` | JaVers core 통과 | 미완료 | 중앙 push 전 PENDING |
+| bluetape4k-leader | `2ca7ad1` | `d6898be` | Netty native regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
+| bluetape4k-text | `20482d6` | `d6898be` | 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
 
 대표 resolved graph에서 확인한 실제 선택 버전은 다음과 같다.
 
@@ -87,7 +87,17 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 - `org.postgresql:r2dbc-postgresql` -> `1.1.2.RELEASE`
 
 publication gate는 9개 repository, 175개 POM, 46,023개 dependency-management
-entry, 175개 Maven effective model을 검사했고 failure는 0이었다.
+entry, 175개 Maven effective model을 검사했고 최종 재실행의 failure는 0이었다.
+중간 재실행 1회에서 AWS Dokka plugin classpath 오류가 발생했으나 동일 AWS task의
+단독 실행과 다음 전체 실행은 통과했다. 따라서 결과 수치는 유효하지만 반복 실행
+안정성은 release 전 재확인 대상으로 남긴다.
+
+candidate map 기준 `sync-shared-versions.py`, `sync-dependabot-ignores.py`,
+`sync-managed-catalog.py`는 통과했다. canonical default sibling checkout만 대상으로
+실행하면 작업 branch가 아니라 기존 branch를 읽어 adoption gap을 보고하므로, 이
+train의 판정에는
+[`2026-08-04-issue-169-candidate-receipt.json`](2026-08-04-issue-169-candidate-receipt.json)의
+exact worktree/head map을 사용한다.
 
 ## 배포 차단 조건
 

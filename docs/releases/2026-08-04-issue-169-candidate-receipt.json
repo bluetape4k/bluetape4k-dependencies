@@ -1,0 +1,36 @@
+{
+  "schema-version": 1,
+  "rollout": "2026-08-04-issue-169-latest-compatible-stable",
+  "catalog": {
+    "commit": "d6898bebdfa2c623e9a4d625bbb54074e7d011bf",
+    "sha256": "eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093"
+  },
+  "repositories": {
+    "bluetape4k-projects": "69e551cda74a263dab8a8ded14f9db9c5da97c7d",
+    "bluetape4k-aws": "a1c068d79fddb933df70c8f4909a7dccd5a80ea9",
+    "bluetape4k-experimental": "e4a7f66c37cf11a3fec19fe2bfbc4c90fd23039e",
+    "bluetape4k-exposed": "e4a9083259ca8c2eb15a87e87dc34819429e6b05",
+    "bluetape4k-graph": "0a574e86932e605498fbd944c2ab596cd9a7f245",
+    "bluetape4k-image": "b7d08849d1f5cf20cd9ca321a64f870833c9a1e7",
+    "bluetape4k-javers": "770481c2f716f60a5cb87f1c2456d9f1b46f4a18",
+    "bluetape4k-leader": "2ca7ad1ab53689695dc256bafe74e22e5a7a11b5",
+    "bluetape4k-text": "20482d67e5818b577767667e187e7c68466d79a3"
+  },
+  "candidate-map-verification": {
+    "clean-worktrees": 10,
+    "settings-and-ci-ref-files-per-downstream": 2,
+    "sync-shared-versions": "pass",
+    "sync-dependabot-ignores": "pass",
+    "sync-managed-catalog": "pass"
+  },
+  "publication-poms": {
+    "final-command-exit": 0,
+    "repositories": 9,
+    "files": 175,
+    "dependencies": 46023,
+    "maven-models": 175,
+    "failures": 0,
+    "intermittent-observation": "One intervening full run failed while applying Dokka in bluetape4k-aws; the isolated AWS task and the next full run passed."
+  },
+  "remote-immutable-ref": "pending-central-push"
+}

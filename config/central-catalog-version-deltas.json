@@ -7,9 +7,10 @@
       "rollout": "2026-08-04-issue-169-latest-compatible-stable",
       "status": "partial-resolved-graph",
       "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "candidate-receipt": "docs/releases/2026-08-04-issue-169-candidate-receipt.json",
       "catalog-sha256": "eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093",
       "publication-pom-verification": {
-        "status": "verified-local-candidate",
+        "status": "verified-local-candidate-with-intermittent-retry",
         "repositories": 9,
         "files": 175,
         "dependencies": 46023,
@@ -20,7 +21,9 @@
         {
           "repository": "bluetape4k-projects",
           "configuration": ":bluetape4k-grpc:testRuntimeClasspath",
+          "authority-key": "grpc-java",
           "coordinate": "io.grpc:grpc-core",
+          "authority-before": "1.81.0",
           "before": "1.80.0",
           "after": "1.83.1",
           "verification": "verified-local-candidate"
@@ -28,7 +31,9 @@
         {
           "repository": "bluetape4k-projects",
           "configuration": ":bluetape4k-mongodb:testRuntimeClasspath",
+          "authority-key": "mongodb-driver",
           "coordinate": "org.mongodb:mongodb-driver-core",
+          "authority-before": "5.7.0",
           "before": "5.8.0",
           "after": "5.9.1",
           "verification": "verified-local-candidate"
@@ -36,7 +41,9 @@
         {
           "repository": "bluetape4k-projects",
           "configuration": ":bluetape4k-mutiny:testRuntimeClasspath",
+          "authority-key": "mutiny",
           "coordinate": "io.smallrye.reactive:mutiny",
+          "authority-before": "3.2.0",
           "before": "3.2.0",
           "after": "3.3.0",
           "verification": "verified-local-candidate"
@@ -44,7 +51,9 @@
         {
           "repository": "bluetape4k-aws",
           "configuration": ":bluetape4k-aws-java:testRuntimeClasspath",
+          "authority-key": "aws2-crt",
           "coordinate": "software.amazon.awssdk.crt:aws-crt",
+          "authority-before": "versionless",
           "before": "versionless",
           "after": "0.48.2",
           "verification": "verified-local-candidate"
@@ -52,7 +61,9 @@
         {
           "repository": "bluetape4k-exposed",
           "configuration": ":bluetape4k-exposed-r2dbc-tests:testRuntimeClasspath",
+          "authority-key": "r2dbc-postgresql",
           "coordinate": "org.postgresql:r2dbc-postgresql",
+          "authority-before": "1.1.1.RELEASE",
           "before": "1.1.1.RELEASE",
           "after": "1.1.2.RELEASE",
           "verification": "verified-local-candidate"
