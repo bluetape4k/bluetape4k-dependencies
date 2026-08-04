@@ -298,6 +298,31 @@ class SyncSharedVersionsTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "publication-pom"):
             sync.validate_dispositions(invalid, {("a" * 64, "default")})
 
+    def test_dispositions_reject_unknown_record_and_evidence_fields(self) -> None:
+        record = {
+            "authority-id": "a" * 64,
+            "line-id": "default",
+            "central-aliases": ["example-library"],
+            "disposition": "central-direct",
+            "evidence": {
+                "type": "catalog-alias",
+                "path": "gradle/libs.versions.toml",
+            },
+            "status": "pending",
+            "owner": "dependency-governance",
+        }
+        manifest = {"schema-version": 1, "records": [record]}
+        sync.validate_dispositions(manifest, {("a" * 64, "default")})
+
+        record["unexpected"] = True
+        with self.assertRaisesRegex(RuntimeError, "unknown disposition fields"):
+            sync.validate_dispositions(manifest, {("a" * 64, "default")})
+        del record["unexpected"]
+
+        record["evidence"]["unexpected"] = True
+        with self.assertRaisesRegex(RuntimeError, "unknown evidence fields"):
+            sync.validate_dispositions(manifest, {("a" * 64, "default")})
+
     def test_dispositions_reject_missing_and_duplicate_pairs(self) -> None:
         fixture_root = (
             Path(__file__).resolve().parent / "fixtures" / "catalog-authority"

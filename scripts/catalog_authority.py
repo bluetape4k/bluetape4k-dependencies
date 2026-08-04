@@ -12,7 +12,7 @@ from typing import Any
 
 import tomllib
 
-ALIAS_PATTERN = re.compile(r"[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*")
+ALIAS_PATTERN = re.compile(r"[a-z][a-z0-9]*(?:-[a-z][a-z0-9]*)*")
 LINE_ID_PATTERN = re.compile(r"(?:default|[a-z][a-z0-9]*(?:-[a-z0-9]+)*)")
 RESERVED_ACCESSOR_NAMESPACES = frozenset({"bundles", "plugins", "versions"})
 KOTLIN_RESERVED_WORDS = frozenset(
@@ -48,7 +48,7 @@ KOTLIN_RESERVED_WORDS = frozenset(
     }
 )
 DYNAMIC_VERSION_PATTERNS = (
-    re.compile(r"\+"),
+    re.compile(r"\+$"),
     re.compile(r"^latest\.", re.IGNORECASE),
     re.compile(r"^(?:\[|\().*(?:\]|\))$"),
 )

@@ -108,8 +108,11 @@ class CatalogAuthorityTest(unittest.TestCase):
     def test_synthetic_and_normalized_accessor_collisions_are_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "reserved accessor namespace"):
             catalog_authority.validate_accessor_aliases(["plugins-foo"])
-        with self.assertRaisesRegex(ValueError, "accessor collision"):
-            catalog_authority.validate_accessor_aliases(["foo-bar", "foo.bar"])
+        for alias in ("foo.bar", "foo_bar"):
+            with self.subTest(alias=alias), self.assertRaisesRegex(
+                ValueError, "invalid accessor alias"
+            ):
+                catalog_authority.validate_accessor_aliases([alias])
 
     def test_invalid_and_kotlin_reserved_aliases_are_rejected(self) -> None:
         for alias, message in (("Demo", "invalid accessor alias"), ("when", "Kotlin reserved word")):
@@ -168,6 +171,17 @@ class CatalogAuthorityTest(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "dynamic or range version"):
                 catalog_authority.parse_catalog(catalog)
+
+    def test_catalog_parser_accepts_exact_version_with_embedded_plus(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            catalog = Path(tmp) / "libs.versions.toml"
+            catalog.write_text(
+                '[versions]\nnats-spring = "0.6.2+3.5"\n', encoding="utf-8"
+            )
+
+            parsed = catalog_authority.parse_catalog(catalog)
+
+            self.assertEqual(parsed.versions["nats-spring"], "0.6.2+3.5")
 
     def test_catalog_parser_rejects_invalid_bundle_shape(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

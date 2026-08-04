@@ -123,6 +123,383 @@ commons-pool2     = "2.13.1"  # https://mvnrepository.com/artifact/org.apache.co
 assertj-core      = "3.27.7"  # https://mvnrepository.com/artifact/org.assertj/assertj-core
 awaitility        = "4.3.0"  # https://mvnrepository.com/artifact/org.awaitility/awaitility-kotlin
 random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.benas/random-beans
+# <generated-central-authority-versions by scripts/promote-catalog-authority.py>
+amqp-client = "5.28.0"
+antlr4-runtime = "4.13.2"
+antlr4-tool = "4.13.2"
+archunit = "1.4.2"
+archunit-junit5 = "1.4.2"
+aspectj-post-compile-weaving = "9.5.0"
+aspectjrt = "1.9.25.1"
+aspectjweaver = "1.9.25.1"
+at-yawk-lz4 = "1.11.1"
+avatica-core = "1.27.0"
+avro-kotlin = "2.10.1"
+avro-plugin = "1.9.1"
+aws-dax-client = "2.0.9"
+aws-smithy-kotlin-http = "1.6.14"
+aws-smithy-kotlin-http-client-engine-crt = "1.6.14"
+aws-smithy-kotlin-http-client-engine-default = "1.6.14"
+aws-smithy-kotlin-http-client-engine-okhttp = "1.6.14"
+aws-smithy-kotlin-serde = "1.6.14"
+aws-smithy-kotlin-serde-json = "1.6.14"
+batik-codec = "1.19"
+batik-transcoder = "1.19"
+blaze-persistence-core-api-jakarta = "1.6.16"
+blaze-persistence-core-impl-jakarta = "1.6.16"
+blaze-persistence-entity-view-api-jakarta = "1.6.16"
+blaze-persistence-entity-view-impl-jakarta = "1.6.16"
+blaze-persistence-integration-hibernate7 = "1.6.16"
+blaze-persistence-jpa-criteria-api-jakarta = "1.6.16"
+blaze-persistence-jpa-criteria-impl-jakarta = "1.6.16"
+blockhound = "1.0.16.RELEASE"
+blockhound-junit-platform = "1.0.16.RELEASE"
+brave = "6.3.1"
+brotli-dec = "0.1.2"
+brotli4j = "1.20.0"
+brotli4j-native = "1.20.0"
+bucket4j-caffeine = "8.18.0"
+bucket4j-core = "8.18.0"
+bucket4j-hazelcast = "8.18.0"
+bucket4j-hazelcast-all = "8.18.0"
+bucket4j-ignite = "8.18.0"
+bucket4j-infinispan-all = "8.18.0"
+bucket4j-jcache = "8.18.0"
+bucket4j-jdk17-lettuce = "8.18.0"
+bucket4j-redisson = "8.18.0"
+bucket4j-spring-boot = "0.13.0"
+byte-buddy-agent = "1.18.4"
+cache2k-api = "2.6.1.Final"
+cache2k-core = "2.6.1.Final"
+cache2k-jcache = "2.6.1.Final"
+cache2k-micrometer = "2.6.1.Final"
+caffeine = "3.2.4"
+caffeine-jcache = "3.2.4"
+cassandra-java-driver-core = "4.19.2"
+cassandra-java-driver-core-shaded = "4.19.2"
+cassandra-java-driver-mapper-processor = "4.19.2"
+cassandra-java-driver-mapper-runtime = "4.19.2"
+cassandra-java-driver-metrics-micrometer = "4.19.2"
+cassandra-java-driver-query-builder = "4.19.2"
+cassandra-java-driver-test-infra = "4.19.2"
+chaos-monkey-spring-boot = "4.0.0"
+chronicle-wire = "2026.5"
+clickhouse-jdbc = "0.9.8"
+commons-beanutils = "1.11.0"
+commons-collections4 = "4.5.0"
+commons-crypto = "1.2.0"
+commons-digest3 = "3.2"
+commons-math3 = "3.6.1"
+commons-math4 = "4.0-beta1"
+commons-rng-simple = "1.7"
+commons-text = "1.15.0"
+commons-validator = "1.10.1"
+curator-framework = "5.9.0"
+curator-recipes = "5.9.0"
+datafaker = "2.5.4"
+dependency-check = "12.2.2"
+detekt-dev = "2.0.0-alpha.5"
+detekt-formatting-legacy = "2.0.0-alpha.5"
+detekt-legacy = "1.23.8"
+download = "5.6.0"
+duckdb-jdbc = "1.5.2.1"
+eclipse-collections = "13.0.0"
+eclipse-collections-forkjoin = "13.0.0"
+eclipse-collections-testutils = "13.0.0"
+ehcache = "3.12.0"
+ehcache-clustered = "3.12.0"
+ehcache-transactions = "3.12.0"
+elasticmq-rest-sqs = "1.7.1"
+elasticsearch-java = "9.4.0"
+elasticsearch-rest-client = "9.4.0"
+elasticsearch-rest-client-sniffer = "9.4.0"
+esri-geometry-api = "2.2.4"
+fastjson2 = "2.0.62"
+fastjson2-extension = "2.0.62"
+fastjson2-extension-spring6 = "2.0.62"
+fastjson2-kotlin = "2.0.62"
+feign-bom = "13.12"
+feign-core = "13.12"
+feign-gson = "13.12"
+feign-hc5 = "13.12"
+feign-httpclient = "13.12"
+feign-jackson = "13.12"
+feign-java11 = "13.12"
+feign-jaxb = "13.12"
+feign-jaxrs = "13.12"
+feign-jaxrs2 = "13.12"
+feign-kotlin = "13.12"
+feign-micrometer = "13.12"
+feign-mock = "13.12"
+feign-okhttp = "13.12"
+feign-reactive-wrappers = "13.12"
+feign-slf4j = "13.12"
+findbugs = "3.0.2"
+foojay-resolver = "1.0.0"
+gatling-http-java = "3.15.1"
+geotools31 = "31.6"
+geotools34 = "34.3"
+glassfish-expressly = "6.0.0"
+google-api-services-bigquery = "v2-rev20240919-2.0.0"
+google-maps-services = "2.2.0"
+graalvm-native = "1.1.0"
+groovy = "5.0.6"
+groovy-jsr223 = "5.0.6"
+grpc-alts = "1.81.0"
+grpc-api = "1.81.0"
+grpc-auth = "1.81.0"
+grpc-bom = "1.81.0"
+grpc-context = "1.81.0"
+grpc-core = "1.81.0"
+grpc-google-common-protos = "2.71.0"
+grpc-grpclb = "1.81.0"
+grpc-inprocess = "1.81.0"
+grpc-kotlin-stub = "1.5.0"
+grpc-netty = "1.81.0"
+grpc-netty-shaded = "1.81.0"
+grpc-okhttp = "1.81.0"
+grpc-protobuf = "1.81.0"
+grpc-protobuf-lite = "1.81.0"
+grpc-protoc-gen-grpc-java = "1.81.0"
+grpc-protoc-gen-grpc-kotlin = "1.5.0"
+grpc-services = "1.81.0"
+grpc-stub = "1.81.0"
+grpc-testing = "1.81.0"
+gson = "2.13.2"
+gson-javatime-serializers = "1.1.2"
+h2-v1 = "1.4.197"
+h2-v2 = "2.4.240"
+hibernate-reactive-core = "4.5.0.Final"
+hibernate-validator = "9.1.0.Final"
+hibernate-validator-annotation-processor = "9.1.0.Final"
+hibernate73 = "7.3.4.Final"
+hsqldb = "2.7.4"
+ignite-spring-cache-ext = "2.0.0"
+ignite-spring-data-ext = "2.0.0"
+immudb4j = "1.0.1"
+influxdb-java = "2.25"
+jackson-core = "2.22.0"
+jackson-dataformat-msgpack = "0.9.12"
+jackson-module-kotlin = "2.22.0"
+jakarta-annotation-api = "3.0.0"
+jakarta-el-api = "6.0.1"
+jakarta-inject-api = "2.0.1"
+jakarta-interceptor-api = "2.2.0"
+jakarta-jms-api = "3.1.0"
+jakarta-json = "2.0.1"
+jakarta-json-api = "2.1.3"
+jakarta-persistence-v31 = "3.1.0"
+jakarta-persistence-v32 = "3.2.0"
+jakarta-servlet-api = "6.1.0"
+jakarta-transaction-api = "2.0.1"
+jakarta-validation-api = "3.1.1"
+jakarta-ws-rs-api = "4.0.0"
+janino = "3.1.12"
+janino-commons-compiler = "3.1.12"
+java-uuid-generator = "5.2.0"
+javassist = "3.30.2-GA"
+javax-cache-api = "1.1.1"
+javax-money-api = "1.1"
+javers-core = "7.11.0"
+jctools-core = "4.0.6"
+jetbrains-annotations = "26.1.0"
+jetcd-core = "0.8.6"
+jfalkordb = "0.8.0"
+jib = "3.4.4"
+jjwt-api = "0.13.0"
+jjwt-extensions = "0.13.0"
+jjwt-impl = "0.13.0"
+jjwt-jackson = "0.13.0"
+jmh-core = "1.37"
+jmh-generator-annprocess = "1.37"
+jna = "5.18.1"
+jna-platform = "5.18.1"
+jnats = "2.25.3"
+jsonassert-v1 = "1.5.3"
+jsonassert-v2 = "2.0-rc1"
+jsonpath-v2 = "2.10.0"
+jsonpath-v3 = "3.0.0"
+jts-core = "1.20.0"
+junit-bom = "6.0.3"
+junit-jupiter = "6.0.3"
+junit-jupiter-api = "6.0.3"
+junit-jupiter-engine = "6.0.3"
+junit-jupiter-migrationsupport = "6.0.3"
+junit-jupiter-params = "6.0.3"
+junit-platform-commons = "6.0.3"
+junit-platform-engine = "6.0.3"
+junit-platform-launcher = "6.0.3"
+junit-platform-suite-api = "6.0.3"
+junit-platform-suite-engine = "6.0.3"
+junit-platform1-runner = "1.14.4"
+junit-platform6-runner = "6.0.3"
+junit-vintage-engine = "6.0.3"
+jvips-build69bf715 = "8.12.2-69bf715"
+jvips-buildf9dc8c9 = "8.12.2-f9dc8c9"
+keycloak-testcontainers = "3.7.0"
+kotlin20 = "2.0.21"
+kotlinx-atomicfu = "0.32.1"
+kotlinx-benchmark = "0.4.17"
+kotlinx-benchmark-runtime = "0.4.17"
+kotlinx-benchmark-runtime-jvm = "0.4.17"
+kryo = "5.6.2"
+kubernetes-client-java = "24.0.0"
+kuromoji-ipadic = "0.9.0"
+kuromoji-unidic = "0.9.0"
+libphonenumber-v8 = "8.13.52"
+libphonenumber-v9 = "9.0.30"
+lingua = "1.2.2"
+logback = "1.5.38"
+logback-slack-appender = "1.6.1"
+mapstruct = "1.6.3"
+mapstruct-processor = "1.6.3"
+mariadb-java-client = "3.5.8"
+maxmind-geoip2 = "5.0.2"
+metadata-extractor = "2.20.0"
+micrometer-bom = "1.16.5"
+micrometer-context-propagation = "1.2.1"
+micrometer-tracing = "1.6.5"
+micrometer-tracing-bom = "1.6.5"
+micrometer-tracing-bridge-brave = "1.6.5"
+micrometer-tracing-bridge-otel = "1.6.5"
+micrometer-tracing-integration-test = "1.6.5"
+micrometer-tracing-test = "1.6.5"
+milvus-sdk-java = "2.6.13"
+minio-v8 = "8.6.0"
+minio-v9 = "9.0.0"
+mockk = "1.14.9"
+mockserver-client-java = "5.15.0"
+mockserver-netty = "5.15.0"
+mongo-bson = "5.7.0"
+mongo-bson-kotlin = "5.7.0"
+mongo-bson-kotlinx = "5.7.0"
+mongodb-driver-core = "5.7.0"
+mongodb-driver-kotlin-coroutine = "5.7.0"
+mongodb-driver-kotlin-extensions = "5.7.0"
+mongodb-driver-kotlin-sync = "5.7.0"
+mongodb-driver-legacy = "5.7.0"
+mongodb-driver-reactivestreams = "5.7.0"
+mongodb-driver-sync = "5.7.0"
+mutiny = "3.2.0"
+mutiny-kotlin = "3.2.0"
+mvel2 = "2.5.2.Final"
+mybatis = "3.5.19"
+mybatis-spring3 = "3.0.5"
+mybatis-spring4 = "4.0.0"
+nats-spring = "0.6.2+3.5"
+nats-spring-cloud-stream-binder = "0.6.2+3.5"
+neo4j-bolt-connection-bom = "11.0.2"
+neo4j-bolt-connection-netty = "11.0.2"
+neo4j-bolt-connection-pooled = "11.0.2"
+neo4j-driver5 = "5.28.4"
+neo4j-driver6 = "6.1.0"
+netty-tcnative-classes = "2.0.77.Final"
+objenesis = "3.5"
+okhttp3 = "5.3.2"
+okhttp3-bom = "5.3.2"
+okhttp3-coroutines = "5.3.2"
+okhttp3-logging-interceptor = "5.3.2"
+okhttp3-mockwebserver = "5.3.2"
+okhttp3-sse = "5.3.2"
+okhttp3-urlconnection = "5.3.2"
+okio = "3.17.0"
+okio-fakefilesystem = "3.17.0"
+open-korean-text = "2.3.1"
+opentelemetry-alpha-bom = "1.63.0-alpha"
+oracle-ojdbc8 = "19.3.0.0"
+org-lz4 = "1.8.0"
+pgjdbc-ng = "0.8.9"
+pgvector = "0.1.6"
+postgis-y2024 = "2024.1.0"
+postgis-y2025 = "2025.1.1"
+proj4j = "1.3.0"
+proj4j-epsg = "1.3.0"
+prometheus-simpleclient = "0.16.0"
+prometheus-simpleclient-common = "0.16.0"
+prometheus-simpleclient-dropwizard = "0.16.0"
+prometheus-simpleclient-httpserver = "0.16.0"
+prometheus-simpleclient-pushgateway = "0.16.0"
+prometheus-simpleclient-spring-boot = "0.16.0"
+prometheus-simpleclient-tracer-common = "0.16.0"
+prometheus-simpleclient-tracer-otel = "0.16.0"
+prometheus-simpleclient-tracer-otel-agent = "0.16.0"
+proto-google-common-protos = "2.71.0"
+protobuf-plugin = "0.10.0"
+pulsar3 = "3.3.9"
+pulsar4 = "4.2.1"
+r2dbc-mariadb = "1.4.0"
+r2dbc-mysql = "1.4.2"
+r2dbc-pool = "1.0.2.RELEASE"
+r2dbc-postgresql = "1.1.1.RELEASE"
+r2dbc-proxy = "1.1.6.RELEASE"
+r2dbc-spi = "1.0.0.RELEASE"
+reactor-kafka = "1.3.25"
+resilience4j-all = "2.4.0"
+resilience4j-annotations = "2.4.0"
+resilience4j-bom = "2.4.0"
+resilience4j-bulkhead = "2.4.0"
+resilience4j-cache = "2.4.0"
+resilience4j-circuitbreaker = "2.4.0"
+resilience4j-core = "2.4.0"
+resilience4j-feign = "2.4.0"
+resilience4j-kotlin = "2.4.0"
+resilience4j-metrics = "2.4.0"
+resilience4j-micrometer = "2.4.0"
+resilience4j-ratelimiter = "2.4.0"
+resilience4j-reactor = "2.4.0"
+resilience4j-retry = "2.4.0"
+resilience4j-spring = "2.4.0"
+resilience4j-timelimiter = "2.4.0"
+rest-assured = "6.0.0"
+rest-assured-all = "6.0.0"
+rest-assured-json-path = "6.0.0"
+rest-assured-kotlin = "6.0.0"
+retrofit2 = "3.0.0"
+retrofit2-adapter-java8 = "3.0.0"
+retrofit2-adapter-reactor = "2.1.0"
+retrofit2-adapter-rxjava2 = "3.0.0"
+retrofit2-adapter-rxjava3 = "3.0.0"
+retrofit2-converter-jackson = "3.0.0"
+retrofit2-converter-moshi = "3.0.0"
+retrofit2-converter-protobuf = "3.0.0"
+retrofit2-converter-scalars = "3.0.0"
+retrofit2-mock = "3.0.0"
+sentry-logback = "8.41.0"
+snakeyaml = "2.6"
+snappy-java = "1.1.10.8"
+spring-cloud-aws-bom = "4.0.2"
+spring-cloud-dependencies = "2025.1.1"
+spring-modulith-bom = "2.0.6"
+spring-statemachine-bom = "4.0.1"
+spring-statemachine-core = "4.0.1"
+springmockk = "5.0.1"
+starrocks-connector-j = "1.1.1"
+tess4j = "5.19.0"
+test-logger = "4.0.0"
+testcontainers-ministack = "0.1.4"
+testcontainers-opensearch = "4.1.0"
+tink = "1.20.0"
+tinkergraph-gremlin = "3.8.1"
+tinkerpop-gremlin-core = "3.8.1"
+trino-jdbc = "480"
+turbine = "1.2.1"
+turbine-jvm = "1.2.1"
+twelvemonkeys-imageio-core = "3.13.1"
+twelvemonkeys-imageio-metadata = "3.13.1"
+twelvemonkeys-imageio-tiff = "3.13.1"
+typesafe-config = "1.4.3"
+ucar-cdm-core = "5.9.1"
+ucar-netcdf4 = "5.9.1"
+uuid-creator = "6.1.1"
+vault-java-driver = "5.1.0"
+vips-ffm = "1.9.8"
+weaviate-client = "6.2.0"
+wiremock = "3.13.2"
+xz = "1.12"
+zero-allocation-hashing = "2026.0"
+zxing-core = "3.5.4"
+zxing-javase = "3.5.4"
+# </generated-central-authority-versions>
 # </shared-version-source-of-truth>
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -148,6 +525,21 @@ spring-boot3          = { id = "org.springframework.boot",             version.r
 spring-boot4          = { id = "org.springframework.boot",             version.ref = "spring-boot4" }
 
 # ────────────────────────────────────────────────────────────────────────────
+# <generated-central-authority-plugins by scripts/promote-catalog-authority.py>
+aspectj-post-compile-weaving = { id = "io.freefair.aspectj.post-compile-weaving", version.ref = "aspectj-post-compile-weaving" }
+avro-plugin = { id = "com.github.davidmc24.gradle.plugin.avro", version.ref = "avro-plugin" }
+dependency-check = { id = "org.owasp.dependencycheck", version.ref = "dependency-check" }
+detekt-dev = { id = "dev.detekt", version.ref = "detekt-dev" }
+detekt-legacy = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt-legacy" }
+download = { id = "de.undercouch.download", version.ref = "download" }
+foojay-resolver = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay-resolver" }
+graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
+jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
+kotlinx-atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "kotlinx-atomicfu" }
+kotlinx-benchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "kotlinx-benchmark" }
+protobuf-plugin = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
+test-logger = { id = "com.adarshr.test-logger", version.ref = "test-logger" }
+# </generated-central-authority-plugins>
 [libraries]
 bluetape4k-dependencies                       = { module = "io.github.bluetape4k:bluetape4k-dependencies", version.ref = "bluetape4k-dependencies" }
 
@@ -269,6 +661,415 @@ vertx-core                                    = { module = "io.vertx:vertx-core"
 vertx-dependencies                            = { module = "io.vertx:vertx-dependencies", version.ref = "vertx" }
 zookeeper                                     = { module = "org.apache.zookeeper:zookeeper", version.ref = "zookeeper" }
 zstd-jni                                      = { module = "com.github.luben:zstd-jni", version.ref = "zstd-jni" }
+# <generated-central-authority-libraries by scripts/promote-catalog-authority.py>
+amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "amqp-client" }
+antlr4-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "antlr4-runtime" }
+antlr4-tool = { module = "org.antlr:antlr4", version.ref = "antlr4-tool" }
+archunit = { module = "com.tngtech.archunit:archunit", version.ref = "archunit" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit-junit5" }
+aspectjrt = { module = "org.aspectj:aspectjrt", version.ref = "aspectjrt" }
+aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "aspectjweaver" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj-core" }
+at-yawk-lz4-java = { module = "at.yawk.lz4:lz4-java", version.ref = "at-yawk-lz4" }
+avatica-core = { module = "org.apache.calcite.avatica:avatica-core", version.ref = "avatica-core" }
+avro-kotlin = { module = "com.github.avro-kotlin.avro4k:avro4k-core", version.ref = "avro-kotlin" }
+aws-dax-client = { module = "software.amazon.dax:amazon-dax-client", version.ref = "aws-dax-client" }
+aws-smithy-kotlin-http = { module = "aws.smithy.kotlin:http-jvm", version.ref = "aws-smithy-kotlin-http" }
+aws-smithy-kotlin-http-client-engine-crt = { module = "aws.smithy.kotlin:http-client-engine-crt", version.ref = "aws-smithy-kotlin-http-client-engine-crt" }
+aws-smithy-kotlin-http-client-engine-default = { module = "aws.smithy.kotlin:http-client-engine-default", version.ref = "aws-smithy-kotlin-http-client-engine-default" }
+aws-smithy-kotlin-http-client-engine-okhttp = { module = "aws.smithy.kotlin:http-client-engine-okhttp", version.ref = "aws-smithy-kotlin-http-client-engine-okhttp" }
+aws-smithy-kotlin-serde = { module = "aws.smithy.kotlin:serde-jvm", version.ref = "aws-smithy-kotlin-serde" }
+aws-smithy-kotlin-serde-json = { module = "aws.smithy.kotlin:serde-json-jvm", version.ref = "aws-smithy-kotlin-serde-json" }
+aws2-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt" }
+batik-codec = { module = "org.apache.xmlgraphics:batik-codec", version.ref = "batik-codec" }
+batik-transcoder = { module = "org.apache.xmlgraphics:batik-transcoder", version.ref = "batik-transcoder" }
+blaze-persistence-core-api-jakarta = { module = "com.blazebit:blaze-persistence-core-api-jakarta", version.ref = "blaze-persistence-core-api-jakarta" }
+blaze-persistence-core-impl-jakarta = { module = "com.blazebit:blaze-persistence-core-impl-jakarta", version.ref = "blaze-persistence-core-impl-jakarta" }
+blaze-persistence-entity-view-api-jakarta = { module = "com.blazebit:blaze-persistence-entity-view-api-jakarta", version.ref = "blaze-persistence-entity-view-api-jakarta" }
+blaze-persistence-entity-view-impl-jakarta = { module = "com.blazebit:blaze-persistence-entity-view-impl-jakarta", version.ref = "blaze-persistence-entity-view-impl-jakarta" }
+blaze-persistence-integration-hibernate7 = { module = "com.blazebit:blaze-persistence-integration-hibernate-7.0", version.ref = "blaze-persistence-integration-hibernate7" }
+blaze-persistence-jpa-criteria-api-jakarta = { module = "com.blazebit:blaze-persistence-jpa-criteria-api-jakarta", version.ref = "blaze-persistence-jpa-criteria-api-jakarta" }
+blaze-persistence-jpa-criteria-impl-jakarta = { module = "com.blazebit:blaze-persistence-jpa-criteria-impl-jakarta", version.ref = "blaze-persistence-jpa-criteria-impl-jakarta" }
+blockhound = { module = "io.projectreactor.tools:blockhound", version.ref = "blockhound" }
+blockhound-junit-platform = { module = "io.projectreactor.tools:blockhound-junit-platform", version.ref = "blockhound-junit-platform" }
+brotli-dec = { module = "org.brotli:dec", version.ref = "brotli-dec" }
+brotli4j = { module = "com.aayushatharva.brotli4j:brotli4j", version.ref = "brotli4j" }
+brotli4j-native = { module = "com.aayushatharva.brotli4j:native-linux-x86_64", version.ref = "brotli4j-native" }
+bucket4j-caffeine = { module = "com.bucket4j:bucket4j_jdk17-caffeine", version.ref = "bucket4j-caffeine" }
+bucket4j-core = { module = "com.bucket4j:bucket4j_jdk17-core", version.ref = "bucket4j-core" }
+bucket4j-hazelcast = { module = "com.bucket4j:bucket4j_jdk17-hazelcast", version.ref = "bucket4j-hazelcast" }
+bucket4j-hazelcast-all = { module = "com.bucket4j:bucket4j_jdk17-hazelcast-all", version.ref = "bucket4j-hazelcast-all" }
+bucket4j-ignite = { module = "com.bucket4j:bucket4j_jdk17-ignite", version.ref = "bucket4j-ignite" }
+bucket4j-infinispan-all = { module = "com.bucket4j:bucket4j_jdk17-infinispan-all", version.ref = "bucket4j-infinispan-all" }
+bucket4j-jcache = { module = "com.bucket4j:bucket4j_jdk17-jcache", version.ref = "bucket4j-jcache" }
+bucket4j-jdk17-core = { module = "com.bucket4j:bucket4j_jdk17-core", version.ref = "bucket4j-core" }
+bucket4j-jdk17-lettuce = { module = "com.bucket4j:bucket4j_jdk17-lettuce", version.ref = "bucket4j-jdk17-lettuce" }
+bucket4j-lettuce = { module = "com.bucket4j:bucket4j_jdk17-lettuce", version.ref = "bucket4j-jdk17-lettuce" }
+bucket4j-redisson = { module = "com.bucket4j:bucket4j_jdk17-redisson", version.ref = "bucket4j-redisson" }
+bucket4j-spring-boot = { module = "com.giffing.bucket4j.spring.boot.starter:bucket4j-spring-boot-starter", version.ref = "bucket4j-spring-boot" }
+byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "byte-buddy" }
+byte-buddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "byte-buddy-agent" }
+cache2k-api = { module = "org.cache2k:cache2k-api", version.ref = "cache2k-api" }
+cache2k-core = { module = "org.cache2k:cache2k-core", version.ref = "cache2k-core" }
+cache2k-jcache = { module = "org.cache2k:cache2k-jcache", version.ref = "cache2k-jcache" }
+cache2k-micrometer = { module = "org.cache2k:cache2k-micrometer", version.ref = "cache2k-micrometer" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+caffeine-core = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+caffeine-jcache = { module = "com.github.ben-manes.caffeine:jcache", version.ref = "caffeine-jcache" }
+caffeine-lib = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+cassandra-java-driver-core = { module = "org.apache.cassandra:java-driver-core", version.ref = "cassandra-java-driver-core" }
+cassandra-java-driver-core-shaded = { module = "org.apache.cassandra:java-driver-core-shaded", version.ref = "cassandra-java-driver-core-shaded" }
+cassandra-java-driver-mapper-processor = { module = "org.apache.cassandra:java-driver-mapper-processor", version.ref = "cassandra-java-driver-mapper-processor" }
+cassandra-java-driver-mapper-runtime = { module = "org.apache.cassandra:java-driver-mapper-runtime", version.ref = "cassandra-java-driver-mapper-runtime" }
+cassandra-java-driver-metrics-micrometer = { module = "org.apache.cassandra:java-driver-metrics-micrometer", version.ref = "cassandra-java-driver-metrics-micrometer" }
+cassandra-java-driver-query-builder = { module = "org.apache.cassandra:java-driver-query-builder", version.ref = "cassandra-java-driver-query-builder" }
+cassandra-java-driver-test-infra = { module = "org.apache.cassandra:java-driver-test-infra", version.ref = "cassandra-java-driver-test-infra" }
+chaos-monkey-spring-boot = { module = "de.codecentric:chaos-monkey-spring-boot", version.ref = "chaos-monkey-spring-boot" }
+chronicle-wire = { module = "net.openhft:chronicle-wire", version.ref = "chronicle-wire" }
+clickhouse-jdbc = { module = "com.clickhouse:clickhouse-jdbc", version.ref = "clickhouse-jdbc" }
+commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
+commons-collections4 = { module = "org.apache.commons:commons-collections4", version.ref = "commons-collections4" }
+commons-crypto = { module = "org.apache.commons:commons-crypto", version.ref = "commons-crypto" }
+commons-digest3 = { module = "org.apache.commons:commons-digester3", version.ref = "commons-digest3" }
+commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
+commons-math4 = { module = "org.apache.commons:commons-math4-core", version.ref = "commons-math4" }
+commons-rng-simple = { module = "org.apache.commons:commons-rng-simple", version.ref = "commons-rng-simple" }
+commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
+commons-validator = { module = "commons-validator:commons-validator", version.ref = "commons-validator" }
+curator-framework = { module = "org.apache.curator:curator-framework", version.ref = "curator-framework" }
+curator-recipes = { module = "org.apache.curator:curator-recipes", version.ref = "curator-recipes" }
+datafaker = { module = "net.datafaker:datafaker", version.ref = "datafaker" }
+detekt-formatting-legacy = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt-formatting-legacy" }
+detekt-rules-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt-dev" }
+duckdb-jdbc = { module = "org.duckdb:duckdb_jdbc", version.ref = "duckdb-jdbc" }
+eclipse-collections = { module = "org.eclipse.collections:eclipse-collections", version.ref = "eclipse-collections" }
+eclipse-collections-forkjoin = { module = "org.eclipse.collections:eclipse-collections-forkjoin", version.ref = "eclipse-collections-forkjoin" }
+eclipse-collections-testutils = { module = "org.eclipse.collections:eclipse-collections-testutils", version.ref = "eclipse-collections-testutils" }
+ehcache = { module = "org.ehcache:ehcache", version.ref = "ehcache" }
+ehcache-clustered = { module = "org.ehcache:ehcache-clustered", version.ref = "ehcache-clustered" }
+ehcache-transactions = { module = "org.ehcache:ehcache-transactions", version.ref = "ehcache-transactions" }
+elasticmq-rest-sqs = { module = "org.elasticmq:elasticmq-rest-sqs_2.13", version.ref = "elasticmq-rest-sqs" }
+elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch-java" }
+elasticsearch-rest-client = { module = "org.elasticsearch.client:elasticsearch-rest-client", version.ref = "elasticsearch-rest-client" }
+elasticsearch-rest-client-sniffer = { module = "org.elasticsearch.client:elasticsearch-rest-client-sniffer", version.ref = "elasticsearch-rest-client-sniffer" }
+esri-geometry-api = { module = "com.esri.geometry:esri-geometry-api", version.ref = "esri-geometry-api" }
+fastjson2 = { module = "com.alibaba.fastjson2:fastjson2", version.ref = "fastjson2" }
+fastjson2-extension = { module = "com.alibaba.fastjson2:fastjson2-extension", version.ref = "fastjson2-extension" }
+fastjson2-extension-spring6 = { module = "com.alibaba.fastjson2:fastjson2-extension-spring6", version.ref = "fastjson2-extension-spring6" }
+fastjson2-kotlin = { module = "com.alibaba.fastjson2:fastjson2-kotlin", version.ref = "fastjson2-kotlin" }
+feign-bom = { module = "io.github.openfeign:feign-bom", version.ref = "feign-bom" }
+feign-core = { module = "io.github.openfeign:feign-core", version.ref = "feign-core" }
+feign-gson = { module = "io.github.openfeign:feign-gson", version.ref = "feign-gson" }
+feign-hc5 = { module = "io.github.openfeign:feign-hc5", version.ref = "feign-hc5" }
+feign-httpclient = { module = "io.github.openfeign:feign-httpclient", version.ref = "feign-httpclient" }
+feign-jackson = { module = "io.github.openfeign:feign-jackson", version.ref = "feign-jackson" }
+feign-java11 = { module = "io.github.openfeign:feign-java11", version.ref = "feign-java11" }
+feign-jaxb = { module = "io.github.openfeign:feign-jaxb", version.ref = "feign-jaxb" }
+feign-jaxrs = { module = "io.github.openfeign:feign-jaxrs", version.ref = "feign-jaxrs" }
+feign-jaxrs2 = { module = "io.github.openfeign:feign-jaxrs2", version.ref = "feign-jaxrs2" }
+feign-kotlin = { module = "io.github.openfeign:feign-kotlin", version.ref = "feign-kotlin" }
+feign-micrometer = { module = "io.github.openfeign:feign-micrometer", version.ref = "feign-micrometer" }
+feign-mock = { module = "io.github.openfeign:feign-mock", version.ref = "feign-mock" }
+feign-okhttp = { module = "io.github.openfeign:feign-okhttp", version.ref = "feign-okhttp" }
+feign-reactive-wrappers = { module = "io.github.openfeign:feign-reactive-wrappers", version.ref = "feign-reactive-wrappers" }
+feign-slf4j = { module = "io.github.openfeign:feign-slf4j", version.ref = "feign-slf4j" }
+findbugs = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs" }
+gatling-charts-highcharts = { module = "io.gatling.highcharts:gatling-charts-highcharts", version.ref = "gatling" }
+gatling-core-java = { module = "io.gatling:gatling-core-java", version.ref = "gatling" }
+gatling-http-java = { module = "io.gatling:gatling-http-java", version.ref = "gatling-http-java" }
+geotools31-epsg-hsql = { module = "org.geotools:gt-epsg-hsql", version.ref = "geotools31" }
+geotools31-referencing = { module = "org.geotools:gt-referencing", version.ref = "geotools31" }
+geotools31-shapefile = { module = "org.geotools:gt-shapefile", version.ref = "geotools31" }
+geotools34-epsg-hsql = { module = "org.geotools:gt-epsg-hsql", version.ref = "geotools34" }
+geotools34-referencing = { module = "org.geotools:gt-referencing", version.ref = "geotools34" }
+geotools34-shapefile = { module = "org.geotools:gt-shapefile", version.ref = "geotools34" }
+glassfish-expressly = { module = "org.glassfish.expressly:expressly", version.ref = "glassfish-expressly" }
+google-api-services-bigquery = { module = "com.google.apis:google-api-services-bigquery", version.ref = "google-api-services-bigquery" }
+google-maps-services = { module = "com.google.maps:google-maps-services", version.ref = "google-maps-services" }
+groovy = { module = "org.apache.groovy:groovy", version.ref = "groovy" }
+groovy-jsr223 = { module = "org.apache.groovy:groovy-jsr223", version.ref = "groovy-jsr223" }
+grpc-alts = { module = "io.grpc:grpc-alts", version.ref = "grpc-alts" }
+grpc-api = { module = "io.grpc:grpc-api", version.ref = "grpc-api" }
+grpc-auth = { module = "io.grpc:grpc-auth", version.ref = "grpc-auth" }
+grpc-bom = { module = "io.grpc:grpc-bom", version.ref = "grpc-bom" }
+grpc-context = { module = "io.grpc:grpc-context", version.ref = "grpc-context" }
+grpc-core = { module = "io.grpc:grpc-core", version.ref = "grpc-core" }
+grpc-google-common-protos = { module = "com.google.api.grpc:grpc-google-common-protos", version.ref = "grpc-google-common-protos" }
+grpc-grpclb = { module = "io.grpc:grpc-grpclb", version.ref = "grpc-grpclb" }
+grpc-inprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc-inprocess" }
+grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "grpc-kotlin-stub" }
+grpc-netty = { module = "io.grpc:grpc-netty", version.ref = "grpc-netty" }
+grpc-netty-shaded = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc-netty-shaded" }
+grpc-okhttp = { module = "io.grpc:grpc-okhttp", version.ref = "grpc-okhttp" }
+grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc-protobuf" }
+grpc-protobuf-lite = { module = "io.grpc:grpc-protobuf-lite", version.ref = "grpc-protobuf-lite" }
+grpc-protoc-gen-grpc-java = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "grpc-protoc-gen-grpc-java" }
+grpc-protoc-gen-grpc-kotlin = { module = "io.grpc:protoc-gen-grpc-kotlin", version.ref = "grpc-protoc-gen-grpc-kotlin" }
+grpc-services = { module = "io.grpc:grpc-services", version.ref = "grpc-services" }
+grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc-stub" }
+grpc-testing = { module = "io.grpc:grpc-testing", version.ref = "grpc-testing" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+gson-javatime-serializers = { module = "com.fatboyindustrial.gson-javatime-serialisers:gson-javatime-serialisers", version.ref = "gson-javatime-serializers" }
+h2-v1 = { module = "com.h2database:h2", version.ref = "h2-v1" }
+h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
+hibernate-reactive-core = { module = "org.hibernate.reactive:hibernate-reactive-core", version.ref = "hibernate-reactive-core" }
+hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "hibernate-validator" }
+hibernate-validator-annotation-processor = { module = "org.hibernate:hibernate-validator-annotation-processor", version.ref = "hibernate-validator-annotation-processor" }
+hibernate73-envers = { module = "org.hibernate.orm:hibernate-envers", version.ref = "hibernate73" }
+hsqldb = { module = "org.hsqldb:hsqldb", version.ref = "hsqldb" }
+ignite-spring-cache-ext = { module = "org.apache.ignite:ignite-spring-cache-ext", version.ref = "ignite-spring-cache-ext" }
+ignite-spring-data-ext = { module = "org.apache.ignite:ignite-spring-data-2.2-ext", version.ref = "ignite-spring-data-ext" }
+immudb4j = { module = "io.codenotary:immudb4j", version.ref = "immudb4j" }
+influxdb-java = { module = "org.influxdb:influxdb-java", version.ref = "influxdb-java" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson-core" }
+jackson-dataformat-msgpack = { module = "org.msgpack:jackson-dataformat-msgpack", version.ref = "jackson-dataformat-msgpack" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson2" }
+jackson3-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson3" }
+jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "jakarta-annotation-api" }
+jakarta-el-api = { module = "jakarta.el:jakarta.el-api", version.ref = "jakarta-el-api" }
+jakarta-inject-api = { module = "jakarta.inject:jakarta.inject-api", version.ref = "jakarta-inject-api" }
+jakarta-interceptor-api = { module = "jakarta.interceptor:jakarta.interceptor-api", version.ref = "jakarta-interceptor-api" }
+jakarta-jms-api = { module = "jakarta.jms:jakarta.jms-api", version.ref = "jakarta-jms-api" }
+jakarta-json = { module = "org.glassfish:jakarta.json", version.ref = "jakarta-json" }
+jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version.ref = "jakarta-json-api" }
+jakarta-json-glassfish = { module = "org.glassfish:jakarta.json", version.ref = "jakarta-json" }
+jakarta-json-impl = { module = "org.glassfish:jakarta.json", version.ref = "jakarta-json" }
+jakarta-persistence-v31 = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence-v31" }
+jakarta-persistence-v32 = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence-v32" }
+jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "jakarta-servlet-api" }
+jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "jakarta-transaction-api" }
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "jakarta-validation-api" }
+jakarta-ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api", version.ref = "jakarta-ws-rs-api" }
+janino = { module = "org.codehaus.janino:janino", version.ref = "janino" }
+janino-commons-compiler = { module = "org.codehaus.janino:commons-compiler", version.ref = "janino-commons-compiler" }
+java-uuid-generator = { module = "com.fasterxml.uuid:java-uuid-generator", version.ref = "java-uuid-generator" }
+javassist = { module = "org.javassist:javassist", version.ref = "javassist" }
+javax-cache-api = { module = "javax.cache:cache-api", version.ref = "javax-cache-api" }
+javax-money-api = { module = "javax.money:money-api", version.ref = "javax-money-api" }
+javers-core = { module = "org.javers:javers-core", version.ref = "javers-core" }
+jctools-core = { module = "org.jctools:jctools-core", version.ref = "jctools-core" }
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
+jetcd-core = { module = "io.etcd:jetcd-core", version.ref = "jetcd-core" }
+jfalkordb = { module = "com.falkordb:jfalkordb", version.ref = "jfalkordb" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "jjwt-api" }
+jjwt-extensions = { module = "io.jsonwebtoken:jjwt-extensions", version.ref = "jjwt-extensions" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "jjwt-impl" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt-jackson" }
+jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh-core" }
+jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh-generator-annprocess" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna-platform" }
+jnats = { module = "io.nats:jnats", version.ref = "jnats" }
+jsonassert-v1 = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert-v1" }
+jsonassert-v2 = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert-v2" }
+jsonpath-v2 = { module = "com.jayway.jsonpath:json-path", version.ref = "jsonpath-v2" }
+jsonpath-v3 = { module = "com.jayway.jsonpath:json-path", version.ref = "jsonpath-v3" }
+jts-core = { module = "org.locationtech.jts:jts-core", version.ref = "jts-core" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+junit-jupiter-all = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter-api" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter-engine" }
+junit-jupiter-migrationsupport = { module = "org.junit.jupiter:junit-jupiter-migrationsupport", version.ref = "junit-jupiter-migrationsupport" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter-params" }
+junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version.ref = "junit-platform-commons" }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version.ref = "junit-platform-engine" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform-launcher" }
+junit-platform-suite-api = { module = "org.junit.platform:junit-platform-suite-api", version.ref = "junit-platform-suite-api" }
+junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suite-engine", version.ref = "junit-platform-suite-engine" }
+junit-platform1-runner = { module = "org.junit.platform:junit-platform-runner", version.ref = "junit-platform1-runner" }
+junit-platform6-runner = { module = "org.junit.platform:junit-platform-runner", version.ref = "junit-platform6-runner" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit-vintage-engine" }
+jvips-build69bf715 = { module = "com.criteo:jvips", version.ref = "jvips-build69bf715" }
+jvips-buildf9dc8c9 = { module = "com.criteo:jvips", version.ref = "jvips-buildf9dc8c9" }
+keycloak-testcontainers = { module = "com.github.dasniko:testcontainers-keycloak", version.ref = "keycloak-testcontainers" }
+kotlin20-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin20" }
+kotlin20-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin20" }
+kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "kotlinx-atomicfu" }
+kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "kotlinx-benchmark-runtime" }
+kotlinx-benchmark-runtime-jvm = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime-jvm", version.ref = "kotlinx-benchmark-runtime-jvm" }
+kotlinx-benchmark-runtimejvm = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime-jvm", version.ref = "kotlinx-benchmark-runtime-jvm" }
+kryo = { module = "com.esotericsoftware:kryo", version.ref = "kryo" }
+kryo5 = { module = "com.esotericsoftware:kryo", version.ref = "kryo" }
+kubernetes-client-java = { module = "io.kubernetes:client-java", version.ref = "kubernetes-client-java" }
+kuromoji-ipadic = { module = "com.atilika.kuromoji:kuromoji-ipadic", version.ref = "kuromoji-ipadic" }
+kuromoji-unidic = { module = "com.atilika.kuromoji:kuromoji-unidic", version.ref = "kuromoji-unidic" }
+libphonenumber-v8 = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumber-v8" }
+libphonenumber-v9 = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumber-v9" }
+lingua = { module = "com.github.pemistahl:lingua", version.ref = "lingua" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
+logback-slack-appender = { module = "com.github.maricn:logback-slack-appender", version.ref = "logback-slack-appender" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct-processor" }
+mariadb-java-client = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "mariadb-java-client" }
+maxmind-geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "maxmind-geoip2" }
+metadata-extractor = { module = "com.drewnoakes:metadata-extractor", version.ref = "metadata-extractor" }
+micrometer-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micrometer-bom" }
+micrometer-context-propagation = { module = "io.micrometer:context-propagation", version.ref = "micrometer-context-propagation" }
+micrometer-tracing = { module = "io.micrometer:micrometer-tracing", version.ref = "micrometer-tracing" }
+micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing-bom" }
+micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "micrometer-tracing-bridge-brave" }
+micrometer-tracing-bridge-otel = { module = "io.micrometer:micrometer-tracing-bridge-otel", version.ref = "micrometer-tracing-bridge-otel" }
+micrometer-tracing-integration-test = { module = "io.micrometer:micrometer-tracing-integration-test", version.ref = "micrometer-tracing-integration-test" }
+micrometer-tracing-test = { module = "io.micrometer:micrometer-tracing-test", version.ref = "micrometer-tracing-test" }
+milvus-sdk-java = { module = "io.milvus:milvus-sdk-java", version.ref = "milvus-sdk-java" }
+minio-v8 = { module = "io.minio:minio", version.ref = "minio-v8" }
+minio-v9 = { module = "io.minio:minio", version.ref = "minio-v9" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockserver-client-java = { module = "org.mock-server:mockserver-client-java", version.ref = "mockserver-client-java" }
+mockserver-netty = { module = "org.mock-server:mockserver-netty", version.ref = "mockserver-netty" }
+mongo-bson = { module = "org.mongodb:bson", version.ref = "mongo-bson" }
+mongo-bson-kotlin = { module = "org.mongodb:bson-kotlin", version.ref = "mongo-bson-kotlin" }
+mongo-bson-kotlinx = { module = "org.mongodb:bson-kotlinx", version.ref = "mongo-bson-kotlinx" }
+mongodb-driver-core = { module = "org.mongodb:mongodb-driver-core", version.ref = "mongodb-driver-core" }
+mongodb-driver-kotlin-coroutine = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "mongodb-driver-kotlin-coroutine" }
+mongodb-driver-kotlin-extensions = { module = "org.mongodb:mongodb-driver-kotlin-extensions", version.ref = "mongodb-driver-kotlin-extensions" }
+mongodb-driver-kotlin-sync = { module = "org.mongodb:mongodb-driver-kotlin-sync", version.ref = "mongodb-driver-kotlin-sync" }
+mongodb-driver-legacy = { module = "org.mongodb:mongodb-driver-legacy", version.ref = "mongodb-driver-legacy" }
+mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "mongodb-driver-reactivestreams" }
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "mongodb-driver-sync" }
+mutiny = { module = "io.smallrye.reactive:mutiny", version.ref = "mutiny" }
+mutiny-kotlin = { module = "io.smallrye.reactive:mutiny-kotlin", version.ref = "mutiny-kotlin" }
+mvel2 = { module = "org.mvel:mvel2", version.ref = "mvel2" }
+mybatis = { module = "org.mybatis:mybatis", version.ref = "mybatis" }
+mybatis-spring3 = { module = "org.mybatis:mybatis-spring", version.ref = "mybatis-spring3" }
+mybatis-spring4 = { module = "org.mybatis:mybatis-spring", version.ref = "mybatis-spring4" }
+nats-spring = { module = "io.nats:nats-spring", version.ref = "nats-spring" }
+nats-spring-cloud-stream-binder = { module = "io.nats:nats-spring-cloud-stream-binder", version.ref = "nats-spring-cloud-stream-binder" }
+neo4j-bolt-connection-bom = { module = "org.neo4j.bolt:neo4j-bolt-connection-bom", version.ref = "neo4j-bolt-connection-bom" }
+neo4j-bolt-connection-netty = { module = "org.neo4j.bolt:neo4j-bolt-connection-netty", version.ref = "neo4j-bolt-connection-netty" }
+neo4j-bolt-connection-pooled = { module = "org.neo4j.bolt:neo4j-bolt-connection-pooled", version.ref = "neo4j-bolt-connection-pooled" }
+neo4j-driver5 = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4j-driver5" }
+neo4j-driver6 = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4j-driver6" }
+netty-tcnative-classes = { module = "io.netty:netty-tcnative-classes", version.ref = "netty-tcnative-classes" }
+netty4-all = { module = "io.netty:netty-all", version.ref = "netty4" }
+netty4-buffer = { module = "io.netty:netty-buffer", version.ref = "netty4" }
+netty4-codec = { module = "io.netty:netty-codec", version.ref = "netty4" }
+netty4-codec-dns = { module = "io.netty:netty-codec-dns", version.ref = "netty4" }
+netty4-codec-http = { module = "io.netty:netty-codec-http", version.ref = "netty4" }
+netty4-codec-http2 = { module = "io.netty:netty-codec-http2", version.ref = "netty4" }
+netty4-codec-socks = { module = "io.netty:netty-codec-socks", version.ref = "netty4" }
+netty4-common = { module = "io.netty:netty-common", version.ref = "netty4" }
+netty4-handler = { module = "io.netty:netty-handler", version.ref = "netty4" }
+netty4-handler-proxy = { module = "io.netty:netty-handler-proxy", version.ref = "netty4" }
+netty4-resolver = { module = "io.netty:netty-resolver", version.ref = "netty4" }
+netty4-resolver-dns = { module = "io.netty:netty-resolver-dns", version.ref = "netty4" }
+netty4-transport = { module = "io.netty:netty-transport", version.ref = "netty4" }
+objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
+okhttp3 = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp3" }
+okhttp3-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "okhttp3-bom" }
+okhttp3-coroutines = { module = "com.squareup.okhttp3:okhttp-coroutines", version.ref = "okhttp3-coroutines" }
+okhttp3-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp3-logging-interceptor" }
+okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp3-mockwebserver" }
+okhttp3-sse = { module = "com.squareup.okhttp3:okhttp-sse", version.ref = "okhttp3-sse" }
+okhttp3-urlconnection = { module = "com.squareup.okhttp3:okhttp-urlconnection", version.ref = "okhttp3-urlconnection" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "okio-fakefilesystem" }
+open-korean-text = { module = "org.openkoreantext:open-korean-text", version.ref = "open-korean-text" }
+opentelemetry-alpha-bom = { module = "io.opentelemetry:opentelemetry-bom-alpha", version.ref = "opentelemetry-alpha-bom" }
+oracle-ojdbc8 = { module = "com.oracle.ojdbc:ojdbc8", version.ref = "oracle-ojdbc8" }
+org-lz4-java = { module = "org.lz4:lz4-java", version.ref = "org-lz4" }
+pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "pgjdbc-ng" }
+pgvector = { module = "com.pgvector:pgvector", version.ref = "pgvector" }
+postgis-y2024 = { module = "net.postgis:postgis-jdbc", version.ref = "postgis-y2024" }
+postgis-y2025 = { module = "net.postgis:postgis-jdbc", version.ref = "postgis-y2025" }
+proj4j = { module = "org.locationtech.proj4j:proj4j", version.ref = "proj4j" }
+proj4j-epsg = { module = "org.locationtech.proj4j:proj4j-epsg", version.ref = "proj4j-epsg" }
+prometheus-simpleclient = { module = "io.prometheus:simpleclient", version.ref = "prometheus-simpleclient" }
+prometheus-simpleclient-common = { module = "io.prometheus:simpleclient_common", version.ref = "prometheus-simpleclient-common" }
+prometheus-simpleclient-dropwizard = { module = "io.prometheus:simpleclient_dropwizard", version.ref = "prometheus-simpleclient-dropwizard" }
+prometheus-simpleclient-httpserver = { module = "io.prometheus:simpleclient_httpserver", version.ref = "prometheus-simpleclient-httpserver" }
+prometheus-simpleclient-pushgateway = { module = "io.prometheus:simpleclient_pushgateway", version.ref = "prometheus-simpleclient-pushgateway" }
+prometheus-simpleclient-spring-boot = { module = "io.prometheus:simpleclient_spring_boot", version.ref = "prometheus-simpleclient-spring-boot" }
+prometheus-simpleclient-tracer-common = { module = "io.prometheus:simpleclient_tracer_common", version.ref = "prometheus-simpleclient-tracer-common" }
+prometheus-simpleclient-tracer-otel = { module = "io.prometheus:simpleclient_tracer_otel", version.ref = "prometheus-simpleclient-tracer-otel" }
+prometheus-simpleclient-tracer-otel-agent = { module = "io.prometheus:simpleclient_tracer_otel_agent", version.ref = "prometheus-simpleclient-tracer-otel-agent" }
+proto-google-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version.ref = "proto-google-common-protos" }
+pulsar3-client = { module = "org.apache.pulsar:pulsar-client", version.ref = "pulsar3" }
+pulsar3-client-api = { module = "org.apache.pulsar:pulsar-client-api", version.ref = "pulsar3" }
+pulsar4-client = { module = "org.apache.pulsar:pulsar-client", version.ref = "pulsar4" }
+pulsar4-client-api = { module = "org.apache.pulsar:pulsar-client-api", version.ref = "pulsar4" }
+r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "r2dbc-mariadb" }
+r2dbc-mysql = { module = "io.asyncer:r2dbc-mysql", version.ref = "r2dbc-mysql" }
+r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "r2dbc-pool" }
+r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "r2dbc-postgresql" }
+r2dbc-proxy = { module = "io.r2dbc:r2dbc-proxy", version.ref = "r2dbc-proxy" }
+r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "r2dbc-spi" }
+reactor-kafka = { module = "io.projectreactor.kafka:reactor-kafka", version.ref = "reactor-kafka" }
+reactor-kafka4 = { module = "io.projectreactor.kafka:reactor-kafka", version.ref = "reactor-kafka" }
+reflectasm = { module = "com.esotericsoftware:reflectasm", version.ref = "reflectasm" }
+resilience4j-all = { module = "io.github.resilience4j:resilience4j-all", version.ref = "resilience4j-all" }
+resilience4j-annotations = { module = "io.github.resilience4j:resilience4j-annotations", version.ref = "resilience4j-annotations" }
+resilience4j-bom = { module = "io.github.resilience4j:resilience4j-bom", version.ref = "resilience4j-bom" }
+resilience4j-bulkhead = { module = "io.github.resilience4j:resilience4j-bulkhead", version.ref = "resilience4j-bulkhead" }
+resilience4j-cache = { module = "io.github.resilience4j:resilience4j-cache", version.ref = "resilience4j-cache" }
+resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j-circuitbreaker" }
+resilience4j-core = { module = "io.github.resilience4j:resilience4j-core", version.ref = "resilience4j-core" }
+resilience4j-feign = { module = "io.github.resilience4j:resilience4j-feign", version.ref = "resilience4j-feign" }
+resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j-kotlin" }
+resilience4j-metrics = { module = "io.github.resilience4j:resilience4j-metrics", version.ref = "resilience4j-metrics" }
+resilience4j-micrometer = { module = "io.github.resilience4j:resilience4j-micrometer", version.ref = "resilience4j-micrometer" }
+resilience4j-ratelimiter = { module = "io.github.resilience4j:resilience4j-ratelimiter", version.ref = "resilience4j-ratelimiter" }
+resilience4j-reactor = { module = "io.github.resilience4j:resilience4j-reactor", version.ref = "resilience4j-reactor" }
+resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j-retry" }
+resilience4j-spring = { module = "io.github.resilience4j:resilience4j-spring", version.ref = "resilience4j-spring" }
+resilience4j-timelimiter = { module = "io.github.resilience4j:resilience4j-timelimiter", version.ref = "resilience4j-timelimiter" }
+rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "rest-assured" }
+rest-assured-all = { module = "io.rest-assured:rest-assured-all", version.ref = "rest-assured-all" }
+rest-assured-json-path = { module = "io.rest-assured:json-path", version.ref = "rest-assured-json-path" }
+rest-assured-kotlin = { module = "io.rest-assured:kotlin-extensions", version.ref = "rest-assured-kotlin" }
+retrofit2 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit2" }
+retrofit2-adapter-java8 = { module = "com.squareup.retrofit2:adapter-java8", version.ref = "retrofit2-adapter-java8" }
+retrofit2-adapter-reactor = { module = "com.jakewharton.retrofit:retrofit2-reactor-adapter", version.ref = "retrofit2-adapter-reactor" }
+retrofit2-adapter-rxjava2 = { module = "com.squareup.retrofit2:adapter-rxjava2", version.ref = "retrofit2-adapter-rxjava2" }
+retrofit2-adapter-rxjava3 = { module = "com.squareup.retrofit2:adapter-rxjava3", version.ref = "retrofit2-adapter-rxjava3" }
+retrofit2-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "retrofit2-converter-jackson" }
+retrofit2-converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "retrofit2-converter-moshi" }
+retrofit2-converter-protobuf = { module = "com.squareup.retrofit2:converter-protobuf", version.ref = "retrofit2-converter-protobuf" }
+retrofit2-converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "retrofit2-converter-scalars" }
+retrofit2-mock = { module = "com.squareup.retrofit2:retrofit-mock", version.ref = "retrofit2-mock" }
+sentry-logback = { module = "io.sentry:sentry-logback", version.ref = "sentry-logback" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+snappy-java = { module = "org.xerial.snappy:snappy-java", version.ref = "snappy-java" }
+spring-cloud-aws-bom = { module = "io.awspring.cloud:spring-cloud-aws-dependencies", version.ref = "spring-cloud-aws-bom" }
+spring-cloud-dependencies = { module = "org.springframework.cloud:spring-cloud-dependencies", version.ref = "spring-cloud-dependencies" }
+spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "spring-modulith-bom" }
+spring-statemachine-bom = { module = "org.springframework.statemachine:spring-statemachine-bom", version.ref = "spring-statemachine-bom" }
+spring-statemachine-core = { module = "org.springframework.statemachine:spring-statemachine-core", version.ref = "spring-statemachine-core" }
+springmockk = { module = "com.ninja-squad:springmockk", version.ref = "springmockk" }
+starrocks-connector-j = { module = "com.starrocks:starrocks-connector-j", version.ref = "starrocks-connector-j" }
+tess4j = { module = "net.sourceforge.tess4j:tess4j", version.ref = "tess4j" }
+testcontainers-ministack = { module = "org.ministack:testcontainers-ministack", version.ref = "testcontainers-ministack" }
+testcontainers-opensearch = { module = "org.opensearch:opensearch-testcontainers", version.ref = "testcontainers-opensearch" }
+tink = { module = "com.google.crypto.tink:tink", version.ref = "tink" }
+tinkergraph-gremlin = { module = "org.apache.tinkerpop:tinkergraph-gremlin", version.ref = "tinkergraph-gremlin" }
+tinkerpop-gremlin-core = { module = "org.apache.tinkerpop:gremlin-core", version.ref = "tinkerpop-gremlin-core" }
+trino-jdbc = { module = "io.trino:trino-jdbc", version.ref = "trino-jdbc" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+turbine-jvm = { module = "app.cash.turbine:turbine-jvm", version.ref = "turbine-jvm" }
+twelvemonkeys-imageio-core = { module = "com.twelvemonkeys.imageio:imageio-core", version.ref = "twelvemonkeys-imageio-core" }
+twelvemonkeys-imageio-metadata = { module = "com.twelvemonkeys.imageio:imageio-metadata", version.ref = "twelvemonkeys-imageio-metadata" }
+twelvemonkeys-imageio-tiff = { module = "com.twelvemonkeys.imageio:imageio-tiff", version.ref = "twelvemonkeys-imageio-tiff" }
+typesafe-config = { module = "com.typesafe:config", version.ref = "typesafe-config" }
+ucar-cdm-core = { module = "edu.ucar:cdm-core", version.ref = "ucar-cdm-core" }
+ucar-netcdf4 = { module = "edu.ucar:netcdf4", version.ref = "ucar-netcdf4" }
+uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "uuid-creator" }
+vault-java-driver = { module = "com.bettercloud:vault-java-driver", version.ref = "vault-java-driver" }
+vertx4-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx4" }
+vertx4-web-common = { module = "io.vertx:vertx-web-common", version.ref = "vertx4" }
+vips-ffm = { module = "app.photofox.vips-ffm:vips-ffm-core", version.ref = "vips-ffm" }
+weaviate-client = { module = "io.weaviate:client6", version.ref = "weaviate-client" }
+wiremock = { module = "org.wiremock:wiremock", version.ref = "wiremock" }
+xz = { module = "org.tukaani:xz", version.ref = "xz" }
+zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version.ref = "zero-allocation-hashing" }
+zipkin-brave = { module = "io.zipkin.brave:brave", version.ref = "brave" }
+zipkin-brave-tests = { module = "io.zipkin.brave:brave-tests", version.ref = "brave" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing-core" }
+zxing-javase = { module = "com.google.zxing:javase", version.ref = "zxing-javase" }
+# </generated-central-authority-libraries>
 # </external-managed-modules by dependency governance>
 
 # <generated-managed-modules by scripts/sync-managed-catalog.py>

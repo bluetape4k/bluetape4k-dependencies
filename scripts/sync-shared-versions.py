@@ -80,6 +80,19 @@ DISPOSITION_EVIDENCE_TYPES = {
     "compatibility-line": frozenset({"compatibility-review"}),
     "structural-repo-owned": frozenset({"settings-evaluation"}),
 }
+DISPOSITION_RECORD_FIELDS = frozenset(
+    {
+        "authority-id",
+        "line-id",
+        "central-aliases",
+        "disposition",
+        "evidence",
+        "status",
+        "owner",
+    }
+)
+STRUCTURAL_DISPOSITION_FIELDS = frozenset({"repository", "issue", "review-by"})
+DISPOSITION_EVIDENCE_FIELDS = frozenset({"type", "path"})
 AUTHORITY_LINE_FIELDS = frozenset(
     {
         "repository",
@@ -1217,6 +1230,16 @@ def validate_dispositions(
     for index, record in enumerate(records):
         if not isinstance(record, dict):
             raise TypeError(f"invalid disposition record at index {index}")
+        disposition = record.get("disposition")
+        allowed_record_fields = DISPOSITION_RECORD_FIELDS
+        if disposition == "structural-repo-owned":
+            allowed_record_fields |= STRUCTURAL_DISPOSITION_FIELDS
+        unknown_record_fields = sorted(set(record) - allowed_record_fields)
+        if unknown_record_fields:
+            raise RuntimeError(
+                "unknown disposition fields at index "
+                f"{index}: {', '.join(unknown_record_fields)}"
+            )
         authority_id = record.get("authority-id")
         line_id = record.get("line-id")
         if not isinstance(authority_id, str) or SHA256.fullmatch(authority_id) is None:
@@ -1228,7 +1251,6 @@ def validate_dispositions(
             raise RuntimeError(f"duplicate disposition pair: {authority_id}:{line_id}")
         actual_pairs.add(pair)
 
-        disposition = record.get("disposition")
         allowed_evidence = DISPOSITION_EVIDENCE_TYPES.get(disposition)
         if allowed_evidence is None:
             raise RuntimeError(f"invalid disposition at index {index}: {disposition}")
@@ -1240,6 +1262,12 @@ def validate_dispositions(
             expected = ", ".join(sorted(allowed_evidence))
             raise RuntimeError(
                 f"invalid evidence for {disposition}; expected {expected}"
+            )
+        unknown_evidence_fields = sorted(set(evidence) - DISPOSITION_EVIDENCE_FIELDS)
+        if unknown_evidence_fields:
+            raise RuntimeError(
+                "unknown evidence fields at disposition index "
+                f"{index}: {', '.join(unknown_evidence_fields)}"
             )
         if not isinstance(evidence.get("path"), str) or not evidence["path"]:
             raise RuntimeError(f"missing evidence path at disposition index {index}")
