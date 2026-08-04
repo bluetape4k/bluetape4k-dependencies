@@ -16,9 +16,9 @@ import importlib.util
 import json
 import re
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
-
+from typing import Any
 
 SCRIPT_NAME = "scripts/promote-catalog-authority.py"
 AUTHORITY_PATH = Path(__file__).resolve().with_name("catalog_authority.py")
@@ -677,20 +677,26 @@ def _render_catalog(
             raise PromotionError(f"version-key value collision: {key}")
     for alias, (plugin_id, version_key, version) in generated_plugins.items():
         existing = existing_plugins.get(alias)
-        if existing is not None and alias not in managed_plugins:
-            if (
+        if (
+            existing is not None
+            and alias not in managed_plugins
+            and (
                 existing.get("id") != plugin_id
                 or _entry_effective_version(existing, existing_versions) != version
-            ):
-                raise PromotionError(f"alias/accessor collision: {alias}")
+            )
+        ):
+            raise PromotionError(f"alias/accessor collision: {alias}")
     for alias, (module, version_key, version) in generated_libraries.items():
         existing = existing_libraries.get(alias)
-        if existing is not None and alias not in managed_libraries:
-            if (
+        if (
+            existing is not None
+            and alias not in managed_libraries
+            and (
                 existing.get("module") != module
                 or _entry_effective_version(existing, existing_versions) != version
-            ):
-                raise PromotionError(f"alias/accessor collision: {alias}")
+            )
+        ):
+            raise PromotionError(f"alias/accessor collision: {alias}")
 
     try:
         _validate_accessor_aliases(

@@ -1148,6 +1148,30 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             with self.assertRaisesRegex(RuntimeError, "top-level fields"):
                 sync.load_repository_map(invalid, root, sync.DEFAULT_REPOSITORIES)
 
+    def test_repository_roots_use_catalog_checkout_not_worktree_parent(self) -> None:
+        catalog = (
+            Path("/workspace/bluetape4k-projects/.worktrees/candidate")
+            / "gradle"
+            / "libs.versions.toml"
+        )
+        targets = {
+            "bluetape4k-projects": sync.RepositoryTarget(
+                "bluetape4k-projects",
+                catalog,
+                "issue/168-central-catalog-authority",
+                "a" * 40,
+            )
+        }
+
+        self.assertEqual(
+            sync.repository_roots(targets),
+            {
+                "bluetape4k-projects": Path(
+                    "/workspace/bluetape4k-projects/.worktrees/candidate"
+                )
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

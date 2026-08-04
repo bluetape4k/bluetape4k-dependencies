@@ -652,6 +652,15 @@ def load_repository_map(
     return targets
 
 
+def repository_roots(
+    targets: dict[str, RepositoryTarget],
+) -> dict[str, Path]:
+    return {
+        repository: target.catalog.parents[1]
+        for repository, target in targets.items()
+    }
+
+
 def read_source_versions(catalog: Path) -> dict[str, SourceVersion]:
     text = catalog.read_text(encoding="utf-8")
     module_groups = module_groups_by_version_ref(text)
@@ -1364,7 +1373,7 @@ def main() -> int:
         return 2
     source_catalog = repo_root / "gradle" / "libs.versions.toml"
     mapped: dict[str, RepositoryTarget] | None = None
-    repository_roots: dict[str, Path] | None = None
+    mapped_repository_roots: dict[str, Path] | None = None
     if args.repository_map:
         try:
             mapped = load_repository_map(
@@ -1373,10 +1382,7 @@ def main() -> int:
         except RuntimeError as exc:
             print(str(exc), file=sys.stderr)
             return 2
-        repository_roots = {
-            repository: target.catalog.parents[2]
-            for repository, target in mapped.items()
-        }
+        mapped_repository_roots = repository_roots(mapped)
     if bool(args.inventory_out) != bool(args.summary_out):
         print(
             "--inventory-out and --summary-out must be supplied together",
@@ -1394,14 +1400,14 @@ def main() -> int:
                 workspace,
                 source_catalog,
                 repositories,
-                repository_roots,
+                mapped_repository_roots,
                 authority_lines=authority_lines,
                 used_authority_lines=used_authority_lines,
             )
             hard_coded_inventory = hard_coded_authority_records(
                 workspace,
                 repositories,
-                repository_roots,
+                mapped_repository_roots,
                 authority_lines=authority_lines,
                 used_authority_lines=used_authority_lines,
             )
