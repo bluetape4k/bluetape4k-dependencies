@@ -1,0 +1,20 @@
+{
+  "schema-version": 1,
+  "selectors": [
+    {
+      "repository": "bluetape4k-projects",
+      "local-version-key": "grpc-kotlin",
+      "central-version-key": "managed-grpc-protoc-gen-grpc-kotlin-h8643385749ff"
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "local-version-key": "jmh",
+      "central-version-key": "managed-jmh-core-h350a653f63e5"
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "local-version-key": "jmh",
+      "central-version-key": "managed-jmh-core-h350a653f63e5"
+    }
+  ]
+}

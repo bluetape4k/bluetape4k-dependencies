@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
@@ -15,6 +16,11 @@ REPOSITORY_MAP_FIXTURE = (
     / "fixtures"
     / "catalog-candidate"
     / "repository-map-valid.json"
+)
+SELECTOR_CONFIG = (
+    Path(__file__).resolve().parents[1]
+    / "config"
+    / "central-catalog-version-selectors.json"
 )
 SPEC = importlib.util.spec_from_file_location("migrate_catalog_authority", SCRIPT_PATH)
 assert SPEC is not None and SPEC.loader is not None
@@ -312,6 +318,36 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
         with self.assertRaisesRegex(migrate.MigrationError, "invalid policy"):
             migrate._validate_policy(empty_occurrences)
 
+    def test_version_selector_config_and_unknown_repositories_fail_closed(self) -> None:
+        aliases = migrate._central_aliases(
+            Path(__file__).resolve().parents[1] / "gradle/libs.versions.toml"
+        )
+        selector_document = json.loads(SELECTOR_CONFIG.read_text(encoding="utf-8"))
+        selectors = migrate._validate_version_selectors(
+            selector_document,
+            aliases.versions,
+            allowed_repositories={
+                "bluetape4k-projects",
+                "bluetape4k-exposed",
+            },
+        )
+        self.assertEqual(
+            set(selectors),
+            {
+                ("bluetape4k-projects", "grpc-kotlin"),
+                ("bluetape4k-projects", "jmh"),
+                ("bluetape4k-exposed", "jmh"),
+            },
+        )
+        invalid = copy.deepcopy(selector_document)
+        invalid["selectors"][0]["repository"] = "bluetape4k-unknown"
+        with self.assertRaisesRegex(migrate.MigrationError, "managed selected"):
+            migrate._validate_version_selectors(
+                invalid,
+                aliases.versions,
+                allowed_repositories={"bluetape4k-projects"},
+            )
+
     def test_apply_plan_preflights_every_target_before_writing(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
@@ -420,6 +456,187 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
             self.assertTrue(
                 any("ambiguous local version" in blocker for blocker in plan.blockers)
             )
+
+    def test_explicit_version_selector_rewrites_only_selected_accessor(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "gradle").mkdir()
+            catalog = root / "gradle/libs.versions.toml"
+            catalog.write_text(
+                "[versions]\n"
+                'shared = "1.2.3"\n'
+                "[plugins]\n"
+                "[libraries]\n"
+                'alpha-local = { module = "org.example:alpha", version.ref = "shared" }\n'
+                'beta-local = { module = "org.example:beta", version.ref = "shared" }\n',
+                encoding="utf-8",
+            )
+            build = root / "build.gradle.kts"
+            build.write_text(
+                "val shared = libs.versions.shared.get()\n",
+                encoding="utf-8",
+            )
+            inventory = [
+                _record("a" * 64, alias="alpha-local", source_line=5),
+                _record(
+                    "b" * 64,
+                    coordinate="org.example:beta",
+                    alias="beta-local",
+                    source_line=6,
+                ),
+            ]
+            policy = {
+                "schema-version": 1,
+                "subjects": [
+                    _policy(central_alias="alpha")["subjects"][0],
+                    _policy(
+                        coordinate="org.example:beta",
+                        local_alias="beta-local",
+                        central_alias="beta",
+                    )["subjects"][0],
+                ],
+            }
+            policy["subjects"][0]["lines"][0]["version-key"] = "central-alpha"
+            policy["subjects"][1]["lines"][0]["version-key"] = "central-beta"
+            dispositions = {
+                "schema-version": 1,
+                "records": [
+                    _dispositions("a" * 64, ["alpha"])["records"][0],
+                    _dispositions("b" * 64, ["beta"])["records"][0],
+                ],
+            }
+            plan = migrate.plan_repository(
+                "bluetape4k-projects",
+                root,
+                catalog,
+                inventory,
+                policy,
+                dispositions,
+                migrate.CentralAliases(
+                    libraries={"alpha", "beta"},
+                    plugins=set(),
+                    versions={"central-alpha", "central-beta"},
+                    version_values={
+                        "central-alpha": "1.2.3",
+                        "central-beta": "1.2.3",
+                    },
+                ),
+                version_selectors={("bluetape4k-projects", "shared"): "central-alpha"},
+            )
+            self.assertEqual(plan.blockers, ())
+            self.assertEqual(plan.removed_aliases, ("alpha-local", "beta-local"))
+            self.assertEqual(plan.removed_versions, ("shared",))
+            self.assertTrue(
+                any(
+                    replacement.before == "libs.versions.shared.get"
+                    and replacement.after == "bt4k.versions.central.alpha.get"
+                    for replacement in plan.replacements
+                )
+            )
+
+    def test_ambiguous_selector_requires_equal_central_values(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "gradle").mkdir()
+            catalog = root / "gradle/libs.versions.toml"
+            catalog.write_text(
+                "[versions]\n"
+                'shared = "1.2.3"\n'
+                "[plugins]\n"
+                "[libraries]\n"
+                'alpha-local = { module = "org.example:alpha", version.ref = "shared" }\n'
+                'beta-local = { module = "org.example:beta", version.ref = "shared" }\n',
+                encoding="utf-8",
+            )
+            (root / "build.gradle.kts").write_text(
+                "val shared = libs.versions.shared.get()\n", encoding="utf-8"
+            )
+            inventory = [
+                _record("a" * 64, alias="alpha-local", source_line=5),
+                _record(
+                    "b" * 64,
+                    coordinate="org.example:beta",
+                    alias="beta-local",
+                    source_line=6,
+                ),
+            ]
+            policy = {
+                "schema-version": 1,
+                "subjects": [
+                    _policy(central_alias="alpha")["subjects"][0],
+                    _policy(
+                        coordinate="org.example:beta",
+                        local_alias="beta-local",
+                        central_alias="beta",
+                    )["subjects"][0],
+                ],
+            }
+            policy["subjects"][0]["lines"][0]["version-key"] = "central-alpha"
+            policy["subjects"][1]["lines"][0]["version-key"] = "central-beta"
+            dispositions = {
+                "schema-version": 1,
+                "records": [
+                    _dispositions("a" * 64, ["alpha"])["records"][0],
+                    _dispositions("b" * 64, ["beta"])["records"][0],
+                ],
+            }
+            aliases = migrate.CentralAliases(
+                libraries={"alpha", "beta"},
+                plugins=set(),
+                versions={"central-alpha", "central-beta"},
+                version_values={
+                    "central-alpha": "1.2.3",
+                    "central-beta": "2.0.0",
+                },
+            )
+            with self.assertRaisesRegex(migrate.MigrationError, "values differ"):
+                migrate.plan_repository(
+                    "bluetape4k-projects",
+                    root,
+                    catalog,
+                    inventory,
+                    policy,
+                    dispositions,
+                    aliases,
+                    version_selectors={
+                        ("bluetape4k-projects", "shared"): "central-alpha"
+                    },
+                )
+
+    def test_orphan_selector_local_key_is_rejected_by_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            (root / "gradle").mkdir()
+            catalog = root / "gradle/libs.versions.toml"
+            catalog.write_text(
+                "[versions]\n"
+                'alpha-local = "1.2.3"\n'
+                "[plugins]\n[libraries]\n"
+                'alpha-local = { module = "org.example:alpha", version.ref = "alpha-local" }\n',
+                encoding="utf-8",
+            )
+            (root / "build.gradle.kts").write_text(
+                "dependencies { implementation(libs.alpha.local) }\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(migrate.MigrationError, "orphan"):
+                migrate.plan_repository(
+                    "bluetape4k-projects",
+                    root,
+                    catalog,
+                    [_record("a" * 64, source_line=5)],
+                    _policy(),
+                    _dispositions("a" * 64, ["alpha"]),
+                    migrate.CentralAliases(
+                        libraries={"alpha"},
+                        plugins=set(),
+                        versions={"alpha"},
+                        version_values={"alpha": "1.2.3"},
+                    ),
+                    version_selectors={
+                        ("bluetape4k-projects", "missing"): "alpha"
+                    },
+                )
 
 
 if __name__ == "__main__":

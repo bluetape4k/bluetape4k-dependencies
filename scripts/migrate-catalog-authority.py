@@ -76,6 +76,9 @@ POLICY_LINE_FIELDS = frozenset(
     }
 )
 POLICY_OCCURRENCE_FIELDS = frozenset({"central-alias", "local-alias", "repository"})
+VERSION_SELECTOR_FIELDS = frozenset(
+    {"central-version-key", "local-version-key", "repository"}
+)
 DISPOSITION_FIELDS = frozenset(
     {
         "authority-id",
@@ -128,6 +131,7 @@ class CentralAliases:
     plugins: frozenset[str]
     versions: frozenset[str]
     version_refs: Mapping[str, str]
+    version_values: Mapping[str, object]
 
     def __init__(
         self,
@@ -135,11 +139,13 @@ class CentralAliases:
         plugins: Iterable[str],
         versions: Iterable[str],
         version_refs: Mapping[str, str] | None = None,
+        version_values: Mapping[str, object] | None = None,
     ) -> None:
         object.__setattr__(self, "libraries", frozenset(libraries))
         object.__setattr__(self, "plugins", frozenset(plugins))
         object.__setattr__(self, "versions", frozenset(versions))
         object.__setattr__(self, "version_refs", dict(version_refs or {}))
+        object.__setattr__(self, "version_values", dict(version_values or {}))
 
 
 @dataclasses.dataclass(frozen=True)
@@ -178,6 +184,7 @@ class MigrationPlan:
     removed_versions: tuple[str, ...]
     blockers: tuple[str, ...]
     structural_preserved: tuple[str, ...]
+    used_version_selectors: tuple[tuple[str, str], ...] = ()
 
     @property
     def replacements_count(self) -> int:
@@ -255,6 +262,18 @@ def _require_string(value: Any, label: str) -> str:
 def _validate_alias(alias: str, label: str) -> None:
     if ALIAS_PATTERN.fullmatch(alias) is None:
         raise MigrationError(f"invalid {label}: {alias}")
+
+
+def _version_value_fingerprint(value: object) -> str:
+    try:
+        return json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    except (TypeError, ValueError) as exc:
+        raise MigrationError("central version value is not JSON-compatible") from exc
 
 
 def _validate_inventory(raw: Any) -> list[dict[str, Any]]:
@@ -445,6 +464,61 @@ def _validate_dispositions(raw: Any) -> dict[tuple[str, str], dict[str, Any]]:
         if key in result:
             raise MigrationError(f"duplicate disposition pair: {aid}:{line_id}")
         result[key] = dict(item)
+    return result
+
+
+def _validate_version_selectors(
+    raw: Any,
+    central_versions: Iterable[str],
+    *,
+    allowed_repositories: Iterable[str] | None = None,
+) -> dict[tuple[str, str], str]:
+    """Validate explicit selectors for local version accessors.
+
+    A local version key may back multiple central version refs (for example
+    ``jmh`` or ``grpc-kotlin``).  Selectors are intentionally external to the
+    policy so the operator must name the repository and accessor use-site
+    before a replacement can occur.
+    """
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict) or set(raw) != {"schema-version", "selectors"}:
+        raise MigrationError("invalid version selector schema")
+    if raw["schema-version"] != 1 or not isinstance(raw["selectors"], list):
+        raise MigrationError("version selector schema-version must be 1")
+    central_keys = frozenset(central_versions)
+    allowed = frozenset(
+        allowed_repositories
+        if allowed_repositories is not None
+        else (REPOSITORY_NAMES[key] for key in REPOSITORY_KEYS)
+    )
+    result: dict[tuple[str, str], str] = {}
+    for index, item in enumerate(raw["selectors"]):
+        if not isinstance(item, dict) or set(item) != VERSION_SELECTOR_FIELDS:
+            raise MigrationError(f"invalid version selector at index {index}")
+        repository = _require_string(item["repository"], "selector repository")
+        local_key = _require_string(
+            item["local-version-key"], "selector local-version-key"
+        )
+        central_key = _require_string(
+            item["central-version-key"], "selector central-version-key"
+        )
+        _validate_alias(local_key, "selector local-version-key")
+        _validate_alias(central_key, "selector central-version-key")
+        if repository not in allowed:
+            raise MigrationError(
+                f"selector repository is not a managed selected repository: {repository}"
+            )
+        if central_key not in central_keys:
+            raise MigrationError(
+                f"selector central version key is absent from central catalog: {central_key}"
+            )
+        key = (repository, local_key)
+        if key in result:
+            raise MigrationError(
+                f"duplicate version selector: {repository}:{local_key}"
+            )
+        result[key] = central_key
     return result
 
 
@@ -645,7 +719,11 @@ def _accessor(alias: str) -> str:
 def _contains_accessor(text: str, token: str) -> bool:
     for match in re.finditer(rf"(?<![A-Za-z0-9_.]){re.escape(token)}", text):
         suffix = text[match.end() :]
-        if not suffix or suffix[0] not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.":
+        if (
+            not suffix
+            or suffix[0]
+            not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_."
+        ):
             return True
         provider = re.match(r"\.([A-Za-z0-9_]+)", suffix)
         if provider is not None and provider.group(1) in ALLOWED_PROVIDER_TAILS:
@@ -736,6 +814,7 @@ def plan_repository(
     policy: Any,
     dispositions: Any,
     central_aliases: CentralAliases,
+    version_selectors: Mapping[tuple[str, str], str] | None = None,
 ) -> MigrationPlan:
     """Plan one repository without mutating it."""
     if (
@@ -818,10 +897,56 @@ def plan_repository(
             else f"bt4k.plugins.{_accessor(mapping.central_alias)}"
         )
 
+    selectors = dict(version_selectors or {})
     ambiguous_version_keys: dict[str, set[str]] = {}
+    selected_version_keys: set[str] = set()
+    used_version_selectors: set[tuple[str, str]] = set()
+    for selector_repository, selector_key in selectors:
+        if selector_repository != repository:
+            continue
+        central_candidates = local_version_to_central.get(selector_key)
+        if central_candidates is None:
+            raise MigrationError(
+                f"orphan version selector local key: "
+                f"{selector_repository}:{selector_key}"
+            )
+        if len(central_candidates) == 1:
+            raise MigrationError(
+                f"orphan version selector for unambiguous local key: "
+                f"{selector_repository}:{selector_key}"
+            )
     for local_version_key, central_keys in local_version_to_central.items():
         if len(central_keys) != 1:
-            ambiguous_version_keys[local_version_key] = central_keys
+            selector = selectors.get((repository, local_version_key))
+            if selector is None:
+                ambiguous_version_keys[local_version_key] = central_keys
+                continue
+            if selector not in central_keys:
+                raise MigrationError(
+                    f"version selector does not match local ambiguity: "
+                    f"{repository}:{local_version_key} -> {selector}"
+                )
+            try:
+                candidate_values = {
+                    _version_value_fingerprint(
+                        central_aliases.version_values[central_key]
+                    )
+                    for central_key in central_keys
+                }
+            except KeyError as exc:
+                raise MigrationError(
+                    f"central version value is absent from catalog: {exc.args[0]}"
+                ) from exc
+            if len(candidate_values) != 1:
+                raise MigrationError(
+                    f"ambiguous local version requires occurrence-scoped selector "
+                    f"when central values differ: {repository}:{local_version_key}"
+                )
+            accessor_mapping[("version", local_version_key)] = (
+                f"bt4k.versions.{_accessor(selector)}"
+            )
+            selected_version_keys.add(local_version_key)
+            used_version_selectors.add((repository, local_version_key))
             continue
         accessor_mapping[("version", local_version_key)] = (
             f"bt4k.versions.{_accessor(next(iter(central_keys)))}"
@@ -867,8 +992,7 @@ def plan_repository(
     for local_version_key, central_keys in sorted(ambiguous_version_keys.items()):
         token = f"libs.versions.{_accessor(local_version_key)}"
         if any(
-            _contains_accessor(text, token)
-            for text in build_texts_after_replacements
+            _contains_accessor(text, token) for text in build_texts_after_replacements
         ):
             blockers.append(
                 f"ambiguous local version accessor mapping: {local_version_key} -> {','.join(sorted(central_keys))}"
@@ -923,12 +1047,10 @@ def plan_repository(
     removed_versions: list[str] = []
     for local_key, central_keys in sorted(local_version_to_central.items()):
         if (
-            len(central_keys) == 1
+            (len(central_keys) == 1 or local_key in selected_version_keys)
             and local_key not in remaining_refs
             and not any(
-                _contains_accessor(
-                    text, f"libs.versions.{_accessor(local_key)}"
-                )
+                _contains_accessor(text, f"libs.versions.{_accessor(local_key)}")
                 for text in build_texts
             )
             and _remove_version_line(catalog_lines, local_key, positions)
@@ -963,6 +1085,7 @@ def plan_repository(
         removed_versions=tuple(sorted(removed_versions)),
         blockers=tuple(sorted(set(blockers))),
         structural_preserved=tuple(sorted(set(structural_preserved))),
+        used_version_selectors=tuple(sorted(used_version_selectors)),
     )
 
 
@@ -980,9 +1103,7 @@ def apply_plan(plan: MigrationPlan) -> None:
         path.write_text(text, encoding="utf-8")
 
 
-def _load_repository_map(
-    path: Path, workspace: Path
-) -> dict[str, tuple[Path, Path]]:
+def _load_repository_map(path: Path, workspace: Path) -> dict[str, tuple[Path, Path]]:
     _canonical_file(path, "repository map")
     raw = _read_json(path, "repository map")
     if (
@@ -1029,7 +1150,13 @@ def _central_aliases(path: Path) -> CentralAliases:
         ref = entry.get("version.ref")
         if isinstance(ref, str):
             version_refs[alias] = ref
-    return CentralAliases(data.libraries, data.plugins, data.versions, version_refs)
+    return CentralAliases(
+        data.libraries,
+        data.plugins,
+        data.versions,
+        version_refs,
+        data.versions,
+    )
 
 
 def _summary(plan: MigrationPlan) -> dict[str, Any]:
@@ -1082,6 +1209,11 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         type=Path,
     )
+    parser.add_argument(
+        "--version-selectors",
+        type=Path,
+        help="Explicit repository/local-version to central-version selectors",
+    )
     parser.add_argument("--repo", action="append", dest="repositories")
     parser.add_argument("--write", action="store_true")
     parser.add_argument("--check", action="store_true")
@@ -1128,6 +1260,16 @@ def main(argv: list[str] | None = None) -> int:
                 raise MigrationError(f"unknown managed repository: {requested_name}")
             if key not in selected_keys:
                 selected_keys.append(key)
+        selector_document = (
+            _read_json(args.version_selectors, "version selectors")
+            if args.version_selectors is not None
+            else None
+        )
+        version_selectors = _validate_version_selectors(
+            selector_document,
+            aliases.versions,
+            allowed_repositories=(REPOSITORY_NAMES[key] for key in selected_keys),
+        )
         records = _validate_inventory(inventory)
         plans: list[MigrationPlan] = []
         for key in selected_keys:
@@ -1141,7 +1283,19 @@ def main(argv: list[str] | None = None) -> int:
                     policy,
                     dispositions,
                     aliases,
+                    version_selectors,
                 )
+            )
+        consumed_selectors = {
+            selector
+            for plan in plans
+            for selector in plan.used_version_selectors
+        }
+        unused_selectors = sorted(set(version_selectors) - consumed_selectors)
+        if unused_selectors:
+            raise MigrationError(
+                "unused or orphan version selectors: "
+                + ", ".join(f"{repo}:{key}" for repo, key in unused_selectors)
             )
         if mode in {"write", "write-check"}:
             blocked = [plan for plan in plans if plan.blockers]
@@ -1165,6 +1319,7 @@ def main(argv: list[str] | None = None) -> int:
                         policy,
                         dispositions,
                         aliases,
+                        version_selectors,
                     )
                     for key in selected_keys
                 ]
