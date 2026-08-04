@@ -1,7 +1,66 @@
 {
-  "schema-version": 1,
+  "schema-version": 2,
   "rollout": "2026-08-03-issue-168-central-catalog-authority",
   "status": "pending-resolved-graph",
+  "subsequent-rollouts": [
+    {
+      "rollout": "2026-08-04-issue-169-latest-compatible-stable",
+      "status": "partial-resolved-graph",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "catalog-sha256": "eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093",
+      "publication-pom-verification": {
+        "status": "verified-local-candidate",
+        "repositories": 9,
+        "files": 175,
+        "dependencies": 46023,
+        "maven-models": 175,
+        "failures": 0
+      },
+      "resolved-graph-evidence": [
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-grpc:testRuntimeClasspath",
+          "coordinate": "io.grpc:grpc-core",
+          "before": "1.80.0",
+          "after": "1.83.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-mongodb:testRuntimeClasspath",
+          "coordinate": "org.mongodb:mongodb-driver-core",
+          "before": "5.8.0",
+          "after": "5.9.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-mutiny:testRuntimeClasspath",
+          "coordinate": "io.smallrye.reactive:mutiny",
+          "before": "3.2.0",
+          "after": "3.3.0",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-aws",
+          "configuration": ":bluetape4k-aws-java:testRuntimeClasspath",
+          "coordinate": "software.amazon.awssdk.crt:aws-crt",
+          "before": "versionless",
+          "after": "0.48.2",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-exposed",
+          "configuration": ":bluetape4k-exposed-r2dbc-tests:testRuntimeClasspath",
+          "coordinate": "org.postgresql:r2dbc-postgresql",
+          "before": "1.1.1.RELEASE",
+          "after": "1.1.2.RELEASE",
+          "verification": "verified-local-candidate"
+        }
+      ],
+      "remote-immutable-ref-verification": "pending-central-push"
+    }
+  ],
   "delta": [
     {
       "repository": "bluetape4k-aws",

@@ -2,7 +2,7 @@
   "schema-version": 1,
   "rollout": "2026-08-04-issue-169-latest-compatible-stable",
   "audit-cutoff": "2026-08-04",
-  "status": "validation-pending",
+  "status": "partial-validation",
   "delta": [
     {
       "authority-key": "kover",
@@ -98,7 +98,7 @@
       "coordinate": "software.amazon.awssdk.crt:aws-crt",
       "before": "versionless",
       "after": "0.48.2",
-      "disposition": "adopt-latest",
+      "disposition": "adopt-compatible-parent-version",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/crt/aws-crt/maven-metadata.xml",
       "reason": "Pin the CRT version declared by the adopted AWS SDK Java 2.50.3 parent and consumed by aws-crt-client."
@@ -106,10 +106,10 @@
     {
       "authority-key": "aws-smithy-kotlin",
       "kind": "library-family",
-      "coordinate": "aws.smithy.kotlin:runtime-core",
+      "coordinate": "aws.smithy.kotlin:http-jvm",
       "before": "1.6.14",
       "after": "1.7.4",
-      "disposition": "adopt-latest",
+      "disposition": "adopt-compatible-parent-version",
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/aws/smithy/kotlin/runtime-core/maven-metadata.xml",
       "reason": "Align direct Smithy runtime aliases with the 1.7.4 runtime required by AWS SDK for Kotlin 1.8.22; global 1.7.5 is held until the SDK adopts it."
@@ -341,7 +341,7 @@
       "before": "1.1.1.RELEASE",
       "after": "1.1.2.RELEASE",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/postgresql/r2dbc-postgresql/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the R2DBC PostgreSQL 1.1 line."
     },

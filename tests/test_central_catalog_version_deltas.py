@@ -11,12 +11,15 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
     def test_ledger_has_strict_schema_and_unique_coordinates(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
 
-        self.assertEqual(document["schema-version"], 1)
+        self.assertEqual(document["schema-version"], 2)
         self.assertEqual(
             document["rollout"], "2026-08-03-issue-168-central-catalog-authority"
         )
         self.assertIn(document["status"], {"pending-resolved-graph", "verified"})
-        self.assertEqual(set(document), {"schema-version", "rollout", "status", "delta"})
+        self.assertEqual(
+            set(document),
+            {"schema-version", "rollout", "status", "subsequent-rollouts", "delta"},
+        )
 
         expected_fields = {
             "repository",
@@ -54,6 +57,42 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             identity = (delta["repository"], delta["coordinate"])
             self.assertNotIn(identity, identities)
             identities.add(identity)
+
+    def test_issue_169_rollout_links_the_authority_ledger_and_local_evidence(self) -> None:
+        document = json.loads(LEDGER.read_text(encoding="utf-8"))
+        rollout = document["subsequent-rollouts"][0]
+
+        self.assertEqual(
+            rollout["rollout"], "2026-08-04-issue-169-latest-compatible-stable"
+        )
+        self.assertEqual(rollout["status"], "partial-resolved-graph")
+        self.assertEqual(
+            rollout["authority-delta-ledger"],
+            "config/latest-stable-version-deltas.json",
+        )
+        self.assertEqual(
+            rollout["catalog-sha256"],
+            (
+                LEDGER.parents[1] / "gradle" / "libs.versions.toml.sha256"
+            ).read_text(encoding="utf-8").split()[0],
+        )
+        pom = rollout["publication-pom-verification"]
+        self.assertEqual(pom["status"], "verified-local-candidate")
+        self.assertEqual(pom["failures"], 0)
+        self.assertEqual(pom["repositories"], 9)
+
+        evidence = rollout["resolved-graph-evidence"]
+        self.assertEqual(len(evidence), 5)
+        self.assertEqual(
+            len({(entry["repository"], entry["coordinate"]) for entry in evidence}),
+            len(evidence),
+        )
+        self.assertTrue(
+            all(entry["verification"] == "verified-local-candidate" for entry in evidence)
+        )
+        self.assertEqual(
+            rollout["remote-immutable-ref-verification"], "pending-central-push"
+        )
 
     def test_ledger_records_only_issue_168_reviewed_adoption_deltas(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))

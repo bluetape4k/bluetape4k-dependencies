@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
@@ -32,7 +33,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             document["rollout"], "2026-08-04-issue-169-latest-compatible-stable"
         )
         self.assertEqual(document["audit-cutoff"], "2026-08-04")
-        self.assertIn(document["status"], {"validation-pending", "verified"})
+        self.assertIn(
+            document["status"],
+            {"validation-pending", "partial-validation", "verified"},
+        )
         self.assertEqual(
             set(document),
             {
@@ -72,7 +76,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     "compatibility-family",
                 },
             )
-            self.assertEqual(delta["disposition"], "adopt-latest")
+            self.assertIn(
+                delta["disposition"],
+                {"adopt-latest", "adopt-compatible-parent-version"},
+            )
             self.assertIn(delta["verification"], {"pending", "verified"})
             self.assertNotEqual(delta["before"], delta["after"])
             self.assertTrue(delta["source"].startswith("https://"))
@@ -161,6 +168,44 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(adopted["grpc-java"], "1.83.1")
         self.assertEqual(adopted["mongodb-driver"], "5.9.1")
         self.assertEqual(adopted["mutiny"], "3.3.0")
+
+    def test_every_adopted_ledger_coordinate_matches_the_candidate_catalog(self) -> None:
+        ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
+        catalog = CATALOG.read_text(encoding="utf-8")
+        versions_section = catalog.split("[versions]", 1)[1].split("\n[", 1)[0]
+        versions = dict(
+            re.findall(
+                r'^([A-Za-z0-9_.-]+)\s*=\s*"([^"]+)"',
+                versions_section,
+                flags=re.MULTILINE,
+            )
+        )
+
+        for delta in ledger["delta"]:
+            coordinate = delta["coordinate"]
+            group, name = coordinate.split(":", 1) if ":" in coordinate else ("", "")
+            candidate_lines = [
+                line
+                for line in catalog.splitlines()
+                if f'module = "{coordinate}"' in line
+                or (group and f'group = "{group}"' in line and f'name = "{name}"' in line)
+                or f'id = "{coordinate}"' in line
+            ]
+            resolved_versions: set[str] = set()
+            for line in candidate_lines:
+                version_ref = re.search(r'version\.ref\s*=\s*"([^"]+)"', line)
+                if version_ref:
+                    resolved_versions.add(versions[version_ref.group(1)])
+                    continue
+                inline_version = re.search(r'version\s*=\s*"([^"]+)"', line)
+                if inline_version:
+                    resolved_versions.add(inline_version.group(1))
+
+            self.assertIn(
+                delta["after"],
+                resolved_versions,
+                f'{delta["authority-key"]} does not match {coordinate} in the catalog',
+            )
 
     def test_library_batch_two_matches_the_candidate_catalog(self) -> None:
         catalog = CATALOG.read_text(encoding="utf-8")
