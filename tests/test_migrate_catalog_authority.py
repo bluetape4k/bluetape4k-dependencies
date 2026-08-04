@@ -302,6 +302,26 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
         with self.assertRaisesRegex(migrate.MigrationError, "workspace"):
             migrate._load_repository_map(REPOSITORY_MAP_FIXTURE, Path("relative"))
 
+    def test_accessor_presence_uses_exact_token_boundaries(self) -> None:
+        self.assertTrue(
+            migrate._contains_accessor(
+                "val v = libs.versions.alpha.local.get()",
+                "libs.versions.alpha.local",
+            )
+        )
+        self.assertFalse(
+            migrate._contains_accessor(
+                "val v = libs.versions.alpha.local.client.get()",
+                "libs.versions.alpha.local",
+            )
+        )
+        self.assertFalse(
+            migrate._contains_accessor(
+                "val v = other.libs.versions.alpha.local",
+                "libs.versions.alpha.local",
+            )
+        )
+
     def test_ambiguous_shared_version_keeps_all_catalog_aliases(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()

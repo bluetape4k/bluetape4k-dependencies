@@ -625,6 +625,17 @@ def _accessor(alias: str) -> str:
     return alias.replace("-", ".")
 
 
+def _contains_accessor(text: str, token: str) -> bool:
+    for match in re.finditer(rf"(?<![A-Za-z0-9_.]){re.escape(token)}", text):
+        suffix = text[match.end() :]
+        if not suffix or suffix[0] not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.":
+            return True
+        provider = re.match(r"\.([A-Za-z0-9_]+)", suffix)
+        if provider is not None and provider.group(1) in ALLOWED_PROVIDER_TAILS:
+            return True
+    return False
+
+
 def _replace_tokens(
     text: str,
     mapping: Mapping[tuple[str, str], str],
@@ -838,7 +849,10 @@ def plan_repository(
     ]
     for local_version_key, central_keys in sorted(ambiguous_version_keys.items()):
         token = f"libs.versions.{_accessor(local_version_key)}"
-        if any(token in text for text in build_texts_after_replacements):
+        if any(
+            _contains_accessor(text, token)
+            for text in build_texts_after_replacements
+        ):
             blockers.append(
                 f"ambiguous local version accessor mapping: {local_version_key} -> {','.join(sorted(central_keys))}"
             )
@@ -895,7 +909,10 @@ def plan_repository(
             len(central_keys) == 1
             and local_key not in remaining_refs
             and not any(
-                f"libs.versions.{_accessor(local_key)}" in text for text in build_texts
+                _contains_accessor(
+                    text, f"libs.versions.{_accessor(local_key)}"
+                )
+                for text in build_texts
             )
             and _remove_version_line(catalog_lines, local_key, positions)
         ):
@@ -911,7 +928,7 @@ def plan_repository(
         for kind, local_alias in accessor_mapping:
             prefix = "libs" if kind == "library" else f"libs.{kind}s"
             token = f"{prefix}.{_accessor(local_alias)}"
-            if re.search(rf"{re.escape(token)}(?![A-Za-z0-9_.])", text):
+            if _contains_accessor(text, token):
                 blockers.append(f"governed local accessor remains: {path}:{token}")
 
     return MigrationPlan(
