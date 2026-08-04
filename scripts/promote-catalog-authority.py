@@ -546,7 +546,10 @@ def _effective_lines(
                 "missing occurrence selector: "
                 f"{missing_record['repository']}:{missing_record['alias']}"
             )
-    if len(matched) != len(records):
+    if any(
+        (record["repository"], record["alias"], record["authority-id"]) not in matched
+        for record in records
+    ):
         raise PromotionError("missing occurrence selector")
     return effective, matched
 
@@ -792,6 +795,8 @@ def _canonical_dispositions(
             }
         )
         output.update(line.metadata)
+        if line.disposition == "structural-repo-owned":
+            output["repository"] = record["repository"]
         output.setdefault("owner", "dependency-governance")
         output.setdefault("status", "pending")
         canonical.append(output)

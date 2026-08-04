@@ -279,6 +279,61 @@ class PromoteCatalogAuthorityTest(unittest.TestCase):
                 inventory, orphan, "[versions]\n", {"schema-version": 1, "records": []}
             )
 
+    def test_one_selector_covers_repeated_same_repository_occurrences(self) -> None:
+        first = _record(
+            "a" * 64,
+            "repo-a",
+            "plugin",
+            "org.example.plugin",
+            "org.example.plugin",
+            "1.0",
+            declaration_form="hard-coded",
+        )
+        second = dict(first)
+        second["source-path"] = "other.gradle.kts"
+        second["source-line"] = 20
+        policy = _policy(
+            _subject(
+                "plugin",
+                "org.example.plugin",
+                _line(
+                    "default",
+                    ["example-plugin"],
+                    [
+                        {
+                            "repository": "repo-a",
+                            "local-alias": "org.example.plugin",
+                            "central-alias": "example-plugin",
+                        }
+                    ],
+                    version="1.0",
+                    version_key="example-plugin",
+                    disposition="structural-repo-owned",
+                    evidence_type="settings-evaluation",
+                ),
+            )
+        )
+        catalog = (
+            "[versions]\n"
+            "# <shared-version-source-of-truth by "
+            "scripts/sync-shared-versions.py>\n"
+            "# </shared-version-source-of-truth>\n"
+            "[plugins]\n"
+            "[libraries]\n"
+            "# <external-managed-modules by dependency governance>\n"
+            "# </external-managed-modules by dependency governance>\n"
+        )
+
+        result = promote.build_result(
+            [first, second],
+            policy,
+            catalog,
+            {"schema-version": 1, "records": []},
+        )
+
+        self.assertEqual(len(result.dispositions["records"]), 1)
+        self.assertEqual(result.dispositions["records"][0]["repository"], "repo-a")
+
     def test_strict_policy_and_existing_version_reuse(self) -> None:
         inventory = _inventory(
             _record(
