@@ -911,7 +911,7 @@ def plan_repository(
         for kind, local_alias in accessor_mapping:
             prefix = "libs" if kind == "library" else f"libs.{kind}s"
             token = f"{prefix}.{_accessor(local_alias)}"
-            if token in text:
+            if re.search(rf"{re.escape(token)}(?![A-Za-z0-9_.])", text):
                 blockers.append(f"governed local accessor remains: {path}:{token}")
 
     return MigrationPlan(

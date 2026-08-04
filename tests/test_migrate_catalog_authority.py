@@ -174,13 +174,15 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
                 "[plugins]\n"
                 'plug-local = { id = "org.example.plugin", version.ref = "alpha-local" }\n'
                 "[libraries]\n"
-                'alpha-local = { module = "org.example:alpha", version.ref = "alpha-local" }\n',
+                'alpha-local = { module = "org.example:alpha", version.ref = "alpha-local" }\n'
+                'alpha-local-client = { module = "org.example:alpha-client" }\n',
                 encoding="utf-8",
             )
             build = root / "build.gradle.kts"
             build.write_text(
                 "plugins { alias(libs.plugins.plug.local) }\n"
                 "dependencies { implementation(libs.alpha.local) }\n"
+                "dependencies { implementation(libs.alpha.local.client) }\n"
                 "val v = libs.versions.alpha.local.get()\n",
                 encoding="utf-8",
             )
@@ -239,6 +241,7 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
             migrate.apply_plan(plan)
             self.assertIn("bt4k.plugins.plug", build.read_text(encoding="utf-8"))
             self.assertIn("bt4k.alpha", build.read_text(encoding="utf-8"))
+            self.assertIn("libs.alpha.local.client", build.read_text(encoding="utf-8"))
             self.assertIn(
                 "bt4k.versions.alpha.get()", build.read_text(encoding="utf-8")
             )
