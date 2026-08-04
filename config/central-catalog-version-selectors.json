@@ -15,6 +15,26 @@
       "repository": "bluetape4k-exposed",
       "local-version-key": "jmh",
       "central-version-key": "managed-jmh-core-h350a653f63e5"
+    },
+    {
+      "repository": "bluetape4k-image",
+      "local-version-key": "jmh",
+      "central-version-key": "managed-jmh-core-h350a653f63e5"
+    },
+    {
+      "repository": "bluetape4k-image",
+      "local-version-key": "zxing",
+      "central-version-key": "managed-zxing-core-hca5061ea4926"
+    },
+    {
+      "repository": "bluetape4k-leader",
+      "local-version-key": "mongo-driver",
+      "central-version-key": "managed-mongodb-driver-sync-h8beacb2ba830"
+    },
+    {
+      "repository": "bluetape4k-text",
+      "local-version-key": "jmh",
+      "central-version-key": "managed-jmh-core-h350a653f63e5"
     }
   ]
 }

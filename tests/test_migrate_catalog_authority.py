@@ -329,6 +329,9 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
             allowed_repositories={
                 "bluetape4k-projects",
                 "bluetape4k-exposed",
+                "bluetape4k-image",
+                "bluetape4k-leader",
+                "bluetape4k-text",
             },
         )
         self.assertEqual(
@@ -337,6 +340,10 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
                 ("bluetape4k-projects", "grpc-kotlin"),
                 ("bluetape4k-projects", "jmh"),
                 ("bluetape4k-exposed", "jmh"),
+                ("bluetape4k-image", "jmh"),
+                ("bluetape4k-image", "zxing"),
+                ("bluetape4k-leader", "mongo-driver"),
+                ("bluetape4k-text", "jmh"),
             },
         )
         invalid = copy.deepcopy(selector_document)
