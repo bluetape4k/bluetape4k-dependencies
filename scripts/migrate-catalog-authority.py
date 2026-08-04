@@ -98,13 +98,22 @@ SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
 SECTION_PATTERN = re.compile(r"^\s*\[([a-z]+)\]\s*$")
 ASSIGNMENT_PATTERN = re.compile(r"^\s*([A-Za-z0-9_-]+)\s*=")
 ACCESSOR_TOKEN_PATTERN = re.compile(
-    r"(?<![A-Za-z0-9_.])libs(?:\.(?:plugins|versions))?(?:\.[A-Za-z0-9_]+)+"
+    r"(?<![A-Za-z0-9_.])(?:libs|rootLibs)(?:\.(?:plugins|versions))?"
+    r"(?:\.(?:asProvider\(\)|[A-Za-z0-9_]+))+"
+)
+HARD_CODED_LIBRARY_PATTERN = re.compile(
+    r'(?P<quote>["\'])(?P<coordinate>[A-Za-z0-9_.-]+:[A-Za-z0-9_.-]+):'
+    r'(?P<version>[^"\'\s$]+)(?P=quote)'
+)
+HARD_CODED_PLUGIN_PATTERN = re.compile(
+    r'\bid\(\s*["\'](?P<coordinate>[^"\']+)["\']\s*\)\s*version\s*'
+    r'(?:\(\s*)?["\'](?P<version>[^"\'$]+)["\']'
 )
 DYNAMIC_LIBRARY_PATTERN = re.compile(
-    r"\blibs\.findLibrary\(\s*['\"]([^'\"]+)['\"]\s*\)"
+    r"\b(?:libs|rootLibs)\.findLibrary\(\s*['\"]([^'\"]+)['\"]\s*\)"
 )
 DYNAMIC_VERSION_PATTERN = re.compile(
-    r"\blibs\.findVersion\(\s*['\"]([^'\"]+)['\"]\s*\)"
+    r"\b(?:libs|rootLibs)\.findVersion\(\s*['\"]([^'\"]+)['\"]\s*\)"
 )
 ALLOWED_PROVIDER_TAILS = frozenset(
     {
@@ -163,6 +172,7 @@ class CatalogMapping:
     local_version_key: str | None
     central_version_key: str | None
     declaration_form: str
+    declared_version: str | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -640,6 +650,7 @@ def derive_catalog_mappings(
                 local_version_key=None,
                 central_version_key=central_version_key,
                 declaration_form=record["declaration-form"],
+                declared_version=record.get("declared-version"),
             )
         )
     return tuple(result)
@@ -731,6 +742,163 @@ def _contains_accessor(text: str, token: str) -> bool:
     return False
 
 
+def _catalog_accessor_variants(token: str) -> tuple[str, ...]:
+    """Return the standard and root catalog spellings for ``token``."""
+    if token == "libs" or token.startswith("libs."):
+        return (token, "rootLibs" + token[len("libs") :])
+    return (token,)
+
+
+def _contains_catalog_accessor(text: str, token: str) -> bool:
+    """Match a local catalog accessor regardless of its Gradle variable name."""
+    return any(
+        _contains_accessor(text, variant)
+        for variant in _catalog_accessor_variants(token)
+    )
+
+
+def _central_accessor(
+    namespace: str,
+    alias: str,
+    aliases: Iterable[str],
+) -> str:
+    prefix = "bt4k"
+    if namespace == "plugin":
+        prefix = "bt4k.plugins"
+    elif namespace == "version":
+        prefix = "bt4k.versions"
+    accessor = _accessor(alias)
+    token = f"{prefix}.{accessor}"
+    if any(
+        other != alias and _accessor(other).startswith(f"{accessor}.")
+        for other in aliases
+    ):
+        return f"{token}.asProvider()"
+    return token
+
+
+def _ensure_root_bt4k_capture(text: str) -> str:
+    if re.search(r"(?m)^val rootBt4k\s*=\s*bt4k\s*$", text):
+        return text
+    anchor = re.compile(r"(?m)^(val rootLibs\s*=\s*libs\s*)$")
+    if len(anchor.findall(text)) != 1:
+        raise MigrationError("rootLibs migration requires one root catalog capture")
+    return anchor.sub(r"\1\nval rootBt4k = bt4k", text, count=1)
+
+
+def _hard_coded_matches(
+    text: str, mapping: CatalogMapping
+) -> tuple[tuple[str, str], ...]:
+    """Return direct hard-coded declarations matching a mapping's subject."""
+    pattern = (
+        HARD_CODED_PLUGIN_PATTERN
+        if mapping.subject_kind == "plugin"
+        else HARD_CODED_LIBRARY_PATTERN
+    )
+    return tuple(
+        (match.group("coordinate"), match.group("version"))
+        for match in pattern.finditer(text)
+        if match.group("coordinate") == mapping.coordinate
+    )
+
+
+def _hard_coded_adoption_token(mapping: CatalogMapping) -> str:
+    if mapping.subject_kind == "plugin":
+        return f"bt4k.plugins.{_accessor(mapping.central_alias)}"
+    return f"bt4k.{_accessor(mapping.central_alias)}"
+
+
+def _hard_coded_adoption_present(text: str, mapping: CatalogMapping) -> bool:
+    if _contains_accessor(text, _hard_coded_adoption_token(mapping)):
+        return True
+    version_key = mapping.central_version_key
+    if not isinstance(version_key, str) or not version_key:
+        return False
+    version_accessor = f"bt4k.versions.{_accessor(version_key)}"
+    if _contains_accessor(text, version_accessor):
+        return True
+    return re.search(
+        rf"\bbt4kVersion\(\s*['\"]{re.escape(version_key)}['\"]\s*\)",
+        text,
+    ) is not None
+
+
+def _classify_hard_coded_mapping(
+    root: Path, mapping: CatalogMapping
+) -> str | None:
+    """Classify a baseline hard-coded occurrence against the current source.
+
+    The inventory is a baseline, so its line number may no longer point at the
+    declaration after an earlier migration.  A direct ``bt4k`` accessor in the
+    recorded source file is positive adoption proof only after every direct
+    literal for the same coordinate has disappeared.  Any changed direct
+    literal or otherwise unclassifiable source remains a blocker.
+    """
+    source = Path(mapping.source_path)
+    if source.is_absolute() or ".." in source.parts:
+        return (
+            "hard-coded declaration location is unsafe to classify: "
+            f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
+        )
+    path = root / source
+    try:
+        if path.is_symlink() or not path.is_file():
+            raise OSError("not a regular file")
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError):
+        return (
+            "hard-coded declaration location cannot be safely classified: "
+            f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
+        )
+
+    location = (
+        lines[mapping.source_line - 1]
+        if 1 <= mapping.source_line <= len(lines)
+        else None
+    )
+    declared_version = mapping.declared_version
+    expected = (
+        (mapping.coordinate, declared_version)
+        if isinstance(declared_version, str) and declared_version
+        else None
+    )
+    current_matches = _hard_coded_matches("\n".join(lines), mapping)
+    if expected is not None and expected in current_matches:
+        return (
+            "hard-coded declaration requires manual migration: "
+            f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
+        )
+    if current_matches:
+        return (
+            "hard-coded declaration changed without catalog adoption: "
+            f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
+        )
+    if _hard_coded_adoption_present("\n".join(lines), mapping):
+        return None
+
+    if location is None:
+        # A removed line is safe only when the corresponding bt4k accessor is
+        # still present in the file.  Otherwise, there is no evidence of what
+        # happened to the baseline occurrence.
+        return (
+            "hard-coded declaration location cannot be safely classified: "
+            f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
+        )
+
+    if (
+        HARD_CODED_PLUGIN_PATTERN.search(location)
+        or HARD_CODED_LIBRARY_PATTERN.search(location)
+    ):
+        return (
+            "hard-coded declaration location contains an unmanaged literal: "
+            f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
+        )
+    return (
+        "hard-coded declaration location cannot be safely classified: "
+        f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
+    )
+
+
 def _replace_tokens(
     text: str,
     mapping: Mapping[tuple[str, str], str],
@@ -742,8 +910,8 @@ def _replace_tokens(
 
     def replace_match(match: re.Match[str]) -> str:
         token = match.group(0)
-        pieces = token.split(".")
-        if pieces[0] != "libs":
+        pieces = [piece.removesuffix("()") for piece in token.split(".")]
+        if pieces[0] not in {"libs", "rootLibs"}:
             return token
         namespace = "library"
         start = 1
@@ -769,9 +937,12 @@ def _replace_tokens(
             if not all(piece in ALLOWED_PROVIDER_TAILS for piece in tail):
                 blockers.append(f"unknown accessor tail in {path}: {token}")
                 return token
-        new_token = replacement + (
-            "." + ".".join(segments[count:]) if count < len(segments) else ""
-        )
+        tail = segments[count:]
+        if tail and tail[0] == "asProvider":
+            tail = tail[1:]
+        if pieces[0] == "rootLibs" and replacement.startswith("bt4k"):
+            replacement = "rootBt4k" + replacement[len("bt4k") :]
+        new_token = replacement + ("." + ".".join(tail) if tail else "")
         line = text.count("\n", 0, match.start()) + 1
         replacements.append(Replacement(path, token, new_token, line))
         return new_token
@@ -860,9 +1031,9 @@ def plan_repository(
                     f"{mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
                 )
             else:
-                blockers.append(
-                    f"hard-coded declaration requires manual migration: {mapping.source_path}:{mapping.source_line}:{mapping.coordinate}"
-                )
+                blocker = _classify_hard_coded_mapping(root, mapping)
+                if blocker is not None:
+                    blockers.append(blocker)
             continue
         section = "libraries" if mapping.subject_kind == "library" else "plugins"
         entry_key = f"{section}:{mapping.local_alias}"
@@ -891,10 +1062,17 @@ def plan_repository(
             raise MigrationError(
                 f"catalog alias section mismatch for {section}:{mapping.local_alias}"
             )
-        accessor_mapping[(mapping.subject_kind, mapping.local_alias)] = (
-            f"bt4k.{_accessor(mapping.central_alias)}"
+        central_namespace_aliases = (
+            central_aliases.libraries
             if mapping.subject_kind == "library"
-            else f"bt4k.plugins.{_accessor(mapping.central_alias)}"
+            else central_aliases.plugins
+        )
+        accessor_mapping[(mapping.subject_kind, mapping.local_alias)] = (
+            _central_accessor(
+                mapping.subject_kind,
+                mapping.central_alias,
+                central_namespace_aliases,
+            )
         )
 
     selectors = dict(version_selectors or {})
@@ -943,13 +1121,15 @@ def plan_repository(
                     f"when central values differ: {repository}:{local_version_key}"
                 )
             accessor_mapping[("version", local_version_key)] = (
-                f"bt4k.versions.{_accessor(selector)}"
+                _central_accessor("version", selector, central_aliases.versions)
             )
             selected_version_keys.add(local_version_key)
             used_version_selectors.add((repository, local_version_key))
             continue
         accessor_mapping[("version", local_version_key)] = (
-            f"bt4k.versions.{_accessor(next(iter(central_keys)))}"
+            _central_accessor(
+                "version", next(iter(central_keys)), central_aliases.versions
+            )
         )
 
     edits: dict[Path, str] = {}
@@ -980,6 +1160,13 @@ def plan_repository(
         updated, found, token_blockers = _replace_tokens(
             current, accessor_mapping, path=path
         )
+        if any(item.before.startswith("rootLibs.") for item in found):
+            if path != root / "build.gradle.kts":
+                token_blockers.append(
+                    f"rootLibs accessor outside root build requires manual migration: {path}"
+                )
+            else:
+                updated = _ensure_root_bt4k_capture(updated)
         replacements.extend(found)
         blockers.extend(token_blockers)
         if updated != current:
@@ -992,7 +1179,8 @@ def plan_repository(
     for local_version_key, central_keys in sorted(ambiguous_version_keys.items()):
         token = f"libs.versions.{_accessor(local_version_key)}"
         if any(
-            _contains_accessor(text, token) for text in build_texts_after_replacements
+            _contains_catalog_accessor(text, token)
+            for text in build_texts_after_replacements
         ):
             blockers.append(
                 f"ambiguous local version accessor mapping: {local_version_key} -> {','.join(sorted(central_keys))}"
@@ -1050,7 +1238,9 @@ def plan_repository(
             (len(central_keys) == 1 or local_key in selected_version_keys)
             and local_key not in remaining_refs
             and not any(
-                _contains_accessor(text, f"libs.versions.{_accessor(local_key)}")
+                _contains_catalog_accessor(
+                    text, f"libs.versions.{_accessor(local_key)}"
+                )
                 for text in build_texts
             )
             and _remove_version_line(catalog_lines, local_key, positions)
@@ -1067,7 +1257,7 @@ def plan_repository(
         for kind, local_alias in accessor_mapping:
             prefix = "libs" if kind == "library" else f"libs.{kind}s"
             token = f"{prefix}.{_accessor(local_alias)}"
-            if _contains_accessor(text, token):
+            if _contains_catalog_accessor(text, token):
                 blockers.append(f"governed local accessor remains: {path}:{token}")
 
     return MigrationPlan(
@@ -1310,7 +1500,10 @@ def main(argv: list[str] | None = None) -> int:
                 apply_plan(plan)
             if mode == "write-check":
                 # Replanning against the same source proves idempotence without
-                # reloading the baseline map after it becomes dirty.
+                # reloading the baseline map after it becomes dirty.  Explicit
+                # selectors are migration-time disambiguators for local version
+                # keys that no longer exist after a successful write, so they
+                # must not be revalidated against the migrated catalogs.
                 plans = [
                     plan_repository(
                         REPOSITORY_NAMES[key],
@@ -1319,7 +1512,7 @@ def main(argv: list[str] | None = None) -> int:
                         policy,
                         dispositions,
                         aliases,
-                        version_selectors,
+                        {},
                     )
                     for key in selected_keys
                 ]

@@ -196,6 +196,12 @@ def candidate_dependabot_file(repository_root: Path) -> Path | None:
     return config
 
 
+def candidate_repository_root(catalog: Path) -> Path:
+    if catalog.name != "libs.versions.toml" or catalog.parent.name != "gradle":
+        raise RuntimeError(f"candidate catalog path is not canonical: {catalog}")
+    return catalog.parents[1]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -249,7 +255,9 @@ def main() -> int:
         try:
             targets = []
             for repo in repositories:
-                config = candidate_dependabot_file(mapped[repo].catalog.parents[2])
+                config = candidate_dependabot_file(
+                    candidate_repository_root(mapped[repo].catalog)
+                )
                 if config is not None:
                     targets.append((repo, config))
         except RuntimeError as exc:

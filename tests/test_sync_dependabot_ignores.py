@@ -7,7 +7,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[1] / "scripts" / "sync-dependabot-ignores.py"
 )
@@ -42,6 +41,15 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
             config.symlink_to(outside)
             with self.assertRaisesRegex(RuntimeError, "non-symlink"):
                 sync.candidate_dependabot_file(root)
+
+    def test_candidate_repository_root_uses_catalog_owner(self) -> None:
+        catalog = Path("/workspace/repo/gradle/libs.versions.toml")
+        self.assertEqual(
+            sync.candidate_repository_root(catalog),
+            Path("/workspace/repo"),
+        )
+        with self.assertRaisesRegex(RuntimeError, "not canonical"):
+            sync.candidate_repository_root(Path("/workspace/repo/catalog.toml"))
 
     def test_default_workspace_matches_repository_workspace(self) -> None:
         original_file = sync.__file__
