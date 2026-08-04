@@ -342,6 +342,73 @@ class PromoteCatalogAuthorityTest(unittest.TestCase):
                 {"schema-version": 1, "records": []},
             )
 
+    def test_gradle_accessor_alias_grammar_is_fail_closed(self) -> None:
+        inventory = _inventory(
+            _record(
+                "a" * 64,
+                "repo-a",
+                "library",
+                "org.example:alpha",
+                "alpha",
+                "1.2.3",
+            )
+        )
+        occurrence = {
+            "repository": "repo-a",
+            "local-alias": "alpha",
+            "central-alias": "alpha.bad",
+        }
+        invalid = _policy(
+            _subject(
+                "library",
+                "org.example:alpha",
+                _line("default", ["alpha.bad"], [occurrence]),
+            )
+        )
+        with self.assertRaisesRegex(ValueError, "invalid central alias"):
+            promote.build_result(
+                inventory,
+                invalid,
+                "[versions]\n",
+                {"schema-version": 1, "records": []},
+            )
+
+        reserved = _policy(
+            _subject(
+                "library",
+                "org.example:alpha",
+                _line(
+                    "default",
+                    ["when-value"],
+                    [
+                        {
+                            "repository": "repo-a",
+                            "local-alias": "alpha",
+                            "central-alias": "when-value",
+                        }
+                    ],
+                    version_key="alpha-version",
+                ),
+            )
+        )
+        catalog = (
+            "[versions]\n"
+            "# <shared-version-source-of-truth by "
+            "scripts/sync-shared-versions.py>\n"
+            "# </shared-version-source-of-truth>\n"
+            "[plugins]\n"
+            "[libraries]\n"
+            "# <external-managed-modules by dependency governance>\n"
+            "# </external-managed-modules by dependency governance>\n"
+        )
+        with self.assertRaisesRegex(ValueError, "Kotlin reserved word"):
+            promote.build_result(
+                inventory,
+                reserved,
+                catalog,
+                {"schema-version": 1, "records": []},
+            )
+
     def test_write_is_idempotent_and_check_does_not_mutate(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

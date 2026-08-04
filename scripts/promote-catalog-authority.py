@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import importlib.util
 import json
 import re
 import sys
@@ -20,6 +21,21 @@ from typing import Any, Iterable
 
 
 SCRIPT_NAME = "scripts/promote-catalog-authority.py"
+AUTHORITY_PATH = Path(__file__).resolve().with_name("catalog_authority.py")
+AUTHORITY_SPEC = importlib.util.spec_from_file_location(
+    "promotion_catalog_authority", AUTHORITY_PATH
+)
+if AUTHORITY_SPEC is None or AUTHORITY_SPEC.loader is None:
+    raise RuntimeError(f"Cannot load {AUTHORITY_PATH}")
+catalog_authority = importlib.util.module_from_spec(AUTHORITY_SPEC)
+sys.modules.setdefault("promotion_catalog_authority", catalog_authority)
+try:
+    AUTHORITY_SPEC.loader.exec_module(catalog_authority)
+except ModuleNotFoundError as exc:
+    if exc.name != "tomllib":
+        raise
+    catalog_authority = None
+
 SOURCE_END = "# </shared-version-source-of-truth>"
 EXTERNAL_END = "# </external-managed-modules by dependency governance>"
 VERSIONS_START = f"# <generated-central-authority-versions by {SCRIPT_NAME}>"
@@ -29,10 +45,40 @@ PLUGINS_END = "# </generated-central-authority-plugins>"
 LIBRARIES_START = f"# <generated-central-authority-libraries by {SCRIPT_NAME}>"
 LIBRARIES_END = "# </generated-central-authority-libraries>"
 
-ALIAS_PATTERN = re.compile(r"[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$")
+ALIAS_PATTERN = re.compile(r"[a-z][a-z0-9]*(?:-[a-z][a-z0-9]*)*$")
 LINE_PATTERN = re.compile(r"(?:default|[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$")
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}$")
 RESERVED_ACCESSOR_NAMESPACES = {"bundles", "plugins", "versions"}
+KOTLIN_RESERVED_WORDS = {
+    "as",
+    "break",
+    "class",
+    "continue",
+    "do",
+    "else",
+    "false",
+    "for",
+    "fun",
+    "if",
+    "in",
+    "interface",
+    "is",
+    "null",
+    "object",
+    "package",
+    "return",
+    "super",
+    "this",
+    "throw",
+    "true",
+    "try",
+    "typealias",
+    "typeof",
+    "val",
+    "var",
+    "when",
+    "while",
+}
 DISPOSITION_EVIDENCE_TYPES = {
     "central-direct": {"catalog-alias"},
     "central-version-local-alias": {"catalog-version"},
@@ -99,6 +145,41 @@ def _validate_alias(alias: str, context: str) -> None:
         raise PromotionError(f"invalid central alias at {context}: {alias}")
     if alias.split(".")[0].split("-")[0].split("_")[0] in RESERVED_ACCESSOR_NAMESPACES:
         raise PromotionError(f"reserved accessor namespace at {context}: {alias}")
+
+
+def _validate_accessor_aliases(
+    libraries: set[str], plugins: set[str], versions: set[str]
+) -> None:
+    if catalog_authority is not None:
+        catalog_authority.validate_accessor_aliases(
+            libraries=libraries,
+            plugins=plugins,
+            versions=versions,
+        )
+        return
+
+    owners: dict[tuple[str, ...], tuple[str, str]] = {}
+    for tree, prefix, aliases in (
+        ("library", (), libraries),
+        ("plugin", ("plugins",), plugins),
+        ("version", ("versions",), versions),
+    ):
+        for alias in aliases:
+            if ALIAS_PATTERN.fullmatch(alias) is None:
+                raise ValueError(f"invalid accessor alias: {alias}")
+            normalized = tuple(alias.split("-"))
+            if any(part in KOTLIN_RESERVED_WORDS for part in normalized):
+                raise ValueError(f"Kotlin reserved word in accessor alias: {alias}")
+            if tree == "library" and normalized[0] in RESERVED_ACCESSOR_NAMESPACES:
+                raise ValueError(f"reserved accessor namespace: {alias}")
+            accessor = prefix + normalized
+            previous = owners.get(accessor)
+            if previous is not None:
+                raise ValueError(
+                    "cross-tree accessor collision: "
+                    f"{previous[0]} {previous[1]} and {tree} {alias}"
+                )
+            owners[accessor] = (tree, alias)
 
 
 def _validate_line_id(line_id: str, context: str) -> None:
@@ -610,6 +691,15 @@ def _render_catalog(
                 or _entry_effective_version(existing, existing_versions) != version
             ):
                 raise PromotionError(f"alias/accessor collision: {alias}")
+
+    try:
+        _validate_accessor_aliases(
+            (set(existing_libraries) - managed_libraries) | set(generated_libraries),
+            (set(existing_plugins) - managed_plugins) | set(generated_plugins),
+            (set(existing_versions) - managed_versions) | set(generated_versions),
+        )
+    except ValueError as exc:
+        raise PromotionError(str(exc)) from exc
 
     version_lines = [
         f'{key} = "{generated_versions[key]}"\n'

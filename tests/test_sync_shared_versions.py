@@ -381,12 +381,7 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             {("h2", "h2-1"), ("h2-v2", "h2-2")},
         )
         self.assertEqual(
-            len(
-                {
-                    (record["authority-id"], record["line-id"])
-                    for record in records
-                }
-            ),
+            len({(record["authority-id"], record["line-id"]) for record in records}),
             2,
         )
 
@@ -460,14 +455,18 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             self.skipTest("managed sibling repositories are unavailable")
 
         authority_lines = sync.load_authority_lines(
-            SCRIPT_PATH.parents[1]
-            / "config"
-            / "central-catalog-authority-lines.json"
+            SCRIPT_PATH.parents[1] / "config" / "central-catalog-authority-lines.json"
         )
         used_authority_lines: set[tuple[str, str, str, str]] = set()
         records = sync.catalog_authority_records(
             workspace,
             SCRIPT_PATH.parents[1] / "gradle" / "libs.versions.toml",
+            sync.DEFAULT_REPOSITORIES,
+            authority_lines=authority_lines,
+            used_authority_lines=used_authority_lines,
+        )
+        sync.hard_coded_authority_records(
+            workspace,
             sync.DEFAULT_REPOSITORIES,
             authority_lines=authority_lines,
             used_authority_lines=used_authority_lines,
@@ -490,25 +489,39 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             ),
             9,
         )
+        compatibility_records = [
+            record for record in records if record["line-id"] != "default"
+        ]
+        self.assertEqual(len(compatibility_records), 48)
         self.assertEqual(
+            {record["line-id"] for record in compatibility_records},
             {
-                (record["repository"], record["alias"], record["line-id"])
-                for record in records
-                if record["line-id"] != "default"
-            },
-            {
-                ("bluetape4k-projects", "h2", "h2-1"),
-                ("bluetape4k-projects", "h2-v2", "h2-2"),
-                (
-                    "bluetape4k-projects",
-                    "jakarta-persistence-api",
-                    "jakarta-persistence-31",
-                ),
-                (
-                    "bluetape4k-projects",
-                    "jakarta-persistence-api-v32",
-                    "jakarta-persistence-32",
-                ),
+                "geotools-31",
+                "geotools-34",
+                "h2-1",
+                "h2-2",
+                "jakarta-persistence-31",
+                "jakarta-persistence-32",
+                "jsonassert-1",
+                "jsonassert-2",
+                "jsonpath-2",
+                "jsonpath-3",
+                "junit-platform-1",
+                "junit-platform-6",
+                "jvips-69bf715",
+                "jvips-f9dc8c9",
+                "libphonenumber-8",
+                "libphonenumber-9",
+                "minio-8",
+                "minio-9",
+                "mybatis-spring-3",
+                "mybatis-spring-4",
+                "neo4j-driver-5",
+                "neo4j-driver-6",
+                "postgis-2024",
+                "postgis-2025",
+                "pulsar-3",
+                "pulsar-4",
             },
         )
         self.assertEqual(
