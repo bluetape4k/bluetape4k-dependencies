@@ -97,9 +97,12 @@ record는 `authority-id`, `line-id`, `occurrence-id`, `repository`, semantic `su
 유지된다. hard-coded coordinate/plugin ID는 parser가 source context로 semantic subject-kind를
 분류하며, catalog alias로의 변환은 같은 authority identity를 유지한다.
 `line-id`는 기본 line이면 `default`이고, 동시에 유지해야 하는 ABI/major compatibility
-line이면 disposition에 source-controlled canonical identifier(예: `spring-boot-3`)로 한 번
-선언한다. 이는 alias/path/declared version에서 파생하지 않으며 명시적 follow-up 없이
-변경할 수 없다. `occurrence-id`는 authority-id/line-id/alias/source path/line의 SHA-256이다.
+line이면 `config/central-catalog-authority-lines.json`에 repository, semantic subject,
+coordinate/plugin ID, alias selector와 source-controlled canonical identifier(예:
+`spring-boot-3`)를 선언한다. selector는 inventory occurrence와 정확히 일치해야 하며,
+중복·미사용 selector는 실패한다. `line-id`는 alias/path/declared version에서 파생하지
+않으며 명시적 follow-up 없이 변경할 수 없다. `occurrence-id`는
+authority-id/line-id/alias/source path/line의 SHA-256이다.
 G4는 `(authority-id, line-id)`별 before/after occurrence lineage를 기록해 alias 제거·이동·병합을
 reconcile하고, unreconciled deletion/addition은 fail-closed다. aggregate summary는 별도
 JSON으로 만든다. migration 반복에서는

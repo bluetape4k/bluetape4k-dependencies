@@ -17,7 +17,6 @@ import hashlib
 import importlib.util
 import json
 import re
-import subprocess
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -81,6 +80,15 @@ DISPOSITION_EVIDENCE_TYPES = {
     "compatibility-line": frozenset({"compatibility-review"}),
     "structural-repo-owned": frozenset({"settings-evaluation"}),
 }
+AUTHORITY_LINE_FIELDS = frozenset(
+    {
+        "repository",
+        "subject-kind",
+        "coordinate-or-plugin-id",
+        "alias",
+        "line-id",
+    }
+)
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 LINE_ID = re.compile(r"^(?:default|[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$")
 HARD_CODED_LIBRARY = re.compile(
@@ -864,6 +872,9 @@ def catalog_authority_records(
     central_catalog: Path,
     repositories: tuple[str, ...],
     repository_roots: dict[str, Path] | None = None,
+    *,
+    authority_lines: dict[tuple[str, str, str, str], str] | None = None,
+    used_authority_lines: set[tuple[str, str, str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     authority = _catalog_authority_module()
     central_data = read_catalog(central_catalog)
@@ -896,7 +907,14 @@ def catalog_authority_records(
                     f"explicit library authority has no declared version: {repository}:{alias}"
                 )
             stable_id = authority.authority_id(repository, "library", library.module)
-            line_id = "default"
+            line_id = authority_line_id(
+                authority_lines,
+                used_authority_lines,
+                repository,
+                "library",
+                library.module,
+                alias,
+            )
             source_path = "gradle/libs.versions.toml"
             source_line = library_source_lines.get(alias)
             if source_line is None:
@@ -944,7 +962,14 @@ def catalog_authority_records(
                     f"explicit plugin authority has no declared version: {repository}:{alias}"
                 )
             stable_id = authority.authority_id(repository, "plugin", plugin.plugin_id)
-            line_id = "default"
+            line_id = authority_line_id(
+                authority_lines,
+                used_authority_lines,
+                repository,
+                "plugin",
+                plugin.plugin_id,
+                alias,
+            )
             source_path = "gradle/libs.versions.toml"
             source_line = plugin_source_lines.get(alias)
             if source_line is None:
@@ -999,6 +1024,9 @@ def hard_coded_authority_records(
     workspace: Path,
     repositories: tuple[str, ...],
     repository_roots: dict[str, Path] | None = None,
+    *,
+    authority_lines: dict[tuple[str, str, str, str], str] | None = None,
+    used_authority_lines: set[tuple[str, str, str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     authority = _catalog_authority_module()
     pending: list[dict[str, Any]] = []
@@ -1037,7 +1065,14 @@ def hard_coded_authority_records(
                     stable_id = authority.authority_id(
                         repository, subject_kind, subject
                     )
-                    line_id = "default"
+                    line_id = authority_line_id(
+                        authority_lines,
+                        used_authority_lines,
+                        repository,
+                        subject_kind,
+                        subject,
+                        alias,
+                    )
                     source_path = relative.as_posix()
                     occurrence_payload = "\0".join(
                         (stable_id, line_id, alias, source_path, str(source_line))
@@ -1093,6 +1128,73 @@ def load_dispositions(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise TypeError("disposition manifest must be an object")
     return value
+
+
+def load_authority_lines(path: Path) -> dict[tuple[str, str, str, str], str]:
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"invalid authority line manifest: {path}") from exc
+    if (
+        not isinstance(manifest, dict)
+        or set(manifest) != {"schema-version", "records"}
+        or manifest.get("schema-version") != 1
+        or not isinstance(manifest.get("records"), list)
+    ):
+        raise RuntimeError("invalid authority line manifest schema")
+
+    result: dict[tuple[str, str, str, str], str] = {}
+    for index, record in enumerate(manifest["records"]):
+        if not isinstance(record, dict) or set(record) != AUTHORITY_LINE_FIELDS:
+            raise RuntimeError(f"invalid authority line record at index {index}")
+        repository = record.get("repository")
+        subject_kind = record.get("subject-kind")
+        subject = record.get("coordinate-or-plugin-id")
+        alias = record.get("alias")
+        line_id = record.get("line-id")
+        if (
+            not all(
+                isinstance(value, str) and value
+                for value in (repository, subject, alias)
+            )
+            or subject_kind not in {"library", "plugin"}
+            or not isinstance(line_id, str)
+            or line_id == "default"
+            or LINE_ID.fullmatch(line_id) is None
+        ):
+            raise RuntimeError(f"invalid authority line record at index {index}")
+        selector = (repository, subject_kind, subject, alias)
+        if selector in result:
+            raise RuntimeError(
+                "duplicate authority line selector: " + ":".join(selector)
+            )
+        result[selector] = line_id
+    return result
+
+
+def authority_line_id(
+    authority_lines: dict[tuple[str, str, str, str], str] | None,
+    used_authority_lines: set[tuple[str, str, str, str]] | None,
+    repository: str,
+    subject_kind: str,
+    subject: str,
+    alias: str,
+) -> str:
+    selector = (repository, subject_kind, subject, alias)
+    if authority_lines is None or selector not in authority_lines:
+        return "default"
+    if used_authority_lines is not None:
+        used_authority_lines.add(selector)
+    return authority_lines[selector]
+
+
+def validate_authority_line_usage(
+    authority_lines: dict[tuple[str, str, str, str], str],
+    used_authority_lines: set[tuple[str, str, str, str]],
+) -> None:
+    unused = sorted(set(authority_lines) - used_authority_lines)
+    if unused:
+        raise RuntimeError(f"unused authority line selectors: {len(unused)}")
 
 
 def validate_dispositions(
@@ -1222,6 +1324,11 @@ def main() -> int:
         help="Source-controlled one-to-one authority disposition manifest.",
     )
     parser.add_argument(
+        "--authority-lines",
+        type=Path,
+        help="Source-controlled selectors for simultaneous compatibility lines.",
+    )
+    parser.add_argument(
         "--write",
         action="store_true",
         help="Deprecated compatibility flag. Adoption gaps are never rewritten automatically.",
@@ -1286,12 +1393,27 @@ def main() -> int:
         return 2
     if args.inventory_out:
         try:
+            authority_lines = load_authority_lines(
+                args.authority_lines
+                or repo_root / "config" / "central-catalog-authority-lines.json"
+            )
+            used_authority_lines: set[tuple[str, str, str, str]] = set()
             catalog_inventory = catalog_authority_records(
-                workspace, source_catalog, repositories, repository_roots
+                workspace,
+                source_catalog,
+                repositories,
+                repository_roots,
+                authority_lines=authority_lines,
+                used_authority_lines=used_authority_lines,
             )
             hard_coded_inventory = hard_coded_authority_records(
-                workspace, repositories, repository_roots
+                workspace,
+                repositories,
+                repository_roots,
+                authority_lines=authority_lines,
+                used_authority_lines=used_authority_lines,
             )
+            validate_authority_line_usage(authority_lines, used_authority_lines)
             inventory = sorted(
                 catalog_inventory + hard_coded_inventory,
                 key=lambda item: (
@@ -1337,7 +1459,7 @@ def main() -> int:
                 dispositions,
                 {(item["authority-id"], item["line-id"]) for item in inventory},
             )
-        except (ImportError, RuntimeError) as exc:
+        except (ImportError, RuntimeError, TypeError) as exc:
             print(str(exc), file=sys.stderr)
             return 2
     source_versions = read_source_versions(source_catalog)

@@ -312,6 +312,103 @@ class SyncSharedVersionsTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "duplicate"):
             sync.validate_dispositions(duplicate, {("a" * 64, "default")})
 
+    def test_authority_lines_split_same_coordinate_compatibility_families(self) -> None:
+        if sys.version_info < (3, 11):
+            self.skipTest("catalog authority inventory requires stdlib tomllib")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            central = root / "central.toml"
+            central.write_text("[versions]\n[libraries]\n", encoding="utf-8")
+            repository = root / "bluetape4k-projects"
+            catalog = repository / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir(parents=True)
+            catalog.write_text(
+                """[versions]
+h2-v1 = "1.4.197"
+h2-v2 = "2.4.240"
+[libraries]
+h2 = { module = "com.h2database:h2", version.ref = "h2-v1" }
+h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
+""",
+                encoding="utf-8",
+            )
+            lines_path = root / "authority-lines.json"
+            lines_path.write_text(
+                json.dumps(
+                    {
+                        "schema-version": 1,
+                        "records": [
+                            {
+                                "repository": "bluetape4k-projects",
+                                "subject-kind": "library",
+                                "coordinate-or-plugin-id": "com.h2database:h2",
+                                "alias": "h2",
+                                "line-id": "h2-1",
+                            },
+                            {
+                                "repository": "bluetape4k-projects",
+                                "subject-kind": "library",
+                                "coordinate-or-plugin-id": "com.h2database:h2",
+                                "alias": "h2-v2",
+                                "line-id": "h2-2",
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            lines = sync.load_authority_lines(lines_path)
+            used: set[tuple[str, str, str, str]] = set()
+            records = sync.catalog_authority_records(
+                root,
+                central,
+                ("bluetape4k-projects",),
+                authority_lines=lines,
+                used_authority_lines=used,
+            )
+            sync.validate_authority_line_usage(lines, used)
+
+        self.assertEqual(
+            {(record["alias"], record["line-id"]) for record in records},
+            {("h2", "h2-1"), ("h2-v2", "h2-2")},
+        )
+        self.assertEqual(
+            len(
+                {
+                    (record["authority-id"], record["line-id"])
+                    for record in records
+                }
+            ),
+            2,
+        )
+
+    def test_authority_lines_reject_duplicate_and_unused_selectors(self) -> None:
+        record = {
+            "repository": "bluetape4k-projects",
+            "subject-kind": "library",
+            "coordinate-or-plugin-id": "com.h2database:h2",
+            "alias": "h2",
+            "line-id": "h2-1",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "authority-lines.json"
+            path.write_text(
+                json.dumps({"schema-version": 1, "records": [record, record]}),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(RuntimeError, "duplicate authority line"):
+                sync.load_authority_lines(path)
+
+        selector = (
+            "bluetape4k-projects",
+            "library",
+            "com.h2database:h2",
+            "h2",
+        )
+        with self.assertRaisesRegex(RuntimeError, "unused authority line"):
+            sync.validate_authority_line_usage({selector: "h2-1"}, set())
+
     def test_structural_disposition_requires_same_repository_issue_and_review_date(
         self,
     ) -> None:
@@ -355,11 +452,20 @@ class SyncSharedVersionsTest(unittest.TestCase):
         ):
             self.skipTest("managed sibling repositories are unavailable")
 
+        authority_lines = sync.load_authority_lines(
+            SCRIPT_PATH.parents[1]
+            / "config"
+            / "central-catalog-authority-lines.json"
+        )
+        used_authority_lines: set[tuple[str, str, str, str]] = set()
         records = sync.catalog_authority_records(
             workspace,
             SCRIPT_PATH.parents[1] / "gradle" / "libs.versions.toml",
             sync.DEFAULT_REPOSITORIES,
+            authority_lines=authority_lines,
+            used_authority_lines=used_authority_lines,
         )
+        sync.validate_authority_line_usage(authority_lines, used_authority_lines)
 
         self.assertEqual(
             sum(record["subject-kind"] == "library" for record in records), 864
@@ -376,6 +482,27 @@ class SyncSharedVersionsTest(unittest.TestCase):
                 }
             ),
             9,
+        )
+        self.assertEqual(
+            {
+                (record["repository"], record["alias"], record["line-id"])
+                for record in records
+                if record["line-id"] != "default"
+            },
+            {
+                ("bluetape4k-projects", "h2", "h2-1"),
+                ("bluetape4k-projects", "h2-v2", "h2-2"),
+                (
+                    "bluetape4k-projects",
+                    "jakarta-persistence-api",
+                    "jakarta-persistence-31",
+                ),
+                (
+                    "bluetape4k-projects",
+                    "jakarta-persistence-api-v32",
+                    "jakarta-persistence-32",
+                ),
+            },
         )
         self.assertEqual(
             records,

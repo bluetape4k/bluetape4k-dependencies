@@ -435,6 +435,7 @@ Expected: the runner invokes the fixed publisher registry, structural audit prec
 - Modify: `gradle/libs.versions.toml`
 - Modify: `gradle/libs.versions.toml.sha256`
 - Modify: `config/central-catalog-authority-dispositions.json`
+- Add: `config/central-catalog-authority-lines.json`
 - Modify: `config/central-catalog-version-deltas.json`
 - Modify: `config/central-catalog-exceptions.toml`
 - Modify: `build.gradle.kts` only when a published dependency lacks valid imported-BOM management
@@ -469,6 +470,10 @@ python3 -m unittest tests/test_catalog_authority.py tests/test_sync_managed_cata
 Expected: checksum exact match, orphan/duplicate authority zero, compatibility lines preserved.
 
 **Rollback/rerun:** undocumented graph delta가 발견되면 해당 authority pair만 이전 catalog/disposition으로 복원하고 Task 7 Step 2부터 재분류한다.
+
+같은 repository/coordinate가 두 호환 line을 동시에 선언하는 경우에는 catalog 승격 전에
+`central-catalog-authority-lines.json`의 exact occurrence selector로 line을 분리한다.
+중복 또는 inventory에 없는 selector는 Task 7 검증을 실패시킨다.
 
 ### Task 8: 9개 downstream repository를 중앙 alias/accessor로 전환
 
