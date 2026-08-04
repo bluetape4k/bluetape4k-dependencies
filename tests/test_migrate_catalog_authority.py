@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import sys
 import tempfile
@@ -148,7 +149,7 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
 
     def test_fallback_requires_one_same_alias_and_rejects_ambiguity(self) -> None:
         record = _record("a" * 64, alias="other-local")
-        policy = _policy(occurrences=[])
+        policy = {"schema-version": 1, "subjects": []}
         with self.assertRaisesRegex(migrate.MigrationError, "ambiguous"):
             migrate.derive_catalog_mappings(
                 [record],
@@ -297,6 +298,40 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
                         libraries={"alpha"}, plugins=set(), versions=set()
                     ),
                 )
+
+    def test_policy_validation_matches_canonical_promoter(self) -> None:
+        for missing in ("disposition", "evidence", "version", "version-key"):
+            policy = copy.deepcopy(_policy())
+            del policy["subjects"][0]["lines"][0][missing]
+            with self.subTest(missing=missing), self.assertRaisesRegex(
+                migrate.MigrationError, "invalid policy"
+            ):
+                migrate._validate_policy(policy)
+        empty_occurrences = copy.deepcopy(_policy())
+        empty_occurrences["subjects"][0]["lines"][0]["occurrences"] = []
+        with self.assertRaisesRegex(migrate.MigrationError, "invalid policy"):
+            migrate._validate_policy(empty_occurrences)
+
+    def test_apply_plan_preflights_every_target_before_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            first = root / "first.txt"
+            first.write_text("before", encoding="utf-8")
+            missing = root / "missing.txt"
+            plan = migrate.MigrationPlan(
+                repository="bluetape4k-projects",
+                root=root,
+                catalog=first,
+                edits={first: "after", missing: "never"},
+                replacements=(),
+                removed_aliases=(),
+                removed_versions=(),
+                blockers=(),
+                structural_preserved=(),
+            )
+            with self.assertRaisesRegex(migrate.MigrationError, "regular file"):
+                migrate.apply_plan(plan)
+            self.assertEqual(first.read_text(encoding="utf-8"), "before")
 
     def test_repository_map_requires_explicit_absolute_workspace(self) -> None:
         with self.assertRaisesRegex(migrate.MigrationError, "workspace"):

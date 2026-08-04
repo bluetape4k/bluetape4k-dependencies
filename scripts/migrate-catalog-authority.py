@@ -26,6 +26,7 @@ import tomllib
 SCRIPT_DIR = Path(__file__).resolve().parent
 CATALOG_AUTHORITY = SCRIPT_DIR / "catalog_authority.py"
 CATALOG_CANDIDATE = SCRIPT_DIR / "catalog_candidate.py"
+CATALOG_PROMOTION = SCRIPT_DIR / "promote-catalog-authority.py"
 REPOSITORY_KEYS = (
     "projects",
     "aws",
@@ -214,6 +215,18 @@ def _candidate_module() -> Any:
     return module
 
 
+def _promotion_module() -> Any:
+    spec = importlib.util.spec_from_file_location(
+        "catalog_promotion", CATALOG_PROMOTION
+    )
+    if spec is None or spec.loader is None:
+        raise MigrationError("cannot load catalog promotion parser")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def _canonical_file(path: Path, label: str) -> Path:
     if not path.is_absolute() or path.resolve() != path:
         raise MigrationError(f"{label} path must be absolute and canonical: {path}")
@@ -296,6 +309,10 @@ def _validate_inventory(raw: Any) -> list[dict[str, Any]]:
 
 
 def _validate_policy(raw: Any) -> dict[tuple[str, str, str], dict[str, Any]]:
+    try:
+        _promotion_module()._parse_policy(raw)
+    except (ValueError, TypeError, KeyError) as exc:
+        raise MigrationError(f"invalid policy: {exc}") from exc
     if not isinstance(raw, dict) or set(raw) != {"schema-version", "subjects"}:
         raise MigrationError("invalid policy schema")
     if raw["schema-version"] != 1 or not isinstance(raw["subjects"], list):
@@ -956,9 +973,10 @@ def apply_plan(plan: MigrationPlan) -> None:
             f"migration plan has {len(plan.blockers)} unresolved blockers: "
             f"{plan.repository}"
         )
-    for path, text in plan.edits.items():
+    for path in plan.edits:
         if path.is_symlink() or not path.is_file():
             raise MigrationError(f"migration target is not a regular file: {path}")
+    for path, text in plan.edits.items():
         path.write_text(text, encoding="utf-8")
 
 

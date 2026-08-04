@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import hashlib
 import importlib.util
 import json
 import re
@@ -428,7 +429,9 @@ def _default_line(
         )
     for alias in aliases:
         _validate_alias(alias, f"default {kind}:{coordinate}")
-    version_key = aliases[0]
+    identity = f"{kind}\0{coordinate}\0{next(iter(line_ids))}".encode()
+    digest = hashlib.sha256(identity).hexdigest()[:12]
+    version_key = f"managed-{aliases[0]}-h{digest}"
     return EffectiveLine(
         subject_kind=kind,
         coordinate=coordinate,

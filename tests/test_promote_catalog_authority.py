@@ -86,6 +86,23 @@ def _line(
 
 
 class PromoteCatalogAuthorityTest(unittest.TestCase):
+    def test_default_version_keys_are_namespaced_and_identity_bound(self) -> None:
+        line = promote._default_line(
+            ("library", "org.example:alpha"),
+            [
+                _record(
+                    "a" * 64,
+                    "repo-a",
+                    "library",
+                    "org.example:alpha",
+                    "alpha",
+                    "1.2.3",
+                )
+            ],
+            set(),
+        )
+        self.assertRegex(line.version_key, r"^managed-alpha-h[0-9a-f]{12}$")
+
     def test_deterministic_render_and_versionless_alias(self) -> None:
         inventory = _inventory(
             _record(
