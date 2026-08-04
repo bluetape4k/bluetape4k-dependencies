@@ -5,6 +5,17 @@
     "commit": "d6898bebdfa2c623e9a4d625bbb54074e7d011bf",
     "sha256": "eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093"
   },
+  "scope": {
+    "publishers": 9,
+    "catalog-consumers": 9,
+    "excluded": [
+      "bluetape4k-workshop",
+      "clinic-appointment",
+      "exposed-r2dbc-workshop",
+      "exposed-workshop",
+      "timefold-workshop"
+    ]
+  },
   "repositories": {
     "bluetape4k-projects": "69e551cda74a263dab8a8ded14f9db9c5da97c7d",
     "bluetape4k-aws": "a1c068d79fddb933df70c8f4909a7dccd5a80ea9",
@@ -22,6 +33,55 @@
     "sync-shared-versions": "pass",
     "sync-dependabot-ignores": "pass",
     "sync-managed-catalog": "pass"
+  },
+  "candidate-artifacts": {
+    "repository-map": {
+      "path": "build/issue-169/prepare/candidate-repositories.json",
+      "sha256": "cfcdcd95c0ec16badfa780dfbb9e53415ea1779ae9a097d579a2efd8936b36e7"
+    },
+    "cache-manifest": {
+      "path": "build/issue-169/prepare/cache-manifest.json",
+      "sha256": "d56e4f4f8b05875da8c1631ec225da4a45e913e9b4d2609e1fed2264e8f63aba"
+    },
+    "candidate-manifest": {
+      "path": "build/issue-169/prepare/candidate-manifest.json",
+      "sha256": "f50c120aa84d8cbedd362dc968216d124f2644f16945525cd6b565750284f66f"
+    },
+    "candidate-ledger": {
+      "path": "build/issue-169/prepare/candidate-ledger.json",
+      "sha256": "f18ab0a3504a3c3c600f17dd79b549b870c54946918ca0e019ffc1b852e47165"
+    },
+    "catalog-lock-sha256": "0a6a18722201cd0c470967cc7ba2468877dbf349b875abeb35d1824c8965be50"
+  },
+  "command-receipts": {
+    "sync-shared-versions": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "command": "scripts/sync-shared-versions.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
+      "exit": 0,
+      "output": "build/issue-169/outputs/sync-shared-versions.log",
+      "output-sha256": "8998ab4908d0a75d55424626af5d07542091d0ee25b6507de249140e7fcdb353"
+    },
+    "sync-dependabot-ignores": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "command": "scripts/sync-dependabot-ignores.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
+      "exit": 0,
+      "output": "build/issue-169/outputs/sync-dependabot-ignores.log",
+      "output-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sync-managed-catalog": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "command": "scripts/sync-managed-catalog.py --workspace-root /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
+      "exit": 0,
+      "output": "build/issue-169/outputs/sync-managed-catalog.log",
+      "output-sha256": "81dc648a3a3ca232d258b7fd0f15383675341425aacc684b6472229bf43b8e7c"
+    },
+    "verify-publication-poms": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "command": "scripts/verify-publication-poms.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --summary",
+      "exit": 0,
+      "output": "build/issue-169/outputs/verify-publication-poms.log",
+      "output-sha256": "5cb6b0d8a48a3b43de787dcaa243eea6d36da4d1e025aab490f319a4bca7be1d"
+    }
   },
   "publication-poms": {
     "final-command-exit": 0,

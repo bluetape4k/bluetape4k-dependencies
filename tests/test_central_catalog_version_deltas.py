@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 import unittest
 from pathlib import Path
 
 LEDGER = Path(__file__).resolve().parents[1] / "config" / "central-catalog-version-deltas.json"
+CATALOG = LEDGER.parents[1] / "gradle" / "libs.versions.toml"
 
 
 class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
@@ -93,6 +95,9 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         evidence = rollout["resolved-graph-evidence"]
         self.assertEqual(len(evidence), 5)
         self.assertEqual(
+            len({entry["authority-key"] for entry in evidence}), len(evidence)
+        )
+        self.assertEqual(
             len({(entry["repository"], entry["coordinate"]) for entry in evidence}),
             len(evidence),
         )
@@ -107,10 +112,39 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         authority_deltas = {
             entry["authority-key"]: entry for entry in authority_ledger["delta"]
         }
+        catalog = CATALOG.read_text(encoding="utf-8")
+        versions_section = catalog.split("[versions]", 1)[1].split("\n[", 1)[0]
+        versions = dict(
+            re.findall(
+                r'^([A-Za-z0-9_.-]+)\s*=\s*"([^"]+)"',
+                versions_section,
+                flags=re.MULTILINE,
+            )
+        )
         for entry in evidence:
             authority = authority_deltas[entry["authority-key"]]
+            self.assertEqual(entry["authority-coordinate"], authority["coordinate"])
             self.assertEqual(entry["authority-before"], authority["before"])
             self.assertEqual(entry["after"], authority["after"])
+
+            coordinate = entry["authority-coordinate"]
+            group, name = coordinate.split(":", 1)
+            candidate_lines = [
+                line
+                for line in catalog.splitlines()
+                if f'module = "{coordinate}"' in line
+                or (f'group = "{group}"' in line and f'name = "{name}"' in line)
+            ]
+            resolved_versions: set[str] = set()
+            for line in candidate_lines:
+                version_ref = re.search(r'version\.ref\s*=\s*"([^"]+)"', line)
+                if version_ref:
+                    resolved_versions.add(versions[version_ref.group(1)])
+                    continue
+                inline_version = re.search(r'version\s*=\s*"([^"]+)"', line)
+                if inline_version:
+                    resolved_versions.add(inline_version.group(1))
+            self.assertIn(entry["after"], resolved_versions)
         self.assertEqual(
             rollout["remote-immutable-ref-verification"], "pending-central-push"
         )

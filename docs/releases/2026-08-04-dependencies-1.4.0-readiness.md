@@ -97,7 +97,8 @@ candidate map 기준 `sync-shared-versions.py`, `sync-dependabot-ignores.py`,
 실행하면 작업 branch가 아니라 기존 branch를 읽어 adoption gap을 보고하므로, 이
 train의 판정에는
 [`2026-08-04-issue-169-candidate-receipt.json`](2026-08-04-issue-169-candidate-receipt.json)의
-exact worktree/head map을 사용한다.
+exact worktree/head map을 사용한다. Receipt는 생성된 repository map, catalog lock,
+candidate manifest/ledger와 네 개 검증 명령의 output SHA-256을 함께 고정한다.
 
 ## 배포 차단 조건
 
