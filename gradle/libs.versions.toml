@@ -48,7 +48,7 @@ kotlinx-serialization = "1.11.0"  # https://mvnrepository.com/artifact/org.jetbr
 jackson           = "2.22.1"  # https://mvnrepository.com/artifact/com.fasterxml.jackson/jackson-bom
 jackson-annotations = "2.22"  # downstream alias compatibility for jackson-annotations
 jackson2          = "2.22.1"  # Jackson 2 compatibility line
-jackson3          = "3.2.0"  # Jackson 3 compatibility line
+jackson3          = "3.2.1"  # Jackson 3 compatibility line
 lettuce           = "7.6.0.RELEASE"  # https://mvnrepository.com/artifact/io.lettuce/lettuce-core
 exposed           = "1.3.1"  # https://mvnrepository.com/artifact/org.jetbrains.exposed/exposed-bom
 ignite            = "2.18.0"  # Apache Ignite 2 compatibility line
@@ -58,48 +58,49 @@ kafka4            = "4.2.1"  # https://mvnrepository.com/artifact/org.apache.kaf
 spring-kafka      = "3.3.16"  # Spring Kafka 3 compatibility line
 spring-kafka4     = "4.1.0"  # Spring Kafka 4 compatibility line
 testcontainers    = "2.0.5"  # https://mvnrepository.com/artifact/org.testcontainers/testcontainers-bom
-kover             = "0.9.8"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kover-gradle-plugin
+kover             = "0.9.9"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kover-gradle-plugin
 fory              = "1.3.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
 fory-kotlin       = "1.3.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
-aws2              = "2.47.1"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
-aws-kotlin        = "1.8.0"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
+aws2              = "2.47.6"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
+aws2-crt          = "0.48.3"  # Standalone CRT release; not managed by the AWS SDK v2 BOM
+aws-kotlin        = "1.8.22"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.8.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
-ktor              = "3.5.1"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
-netty4            = "4.1.133.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
+ktor              = "3.5.2"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
+netty4            = "4.1.136.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
 netty             = "4.2.16.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
-opentelemetry     = "1.63.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
+opentelemetry     = "1.64.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
 opentelemetry-instrumentation-alpha = "2.29.0-alpha"  # Stable compatibility line used by bluetape4k-projects
 protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
 log4j             = "2.26.1"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
-vertx4            = "4.5.27"  # Vert.x 4 compatibility line required by Fabric8
-vertx             = "5.1.4"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
+vertx4            = "4.5.31"  # Vert.x 4 compatibility line required by Fabric8
+vertx             = "5.1.5"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
 redisson          = "4.6.1"  # https://mvnrepository.com/artifact/org.redisson/redisson
 querydsl          = "7.4.0"  # https://mvnrepository.com/artifact/io.github.openfeign.querydsl/querydsl-apt
 bouncycastle-bcpg = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
 bouncycastle-bcpkix = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on
 bouncycastle-bcprov = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on
-classgraph        = "4.8.184"  # https://mvnrepository.com/artifact/io.github.classgraph/classgraph
+classgraph        = "4.8.186"  # https://mvnrepository.com/artifact/io.github.classgraph/classgraph
 tomcat            = "11.0.24"  # https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core
 zookeeper         = "3.9.5"  # https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper
 avro              = "1.12.1"  # https://mvnrepository.com/artifact/org.apache.avro/avro
 guava             = "33.6.0-jre"  # https://mvnrepository.com/artifact/com.google.guava/guava
-httpclient5       = "5.6.2"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5
+httpclient5       = "5.6.3"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5
 httpcore5         = "5.4.3"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5
-hibernate         = "7.4.4.Final"  # https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core
+hibernate         = "7.4.5.Final"  # https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core
 reflectasm        = "1.11.9"  # https://mvnrepository.com/artifact/com.esotericsoftware/reflectasm
 ow2-asm           = "9.10.1"  # https://mvnrepository.com/artifact/org.ow2.asm/asm
-zstd              = "1.5.7-11"  # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
-zstd-jni          = "1.5.7-11"  # downstream alias compatibility for zstd-jni
+zstd              = "1.5.7-12"  # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
+zstd-jni          = "1.5.7-12"  # downstream alias compatibility for zstd-jni
 jakarta-activation = "2.1.4"  # https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api
 jakarta-xml-bind  = "4.0.5"  # https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api
 hazelcast         = "5.7.0"  # https://mvnrepository.com/artifact/com.hazelcast/hazelcast
-scrimage          = "4.6.5"  # https://mvnrepository.com/artifact/com.sksamuel.scrimage/scrimage-core
+scrimage          = "4.6.7"  # https://mvnrepository.com/artifact/com.sksamuel.scrimage/scrimage-core
 timefold-solver   = "2.2.0"   # https://mvnrepository.com/artifact/ai.timefold.solver/timefold-solver-bom
 flyway            = "12.10.0"  # https://mvnrepository.com/artifact/org.flywaydb/flyway-core
-shadow            = "9.5.1"  # https://mvnrepository.com/artifact/com.gradleup.shadow/shadow-gradle-plugin
+shadow            = "9.6.1"  # https://mvnrepository.com/artifact/com.gradleup.shadow/shadow-gradle-plugin
 springdoc-openapi = "3.0.3"  # https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
 postgresql        = "42.7.13"  # https://mvnrepository.com/artifact/org.postgresql/postgresql
 postgresql-driver = "42.7.13"  # downstream alias compatibility for PostgreSQL JDBC
@@ -107,12 +108,13 @@ mysql-connector-j = "9.7.0"  # https://mvnrepository.com/artifact/com.mysql/mysq
 r2dbc-h2          = "1.1.0.RELEASE"  # https://mvnrepository.com/artifact/io.r2dbc/r2dbc-h2
 reactor-bom       = "2025.0.6"  # https://mvnrepository.com/artifact/io.projectreactor/reactor-bom
 gatling           = "3.15.1"  # https://mvnrepository.com/artifact/io.gatling/gatling-app
+gatling-plugin    = "3.15.1.2"
 logcaptor         = "2.12.6"  # https://mvnrepository.com/artifact/io.github.hakky54/logcaptor
 hikaricp          = "7.1.0"  # https://mvnrepository.com/artifact/com.zaxxer/HikariCP
 agroal            = "3.2.1"  # https://mvnrepository.com/artifact/io.agroal/agroal-pool
 javamoney-moneta  = "1.4.5"  # https://mvnrepository.com/artifact/org.javamoney/moneta
 mybatis-dynamic-sql = "2.0.0"  # https://mvnrepository.com/artifact/org.mybatis.dynamic-sql/mybatis-dynamic-sql
-commons-codec     = "1.22.0"  # https://mvnrepository.com/artifact/commons-codec/commons-codec
+commons-codec     = "1.22.1"  # https://mvnrepository.com/artifact/commons-codec/commons-codec
 commons-compress  = "1.28.0"  # https://mvnrepository.com/artifact/org.apache.commons/commons-compress
 commons-csv       = "1.14.1"  # https://mvnrepository.com/artifact/org.apache.commons/commons-csv
 commons-exec      = "1.6.0"  # https://mvnrepository.com/artifact/org.apache.commons/commons-exec
@@ -135,7 +137,7 @@ dependency-check = "12.2.2"
 detekt-dev = "2.0.0-alpha.5"
 detekt-formatting-legacy = "2.0.0-alpha.5"
 detekt-legacy = "1.23.8"
-download = "5.6.0"
+download = "5.7.0"
 duckdb-jdbc = "1.5.2.1"
 elasticmq-rest-sqs = "1.7.1"
 foojay-resolver = "1.0.0"
@@ -151,7 +153,7 @@ jakarta-inject-api = "2.0.1"
 jakarta-persistence-v31 = "3.1.0"
 jakarta-persistence-v32 = "3.2.0"
 jfalkordb = "0.8.0"
-jib = "3.4.4"
+jib = "3.5.4"
 jnats = "2.25.3"
 jsonassert-v1 = "1.5.3"
 jsonassert-v2 = "2.0-rc1"
@@ -176,12 +178,12 @@ managed-assertj-core-h830d024e84c8 = "3.27.7"
 managed-avatica-core-hba1bf9decd49 = "1.27.0"
 managed-avro-plugin-hace42c31bdda = "1.9.1"
 managed-aws-dax-client-ha8827a8b0fcb = "2.0.9"
-managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467 = "1.6.14"
-managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5 = "1.6.14"
-managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604 = "1.6.14"
-managed-aws-smithy-kotlin-http-hea8fa947b4d3 = "1.6.14"
-managed-aws-smithy-kotlin-serde-hb6c6080166ba = "1.6.14"
-managed-aws-smithy-kotlin-serde-json-h39078dce8d4a = "1.6.14"
+managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467 = "1.7.4"
+managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5 = "1.7.4"
+managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604 = "1.7.4"
+managed-aws-smithy-kotlin-http-hea8fa947b4d3 = "1.7.4"
+managed-aws-smithy-kotlin-serde-hb6c6080166ba = "1.7.4"
+managed-aws-smithy-kotlin-serde-json-h39078dce8d4a = "1.7.4"
 managed-batik-codec-h3ee064576347 = "1.19"
 managed-batik-transcoder-h86723efb5618 = "1.19"
 managed-blaze-persistence-core-api-jakarta-heb5c993b1d4f = "1.6.16"
@@ -390,7 +392,7 @@ managed-nats-spring-h9ddf1b6453e3 = "0.6.2+3.5"
 managed-neo4j-bolt-connection-bom-h7783d6d91aad = "11.0.2"
 managed-neo4j-bolt-connection-netty-hde6be92c15e6 = "11.0.2"
 managed-neo4j-bolt-connection-pooled-h0355e6822c7f = "11.0.2"
-managed-netty-tcnative-classes-h39fc93b48f6f = "2.0.77.Final"
+managed-netty-tcnative-classes-h39fc93b48f6f = "2.0.78.Final"
 managed-objenesis-h7460768a532c = "3.5"
 managed-okhttp3-bom-h2c1e6cd75f1f = "5.3.2"
 managed-okhttp3-coroutines-h9d5eb12a5613 = "5.3.2"
@@ -519,7 +521,7 @@ kotlin-spring         = { id = "org.jetbrains.kotlin.plugin.spring",  version.re
 byte-buddy-gradle     = { id = "net.bytebuddy.byte-buddy-gradle-plugin", version.ref = "byte-buddy" }
 dependency-management = { id = "io.spring.dependency-management",     version.ref = "dependency-management" }
 dokka                 = { id = "org.jetbrains.dokka",                  version.ref = "dokka" }
-gatling               = { id = "io.gatling.gradle",                    version.ref = "gatling" }
+gatling               = { id = "io.gatling.gradle",                    version.ref = "gatling-plugin" }
 kover                 = { id = "org.jetbrains.kotlinx.kover",          version.ref = "kover" }
 nmcp                  = { id = "com.gradleup.nmcp",                    version.ref = "nmcp" }
 nmcp-aggregation      = { id = "com.gradleup.nmcp.aggregation",        version.ref = "nmcp" }
@@ -685,7 +687,7 @@ aws-smithy-kotlin-http-client-engine-default = { module = "aws.smithy.kotlin:htt
 aws-smithy-kotlin-http-client-engine-okhttp = { module = "aws.smithy.kotlin:http-client-engine-okhttp", version.ref = "managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604" }
 aws-smithy-kotlin-serde = { module = "aws.smithy.kotlin:serde-jvm", version.ref = "managed-aws-smithy-kotlin-serde-hb6c6080166ba" }
 aws-smithy-kotlin-serde-json = { module = "aws.smithy.kotlin:serde-json-jvm", version.ref = "managed-aws-smithy-kotlin-serde-json-h39078dce8d4a" }
-aws2-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt" }
+aws2-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version.ref = "aws2-crt" }
 batik-codec = { module = "org.apache.xmlgraphics:batik-codec", version.ref = "managed-batik-codec-h3ee064576347" }
 batik-transcoder = { module = "org.apache.xmlgraphics:batik-transcoder", version.ref = "managed-batik-transcoder-h86723efb5618" }
 blaze-persistence-core-api-jakarta = { module = "com.blazebit:blaze-persistence-core-api-jakarta", version.ref = "managed-blaze-persistence-core-api-jakarta-heb5c993b1d4f" }

@@ -58,6 +58,7 @@ CENTRAL_DEPENDENCY_IGNORES = (
     "org.testcontainers:*",
     "org.apache.fory:*",
     "software.amazon.awssdk:*",
+    "software.amazon.awssdk.crt:*",
     "aws.sdk.kotlin:*",
     "io.fabric8:*",
     "io.ktor:*",

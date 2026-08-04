@@ -1,0 +1,272 @@
+{
+  "schema-version": 1,
+  "rollout": "2026-08-04-issue-169-latest-compatible-stable",
+  "audit-cutoff": "2026-08-04",
+  "status": "validation-pending",
+  "delta": [
+    {
+      "authority-key": "kover",
+      "kind": "plugin",
+      "coordinate": "org.jetbrains.kotlinx.kover",
+      "before": "0.9.8",
+      "after": "0.9.9",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://plugins.gradle.org/m2/org/jetbrains/kotlinx/kover/org.jetbrains.kotlinx.kover.gradle.plugin/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the existing Kover 0.9 line."
+    },
+    {
+      "authority-key": "download",
+      "kind": "plugin",
+      "coordinate": "de.undercouch.download",
+      "before": "5.6.0",
+      "after": "5.7.0",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://plugins.gradle.org/m2/de/undercouch/download/de.undercouch.download.gradle.plugin/maven-metadata.xml",
+      "reason": "Adopt the latest stable release in the existing Download Task 5.x compatibility line."
+    },
+    {
+      "authority-key": "gatling-plugin",
+      "kind": "plugin",
+      "coordinate": "io.gatling.gradle",
+      "before": "3.15.1",
+      "after": "3.15.1.2",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://plugins.gradle.org/m2/io/gatling/gradle/io.gatling.gradle.gradle.plugin/maven-metadata.xml",
+      "reason": "The Gradle plugin release line advances independently from the Gatling libraries, so it requires a dedicated central version key."
+    },
+    {
+      "authority-key": "jib",
+      "kind": "plugin",
+      "coordinate": "com.google.cloud.tools.jib",
+      "before": "3.4.4",
+      "after": "3.5.4",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://plugins.gradle.org/m2/com/google/cloud/tools/jib/com.google.cloud.tools.jib.gradle.plugin/maven-metadata.xml",
+      "reason": "Adopt the latest stable release in the existing Jib 3.x compatibility line."
+    },
+    {
+      "authority-key": "shadow",
+      "kind": "plugin",
+      "coordinate": "com.gradleup.shadow",
+      "before": "9.5.1",
+      "after": "9.6.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://plugins.gradle.org/m2/com/gradleup/shadow/com.gradleup.shadow.gradle.plugin/maven-metadata.xml",
+      "reason": "Adopt the latest stable release in the existing Shadow 9.x compatibility line."
+    },
+    {
+      "authority-key": "jackson3",
+      "kind": "platform",
+      "coordinate": "tools.jackson:jackson-bom",
+      "before": "3.2.0",
+      "after": "3.2.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/tools/jackson/jackson-bom/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Jackson 3.2 compatibility line."
+    },
+    {
+      "authority-key": "aws2",
+      "kind": "platform",
+      "coordinate": "software.amazon.awssdk:bom",
+      "before": "2.47.1",
+      "after": "2.47.6",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/bom/maven-metadata.xml",
+      "reason": "Adopt the latest patch in the existing AWS SDK Java 2.47 compatibility line."
+    },
+    {
+      "authority-key": "aws-kotlin",
+      "kind": "library-family",
+      "coordinate": "aws.sdk.kotlin:aws-core",
+      "before": "1.8.0",
+      "after": "1.8.22",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/aws/sdk/kotlin/aws-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the AWS SDK for Kotlin 1.8 line."
+    },
+    {
+      "authority-key": "aws2-crt",
+      "kind": "library",
+      "coordinate": "software.amazon.awssdk.crt:aws-crt",
+      "before": "versionless",
+      "after": "0.48.3",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/crt/aws-crt/maven-metadata.xml",
+      "reason": "The artifact is outside the AWS SDK v2 BOM and has no parent-POM coupling; adopt its latest stable standalone release explicitly."
+    },
+    {
+      "authority-key": "aws-smithy-kotlin",
+      "kind": "library-family",
+      "coordinate": "aws.smithy.kotlin:runtime-core",
+      "before": "1.6.14",
+      "after": "1.7.4",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/aws/smithy/kotlin/runtime-core/maven-metadata.xml",
+      "reason": "Align direct Smithy runtime aliases with the 1.7.4 runtime required by AWS SDK for Kotlin 1.8.22; global 1.7.5 is held until the SDK adopts it."
+    },
+    {
+      "authority-key": "ktor",
+      "kind": "platform",
+      "coordinate": "io.ktor:ktor-bom",
+      "before": "3.5.1",
+      "after": "3.5.2",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/ktor/ktor-bom/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Ktor 3.5 line."
+    },
+    {
+      "authority-key": "netty4",
+      "kind": "compatibility-family",
+      "coordinate": "io.netty:netty-all",
+      "before": "4.1.133.Final",
+      "after": "4.1.136.Final",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/netty/netty-all/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Netty 4.1 line required by Vert.x 4 and Fabric8."
+    },
+    {
+      "authority-key": "netty4-tcnative",
+      "kind": "compatibility-family",
+      "coordinate": "io.netty:netty-tcnative-classes",
+      "before": "2.0.77.Final",
+      "after": "2.0.78.Final",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/netty/netty-bom/4.1.136.Final/netty-bom-4.1.136.Final.pom",
+      "reason": "Align the native classes artifact with the tcnative version declared by the adopted Netty 4.1.136 BOM."
+    },
+    {
+      "authority-key": "opentelemetry",
+      "kind": "platform",
+      "coordinate": "io.opentelemetry:opentelemetry-bom",
+      "before": "1.63.0",
+      "after": "1.64.0",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/opentelemetry/opentelemetry-bom/maven-metadata.xml",
+      "reason": "Adopt the latest stable OpenTelemetry 1.x BOM release."
+    },
+    {
+      "authority-key": "vertx4",
+      "kind": "compatibility-family",
+      "coordinate": "io.vertx:vertx-core",
+      "before": "4.5.27",
+      "after": "4.5.31",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/vertx/vertx-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Fabric8-compatible Vert.x 4.5 line."
+    },
+    {
+      "authority-key": "vertx",
+      "kind": "platform",
+      "coordinate": "io.vertx:vertx-dependencies",
+      "before": "5.1.4",
+      "after": "5.1.5",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/vertx/vertx-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Vert.x 5.1 line."
+    },
+    {
+      "authority-key": "classgraph",
+      "kind": "library",
+      "coordinate": "io.github.classgraph:classgraph",
+      "before": "4.8.184",
+      "after": "4.8.186",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/github/classgraph/classgraph/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the ClassGraph 4.8 line."
+    },
+    {
+      "authority-key": "httpclient5",
+      "kind": "library",
+      "coordinate": "org.apache.httpcomponents.client5:httpclient5",
+      "before": "5.6.2",
+      "after": "5.6.3",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/apache/httpcomponents/client5/httpclient5/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the HttpClient 5.6 line."
+    },
+    {
+      "authority-key": "hibernate",
+      "kind": "library-family",
+      "coordinate": "org.hibernate.orm:hibernate-core",
+      "before": "7.4.4.Final",
+      "after": "7.4.5.Final",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/org/hibernate/orm/hibernate-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Hibernate ORM 7.4 line."
+    },
+    {
+      "authority-key": "zstd",
+      "kind": "library",
+      "coordinate": "com.github.luben:zstd-jni",
+      "before": "1.5.7-11",
+      "after": "1.5.7-12",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/com/github/luben/zstd-jni/maven-metadata.xml",
+      "reason": "Adopt the latest stable native patch and keep the zstd compatibility alias aligned."
+    },
+    {
+      "authority-key": "scrimage",
+      "kind": "library-family",
+      "coordinate": "com.sksamuel.scrimage:scrimage-core",
+      "before": "4.6.5",
+      "after": "4.6.7",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/com/sksamuel/scrimage/scrimage-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Scrimage 4.6 line."
+    },
+    {
+      "authority-key": "commons-codec",
+      "kind": "library",
+      "coordinate": "commons-codec:commons-codec",
+      "before": "1.22.0",
+      "after": "1.22.1",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/commons-codec/commons-codec/maven-metadata.xml",
+      "reason": "Adopt the latest stable patch in the Commons Codec 1.22 line."
+    }
+  ],
+  "hold": [
+    {
+      "authority-key": "kotlin",
+      "kind": "plugin-family",
+      "coordinate": "org.jetbrains.kotlin.*",
+      "current": "2.4.0",
+      "latest": "2.4.10",
+      "disposition": "hold-compatibility",
+      "source": "https://plugins.gradle.org/m2/org/jetbrains/kotlin/jvm/org.jetbrains.kotlin.jvm.gradle.plugin/maven-metadata.xml",
+      "reason": "Downstream detekt tasks fail because dev.detekt 2.0.0-alpha.5 was compiled with Kotlin 2.4.0 and rejects execution with Kotlin 2.4.10."
+    },
+    {
+      "authority-key": "dependency-check",
+      "kind": "plugin",
+      "coordinate": "org.owasp.dependencycheck",
+      "current": "12.2.2",
+      "latest": "13.0.0",
+      "disposition": "defer-breaking-migration",
+      "source": "https://plugins.gradle.org/m2/org/owasp/dependencycheck/org.owasp.dependencycheck.gradle.plugin/maven-metadata.xml",
+      "reason": "The latest stable release crosses a major version boundary and requires a dedicated compatibility review before the 1.4.0 train can adopt it."
+    }
+  ]
+}

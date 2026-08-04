@@ -66,6 +66,7 @@ dependencies {
         api(libs.avro)
         api(libs.avro.compiler)
         api(libs.aws.kotlin.core)
+        api(libs.aws2.aws.crt)
         api(libs.bouncycastle.bcpg)
         api(libs.bouncycastle.bcpkix)
         api(libs.bouncycastle.bcprov)

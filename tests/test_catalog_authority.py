@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import importlib.util
+import json
 import re
 import sys
 import tempfile
@@ -198,6 +199,64 @@ class CatalogAuthorityTest(unittest.TestCase):
         self.assertGreater(len(catalog.versions), 0)
         self.assertGreater(len(catalog.libraries), 0)
         self.assertGreater(len(catalog.plugins), 0)
+
+    def test_real_authority_policy_versions_match_the_catalog(self) -> None:
+        repo_root = SCRIPT_PATH.parents[1]
+        catalog = catalog_authority.parse_catalog(
+            repo_root / "gradle" / "libs.versions.toml"
+        )
+        policy = json.loads(
+            (repo_root / "config" / "central-catalog-authority-policy.json").read_text(
+                encoding="utf-8"
+            )
+        )
+
+        mismatches: list[str] = []
+        for subject in policy["subjects"]:
+            coordinate = subject["coordinate-or-plugin-id"]
+            for line in subject["lines"]:
+                version_key = line.get("version-key")
+                if version_key is None:
+                    continue
+                expected = catalog.versions.get(version_key)
+                if expected is None:
+                    mismatches.append(f"{coordinate}: unknown version-key {version_key}")
+                elif line.get("version") != expected:
+                    mismatches.append(
+                        f"{coordinate}: policy {line.get('version')} != catalog {expected}"
+                    )
+                if subject["subject-kind"] == "plugin":
+                    for alias in line["central-aliases"]:
+                        plugin = catalog.plugins.get(alias)
+                        if plugin is not None and plugin.get("version.ref") != version_key:
+                            mismatches.append(
+                                f"{coordinate}: policy key {version_key} != "
+                                f"plugin {alias} key {plugin.get('version.ref')}"
+                            )
+
+        self.assertEqual(mismatches, [])
+
+    def test_aws_crt_is_a_centrally_versioned_direct_constraint(self) -> None:
+        repo_root = SCRIPT_PATH.parents[1]
+        policy = json.loads(
+            (repo_root / "config" / "central-catalog-authority-policy.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        aws_crt = next(
+            subject
+            for subject in policy["subjects"]
+            if subject["coordinate-or-plugin-id"]
+            == "software.amazon.awssdk.crt:aws-crt"
+        )["lines"][0]
+
+        self.assertEqual(aws_crt["disposition"], "central-direct")
+        self.assertEqual(aws_crt["version-key"], "aws2-crt")
+        self.assertEqual(aws_crt["version"], "0.48.3")
+        self.assertEqual(
+            aws_crt["evidence"],
+            {"path": "gradle/libs.versions.toml", "type": "catalog-alias"},
+        )
 
 
 if __name__ == "__main__":

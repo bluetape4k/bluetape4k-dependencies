@@ -658,7 +658,7 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
                 "kotlin",
             ),
             "kotlin-spring": ("org.jetbrains.kotlin.plugin.spring", "kotlin"),
-            "gatling": ("io.gatling.gradle", "gatling"),
+            "gatling": ("io.gatling.gradle", "gatling-plugin"),
             "kover": ("org.jetbrains.kotlinx.kover", "kover"),
             "shadow": ("com.gradleup.shadow", "shadow"),
             "spring-boot3": ("org.springframework.boot", "spring-boot3"),

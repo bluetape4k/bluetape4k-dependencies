@@ -117,7 +117,14 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         self.assertIn('dependency-name: "org.slf4j:*"', synced)
         self.assertIn('dependency-name: "org.bouncycastle:*"', synced)
         self.assertIn('dependency-name: "org.apache.tomcat.embed:*"', synced)
+        self.assertIn('dependency-name: "software.amazon.awssdk.crt:*"', synced)
         self.assertIn('dependency-name: "org.springframework.boot"', synced)
+
+    def test_aws_crt_is_governed_outside_the_aws_sdk_group(self) -> None:
+        self.assertIn(
+            "software.amazon.awssdk.crt:*",
+            sync.CENTRAL_DEPENDENCY_IGNORES,
+        )
 
     def test_sync_text_adds_ignore_section_when_missing(self) -> None:
         text = "\n".join(
