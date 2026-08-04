@@ -944,7 +944,9 @@ def apply_plan(plan: MigrationPlan) -> None:
         path.write_text(text, encoding="utf-8")
 
 
-def _load_repository_map(path: Path) -> dict[str, tuple[Path, Path]]:
+def _load_repository_map(
+    path: Path, workspace: Path
+) -> dict[str, tuple[Path, Path]]:
     _canonical_file(path, "repository map")
     raw = _read_json(path, "repository map")
     if (
@@ -964,10 +966,15 @@ def _load_repository_map(path: Path) -> dict[str, tuple[Path, Path]]:
             "repository map must contain the canonical nine repositories"
         )
     candidate = _candidate_module()
-    central_root = Path(
-        _require_string(central.get("root"), "central repository root")
-    ).resolve()
-    workspace = central_root.parent
+    if (
+        not workspace.is_absolute()
+        or workspace.resolve() != workspace
+        or not workspace.is_dir()
+        or workspace.is_symlink()
+    ):
+        raise MigrationError(
+            f"workspace must be an absolute regular directory: {workspace}"
+        )
     try:
         loaded = candidate.load_repository_map_v1(path, workspace)
     except (RuntimeError, OSError) as exc:
@@ -1031,6 +1038,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--policy", required=True, type=Path)
     parser.add_argument("--dispositions", required=True, type=Path)
     parser.add_argument("--repository-map", required=True, type=Path)
+    parser.add_argument("--workspace", required=True, type=Path)
     parser.add_argument(
         "--central-catalog",
         "--catalog",
@@ -1055,7 +1063,7 @@ def main(argv: list[str] | None = None) -> int:
         inventory = _read_json(args.inventory, "inventory")
         policy = _read_json(args.policy, "policy")
         dispositions = _read_json(args.dispositions, "dispositions")
-        repository_map = _load_repository_map(args.repository_map)
+        repository_map = _load_repository_map(args.repository_map, args.workspace)
         central_catalog = _canonical_file(args.central_catalog, "central catalog")
         expected_central = _canonical_file(
             Path(

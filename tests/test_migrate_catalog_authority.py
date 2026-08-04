@@ -9,6 +9,12 @@ from pathlib import Path
 SCRIPT_PATH = (
     Path(__file__).resolve().parents[1] / "scripts" / "migrate-catalog-authority.py"
 )
+REPOSITORY_MAP_FIXTURE = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "catalog-candidate"
+    / "repository-map-valid.json"
+)
 SPEC = importlib.util.spec_from_file_location("migrate_catalog_authority", SCRIPT_PATH)
 assert SPEC is not None and SPEC.loader is not None
 migrate = importlib.util.module_from_spec(SPEC)
@@ -288,6 +294,10 @@ class MigrateCatalogAuthorityTest(unittest.TestCase):
                         libraries={"alpha"}, plugins=set(), versions=set()
                     ),
                 )
+
+    def test_repository_map_requires_explicit_absolute_workspace(self) -> None:
+        with self.assertRaisesRegex(migrate.MigrationError, "workspace"):
+            migrate._load_repository_map(REPOSITORY_MAP_FIXTURE, Path("relative"))
 
 
 if __name__ == "__main__":
