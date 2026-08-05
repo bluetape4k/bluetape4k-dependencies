@@ -444,8 +444,8 @@
       "audit": "config/latest-stable-version-audit.json",
       "authority-delta-ledger": "config/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
-      "catalog-sha256": "9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df",
-      "delta-count": 121,
+      "catalog-sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c",
+      "delta-count": 123,
       "downstream-full-builds": {
         "failures": 0,
         "repositories": 9
@@ -459,10 +459,10 @@
       },
       "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
       "resolved-graph-evidence": {
-        "observation-count": 260,
+        "observation-count": 286,
         "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-        "sha256": "1f019f350fa9c52c82f0152f2dd517fed55d93be354123b46df0d017f63d7c97",
-        "spec-count": 130
+        "sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+        "spec-count": 143
       },
       "rollout": "2026-08-05-issue-169-full-authority-audit",
       "status": "verified-resolved-graph"

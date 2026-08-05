@@ -1,47 +1,47 @@
 {
   "catalog": {
-    "carrier-head": "188f27c012801e011c416ee4e0cfded9294293d9",
-    "content-commit": "fbb6df78d04fcb9d7252ce0a1338ee67af9fa817",
-    "sha256": "9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df"
+    "carrier-head": "5afc259a6d97870bcec2b9a1089e0f4bbb70f980",
+    "content-commit": "5afc259a6d97870bcec2b9a1089e0f4bbb70f980",
+    "sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c"
   },
   "full-builds": {
     "failures": 0,
     "repositories": {
       "bluetape4k-aws": {
         "head": "7584c2f39855034e4f4237e123544b25170d449f",
-        "log-sha256": "d4ede1097a1034f89ee4408d0d2b721b249462f76de7b112ac13de596d4cc3d2"
+        "log-sha256": "78d733dddc8507b89242e4ba49324100e8d9614e27cc29ddbb25984a63f0e796"
       },
       "bluetape4k-experimental": {
         "head": "533082b6dc819689f94e0a91e77a7760baf1a2c4",
-        "log-sha256": "a9725c927ff0a6c838a5531038a361e1ce368ed400fc57da073c6368bac2f1cc"
+        "log-sha256": "e7ba1306eefb2bb30c7cb7e321f76d800e80b20ac55f3e0ecd7873e1b7af5b4b"
       },
       "bluetape4k-exposed": {
         "head": "16a8fed2253e729216d4499baf87e0ef0a7fad2a",
-        "log-sha256": "cec7d88ef7ea4f70f0d01fdcf5855dea9e87ae035e008d29c525f39f9b6db28d"
+        "log-sha256": "4389f9f1bdf57b4076ba2c6a0ec859521d20fe48303fdbc66135f6f0aa75adba"
       },
       "bluetape4k-graph": {
         "head": "95677bb7d691ff7f77a95ad14203c7fa4009a553",
-        "log-sha256": "dec9704a9f52d833dec4f57e3aa4997e4238d0b63d787ea31a0868af1277e63b"
+        "log-sha256": "3b104460785ca3ebe42b8951dba43e43615b2adc7b9089d0b340f380c52c2db6"
       },
       "bluetape4k-image": {
         "head": "295c7228d679c0cdc56f5d7fb4eaf4dfa14a9cbe",
-        "log-sha256": "b2018cbb9b1ab627b5b3f188b9427c2342c76e379d87f16d9839ba910d8c1c27"
+        "log-sha256": "bf46f033b15411a0ec3c3412b47939c81222098b26d97a0e69a8fa583071cc7a"
       },
       "bluetape4k-javers": {
         "head": "6ac3b824bfeb6d43977166bce8e1bbef4ce25108",
-        "log-sha256": "812918e8c4cdd3b578d94c0c6dc2a9d003d1d3b1d972af57ed026fd277180ad8"
+        "log-sha256": "46b44ea804f3f3fe5994d835a00d3974ef0c320113e537038592ecf3977ef0c6"
       },
       "bluetape4k-leader": {
         "head": "7f6bcc51db0bf3fcb8dc9794dd12aac17d22a65d",
-        "log-sha256": "8c012636babe5080742f5e0330f428e801b9c7e341ec30bc5fb7674df2a47af0"
+        "log-sha256": "63aaa748df59edd12b6ddd9d837209dfc999205eeecb6c11e9658b9cdc89d9c4"
       },
       "bluetape4k-projects": {
-        "head": "66fe47d3c906e019ca1be7eeeb2c87970188531f",
-        "log-sha256": "43c6187cabb082b511efb179cea972eb9e75b67c7324ee3243bea601d257171a"
+        "head": "10c3781344597d2f97a24d466907bfbd1010310f",
+        "log-sha256": "4e9981821ea12f478ef9216c0607672d0a457c3c4422dc75b65ddf88dea3041b"
       },
       "bluetape4k-text": {
         "head": "dedfb886cb9d1df75e8f2922013e241ccfac4ae4",
-        "log-sha256": "ce69f0133506d1f7e5a54d59ddba3393ef1554e8d59cf5e2f1bc5562575c2ed3"
+        "log-sha256": "453210d9274dce22393052cc0793e5afab6448450f2b60d7ea04409ffde5be47"
       }
     },
     "status": "verified-local-candidate"
@@ -56,10 +56,10 @@
     "status": "verified-local-candidate"
   },
   "resolved-graphs": {
-    "observation-count": 260,
+    "observation-count": 286,
     "receipt": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-    "receipt-sha256": "1f019f350fa9c52c82f0152f2dd517fed55d93be354123b46df0d017f63d7c97",
-    "spec-count": 130,
+    "receipt-sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+    "spec-count": 143,
     "status": "verified-resolved-graph"
   },
   "schema-version": 1,
@@ -92,5 +92,5 @@
     "workflow-dispatched": false
   },
   "status": "verified-local-candidate",
-  "verified-at": "2026-08-05"
+  "verified-at": "2026-08-06"
 }

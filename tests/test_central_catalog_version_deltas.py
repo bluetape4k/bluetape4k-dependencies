@@ -107,8 +107,8 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["catalog-sha256"], authority["candidate"]["catalog-sha256"])
         self.assertEqual(rollout["baseline-catalog-ref"], authority["baseline"]["catalog-ref"])
         self.assertEqual(rollout["audit"], authority["audit"]["path"])
-        self.assertEqual(rollout["delta-count"], 121)
-        self.assertEqual(rollout["resolved-graph-evidence"]["spec-count"], 130)
+        self.assertEqual(rollout["delta-count"], 123)
+        self.assertEqual(rollout["resolved-graph-evidence"]["spec-count"], 143)
         self.assertEqual(rollout["downstream-full-builds"]["failures"], 0)
         self.assertEqual(rollout["publication-pom-verification"]["failures"], 0)
         self.assertEqual(
