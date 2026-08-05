@@ -7,7 +7,7 @@
 bluetape4k-dependencies = "1.4.0"  # Latest released catalog/BOM for downstream consumers; update after release.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "1.12.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
+bluetape4k-bom     = "1.12.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
@@ -50,7 +50,7 @@ jackson-annotations = "2.22"  # downstream alias compatibility for jackson-annot
 jackson2          = "2.22.1"  # Jackson 2 compatibility line
 jackson3          = "3.2.1"  # Jackson 3 compatibility line
 lettuce           = "7.6.0.RELEASE"  # https://mvnrepository.com/artifact/io.lettuce/lettuce-core
-exposed           = "1.3.1"  # https://mvnrepository.com/artifact/org.jetbrains.exposed/exposed-bom
+exposed           = "1.4.0"  # https://mvnrepository.com/artifact/org.jetbrains.exposed/exposed-bom
 ignite            = "2.18.0"  # Apache Ignite 2 compatibility line
 ignite3           = "3.1.0"  # Apache Ignite 3 compatibility line
 kafka3            = "3.9.2"  # Kafka 3 compatibility line
@@ -76,7 +76,7 @@ protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.pr
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
 log4j             = "2.26.1"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
 vertx4            = "4.5.31"  # Vert.x 4 compatibility line required by Fabric8
-vertx             = "5.1.5"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
+vertx             = "5.1.6"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
 redisson          = "4.7.0"  # https://mvnrepository.com/artifact/org.redisson/redisson
 querydsl          = "7.5"  # https://mvnrepository.com/artifact/io.github.openfeign.querydsl/querydsl-apt
 bouncycastle-bcpg = "1.85"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
@@ -241,7 +241,7 @@ managed-eclipse-collections-testutils-h02668598348d = "13.0.0"
 managed-ehcache-clustered-h0a0edf676e4d = "3.12.0"
 managed-ehcache-he9dea86fd186 = "3.12.0"
 managed-ehcache-transactions-h8c2d00308bb1 = "3.12.0"
-managed-elasticsearch-java-h5984397084e4 = "9.4.5"
+managed-elasticsearch-java-h5984397084e4 = "9.5.0"
 managed-elasticsearch-rest-client-h89bafdaca9a6 = "9.5.0"
 managed-elasticsearch-rest-client-sniffer-h440b3d642cb0 = "9.5.0"
 managed-esri-geometry-api-h91fce33325cc = "2.2.4"
@@ -369,7 +369,7 @@ managed-micrometer-tracing-bridge-otel-he56ec84f2b0f = "1.7.0"
 managed-micrometer-tracing-h5a2d98f31144 = "1.7.0"
 managed-micrometer-tracing-integration-test-h1462ec78085f = "1.7.0"
 managed-micrometer-tracing-test-h945eea8eda06 = "1.7.0"
-managed-milvus-sdk-java-h565db6eded15 = "2.6.22"
+managed-milvus-sdk-java-h565db6eded15 = "2.6.23"
 managed-mockk-h9dd32a0538aa = "1.14.11"
 managed-mockserver-client-java-hd19fa6cd8095 = "5.15.0"
 managed-mockserver-netty-h61f0a64eb51b = "5.15.0"
@@ -458,7 +458,7 @@ managed-retrofit2-converter-protobuf-h981151e9543c = "3.0.0"
 managed-retrofit2-converter-scalars-h43e676f7461c = "3.0.0"
 managed-retrofit2-hc7e93e72db68 = "3.0.0"
 managed-retrofit2-mock-hbcb0b5f68a85 = "3.0.0"
-managed-sentry-logback-h65fc12a36c8c = "8.51.0"
+managed-sentry-logback-h65fc12a36c8c = "8.52.0"
 managed-snakeyaml-h08ebcb48b48a = "2.6"
 managed-snappy-java-h6a6d7f53de0b = "1.1.10.8"
 managed-spring-cloud-aws-bom-haebf9fb93e11 = "4.1.0"

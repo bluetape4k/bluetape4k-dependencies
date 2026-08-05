@@ -370,6 +370,11 @@ def build_delta_ledger(
         after = candidate_versions[version_key]
         if before is None or before == after:
             continue
+        # Internal BOM train versions are promoted by the publication DAG and
+        # Maven Central availability gates. They are intentionally outside the
+        # external latest-stable authority audit represented by this ledger.
+        if version_key.startswith("bluetape4k-"):
+            continue
         authorities = authorities_by_key.get(version_key, [])
         if not authorities:
             raise RuntimeError(

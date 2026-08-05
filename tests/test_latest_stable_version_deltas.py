@@ -138,6 +138,32 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 rollout="issue-169",
             )
 
+    def test_build_delta_ledger_excludes_internal_bom_train_versions(self) -> None:
+        module = load_script()
+        audit = {
+            "inputs": {"inventory-sha256": "inventory"},
+            "records": [],
+            "summary": {"line-dispositions": {}},
+        }
+
+        ledger = module.build_delta_ledger(
+            baseline_catalog=(
+                '[versions]\nbluetape4k-bom = "1.12.0-SNAPSHOT"\n'
+                'bluetape4k-exposed-bom = "1.12.0-SNAPSHOT"\n'
+            ),
+            candidate_catalog=(
+                '[versions]\nbluetape4k-bom = "1.12.1"\n'
+                'bluetape4k-exposed-bom = "1.12.0"\n'
+            ),
+            audit=audit,
+            baseline_ref="baseline",
+            audit_cutoff="2026-08-05",
+            rollout="issue-169",
+        )
+
+        self.assertEqual(ledger["delta"], [])
+        self.assertEqual(ledger["status"], "validation-pending")
+
     def test_build_delta_ledger_records_verified_compatibility_alignment(self) -> None:
         module = load_script()
         audit = {
@@ -200,7 +226,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 "resolved-graph-evidence",
             },
         )
-        self.assertEqual(len(document["delta"]), 121)
+        self.assertEqual(len(document["delta"]), 123)
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),

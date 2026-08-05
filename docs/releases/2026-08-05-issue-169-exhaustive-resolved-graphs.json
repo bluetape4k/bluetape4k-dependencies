@@ -1,5 +1,5 @@
 {
-  "catalog-sha256": "9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df",
+  "catalog-sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c",
   "command": [
     "./gradlew",
     "-p",
@@ -276,6 +276,47 @@
     },
     {
       "added-components": [
+        "com.oracle.database.jdbc:ojdbc11:23.26.3.0.0",
+        "org.checkerframework:checker-qual:3.55.1",
+        "org.flywaydb:flyway-core:13.1.0",
+        "org.flywaydb:flyway-database-oracle:13.1.0",
+        "org.flywaydb:flyway-database-postgresql:13.1.0",
+        "org.flywaydb:flyway-mysql:13.1.0",
+        "org.flywaydb:flyway-sqlserver:13.1.0",
+        "org.jetbrains.exposed.plugin:exposed-gradle-plugin:1.4.0",
+        "org.jetbrains.exposed.plugin:exposed-plugin-core:1.4.0",
+        "org.jetbrains.exposed.plugin:org.jetbrains.exposed.plugin.gradle.plugin:1.4.0",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.4.0",
+        "org.postgresql:postgresql:42.7.13",
+        "tools.jackson.core:jackson-core:3.1.5",
+        "tools.jackson.core:jackson-databind:3.1.5",
+        "tools.jackson:jackson-bom:3.1.5"
+      ],
+      "removed-components": [
+        "com.oracle.database.jdbc:ojdbc11:23.26.2.0.0",
+        "org.flywaydb:flyway-core:12.10.0",
+        "org.flywaydb:flyway-database-oracle:12.10.0",
+        "org.flywaydb:flyway-database-postgresql:12.10.0",
+        "org.flywaydb:flyway-mysql:12.10.0",
+        "org.flywaydb:flyway-sqlserver:12.10.0",
+        "org.jetbrains.exposed.plugin:exposed-gradle-plugin:1.3.1",
+        "org.jetbrains.exposed.plugin:org.jetbrains.exposed.plugin.gradle.plugin:1.3.1",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.3.1",
+        "org.postgresql:postgresql:42.7.12",
+        "tools.jackson.core:jackson-core:3.1.4",
+        "tools.jackson.core:jackson-databind:3.1.4",
+        "tools.jackson:jackson-bom:3.1.4"
+      ],
+      "spec_id": "251554a86a8c57bb3244dd31a98d245f933fc5bf61f8c09e261889443f0264d6"
+    },
+    {
+      "added-components": [
         "org.bouncycastle:bcprov-jdk18on:1.85"
       ],
       "removed-components": [
@@ -311,6 +352,73 @@
         "org.javassist:javassist:3.30.2-GA"
       ],
       "spec_id": "2b113ceae33a4cf8bd89f49ab4b894e8dd62a1df863ff607b98cb708a959745a"
+    },
+    {
+      "added-components": [
+        "ch.qos.logback:logback-classic:1.5.34",
+        "ch.qos.logback:logback-core:1.5.34",
+        "io.micrometer:micrometer-commons:1.16.6",
+        "io.micrometer:micrometer-observation:1.16.6",
+        "org.apache.logging.log4j:log4j-api:2.25.4",
+        "org.apache.logging.log4j:log4j-to-slf4j:2.25.4",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-dao:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:exposed-spring-boot4-starter:1.4.0",
+        "org.jetbrains.exposed:spring7-transaction:1.4.0",
+        "org.slf4j:jul-to-slf4j:2.0.18",
+        "org.slf4j:slf4j-api:2.0.18",
+        "org.springframework.boot:spring-boot-autoconfigure:4.1.0",
+        "org.springframework.boot:spring-boot-jdbc:4.1.0",
+        "org.springframework.boot:spring-boot-persistence:4.1.0",
+        "org.springframework.boot:spring-boot-sql:4.1.0",
+        "org.springframework.boot:spring-boot-starter-jdbc:4.1.0",
+        "org.springframework.boot:spring-boot-starter-logging:4.1.0",
+        "org.springframework.boot:spring-boot-starter:4.1.0",
+        "org.springframework.boot:spring-boot-transaction:4.1.0",
+        "org.springframework.boot:spring-boot:4.1.0",
+        "org.springframework:spring-aop:7.0.8",
+        "org.springframework:spring-beans:7.0.8",
+        "org.springframework:spring-context:7.0.8",
+        "org.springframework:spring-core:7.0.8",
+        "org.springframework:spring-expression:7.0.8",
+        "org.springframework:spring-jdbc:7.0.8",
+        "org.springframework:spring-tx:7.0.8",
+        "org.yaml:snakeyaml:2.6"
+      ],
+      "removed-components": [
+        "ch.qos.logback:logback-classic:1.5.21",
+        "ch.qos.logback:logback-core:1.5.21",
+        "io.micrometer:micrometer-commons:1.16.0",
+        "io.micrometer:micrometer-observation:1.16.0",
+        "org.apache.logging.log4j:log4j-api:2.25.2",
+        "org.apache.logging.log4j:log4j-to-slf4j:2.25.2",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-dao:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:exposed-spring-boot4-starter:1.3.1",
+        "org.jetbrains.exposed:spring7-transaction:1.3.1",
+        "org.slf4j:jul-to-slf4j:2.0.17",
+        "org.slf4j:slf4j-api:2.0.17",
+        "org.springframework.boot:spring-boot-autoconfigure:4.0.0",
+        "org.springframework.boot:spring-boot-jdbc:4.0.0",
+        "org.springframework.boot:spring-boot-persistence:4.0.0",
+        "org.springframework.boot:spring-boot-sql:4.0.0",
+        "org.springframework.boot:spring-boot-starter-jdbc:4.0.0",
+        "org.springframework.boot:spring-boot-starter-logging:4.0.0",
+        "org.springframework.boot:spring-boot-starter:4.0.0",
+        "org.springframework.boot:spring-boot-transaction:4.0.0",
+        "org.springframework.boot:spring-boot:4.0.0",
+        "org.springframework:spring-aop:7.0.1",
+        "org.springframework:spring-beans:7.0.1",
+        "org.springframework:spring-context:7.0.1",
+        "org.springframework:spring-core:7.0.1",
+        "org.springframework:spring-expression:7.0.1",
+        "org.springframework:spring-jdbc:7.0.1",
+        "org.springframework:spring-tx:7.0.1",
+        "org.yaml:snakeyaml:2.5"
+      ],
+      "spec_id": "2b1ad3157e3cc925804e82d9c5490e2a64ce476e6d4fa0e4f0f66dab77ec04b6"
     },
     {
       "added-components": [
@@ -408,7 +516,7 @@
     {
       "added-components": [
         "com.google.guava:guava:32.1.3-jre",
-        "io.milvus:milvus-sdk-java:2.6.22",
+        "io.milvus:milvus-sdk-java:2.6.23",
         "org.checkerframework:checker-qual:3.37.0",
         "org.jetbrains.kotlin:kotlin-stdlib-common:1.9.10",
         "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.10",
@@ -621,6 +729,19 @@
     },
     {
       "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-dao:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-dao:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1"
+      ],
+      "spec_id": "427803a3595207c92372934394a72216850490739b8bf1eba8f38cf75778eb65"
+    },
+    {
+      "added-components": [
         "aws.sdk.kotlin:aws-core-jvm:1.8.23",
         "aws.sdk.kotlin:aws-core:1.8.23"
       ],
@@ -717,6 +838,17 @@
     },
     {
       "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-java-time:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-java-time:1.3.1"
+      ],
+      "spec_id": "559ad414cac7cbb401639c076f042bf7b1183bbe7d20ede04bd4a0e63e883ce3"
+    },
+    {
+      "added-components": [
         "com.alibaba.fastjson2:fastjson2:2.0.64"
       ],
       "removed-components": [
@@ -758,6 +890,17 @@
         "io.opentelemetry:opentelemetry-sdk:1.55.0"
       ],
       "spec_id": "5aa5f03d45a5aa164f155102f3ba22e80959f8f6e5308d625ff8ddf87a07b3e8"
+    },
+    {
+      "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-json:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-json:1.3.1"
+      ],
+      "spec_id": "5b0ff32ae681c727ee5b46f3a07da2ae28ca6abad58c5e09ccd7ac8f57e23055"
     },
     {
       "added-components": [
@@ -852,6 +995,37 @@
         "software.amazon.awssdk.crt:aws-crt:0.48.2"
       ],
       "spec_id": "66cd97318cdff3080ca648e1fe12767daa18fbf7e8794719167f955efe5ddca0"
+    },
+    {
+      "added-components": [
+        "io.micrometer:micrometer-commons:1.16.6",
+        "io.micrometer:micrometer-observation:1.16.6",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:spring7-transaction:1.4.0",
+        "org.springframework:spring-aop:7.0.8",
+        "org.springframework:spring-beans:7.0.8",
+        "org.springframework:spring-context:7.0.8",
+        "org.springframework:spring-core:7.0.8",
+        "org.springframework:spring-expression:7.0.8",
+        "org.springframework:spring-jdbc:7.0.8",
+        "org.springframework:spring-tx:7.0.8"
+      ],
+      "removed-components": [
+        "io.micrometer:micrometer-commons:1.16.0",
+        "io.micrometer:micrometer-observation:1.16.0",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:spring7-transaction:1.3.1",
+        "org.springframework:spring-aop:7.0.1",
+        "org.springframework:spring-beans:7.0.1",
+        "org.springframework:spring-context:7.0.1",
+        "org.springframework:spring-core:7.0.1",
+        "org.springframework:spring-expression:7.0.1",
+        "org.springframework:spring-jdbc:7.0.1",
+        "org.springframework:spring-tx:7.0.1"
+      ],
+      "spec_id": "68e49630f0c2aa75e71e85407ab9aac146d5ffd4f03ceb0db8a1ee506d6e6c73"
     },
     {
       "added-components": [
@@ -1030,6 +1204,21 @@
     },
     {
       "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.3.1"
+      ],
+      "spec_id": "7c1e12610aa063699e66a9cfff779a1d86dddda413f32b781a78a57524509f28"
+    },
+    {
+      "added-components": [
         "io.micrometer:micrometer-commons:1.17.0",
         "io.micrometer:micrometer-observation:1.17.0",
         "io.micrometer:micrometer-tracing-test:1.7.0",
@@ -1205,6 +1394,26 @@
     },
     {
       "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1"
+      ],
+      "spec_id": "8fb12efdc02c14f1045e0d75e853277636dd3c05727d79117292e35a41391e39"
+    },
+    {
+      "added-components": [
+        "io.vertx:vertx-dependencies:5.1.6"
+      ],
+      "removed-components": [
+        "io.vertx:vertx-dependencies:5.1.5"
+      ],
+      "spec_id": "91430bf323051acf04e9582019976754069111ef15c63063004636f93bde9092"
+    },
+    {
+      "added-components": [
         "io.netty:netty-tcnative-classes:2.0.81.Final"
       ],
       "removed-components": [
@@ -1332,6 +1541,17 @@
     },
     {
       "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-r2dbc:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-r2dbc:1.3.1"
+      ],
+      "spec_id": "a5e26c63403233031c007b5eff1f3023800feb2005aad258ef5c97b679803cd6"
+    },
+    {
+      "added-components": [
         "org.neo4j.bolt:neo4j-bolt-connection-bom:11.1.0"
       ],
       "removed-components": [
@@ -1398,6 +1618,30 @@
     },
     {
       "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1"
+      ],
+      "spec_id": "b3234b06912878e2b17eb6aa4d97b6d584f1ba0189d4ac2022097790a53f653d"
+    },
+    {
+      "added-components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-r2dbc:1.4.0",
+        "org.jetbrains.exposed:exposed-r2dbc:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-r2dbc:1.3.1",
+        "org.jetbrains.exposed:exposed-r2dbc:1.3.1"
+      ],
+      "spec_id": "b36e955f25e9a3e28837f20b8ba8703c778f941986e4c5130d1a7a5685721526"
+    },
+    {
+      "added-components": [
         "org.geotools.ogc:net.opengis.ows:31.7",
         "org.geotools.ogc:org.w3.xlink:31.7",
         "org.geotools:gt-api:31.7",
@@ -1415,8 +1659,8 @@
     },
     {
       "added-components": [
-        "co.elastic.clients:elasticsearch-java:9.4.5",
-        "co.elastic.clients:elasticsearch-rest5-client:9.4.5",
+        "co.elastic.clients:elasticsearch-java:9.5.0",
+        "co.elastic.clients:elasticsearch-rest5-client:9.5.0",
         "com.fasterxml.jackson.core:jackson-annotations:2.22",
         "com.fasterxml.jackson.core:jackson-core:2.22.0",
         "com.fasterxml.jackson.core:jackson-databind:2.22.0",
@@ -1618,8 +1862,8 @@
     },
     {
       "added-components": [
-        "io.sentry:sentry-logback:8.51.0",
-        "io.sentry:sentry:8.51.0"
+        "io.sentry:sentry-logback:8.52.0",
+        "io.sentry:sentry:8.52.0"
       ],
       "removed-components": [
         "io.sentry:sentry-logback:8.41.0",
@@ -1674,6 +1918,15 @@
         "com.blazebit:blaze-persistence-core-parser-jakarta:1.6.16"
       ],
       "spec_id": "d66291a820daadbdef0f1fc000f5a8c32a842999350d4396987c1391f348be64"
+    },
+    {
+      "added-components": [
+        "org.jetbrains.exposed:exposed-bom:1.4.0"
+      ],
+      "removed-components": [
+        "org.jetbrains.exposed:exposed-bom:1.3.1"
+      ],
+      "spec_id": "dade60044bdd9e237632634e05de01ea9da83c0dbf3149474e0f08efb6fdb5da"
     },
     {
       "added-components": [
@@ -2058,9 +2311,9 @@
       "spec_id": "fe9ec9076ea0ebf4b9dc1f89b63d25307a6a218dca981442dd1092a6e6d37816"
     }
   ],
-  "ledger-contract-sha256": "3b1cceaf43e907c90134a9b58d70b11503cda64eeca0a0074ff0970b6cf88dd5",
-  "log-sha256": "6a4a51ead6a4e88b8ae56eeea62d45a2c9e8512770ebdf8c33e21e827c58d225",
-  "observation-count": 260,
+  "ledger-contract-sha256": "a11824d0bc0db4ef6d124134c13d97dafb6b57d1ae6b6274de3b65bb49b0f441",
+  "log-sha256": "4f86ac009a1cd477650f189857adac9580277882b094285b232d6b069339d683",
+  "observation-count": 286,
   "observations": [
     {
       "components": [
@@ -2908,6 +3161,120 @@
     },
     {
       "components": [
+        "com.fasterxml.jackson.core:jackson-annotations:2.21",
+        "com.github.docker-java:docker-java-api:3.7.1",
+        "com.github.docker-java:docker-java-transport-zerodep:3.7.1",
+        "com.github.docker-java:docker-java-transport:3.7.1",
+        "com.google.protobuf:protobuf-java:3.25.1",
+        "com.h2database:h2:2.4.240",
+        "com.microsoft.sqlserver:mssql-jdbc:13.2.1.jre11",
+        "com.mysql:mysql-connector-j:8.4.0",
+        "com.oracle.database.jdbc:ojdbc11:23.26.3.0.0",
+        "commons-codec:commons-codec:1.19.0",
+        "commons-io:commons-io:2.20.0",
+        "net.java.dev.jna:jna:5.18.1",
+        "org.apache.commons:commons-compress:1.28.0",
+        "org.apache.commons:commons-lang3:3.18.0",
+        "org.checkerframework:checker-qual:3.55.1",
+        "org.flywaydb:flyway-core:13.1.0",
+        "org.flywaydb:flyway-database-oracle:13.1.0",
+        "org.flywaydb:flyway-database-postgresql:13.1.0",
+        "org.flywaydb:flyway-mysql:13.1.0",
+        "org.flywaydb:flyway-sqlserver:13.1.0",
+        "org.jetbrains.exposed.plugin:exposed-gradle-plugin:1.4.0",
+        "org.jetbrains.exposed.plugin:exposed-plugin-core:1.4.0",
+        "org.jetbrains.exposed.plugin:org.jetbrains.exposed.plugin.gradle.plugin:1.4.0",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jetbrains:annotations:17.0.0",
+        "org.mariadb.jdbc:mariadb-java-client:3.5.6",
+        "org.postgresql:postgresql:42.7.13",
+        "org.rnorth.duct-tape:duct-tape:1.0.8",
+        "org.slf4j:slf4j-api:2.0.9",
+        "org.testcontainers:testcontainers-database-commons:2.0.5",
+        "org.testcontainers:testcontainers-jdbc:2.0.5",
+        "org.testcontainers:testcontainers-mariadb:2.0.5",
+        "org.testcontainers:testcontainers-mssqlserver:2.0.5",
+        "org.testcontainers:testcontainers-mysql:2.0.5",
+        "org.testcontainers:testcontainers-oracle-xe:2.0.5",
+        "org.testcontainers:testcontainers-postgresql:2.0.5",
+        "org.testcontainers:testcontainers:2.0.5",
+        "root project 'latest-stable-resolved-graphs'",
+        "tools.jackson.core:jackson-core:3.1.5",
+        "tools.jackson.core:jackson-databind:3.1.5",
+        "tools.jackson:jackson-bom:3.1.5"
+      ],
+      "graph_sha256": "dee41f0754c46a2a4081e93c914829cb0cadff4b92ca91d6a70ca9862e6f5f6d",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "251554a86a8c57bb3244dd31a98d245f933fc5bf61f8c09e261889443f0264d6"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-annotations:2.21",
+        "com.github.docker-java:docker-java-api:3.7.1",
+        "com.github.docker-java:docker-java-transport-zerodep:3.7.1",
+        "com.github.docker-java:docker-java-transport:3.7.1",
+        "com.google.protobuf:protobuf-java:3.25.1",
+        "com.h2database:h2:2.4.240",
+        "com.microsoft.sqlserver:mssql-jdbc:13.2.1.jre11",
+        "com.mysql:mysql-connector-j:8.4.0",
+        "com.oracle.database.jdbc:ojdbc11:23.26.2.0.0",
+        "commons-codec:commons-codec:1.19.0",
+        "commons-io:commons-io:2.20.0",
+        "net.java.dev.jna:jna:5.18.1",
+        "org.apache.commons:commons-compress:1.28.0",
+        "org.apache.commons:commons-lang3:3.18.0",
+        "org.flywaydb:flyway-core:12.10.0",
+        "org.flywaydb:flyway-database-oracle:12.10.0",
+        "org.flywaydb:flyway-database-postgresql:12.10.0",
+        "org.flywaydb:flyway-mysql:12.10.0",
+        "org.flywaydb:flyway-sqlserver:12.10.0",
+        "org.jetbrains.exposed.plugin:exposed-gradle-plugin:1.3.1",
+        "org.jetbrains.exposed.plugin:org.jetbrains.exposed.plugin.gradle.plugin:1.3.1",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jetbrains:annotations:17.0.0",
+        "org.mariadb.jdbc:mariadb-java-client:3.5.6",
+        "org.postgresql:postgresql:42.7.12",
+        "org.rnorth.duct-tape:duct-tape:1.0.8",
+        "org.slf4j:slf4j-api:2.0.9",
+        "org.testcontainers:testcontainers-database-commons:2.0.5",
+        "org.testcontainers:testcontainers-jdbc:2.0.5",
+        "org.testcontainers:testcontainers-mariadb:2.0.5",
+        "org.testcontainers:testcontainers-mssqlserver:2.0.5",
+        "org.testcontainers:testcontainers-mysql:2.0.5",
+        "org.testcontainers:testcontainers-oracle-xe:2.0.5",
+        "org.testcontainers:testcontainers-postgresql:2.0.5",
+        "org.testcontainers:testcontainers:2.0.5",
+        "root project 'latest-stable-resolved-graphs'",
+        "tools.jackson.core:jackson-core:3.1.4",
+        "tools.jackson.core:jackson-databind:3.1.4",
+        "tools.jackson:jackson-bom:3.1.4"
+      ],
+      "graph_sha256": "091b77b929e51debbeb5b4c082444e22dada8ddf5ba6245d49bf36d1e89deb7d",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "251554a86a8c57bb3244dd31a98d245f933fc5bf61f8c09e261889443f0264d6"
+    },
+    {
+      "components": [
         "org.bouncycastle:bcprov-jdk18on:1.85",
         "root project 'latest-stable-resolved-graphs'"
       ],
@@ -2999,6 +3366,104 @@
       "requested": "3.30.2-GA",
       "selected": "3.30.2-GA",
       "spec_id": "2b113ceae33a4cf8bd89f49ab4b894e8dd62a1df863ff607b98cb708a959745a"
+    },
+    {
+      "components": [
+        "ch.qos.logback:logback-classic:1.5.34",
+        "ch.qos.logback:logback-core:1.5.34",
+        "com.zaxxer:HikariCP:7.0.2",
+        "commons-logging:commons-logging:1.3.5",
+        "io.micrometer:micrometer-commons:1.16.6",
+        "io.micrometer:micrometer-observation:1.16.6",
+        "jakarta.annotation:jakarta.annotation-api:3.0.0",
+        "org.apache.logging.log4j:log4j-api:2.25.4",
+        "org.apache.logging.log4j:log4j-to-slf4j:2.25.4",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-dao:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:exposed-spring-boot4-starter:1.4.0",
+        "org.jetbrains.exposed:spring7-transaction:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jspecify:jspecify:1.0.0",
+        "org.slf4j:jul-to-slf4j:2.0.18",
+        "org.slf4j:slf4j-api:2.0.18",
+        "org.springframework.boot:spring-boot-autoconfigure:4.1.0",
+        "org.springframework.boot:spring-boot-jdbc:4.1.0",
+        "org.springframework.boot:spring-boot-persistence:4.1.0",
+        "org.springframework.boot:spring-boot-sql:4.1.0",
+        "org.springframework.boot:spring-boot-starter-jdbc:4.1.0",
+        "org.springframework.boot:spring-boot-starter-logging:4.1.0",
+        "org.springframework.boot:spring-boot-starter:4.1.0",
+        "org.springframework.boot:spring-boot-transaction:4.1.0",
+        "org.springframework.boot:spring-boot:4.1.0",
+        "org.springframework:spring-aop:7.0.8",
+        "org.springframework:spring-beans:7.0.8",
+        "org.springframework:spring-context:7.0.8",
+        "org.springframework:spring-core:7.0.8",
+        "org.springframework:spring-expression:7.0.8",
+        "org.springframework:spring-jdbc:7.0.8",
+        "org.springframework:spring-tx:7.0.8",
+        "org.yaml:snakeyaml:2.6",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "d15bbc74de759458230dfc8ab05d5c528519061f96ebdda256e0228324e380b4",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "2b1ad3157e3cc925804e82d9c5490e2a64ce476e6d4fa0e4f0f66dab77ec04b6"
+    },
+    {
+      "components": [
+        "ch.qos.logback:logback-classic:1.5.21",
+        "ch.qos.logback:logback-core:1.5.21",
+        "com.zaxxer:HikariCP:7.0.2",
+        "commons-logging:commons-logging:1.3.5",
+        "io.micrometer:micrometer-commons:1.16.0",
+        "io.micrometer:micrometer-observation:1.16.0",
+        "jakarta.annotation:jakarta.annotation-api:3.0.0",
+        "org.apache.logging.log4j:log4j-api:2.25.2",
+        "org.apache.logging.log4j:log4j-to-slf4j:2.25.2",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-dao:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:exposed-spring-boot4-starter:1.3.1",
+        "org.jetbrains.exposed:spring7-transaction:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jspecify:jspecify:1.0.0",
+        "org.slf4j:jul-to-slf4j:2.0.17",
+        "org.slf4j:slf4j-api:2.0.17",
+        "org.springframework.boot:spring-boot-autoconfigure:4.0.0",
+        "org.springframework.boot:spring-boot-jdbc:4.0.0",
+        "org.springframework.boot:spring-boot-persistence:4.0.0",
+        "org.springframework.boot:spring-boot-sql:4.0.0",
+        "org.springframework.boot:spring-boot-starter-jdbc:4.0.0",
+        "org.springframework.boot:spring-boot-starter-logging:4.0.0",
+        "org.springframework.boot:spring-boot-starter:4.0.0",
+        "org.springframework.boot:spring-boot-transaction:4.0.0",
+        "org.springframework.boot:spring-boot:4.0.0",
+        "org.springframework:spring-aop:7.0.1",
+        "org.springframework:spring-beans:7.0.1",
+        "org.springframework:spring-context:7.0.1",
+        "org.springframework:spring-core:7.0.1",
+        "org.springframework:spring-expression:7.0.1",
+        "org.springframework:spring-jdbc:7.0.1",
+        "org.springframework:spring-tx:7.0.1",
+        "org.yaml:snakeyaml:2.5",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "234f2b6074c4fd2e7059dc52a391c048f0d096c5885b42653a4634e6d156cbef",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "2b1ad3157e3cc925804e82d9c5490e2a64ce476e6d4fa0e4f0f66dab77ec04b6"
     },
     {
       "components": [
@@ -3198,7 +3663,7 @@
         "com.squareup.okhttp3:okhttp:4.12.0",
         "com.squareup.okio:okio-jvm:3.6.0",
         "com.squareup.okio:okio:3.6.0",
-        "io.milvus:milvus-sdk-java:2.6.22",
+        "io.milvus:milvus-sdk-java:2.6.23",
         "io.perfmark:perfmark-api:0.26.0",
         "org.apache.commons:commons-collections4:4.3",
         "org.apache.commons:commons-lang3:3.12.0",
@@ -3213,10 +3678,10 @@
         "org.jetbrains:annotations:17.0.0",
         "root project 'latest-stable-resolved-graphs'"
       ],
-      "graph_sha256": "baa0376ce91fc7f0ec6b07a72c478b1c4f3ae87c9681facc05db54679d583192",
+      "graph_sha256": "c942fff1f59f113821b68e485a6beea278a3daf2833d456d0e2a1e921b991a0d",
       "phase": "after",
-      "requested": "2.6.22",
-      "selected": "2.6.22",
+      "requested": "2.6.23",
+      "selected": "2.6.23",
       "spec_id": "34eee68e9a67f2fe62fae17d5be13dc0a73bf6b3beee70d01b5e62f2cab91623"
     },
     {
@@ -3609,6 +4074,44 @@
     },
     {
       "components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-dao:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "feca14bd356ad1cf1c786864f6a1b7ec8af76e73120420190efbb5068e19f2d1",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "427803a3595207c92372934394a72216850490739b8bf1eba8f38cf75778eb65"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-dao:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "fdc39ab36a0f4dfdecfe3bba94e8e43045f590c1a8f4c66ee13a66ca73ea8a07",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "427803a3595207c92372934394a72216850490739b8bf1eba8f38cf75778eb65"
+    },
+    {
+      "components": [
         "aws.sdk.kotlin:aws-core-jvm:1.8.23",
         "aws.sdk.kotlin:aws-core:1.8.23",
         "root project 'latest-stable-resolved-graphs'"
@@ -3823,6 +4326,42 @@
     },
     {
       "components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-java-time:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "4e2664476e79c2f7f75aa25d9e05a604fababbc07d1f6f114c7a387a9c0e4b6f",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "559ad414cac7cbb401639c076f042bf7b1183bbe7d20ede04bd4a0e63e883ce3"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-java-time:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "6f97c81ac2b5b0d32deb01ca9da2d4a96f4d258cf09d55c50aeaa74729b3138f",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "559ad414cac7cbb401639c076f042bf7b1183bbe7d20ede04bd4a0e63e883ce3"
+    },
+    {
+      "components": [
         "com.alibaba.fastjson2:fastjson2:2.0.64",
         "root project 'latest-stable-resolved-graphs'"
       ],
@@ -3898,6 +4437,46 @@
       "requested": "1.6.5",
       "selected": "1.6.5",
       "spec_id": "5aa5f03d45a5aa164f155102f3ba22e80959f8f6e5308d625ff8ddf87a07b3e8"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-json:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "8f5ced670948bb9fa5347cfe7895835911f484b54fabef5718761b80a8b47f12",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "5b0ff32ae681c727ee5b46f3a07da2ae28ca6abad58c5e09ccd7ac8f57e23055"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-json:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "1800092e218884701e43a906d2438724aea1e51554263098d7de0efd996dc971",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "5b0ff32ae681c727ee5b46f3a07da2ae28ca6abad58c5e09ccd7ac8f57e23055"
     },
     {
       "components": [
@@ -4133,6 +4712,66 @@
       "requested": "0.48.2",
       "selected": "0.48.2",
       "spec_id": "66cd97318cdff3080ca648e1fe12767daa18fbf7e8794719167f955efe5ddca0"
+    },
+    {
+      "components": [
+        "commons-logging:commons-logging:1.3.5",
+        "io.micrometer:micrometer-commons:1.16.6",
+        "io.micrometer:micrometer-observation:1.16.6",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:spring7-transaction:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jspecify:jspecify:1.0.0",
+        "org.slf4j:slf4j-api:2.0.9",
+        "org.springframework:spring-aop:7.0.8",
+        "org.springframework:spring-beans:7.0.8",
+        "org.springframework:spring-context:7.0.8",
+        "org.springframework:spring-core:7.0.8",
+        "org.springframework:spring-expression:7.0.8",
+        "org.springframework:spring-jdbc:7.0.8",
+        "org.springframework:spring-tx:7.0.8",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "5b7fe7b41c72bc097ab208a1063a1da2bf04858920d96feb8a3f2c4c2f24a5d4",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "68e49630f0c2aa75e71e85407ab9aac146d5ffd4f03ceb0db8a1ee506d6e6c73"
+    },
+    {
+      "components": [
+        "commons-logging:commons-logging:1.3.5",
+        "io.micrometer:micrometer-commons:1.16.0",
+        "io.micrometer:micrometer-observation:1.16.0",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:spring7-transaction:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.jspecify:jspecify:1.0.0",
+        "org.slf4j:slf4j-api:2.0.9",
+        "org.springframework:spring-aop:7.0.1",
+        "org.springframework:spring-beans:7.0.1",
+        "org.springframework:spring-context:7.0.1",
+        "org.springframework:spring-core:7.0.1",
+        "org.springframework:spring-expression:7.0.1",
+        "org.springframework:spring-jdbc:7.0.1",
+        "org.springframework:spring-tx:7.0.1",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "7def97c7d99e4bab275c3c233a67172b15572d6f1c9662cdfc5858cc2d545f6f",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "68e49630f0c2aa75e71e85407ab9aac146d5ffd4f03ceb0db8a1ee506d6e6c73"
     },
     {
       "components": [
@@ -4561,6 +5200,46 @@
     },
     {
       "components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "3484ab229bb049c800c57e009f80363e1e2e0eedec615705965a836aa1d25aa8",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "7c1e12610aa063699e66a9cfff779a1d86dddda413f32b781a78a57524509f28"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-jdbc:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "231a411de3c51ab33df266b1fcc8387fa7e267ed9a72b2bbe7b498e31a4a4747",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "7c1e12610aa063699e66a9cfff779a1d86dddda413f32b781a78a57524509f28"
+    },
+    {
+      "components": [
         "aopalliance:aopalliance:1.0",
         "io.micrometer:context-propagation:1.2.1",
         "io.micrometer:micrometer-commons:1.17.0",
@@ -4899,6 +5578,64 @@
     },
     {
       "components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-jdbc:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "25ff57750a4f0a46bb4611fcb756b1e9ab21dc2162e98abfa2018ad6dc973ebc",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "8fb12efdc02c14f1045e0d75e853277636dd3c05727d79117292e35a41391e39"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-jdbc:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "87b79ca0b64cd9175624e87699761a2dade250d191319faa5d12f423840e3df8",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "8fb12efdc02c14f1045e0d75e853277636dd3c05727d79117292e35a41391e39"
+    },
+    {
+      "components": [
+        "io.vertx:vertx-dependencies:5.1.6",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "557d5b7003b689057338e04ca4962896c0c1ba08b19140b32c4f15103e775d69",
+      "phase": "after",
+      "requested": "5.1.6",
+      "selected": "5.1.6",
+      "spec_id": "91430bf323051acf04e9582019976754069111ef15c63063004636f93bde9092"
+    },
+    {
+      "components": [
+        "io.vertx:vertx-dependencies:5.1.5",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "b2ea8571850a2d5b4d5c743ce62818b6d982fd755633971b86f0112f25872e97",
+      "phase": "before",
+      "requested": "5.1.5",
+      "selected": "5.1.5",
+      "spec_id": "91430bf323051acf04e9582019976754069111ef15c63063004636f93bde9092"
+    },
+    {
+      "components": [
         "io.netty:netty-tcnative-classes:2.0.81.Final",
         "root project 'latest-stable-resolved-graphs'"
       ],
@@ -5171,6 +5908,50 @@
     },
     {
       "components": [
+        "io.r2dbc:r2dbc-spi:1.0.0.RELEASE",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-r2dbc:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.reactivestreams:reactive-streams:1.0.3",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "e5b863aa1915f8a39a8e1fff8afb8916e3f72b491b143978fe4dab178a21801e",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "a5e26c63403233031c007b5eff1f3023800feb2005aad258ef5c97b679803cd6"
+    },
+    {
+      "components": [
+        "io.r2dbc:r2dbc-spi:1.0.0.RELEASE",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-r2dbc:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.reactivestreams:reactive-streams:1.0.3",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "948a01bd7b0385cdfa70cbb394c8b198b43aadaa9c852200e7354848cbb014b3",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "a5e26c63403233031c007b5eff1f3023800feb2005aad258ef5c97b679803cd6"
+    },
+    {
+      "components": [
         "org.neo4j.bolt:neo4j-bolt-connection-bom:11.1.0",
         "root project 'latest-stable-resolved-graphs'"
       ],
@@ -5293,6 +6074,88 @@
     },
     {
       "components": [
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "5d8d1b203b81f86eaf68c6cc3ea6a8f15f6199dd75e2cf45ef21e246c5f526f3",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "b3234b06912878e2b17eb6aa4d97b6d584f1ba0189d4ac2022097790a53f653d"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "cf359abac6137f8f43eaf227296c441576c04dc43f8671a92bd9715bdf936346",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "b3234b06912878e2b17eb6aa4d97b6d584f1ba0189d4ac2022097790a53f653d"
+    },
+    {
+      "components": [
+        "io.r2dbc:r2dbc-spi:1.0.0.RELEASE",
+        "org.jetbrains.exposed:exposed-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-core:1.4.0",
+        "org.jetbrains.exposed:exposed-migration-r2dbc:1.4.0",
+        "org.jetbrains.exposed:exposed-r2dbc:1.4.0",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.reactivestreams:reactive-streams:1.0.3",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "2e6abd0c3410ee900c3f81fac89d2ce95a9e31521c58b28c1d7ffb81197c53c3",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "b36e955f25e9a3e28837f20b8ba8703c778f941986e4c5130d1a7a5685721526"
+    },
+    {
+      "components": [
+        "io.r2dbc:r2dbc-spi:1.0.0.RELEASE",
+        "org.jetbrains.exposed:exposed-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-core:1.3.1",
+        "org.jetbrains.exposed:exposed-migration-r2dbc:1.3.1",
+        "org.jetbrains.exposed:exposed-r2dbc:1.3.1",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.11.0",
+        "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.7.1-0.6.x-compat",
+        "org.reactivestreams:reactive-streams:1.0.3",
+        "org.slf4j:slf4j-api:2.0.9",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "d8bec0394ec7e0701f1d270d12af6db65251fca70ed0892a8e7aeddefa82b495",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "b36e955f25e9a3e28837f20b8ba8703c778f941986e4c5130d1a7a5685721526"
+    },
+    {
+      "components": [
         "commons-pool:commons-pool:1.5.4",
         "it.geosolutions.jgridshift:jgridshift-core:1.3",
         "jakarta.annotation:jakarta.annotation-api:1.3.4",
@@ -5363,8 +6226,8 @@
     },
     {
       "components": [
-        "co.elastic.clients:elasticsearch-java:9.4.5",
-        "co.elastic.clients:elasticsearch-rest5-client:9.4.5",
+        "co.elastic.clients:elasticsearch-java:9.5.0",
+        "co.elastic.clients:elasticsearch-rest5-client:9.5.0",
         "com.fasterxml.jackson.core:jackson-annotations:2.22",
         "com.fasterxml.jackson.core:jackson-core:2.22.0",
         "com.fasterxml.jackson.core:jackson-databind:2.22.0",
@@ -5386,10 +6249,10 @@
         "tools.jackson.core:jackson-databind:3.1.0",
         "tools.jackson:jackson-bom:3.1.0"
       ],
-      "graph_sha256": "4e05eba6cb6f9f710858ccb06845efb4e0f6f6f3d51b32dbec108143bf0dd3c1",
+      "graph_sha256": "08e233be32dd10fa84f6dfbb77ed6574220df356d89198d9654978c149577dbd",
       "phase": "after",
-      "requested": "9.4.5",
-      "selected": "9.4.5",
+      "requested": "9.5.0",
+      "selected": "9.5.0",
       "spec_id": "ba1645b7524065ffc73a310c9674da159721b85019e5def33637f3d5955438d7"
     },
     {
@@ -5884,14 +6747,14 @@
     },
     {
       "components": [
-        "io.sentry:sentry-logback:8.51.0",
-        "io.sentry:sentry:8.51.0",
+        "io.sentry:sentry-logback:8.52.0",
+        "io.sentry:sentry:8.52.0",
         "root project 'latest-stable-resolved-graphs'"
       ],
-      "graph_sha256": "a17a18c12ec474a3aa37a7c7911750d8f185fce17af23f085284a6d9dfd05bd8",
+      "graph_sha256": "54277b876d3d533291f8e4fc206cba1c7bf9f810d72743610eb3dc6cea9d385c",
       "phase": "after",
-      "requested": "8.51.0",
-      "selected": "8.51.0",
+      "requested": "8.52.0",
+      "selected": "8.52.0",
       "spec_id": "d2cbd1f413fdad921dd7c6d8169d2594a890ac2f0df36755df4e44ed6525aa98"
     },
     {
@@ -6081,6 +6944,28 @@
       "requested": "1.6.16",
       "selected": "1.6.16",
       "spec_id": "d66291a820daadbdef0f1fc000f5a8c32a842999350d4396987c1391f348be64"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-bom:1.4.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "7292774136d5792bdf734c2ac1dfba9adffef0f14373ea1f9687411751bb2815",
+      "phase": "after",
+      "requested": "1.4.0",
+      "selected": "1.4.0",
+      "spec_id": "dade60044bdd9e237632634e05de01ea9da83c0dbf3149474e0f08efb6fdb5da"
+    },
+    {
+      "components": [
+        "org.jetbrains.exposed:exposed-bom:1.3.1",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "7760d9ea9a22207470ece9e673b0e8c7bd2de17e70557e34e1fdd167281dfc8d",
+      "phase": "before",
+      "requested": "1.3.1",
+      "selected": "1.3.1",
+      "spec_id": "dade60044bdd9e237632634e05de01ea9da83c0dbf3149474e0f08efb6fdb5da"
     },
     {
       "components": [
@@ -6940,6 +7825,6 @@
     }
   ],
   "schema-version": 2,
-  "spec-count": 130,
+  "spec-count": 143,
   "status": "verified-resolved-graph"
 }

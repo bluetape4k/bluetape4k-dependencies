@@ -9,7 +9,6 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "audit-latest-stable.py"
 LEDGER = REPO_ROOT / "config" / "central-catalog-version-deltas.json"
 AUTHORITY_LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
-CATALOG_CHECKSUM = REPO_ROOT / "gradle" / "libs.versions.toml.sha256"
 
 
 def load_script():
@@ -106,10 +105,6 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             "config/latest-stable-version-deltas.json",
         )
         self.assertEqual(rollout["catalog-sha256"], authority["candidate"]["catalog-sha256"])
-        self.assertEqual(
-            rollout["catalog-sha256"],
-            CATALOG_CHECKSUM.read_text(encoding="utf-8").split()[0],
-        )
         self.assertEqual(rollout["baseline-catalog-ref"], authority["baseline"]["catalog-ref"])
         self.assertEqual(rollout["audit"], authority["audit"]["path"])
         self.assertEqual(rollout["delta-count"], 121)

@@ -1,7 +1,7 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "c5be5b67d624a12e6209a5861058c3fa3281e02455e8d800461809d7df395663",
+    "sha256": "1bded9b4b05f92d6b23a580f6f60c5e2eff398e69ea92c7041ad7a0e2caf1c77",
     "summary": {
       "authority-count": 509,
       "line-count": 543,
@@ -22,23 +22,7 @@
     "catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55"
   },
   "candidate": {
-    "catalog-sha256": "9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df"
-  },
-  "candidate-validation-evidence": {
-    "downstream-full-builds": {
-      "failures": 0,
-      "repositories": 9
-    },
-    "path": "docs/releases/2026-08-05-issue-169-full-candidate-receipt.json",
-    "publication-poms": {
-      "dependencies": 46023,
-      "failures": 0,
-      "files": 175,
-      "maven-models": 175,
-      "repositories": 9
-    },
-    "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
-    "sha256": "0453bac944f1b92c24c6ce8257afc54812cf0033041e15dbb5b483939dce4e5f"
+    "catalog-sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c"
   },
   "delta": [
     {
@@ -216,6 +200,105 @@
       ],
       "verification": "verified-resolved-graph",
       "version-key": "duckdb-jdbc"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.0"
+      },
+      "after": "1.4.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-bom",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-bom",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-core",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-core",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-dao",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-dao",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-java-time",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-java-time",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-jdbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-jdbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-json",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-json",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-migration-jdbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-migration-jdbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-migration-r2dbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-migration-r2dbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-r2dbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-r2dbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-spring-boot4-starter",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-spring-boot4-starter",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:spring7-transaction",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:spring7-transaction",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.exposed.plugin",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed.plugin",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "1.3.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "251554a86a8c57bb3244dd31a98d245f933fc5bf61f8c09e261889443f0264d6",
+        "2b1ad3157e3cc925804e82d9c5490e2a64ce476e6d4fa0e4f0f66dab77ec04b6",
+        "427803a3595207c92372934394a72216850490739b8bf1eba8f38cf75778eb65",
+        "559ad414cac7cbb401639c076f042bf7b1183bbe7d20ede04bd4a0e63e883ce3",
+        "5b0ff32ae681c727ee5b46f3a07da2ae28ca6abad58c5e09ccd7ac8f57e23055",
+        "68e49630f0c2aa75e71e85407ab9aac146d5ffd4f03ceb0db8a1ee506d6e6c73",
+        "7c1e12610aa063699e66a9cfff779a1d86dddda413f32b781a78a57524509f28",
+        "8fb12efdc02c14f1045e0d75e853277636dd3c05727d79117292e35a41391e39",
+        "a5e26c63403233031c007b5eff1f3023800feb2005aad258ef5c97b679803cd6",
+        "b3234b06912878e2b17eb6aa4d97b6d584f1ba0189d4ac2022097790a53f653d",
+        "b36e955f25e9a3e28837f20b8ba8703c778f941986e4c5130d1a7a5685721526",
+        "dade60044bdd9e237632634e05de01ea9da83c0dbf3149474e0f08efb6fdb5da"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "exposed"
     },
     {
       "adoption-evidence": {
@@ -1201,9 +1284,9 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "9.4.5"
+        "version": "9.5.0"
       },
-      "after": "9.4.5",
+      "after": "9.5.0",
       "authorities": [
         {
           "authority-key": "managed:managed-elasticsearch-java-h5984397084e4",
@@ -1993,9 +2076,9 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "2.6.22"
+        "version": "2.6.23"
       },
-      "after": "2.6.22",
+      "after": "2.6.23",
       "authorities": [
         {
           "authority-key": "managed:managed-milvus-sdk-java-h565db6eded15",
@@ -2257,9 +2340,9 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "8.51.0"
+        "version": "8.52.0"
       },
-      "after": "8.51.0",
+      "after": "8.52.0",
       "authorities": [
         {
           "authority-key": "managed:managed-sentry-logback-h65fc12a36c8c",
@@ -2765,13 +2848,35 @@
       ],
       "verification": "verified-resolved-graph",
       "version-key": "timefold-solver"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.1.6"
+      },
+      "after": "5.1.6",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.vertx:vertx-dependencies",
+          "coordinate-or-plugin-id": "io.vertx:vertx-dependencies",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.1.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "91430bf323051acf04e9582019976754069111ef15c63063004636f93bde9092"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "vertx"
     }
   ],
   "resolved-graph-evidence": {
-    "observation-count": 260,
+    "observation-count": 286,
     "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-    "sha256": "1f019f350fa9c52c82f0152f2dd517fed55d93be354123b46df0d017f63d7c97",
-    "spec-count": 130
+    "sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+    "spec-count": 143
   },
   "rollout": "2026-08-05-issue-169-full-authority-audit",
   "schema-version": 3,
