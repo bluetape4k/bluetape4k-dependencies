@@ -366,6 +366,72 @@
       "verification": "pending",
       "source": "https://repo.maven.apache.org/maven2/org/springframework/cloud/spring-cloud-dependencies/maven-metadata.xml",
       "reason": "Adopt the latest stable service release in the Spring Cloud 2025.1 line."
+    },
+    {
+      "authority-key": "jackson2-generated-family",
+      "kind": "library-family",
+      "coordinate": "com.fasterxml.jackson.core:jackson-core",
+      "before": "2.22.0",
+      "after": "2.22.1",
+      "disposition": "adopt-compatible-parent-version",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/jackson-bom/2.22.1/jackson-bom-2.22.1.pom",
+      "reason": "Align generated Jackson core and Kotlin module aliases with the already adopted Jackson 2.22.1 BOM; annotations intentionally remains on the BOM-declared 2.22 line."
+    },
+    {
+      "authority-key": "feign",
+      "kind": "platform",
+      "coordinate": "io.github.openfeign:feign-bom",
+      "before": "13.12",
+      "after": "13.13",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/io/github/openfeign/feign-bom/maven-metadata.xml",
+      "reason": "Adopt the latest stable Feign 13.x BOM and align every generated Feign module alias to it."
+    },
+    {
+      "authority-key": "okhttp",
+      "kind": "platform",
+      "coordinate": "com.squareup.okhttp3:okhttp-bom",
+      "before": "5.3.2",
+      "after": "5.4.0",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp-bom/maven-metadata.xml",
+      "reason": "Adopt the latest stable OkHttp 5.x BOM and align its seven generated module aliases; Okio stays on the version declared by the OkHttp POM."
+    },
+    {
+      "authority-key": "twelvemonkeys-imageio",
+      "kind": "library-family",
+      "coordinate": "com.twelvemonkeys.imageio:imageio-core",
+      "before": "3.13.1",
+      "after": "3.14.0",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/com/twelvemonkeys/imageio/imageio-core/maven-metadata.xml",
+      "reason": "Adopt the latest stable TwelveMonkeys 3.x release across the core, metadata, and TIFF aliases."
+    },
+    {
+      "authority-key": "typesafe-config",
+      "kind": "library",
+      "coordinate": "com.typesafe:config",
+      "before": "1.4.3",
+      "after": "1.4.9",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/com/typesafe/config/maven-metadata.xml",
+      "reason": "Adopt the latest stable release in the existing Typesafe Config 1.4 line."
+    },
+    {
+      "authority-key": "commons-validator",
+      "kind": "library",
+      "coordinate": "commons-validator:commons-validator",
+      "before": "1.10.1",
+      "after": "1.11.0",
+      "disposition": "adopt-latest",
+      "verification": "pending",
+      "source": "https://repo.maven.apache.org/maven2/commons-validator/commons-validator/maven-metadata.xml",
+      "reason": "Adopt the latest stable Commons Validator 1.x release; its Commons Logging dependency remains aligned with the central catalog."
     }
   ],
   "hold": [
@@ -408,6 +474,86 @@
       "disposition": "hold-compatibility",
       "source": "https://repo.maven.apache.org/maven2/aws/smithy/kotlin/runtime-core/maven-metadata.xml",
       "reason": "AWS SDK for Kotlin 1.8.22 directly pins Smithy 1.7.4; hold the one-patch lead until the SDK family adopts it."
+    },
+    {
+      "authority-key": "google-common-protos",
+      "kind": "library-family",
+      "coordinate": "com.google.api.grpc:proto-google-common-protos",
+      "current": "2.71.0",
+      "latest": "2.74.0",
+      "disposition": "hold-compatibility",
+      "source": "https://repo.maven.apache.org/maven2/com/google/api/grpc/proto-google-common-protos/maven-metadata.xml",
+      "reason": "Both proto and gRPC aliases remain at 2.71.0 because the 2.74 POM carries independent gRPC and Protobuf versions that differ from the adopted central families; the directly consumed proto alias needs resolved-graph validation first."
+    },
+    {
+      "authority-key": "gson",
+      "kind": "library",
+      "coordinate": "com.google.code.gson:gson",
+      "current": "2.13.2",
+      "latest": "2.14.0",
+      "disposition": "hold-compatibility",
+      "source": "https://github.com/google/gson/releases/tag/gson-parent-2.14.0",
+      "reason": "Gson 2.14 changes duplicate-key handling, so behavior-sensitive downstream tests must precede adoption."
+    },
+    {
+      "authority-key": "okio-global",
+      "kind": "library-family",
+      "coordinate": "com.squareup.okio:okio",
+      "current": "3.17.0",
+      "latest": "3.18.1",
+      "disposition": "hold-compatibility",
+      "source": "https://repo.maven.apache.org/maven2/com/squareup/okio/okio/maven-metadata.xml",
+      "reason": "OkHttp 5.4.0 still declares Okio 3.17.0, so keep the parent-tested line until an independent graph and ABI pass proves the newer Okio release."
+    },
+    {
+      "authority-key": "rabbitmq-amqp-client",
+      "kind": "library",
+      "coordinate": "com.rabbitmq:amqp-client",
+      "current": "5.28.0",
+      "latest": "5.34.0",
+      "disposition": "hold-compatibility",
+      "source": "https://github.com/rabbitmq/rabbitmq-java-client/releases/tag/v5.34.0",
+      "reason": "The latest client advances its Micrometer dependency line, so coordinate the transitive graph before adoption."
+    },
+    {
+      "authority-key": "maxmind-geoip2",
+      "kind": "library",
+      "coordinate": "com.maxmind.geoip2:geoip2",
+      "current": "5.0.2",
+      "latest": "5.2.0",
+      "disposition": "hold-compatibility",
+      "source": "https://github.com/maxmind/GeoIP2-java/releases/tag/v5.2.0",
+      "reason": "Adopt only after the Jackson 2.22.1 alignment is validated because this release also advances its MaxMind DB and Jackson dependency graph."
+    },
+    {
+      "authority-key": "jfalkordb",
+      "kind": "library",
+      "coordinate": "com.falkordb:jfalkordb",
+      "current": "0.8.0",
+      "latest": "0.10.0",
+      "disposition": "defer-breaking-migration",
+      "source": "https://github.com/FalkorDB/JFalkorDB/releases/tag/v0.10.0",
+      "reason": "The upstream release explicitly contains breaking changes and needs a dedicated consumer migration."
+    },
+    {
+      "authority-key": "avro4k",
+      "kind": "library",
+      "coordinate": "com.github.avro-kotlin.avro4k:avro4k-core",
+      "current": "2.10.1",
+      "latest": "2.12.0",
+      "disposition": "hold-compatibility",
+      "source": "https://repo.maven.apache.org/maven2/com/github/avro-kotlin/avro4k/avro4k-core/maven-metadata.xml",
+      "reason": "The newer release advances Kotlin and serialization runtime lines, so downstream ABI and serialization tests are required first."
+    },
+    {
+      "authority-key": "tink",
+      "kind": "library",
+      "coordinate": "com.google.crypto.tink:tink",
+      "current": "1.20.0",
+      "latest": "1.23.0",
+      "disposition": "hold-compatibility",
+      "source": "https://github.com/tink-crypto/tink-java/releases/tag/v1.23.0",
+      "reason": "This crypto-sensitive upgrade also advances Protobuf and requires dedicated cryptographic compatibility and graph validation."
     }
   ]
 }

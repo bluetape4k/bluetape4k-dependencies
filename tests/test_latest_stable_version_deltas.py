@@ -245,6 +245,64 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         }.items():
             self.assertIn(f'{key} = "{version}"', catalog)
 
+    def test_library_batch_three_matches_the_candidate_catalog(self) -> None:
+        catalog = CATALOG.read_text(encoding="utf-8")
+        expected_families = {
+            "managed-feign-": "13.13",
+            "managed-okhttp3-": "5.4.0",
+            "managed-twelvemonkeys-": "3.14.0",
+        }
+        for prefix, version in expected_families.items():
+            matching = [
+                line for line in catalog.splitlines() if line.startswith(prefix)
+            ]
+            self.assertGreater(len(matching), 0, prefix)
+            self.assertTrue(
+                all(f'= "{version}"' in line for line in matching),
+                f"{prefix} family is not aligned to {version}",
+            )
+
+        for key, version in {
+            "managed-jackson-core-h40e274bcba5b": "2.22.1",
+            "managed-jackson-module-kotlin-ha5b389df3865": "2.22.1",
+            "managed-jackson-annotations-h5ef427554da9": "2.22",
+            "managed-typesafe-config-hff95437ffd9d": "1.4.9",
+            "managed-commons-validator-hb769ab8b32c1": "1.11.0",
+        }.items():
+            self.assertIn(f'{key} = "{version}"', catalog)
+
+    def test_unadopted_latest_versions_have_explicit_holds(self) -> None:
+        ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
+        held = {
+            entry["authority-key"]: (entry["current"], entry["latest"])
+            for entry in ledger["hold"]
+        }
+        self.assertEqual(
+            {
+                key: held[key]
+                for key in (
+                    "google-common-protos",
+                    "gson",
+                    "okio-global",
+                    "rabbitmq-amqp-client",
+                    "maxmind-geoip2",
+                    "jfalkordb",
+                    "avro4k",
+                    "tink",
+                )
+            },
+            {
+                "google-common-protos": ("2.71.0", "2.74.0"),
+                "gson": ("2.13.2", "2.14.0"),
+                "okio-global": ("3.17.0", "3.18.1"),
+                "rabbitmq-amqp-client": ("5.28.0", "5.34.0"),
+                "maxmind-geoip2": ("5.0.2", "5.2.0"),
+                "jfalkordb": ("0.8.0", "0.10.0"),
+                "avro4k": ("2.10.1", "2.12.0"),
+                "tink": ("1.20.0", "1.23.0"),
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
