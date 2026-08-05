@@ -654,6 +654,7 @@ jul-to-slf4j                                  = { module = "org.slf4j:jul-to-slf
 log4j-over-slf4j                              = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
 spring-boot3-dependencies                     = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot3" }
 spring-boot4-dependencies                     = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot4" }
+spring-boot-http-converter                    = { module = "org.springframework.boot:spring-boot-http-converter", version.ref = "spring-boot4" }
 spring-kafka                                  = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka" }
 spring-kafka-test                             = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "spring-kafka" }
 spring-kafka4                                 = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka4" }
