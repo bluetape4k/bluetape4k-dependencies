@@ -701,9 +701,16 @@ class RunCatalogValidationTest(unittest.TestCase):
                 receipt_path.write_text('{"status":"FAIL"}\n', encoding="utf-8")
                 return {"status": "FAIL"}
 
-            with mock.patch.object(
-                runner, "execute_job", side_effect=fail_first
-            ) as execute:
+            with (
+                mock.patch.object(
+                    runner.shutil,
+                    "which",
+                    return_value="/usr/bin/sandbox-exec",
+                ),
+                mock.patch.object(
+                    runner, "execute_job", side_effect=fail_first
+                ) as execute,
+            ):
                 result = runner._execute_preflight_stage(
                     manifest, "e" * 64, (), runner.Stage.G5, root
                 )
