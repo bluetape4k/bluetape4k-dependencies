@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 import shutil
@@ -14,6 +15,7 @@ SCRIPT = REPO_ROOT / "scripts" / "audit-latest-stable.py"
 CATALOG = REPO_ROOT / "gradle" / "libs.versions.toml"
 POLICY = REPO_ROOT / "config" / "central-catalog-authority-policy.json"
 INVENTORY = REPO_ROOT / "config" / "latest-stable-version-inventory.json"
+AUDIT = REPO_ROOT / "config" / "latest-stable-version-audit.json"
 
 
 def load_script():
@@ -483,6 +485,44 @@ class LatestStableInventoryTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "inventory SHA"):
             module.validate_audit(audit, inventory)
 
+    def test_validate_audit_rejects_tampered_record_identity_and_summary(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+
+        tampered_identity = copy.deepcopy(audit)
+        tampered_identity["records"][0]["coordinate-or-plugin-id"] = "evil:coordinate"
+        with self.assertRaisesRegex(RuntimeError, "identity"):
+            module.validate_audit(tampered_identity, inventory)
+
+        tampered_summary = copy.deepcopy(audit)
+        tampered_summary["summary"]["metadata-verified"] -= 1
+        with self.assertRaisesRegex(RuntimeError, "summary"):
+            module.validate_audit(tampered_summary, inventory)
+
+    def test_validate_audit_rejects_incoherent_unavailable_metadata(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+        record = audit["records"][0]
+        record["latest-stable"] = {
+            "latest": None,
+            "metadata-sha256": None,
+            "reason": "tampered",
+            "retrieved-at": audit["retrieved-at"],
+            "source": module.metadata_url(
+                record["kind"], record["coordinate-or-plugin-id"]
+            ),
+            "status": "metadata-unavailable",
+        }
+        for line in record["current-lines"]:
+            line["disposition"] = "hold-unavailable"
+            line["disposition-reason"] = module.disposition_reason("hold-unavailable")
+            line["latest-compatible"] = None
+
+        with self.assertRaisesRegex(RuntimeError, "summary"):
+            module.validate_audit(audit, inventory)
+
     def test_cli_runs_with_the_active_python(self) -> None:
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--check", "--summary"],
@@ -493,22 +533,22 @@ class LatestStableInventoryTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("authority=510", result.stdout)
+        self.assertIn("authority=509", result.stdout)
 
     def test_inventory_reconstructs_the_exact_authority_universe(self) -> None:
         module = load_script()
         inventory = module.build_inventory(CATALOG, POLICY)
 
         self.assertEqual(inventory["schema-version"], 1)
-        self.assertEqual(inventory["summary"]["authority-count"], 510)
+        self.assertEqual(inventory["summary"]["authority-count"], 509)
         self.assertEqual(inventory["summary"]["catalog-direct"], 114)
         self.assertEqual(inventory["summary"]["managed-generated"], 325)
-        self.assertEqual(inventory["summary"]["policy-subjects"], 71)
-        self.assertEqual(inventory["summary"]["audit-pending"], 510)
-        self.assertEqual(len(inventory["records"]), 510)
+        self.assertEqual(inventory["summary"]["policy-subjects"], 70)
+        self.assertEqual(inventory["summary"]["audit-pending"], 509)
+        self.assertEqual(len(inventory["records"]), 509)
         self.assertEqual(
             len({record["authority-key"] for record in inventory["records"]}),
-            510,
+            509,
         )
         self.assertNotIn("bluetape4k-workshop", inventory["scope"]["repositories"])
         self.assertIn("bluetape4k-workshop", inventory["scope"]["excluded"])

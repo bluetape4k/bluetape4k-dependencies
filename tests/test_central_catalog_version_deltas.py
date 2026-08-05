@@ -78,7 +78,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         )
         self.assertEqual(rollout["baseline-catalog-ref"], authority["baseline"]["catalog-ref"])
         self.assertEqual(rollout["audit"], authority["audit"]["path"])
-        self.assertEqual(rollout["delta-count"], 122)
+        self.assertEqual(rollout["delta-count"], 121)
         self.assertEqual(rollout["resolved-graph-evidence"], [])
         self.assertEqual(rollout["downstream-full-builds"]["status"], "pending")
         self.assertEqual(rollout["publication-pom-verification"]["status"], "pending")

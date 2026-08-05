@@ -444,8 +444,8 @@
       "audit": "config/latest-stable-version-audit.json",
       "authority-delta-ledger": "config/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
-      "catalog-sha256": "4cdabfe15b398986a0c2b9ecddc02e7f4f41070b79637f8337b4ce7abd623681",
-      "delta-count": 122,
+      "catalog-sha256": "9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df",
+      "delta-count": 121,
       "downstream-full-builds": {
         "repositories": 9,
         "status": "pending"

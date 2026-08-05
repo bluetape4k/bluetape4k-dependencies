@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import argparse
-import copy
 import concurrent.futures
+import copy
 import datetime as dt
 import hashlib
 import json
@@ -16,7 +16,6 @@ import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG = REPO_ROOT / "gradle" / "libs.versions.toml"
@@ -173,12 +172,15 @@ def classify_line(
         if version_key(latest_compatible) <= version_key(current):
             return "hold-compatibility"
         return "adopt-latest"
-    if latest_compatible == current and compatibility_prefix(latest_stable) == compatibility_prefix(current):
-        if (
+    if (
+        latest_compatible == current
+        and compatibility_prefix(latest_stable) == compatibility_prefix(current)
+        and (
             variant_channel(latest_stable) != variant_channel(current)
             or version_key(latest_stable) <= version_key(current)
-        ):
-            return "hold-compatibility"
+        )
+    ):
+        return "hold-compatibility"
     if governance_disposition == "compatibility-line":
         return "hold-compatibility"
     return "defer-breaking-migration"
@@ -210,7 +212,7 @@ def audit_record(
     try:
         metadata = fetch(source)
         parsed = parse_metadata(metadata)
-    except Exception as error:
+    except (OSError, TimeoutError) as error:
         audited["latest-stable"] = {
             "latest": None,
             "metadata-sha256": None,
@@ -353,8 +355,12 @@ def build_delta_ledger(
                 {
                     "authority-key": record["authority-key"],
                     "coordinate-or-plugin-id": record["coordinate-or-plugin-id"],
+                    "current": line["current"],
                     "disposition": line["disposition"],
+                    "disposition-reason": line["disposition-reason"],
                     "kind": record["kind"],
+                    "latest-compatible": line.get("latest-compatible"),
+                    "metadata-status": record["latest-stable"]["status"],
                 }
             )
 
@@ -369,18 +375,65 @@ def build_delta_ledger(
             raise RuntimeError(
                 f"changed version key is absent from the authority audit: {version_key}"
             )
+        if any(authority["metadata-status"] != "verified" for authority in authorities):
+            raise RuntimeError(
+                "changed version key lacks verified latest-compatible adoption "
+                f"evidence: {version_key}"
+            )
+        if all(authority["latest-compatible"] == after for authority in authorities):
+            adoption_evidence = {
+                "classification": "verified-latest-compatible",
+                "version": after,
+            }
+            reason = (
+                "Adopt the audited latest stable release within the approved "
+                "compatibility line."
+            )
+        elif all(
+            authority["disposition"] == "hold-compatibility"
+            and authority["current"] == after
+            and authority["disposition-reason"]
+            for authority in authorities
+        ):
+            adoption_evidence = {
+                "classification": "verified-compatibility-alignment",
+                "version": after,
+            }
+            reason = (
+                "Align to the explicitly audited compatibility constraint shared "
+                "by every governed authority."
+            )
+        else:
+            raise RuntimeError(
+                "changed version key lacks verified latest-compatible adoption "
+                f"or compatibility-alignment evidence: {version_key}"
+            )
         delta.append(
             {
+                "adoption-evidence": adoption_evidence,
                 "after": after,
                 "authorities": sorted(
-                    authorities,
+                    [
+                        {
+                            key: value
+                            for key, value in authority.items()
+                            if key
+                            not in {
+                                "current",
+                                "disposition-reason",
+                                "latest-compatible",
+                                "metadata-status",
+                            }
+                        }
+                        for authority in authorities
+                    ],
                     key=lambda authority: (
                         authority["authority-key"],
                         authority["coordinate-or-plugin-id"],
                     ),
                 ),
                 "before": before,
-                "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+                "reason": reason,
                 "verification": "pending-resolved-graph",
                 "version-key": version_key,
             }
@@ -403,7 +456,7 @@ def build_delta_ledger(
         },
         "delta": delta,
         "rollout": rollout,
-        "schema-version": 2,
+        "schema-version": 3,
         "status": "validation-pending",
     }
 
@@ -445,7 +498,20 @@ def validate_audit(
         if audit.get("inputs", {}).get("audit-policy-sha256") != expected_policy_sha:
             raise RuntimeError("audit policy SHA does not match the current audit policy")
 
-    expected_keys = {record["authority-key"] for record in inventory["records"]}
+    if audit.get("schema-version") != 1:
+        raise RuntimeError("audit schema version is invalid")
+    if audit.get("scope") != inventory.get("scope"):
+        raise RuntimeError("audit scope does not match the current inventory")
+    for input_name in ("catalog", "policy"):
+        if audit.get("inputs", {}).get(input_name) != inventory.get("inputs", {}).get(
+            input_name
+        ):
+            raise RuntimeError(f"audit {input_name} input does not match inventory")
+
+    inventory_by_key = {
+        record["authority-key"]: record for record in inventory["records"]
+    }
+    expected_keys = set(inventory_by_key)
     records = audit.get("records", [])
     actual_keys = {record.get("authority-key") for record in records}
     if actual_keys != expected_keys or len(records) != len(expected_keys):
@@ -459,9 +525,79 @@ def validate_audit(
         "hold-compatibility",
         "hold-unavailable",
     }
+    metadata_statuses: Counter[str] = Counter()
+    line_dispositions: Counter[str] = Counter()
     for record in records:
-        if record["latest-stable"]["status"] not in allowed_metadata_statuses:
+        inventory_record = inventory_by_key[record["authority-key"]]
+        for field in (
+            "aliases",
+            "authority-key",
+            "authority-source",
+            "coordinate-or-plugin-id",
+            "kind",
+        ):
+            if record.get(field) != inventory_record.get(field):
+                raise RuntimeError(
+                    f"audit record identity does not match inventory: {record['authority-key']}:{field}"
+                )
+        inventory_lines = {
+            (line["line-id"], line["version-key"]): line
+            for line in inventory_record["current-lines"]
+        }
+        audit_lines = {
+            (line.get("line-id"), line.get("version-key")): line
+            for line in record.get("current-lines", [])
+        }
+        if set(audit_lines) != set(inventory_lines):
+            raise RuntimeError(
+                f"audit line identity does not match inventory: {record['authority-key']}"
+            )
+        for line_key, inventory_line in inventory_lines.items():
+            audit_line = audit_lines[line_key]
+            for field in ("current", "governance-disposition", "line-id", "version-key"):
+                if audit_line.get(field) != inventory_line.get(field):
+                    raise RuntimeError(
+                        f"audit line identity does not match inventory: {record['authority-key']}:{line_key}:{field}"
+                    )
+
+        metadata = record.get("latest-stable", {})
+        metadata_status = metadata.get("status")
+        if metadata_status not in allowed_metadata_statuses:
             raise RuntimeError(f"audit record is not explicit: {record['authority-key']}")
+        if metadata.get("source") != metadata_url(
+            record["kind"], record["coordinate-or-plugin-id"]
+        ):
+            raise RuntimeError(f"audit metadata source is invalid: {record['authority-key']}")
+        if metadata.get("retrieved-at") != audit.get("retrieved-at"):
+            raise RuntimeError(
+                f"audit metadata retrieval time is invalid: {record['authority-key']}"
+            )
+        digest = metadata.get("metadata-sha256")
+        if metadata_status == "verified":
+            if (
+                not isinstance(metadata.get("latest"), str)
+                or not is_stable(metadata["latest"])
+                or not isinstance(digest, str)
+                or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+            ):
+                raise RuntimeError(
+                    f"verified audit metadata is incomplete: {record['authority-key']}"
+                )
+        elif metadata_status == "preview-only":
+            if (
+                metadata.get("latest") is not None
+                or not isinstance(digest, str)
+                or re.fullmatch(r"[0-9a-f]{64}", digest) is None
+            ):
+                raise RuntimeError(
+                    f"preview-only audit metadata is incoherent: {record['authority-key']}"
+                )
+        elif metadata.get("latest") is not None or digest is not None:
+            raise RuntimeError(
+                f"unavailable audit metadata is incoherent: {record['authority-key']}"
+            )
+        metadata_statuses[metadata_status] += 1
+
         for line in record["current-lines"]:
             if line.get("disposition") not in allowed_dispositions:
                 raise RuntimeError(
@@ -471,6 +607,25 @@ def validate_audit(
                 raise RuntimeError(
                     f"audit line reason is not explicit: {record['authority-key']}:{line['line-id']}"
                 )
+            if metadata_status in {"metadata-unavailable", "preview-only"} and (
+                line["disposition"] != "hold-unavailable"
+                or line.get("latest-compatible") is not None
+            ):
+                raise RuntimeError(
+                    f"unavailable audit line is not fail-closed: {record['authority-key']}:{line['line-id']}"
+                )
+            line_dispositions[line["disposition"]] += 1
+
+    expected_summary = {
+        "authority-count": len(records),
+        "line-count": sum(len(record["current-lines"]) for record in records),
+        "line-dispositions": dict(sorted(line_dispositions.items())),
+        "metadata-unavailable": metadata_statuses["metadata-unavailable"],
+        "metadata-preview-only": metadata_statuses["preview-only"],
+        "metadata-verified": metadata_statuses["verified"],
+    }
+    if audit.get("summary") != expected_summary:
+        raise RuntimeError("audit summary does not match audited records")
 
 
 def fetch_metadata(url: str, timeout: float) -> bytes:
@@ -703,12 +858,12 @@ def build_inventory(catalog_path: Path, policy_path: Path) -> dict[str, Any]:
 
     if (
         len(managed_records) != 325
-        or len(policy_records) != 71
+        or len(policy_records) != 70
         or len(catalog_records) != 114
-        or len(records) != 510
+        or len(records) != 509
     ):
         raise RuntimeError(
-            "authority universe changed; expected 325 managed + 71 policy + 114 catalog = 510, "
+            "authority universe changed; expected 325 managed + 70 policy + 114 catalog = 509, "
             f"found {len(managed_records)} + {len(policy_records)} + "
             f"{len(catalog_records)} = {len(records)}"
         )
@@ -769,7 +924,9 @@ def parse_args() -> argparse.Namespace:
         "--central-delta-ledger", type=Path, default=DEFAULT_CENTRAL_DELTA_LEDGER
     )
     parser.add_argument("--central-ledger-base-ref")
-    parser.add_argument("--audit-cutoff", default=dt.date.today().isoformat())
+    parser.add_argument(
+        "--audit-cutoff", default=dt.datetime.now(dt.timezone.utc).date().isoformat()
+    )
     parser.add_argument("--rollout", default="2026-08-05-issue-169-full-authority-audit")
     parser.add_argument("--workers", type=int, default=16)
     parser.add_argument("--timeout", type=float, default=30.0)
@@ -783,6 +940,18 @@ def main() -> int:
         catalog = args.catalog.read_text(encoding="utf-8")
         args.policy.write_bytes(canonical_json(sync_policy_versions(policy, catalog)))
     inventory = build_inventory(args.catalog, args.policy)
+    audit = None
+    audit_policy = json.loads(args.audit_policy.read_text(encoding="utf-8"))
+    if args.refresh_audit:
+        retrieved_at = utc_timestamp()
+        audit = build_audit(
+            inventory,
+            fetch=lambda url: fetch_metadata(url, args.timeout),
+            retrieved_at=retrieved_at,
+            workers=args.workers,
+            audit_policy=audit_policy,
+        )
+        args.audit_output.write_bytes(canonical_json(audit))
     if args.refresh_delta_ledger:
         if not args.baseline_ref:
             raise RuntimeError("--baseline-ref is required with --refresh-delta-ledger")
@@ -793,7 +962,9 @@ def main() -> int:
             capture_output=True,
             text=True,
         ).stdout
-        audit = json.loads(args.audit_output.read_text(encoding="utf-8"))
+        if audit is None:
+            audit = json.loads(args.audit_output.read_text(encoding="utf-8"))
+        validate_audit(audit, inventory, audit_policy)
         ledger = build_delta_ledger(
             baseline_catalog=baseline_catalog,
             candidate_catalog=args.catalog.read_text(encoding="utf-8"),
@@ -834,18 +1005,6 @@ def main() -> int:
             f"policy={summary['policy-subjects']} catalog={summary['catalog-direct']} "
             f"audit-pending={summary['audit-pending']}"
         )
-    audit = None
-    audit_policy = json.loads(args.audit_policy.read_text(encoding="utf-8"))
-    if args.refresh_audit:
-        retrieved_at = utc_timestamp()
-        audit = build_audit(
-            inventory,
-            fetch=lambda url: fetch_metadata(url, args.timeout),
-            retrieved_at=retrieved_at,
-            workers=args.workers,
-            audit_policy=audit_policy,
-        )
-        args.audit_output.write_bytes(canonical_json(audit))
     if args.check_audit:
         audit = json.loads(args.audit_output.read_text(encoding="utf-8"))
         validate_audit(audit, inventory, audit_policy)

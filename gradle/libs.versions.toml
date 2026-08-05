@@ -166,7 +166,7 @@ jvips-buildf9dc8c9 = "8.12.2-f9dc8c9"
 kotlin20 = "2.0.21"
 libphonenumber-v8 = "8.13.55"
 libphonenumber-v9 = "9.0.36"
-logback = "1.6.1"
+logback = "1.5.34"
 managed-amqp-client-h639dbc3b57d0 = "5.34.0"
 managed-antlr4-runtime-h501fac563496 = "4.13.2"
 managed-antlr4-tool-hbd6f6a99b4ba = "4.13.2"
@@ -500,7 +500,6 @@ mybatis-spring4 = "4.1.0"
 neo4j-driver5 = "5.28.14"
 neo4j-driver6 = "6.2.1"
 open-korean-text = "2.3.1"
-org-lz4 = "1.8.1"
 postgis-y2024 = "2024.1.0"
 postgis-y2025 = "2025.1.1"
 pulsar3 = "3.3.9"
@@ -979,7 +978,6 @@ okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", versio
 open-korean-text = { module = "org.openkoreantext:open-korean-text", version.ref = "open-korean-text" }
 opentelemetry-alpha-bom = { module = "io.opentelemetry:opentelemetry-bom-alpha", version.ref = "managed-opentelemetry-alpha-bom-h1c695c9ae5d6" }
 oracle-ojdbc8 = { module = "com.oracle.ojdbc:ojdbc8", version.ref = "managed-oracle-ojdbc8-h64c1ef0eb450" }
-org-lz4-java = { module = "org.lz4:lz4-java", version.ref = "org-lz4" }
 pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "managed-pgjdbc-ng-h1e2a5c3724aa" }
 pgvector = { module = "com.pgvector:pgvector", version.ref = "managed-pgvector-h4d188455fc16" }
 postgis-y2024 = { module = "net.postgis:postgis-jdbc", version.ref = "postgis-y2024" }

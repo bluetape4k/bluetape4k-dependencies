@@ -1,19 +1,19 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "1cf9e47f5e6b54f4e08cf3aaeaebfd1b83ae2f45e253c4a0fa79a8105b68b84b",
+    "sha256": "c5be5b67d624a12e6209a5861058c3fa3281e02455e8d800461809d7df395663",
     "summary": {
-      "authority-count": 510,
-      "line-count": 544,
+      "authority-count": 509,
+      "line-count": 543,
       "line-dispositions": {
-        "current": 435,
+        "current": 432,
         "defer-breaking-migration": 22,
-        "hold-compatibility": 79,
+        "hold-compatibility": 81,
         "hold-unavailable": 8
       },
       "metadata-preview-only": 5,
       "metadata-unavailable": 0,
-      "metadata-verified": 505
+      "metadata-verified": 504
     }
   },
   "audit-cutoff": "2026-08-05",
@@ -22,10 +22,14 @@
     "catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55"
   },
   "candidate": {
-    "catalog-sha256": "4cdabfe15b398986a0c2b9ecddc02e7f4f41070b79637f8337b4ce7abd623681"
+    "catalog-sha256": "9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df"
   },
   "delta": [
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.12.0"
+      },
       "after": "2.12.0",
       "authorities": [
         {
@@ -41,6 +45,10 @@
       "version-key": "avro-kotlin"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.8.23"
+      },
       "after": "1.8.23",
       "authorities": [
         {
@@ -56,6 +64,10 @@
       "version-key": "aws-kotlin"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.51.0"
+      },
       "after": "2.51.0",
       "authorities": [
         {
@@ -71,6 +83,10 @@
       "version-key": "aws2"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.48.3"
+      },
       "after": "0.48.3",
       "authorities": [
         {
@@ -86,6 +102,10 @@
       "version-key": "aws2-crt"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.85"
+      },
       "after": "1.85",
       "authorities": [
         {
@@ -101,6 +121,10 @@
       "version-key": "bouncycastle-bcpg"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.85"
+      },
       "after": "1.85",
       "authorities": [
         {
@@ -116,6 +140,10 @@
       "version-key": "bouncycastle-bcpkix"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.85"
+      },
       "after": "1.85",
       "authorities": [
         {
@@ -131,6 +159,10 @@
       "version-key": "bouncycastle-bcprov"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.5.1"
+      },
       "after": "1.5.5.1",
       "authorities": [
         {
@@ -146,6 +178,10 @@
       "version-key": "duckdb-jdbc"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "12.11.0"
+      },
       "after": "12.11.0",
       "authorities": [
         {
@@ -161,6 +197,10 @@
       "version-key": "flyway"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
       "after": "1.5.0",
       "authorities": [
         {
@@ -176,6 +216,10 @@
       "version-key": "fory"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
       "after": "1.5.0",
       "authorities": [
         {
@@ -191,6 +235,10 @@
       "version-key": "fory-kotlin"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "31.7"
+      },
       "after": "31.7",
       "authorities": [
         {
@@ -218,6 +266,10 @@
       "version-key": "geotools31"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "34.4"
+      },
       "after": "34.4",
       "authorities": [
         {
@@ -245,6 +297,10 @@
       "version-key": "geotools34"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.200"
+      },
       "after": "1.4.200",
       "authorities": [
         {
@@ -260,6 +316,10 @@
       "version-key": "h2-v1"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.5.2.Final"
+      },
       "after": "4.5.2.Final",
       "authorities": [
         {
@@ -275,6 +335,10 @@
       "version-key": "hibernate-reactive-core"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.1.MR"
+      },
       "after": "2.0.1.MR",
       "authorities": [
         {
@@ -290,6 +354,10 @@
       "version-key": "jakarta-inject-api"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.26.1"
+      },
       "after": "2.26.1",
       "authorities": [
         {
@@ -305,6 +373,10 @@
       "version-key": "jnats"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.13.55"
+      },
       "after": "8.13.55",
       "authorities": [
         {
@@ -320,6 +392,10 @@
       "version-key": "libphonenumber-v8"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.0.36"
+      },
       "after": "9.0.36",
       "authorities": [
         {
@@ -335,27 +411,35 @@
       "version-key": "libphonenumber-v9"
     },
     {
-      "after": "1.6.1",
+      "adoption-evidence": {
+        "classification": "verified-compatibility-alignment",
+        "version": "1.5.34"
+      },
+      "after": "1.5.34",
       "authorities": [
         {
           "authority-key": "policy:library:ch.qos.logback:logback-classic",
           "coordinate-or-plugin-id": "ch.qos.logback:logback-classic",
-          "disposition": "current",
+          "disposition": "hold-compatibility",
           "kind": "library"
         },
         {
           "authority-key": "policy:library:ch.qos.logback:logback-core",
           "coordinate-or-plugin-id": "ch.qos.logback:logback-core",
-          "disposition": "current",
+          "disposition": "hold-compatibility",
           "kind": "library"
         }
       ],
       "before": "1.5.38",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "reason": "Align to the explicitly audited compatibility constraint shared by every governed authority.",
       "verification": "pending-resolved-graph",
       "version-key": "logback"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.34.0"
+      },
       "after": "5.34.0",
       "authorities": [
         {
@@ -371,6 +455,10 @@
       "version-key": "managed-amqp-client-h639dbc3b57d0"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
       "after": "1.5.0",
       "authorities": [
         {
@@ -386,6 +474,10 @@
       "version-key": "managed-archunit-h1c89bbc7f4ec"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
       "after": "1.5.0",
       "authorities": [
         {
@@ -401,6 +493,10 @@
       "version-key": "managed-archunit-junit5-hb22f43c6c707"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.28.0"
+      },
       "after": "1.28.0",
       "authorities": [
         {
@@ -416,6 +512,10 @@
       "version-key": "managed-avatica-core-hba1bf9decd49"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.11"
+      },
       "after": "2.0.11",
       "authorities": [
         {
@@ -431,6 +531,10 @@
       "version-key": "managed-aws-dax-client-ha8827a8b0fcb"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
       "after": "1.7.6",
       "authorities": [
         {
@@ -446,6 +550,10 @@
       "version-key": "managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
       "after": "1.7.6",
       "authorities": [
         {
@@ -461,6 +569,10 @@
       "version-key": "managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
       "after": "1.7.6",
       "authorities": [
         {
@@ -476,6 +588,10 @@
       "version-key": "managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
       "after": "1.7.6",
       "authorities": [
         {
@@ -491,6 +607,10 @@
       "version-key": "managed-aws-smithy-kotlin-http-hea8fa947b4d3"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
       "after": "1.7.6",
       "authorities": [
         {
@@ -506,6 +626,10 @@
       "version-key": "managed-aws-smithy-kotlin-serde-hb6c6080166ba"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
       "after": "1.7.6",
       "authorities": [
         {
@@ -521,6 +645,10 @@
       "version-key": "managed-aws-smithy-kotlin-serde-json-h39078dce8d4a"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
       "after": "1.6.20",
       "authorities": [
         {
@@ -536,6 +664,10 @@
       "version-key": "managed-blaze-persistence-core-api-jakarta-heb5c993b1d4f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
       "after": "1.6.20",
       "authorities": [
         {
@@ -551,6 +683,10 @@
       "version-key": "managed-blaze-persistence-core-impl-jakarta-h68985a289b7f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
       "after": "1.6.20",
       "authorities": [
         {
@@ -566,6 +702,10 @@
       "version-key": "managed-blaze-persistence-entity-view-api-jakarta-h6c0e0444da3e"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
       "after": "1.6.20",
       "authorities": [
         {
@@ -581,6 +721,10 @@
       "version-key": "managed-blaze-persistence-entity-view-impl-jakarta-h264b9a052d09"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
       "after": "1.6.20",
       "authorities": [
         {
@@ -596,6 +740,10 @@
       "version-key": "managed-blaze-persistence-jpa-criteria-api-jakarta-hc8e49c83a834"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
       "after": "1.6.20",
       "authorities": [
         {
@@ -611,6 +759,10 @@
       "version-key": "managed-blaze-persistence-jpa-criteria-impl-jakarta-h82df0febb513"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.0.17.RELEASE"
+      },
       "after": "1.0.17.RELEASE",
       "authorities": [
         {
@@ -626,6 +778,10 @@
       "version-key": "managed-blockhound-hb055fbbd9fc5"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.0.17.RELEASE"
+      },
       "after": "1.0.17.RELEASE",
       "authorities": [
         {
@@ -641,6 +797,10 @@
       "version-key": "managed-blockhound-junit-platform-h797ad1fe6ad0"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.23.0"
+      },
       "after": "1.23.0",
       "authorities": [
         {
@@ -656,6 +816,10 @@
       "version-key": "managed-brotli4j-h4437d759d0e3"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.23.0"
+      },
       "after": "1.23.0",
       "authorities": [
         {
@@ -671,6 +835,10 @@
       "version-key": "managed-brotli4j-native-hf7fa4d98af73"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
       "after": "8.19.0",
       "authorities": [
         {
@@ -686,6 +854,10 @@
       "version-key": "managed-bucket4j-caffeine-h2040f5a1af3f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
       "after": "8.19.0",
       "authorities": [
         {
@@ -701,6 +873,10 @@
       "version-key": "managed-bucket4j-core-hf97cbeb8c1b0"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
       "after": "8.19.0",
       "authorities": [
         {
@@ -716,6 +892,10 @@
       "version-key": "managed-bucket4j-hazelcast-h3d419bd694ff"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
       "after": "8.19.0",
       "authorities": [
         {
@@ -731,6 +911,10 @@
       "version-key": "managed-bucket4j-ignite-h5676d8442ce0"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
       "after": "8.19.0",
       "authorities": [
         {
@@ -746,6 +930,10 @@
       "version-key": "managed-bucket4j-jcache-hfaa1c252ddcf"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
       "after": "8.19.0",
       "authorities": [
         {
@@ -761,6 +949,10 @@
       "version-key": "managed-bucket4j-jdk17-lettuce-hc74871d952dc"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
       "after": "8.19.0",
       "authorities": [
         {
@@ -776,6 +968,10 @@
       "version-key": "managed-bucket4j-redisson-h76c31c2384b7"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.18.11"
+      },
       "after": "1.18.11",
       "authorities": [
         {
@@ -791,6 +987,10 @@
       "version-key": "managed-byte-buddy-agent-h4bb8401d3e42"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2026.8"
+      },
       "after": "2026.8",
       "authorities": [
         {
@@ -806,6 +1006,10 @@
       "version-key": "managed-chronicle-wire-h06e3563f2bba"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.7.0"
+      },
       "after": "2.7.0",
       "authorities": [
         {
@@ -821,6 +1025,10 @@
       "version-key": "managed-datafaker-h8e6439793185"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.4.5"
+      },
       "after": "9.4.5",
       "authorities": [
         {
@@ -836,6 +1044,10 @@
       "version-key": "managed-elasticsearch-java-h5984397084e4"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.5.0"
+      },
       "after": "9.5.0",
       "authorities": [
         {
@@ -851,6 +1063,10 @@
       "version-key": "managed-elasticsearch-rest-client-h89bafdaca9a6"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.5.0"
+      },
       "after": "9.5.0",
       "authorities": [
         {
@@ -866,6 +1082,10 @@
       "version-key": "managed-elasticsearch-rest-client-sniffer-h440b3d642cb0"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.64"
+      },
       "after": "2.0.64",
       "authorities": [
         {
@@ -881,6 +1101,10 @@
       "version-key": "managed-fastjson2-extension-hd772e403fe72"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.64"
+      },
       "after": "2.0.64",
       "authorities": [
         {
@@ -896,6 +1120,10 @@
       "version-key": "managed-fastjson2-h14dfaa6b626f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.64"
+      },
       "after": "2.0.64",
       "authorities": [
         {
@@ -911,6 +1139,10 @@
       "version-key": "managed-fastjson2-kotlin-ha7a4f6417cad"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "v2-rev20260707-2.0.0"
+      },
       "after": "v2-rev20260707-2.0.0",
       "authorities": [
         {
@@ -926,6 +1158,10 @@
       "version-key": "managed-google-api-services-bigquery-h784b3443228d"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.1.7"
+      },
       "after": "1.1.7",
       "authorities": [
         {
@@ -941,6 +1177,10 @@
       "version-key": "managed-graalvm-native-h4df74ed993d6"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.74.0"
+      },
       "after": "2.74.0",
       "authorities": [
         {
@@ -956,6 +1196,10 @@
       "version-key": "managed-grpc-google-common-protos-h49f5a7d50588"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.14.0"
+      },
       "after": "2.14.0",
       "authorities": [
         {
@@ -971,6 +1215,10 @@
       "version-key": "managed-gson-h005f9a4ed5e8"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.1.3.Final"
+      },
       "after": "9.1.3.Final",
       "authorities": [
         {
@@ -986,6 +1234,10 @@
       "version-key": "managed-hibernate-validator-h7d30a1cdc50f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.32.0-GA"
+      },
       "after": "3.32.0-GA",
       "authorities": [
         {
@@ -1001,6 +1253,10 @@
       "version-key": "managed-javassist-ha87aa6d81eca"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.19.1"
+      },
       "after": "5.19.1",
       "authorities": [
         {
@@ -1016,6 +1272,10 @@
       "version-key": "managed-jna-he2e3f813de81"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.19.1"
+      },
       "after": "5.19.1",
       "authorities": [
         {
@@ -1031,6 +1291,10 @@
       "version-key": "managed-jna-platform-h90667451aeca"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1046,6 +1310,10 @@
       "version-key": "managed-junit-bom-h61cd2dcaa536"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1061,6 +1329,10 @@
       "version-key": "managed-junit-jupiter-api-hbdb647c8c063"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1076,6 +1348,10 @@
       "version-key": "managed-junit-jupiter-engine-h100e4f4488c1"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1091,6 +1367,10 @@
       "version-key": "managed-junit-jupiter-hc9d62f8dba36"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1106,6 +1386,10 @@
       "version-key": "managed-junit-jupiter-migrationsupport-hc68f8f05bd6d"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1121,6 +1405,10 @@
       "version-key": "managed-junit-jupiter-params-hecee21232a80"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1136,6 +1424,10 @@
       "version-key": "managed-junit-platform-commons-he1ea011b202a"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1151,6 +1443,10 @@
       "version-key": "managed-junit-platform-engine-ha913b5a2622e"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1166,6 +1462,10 @@
       "version-key": "managed-junit-platform-launcher-h606d910fe011"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1181,6 +1481,10 @@
       "version-key": "managed-junit-platform-suite-api-h92cc87dc62ce"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1196,6 +1500,10 @@
       "version-key": "managed-junit-platform-suite-engine-h0ac35326fce5"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
       "after": "6.1.2",
       "authorities": [
         {
@@ -1211,6 +1519,10 @@
       "version-key": "managed-junit-vintage-engine-hc9c190fac5a4"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.9.1"
+      },
       "after": "3.9.1",
       "authorities": [
         {
@@ -1226,6 +1538,10 @@
       "version-key": "managed-keycloak-testcontainers-hcf9d84cd8012"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.5.10"
+      },
       "after": "3.5.10",
       "authorities": [
         {
@@ -1241,6 +1557,10 @@
       "version-key": "managed-mariadb-java-client-h168cf4e91ffa"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.21.0"
+      },
       "after": "2.21.0",
       "authorities": [
         {
@@ -1256,6 +1576,10 @@
       "version-key": "managed-metadata-extractor-h364d52ce1b74"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.17.0"
+      },
       "after": "1.17.0",
       "authorities": [
         {
@@ -1271,6 +1595,10 @@
       "version-key": "managed-micrometer-bom-h46388331a0e5"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
       "after": "1.7.0",
       "authorities": [
         {
@@ -1286,6 +1614,10 @@
       "version-key": "managed-micrometer-tracing-bom-h5811d99b9094"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
       "after": "1.7.0",
       "authorities": [
         {
@@ -1301,6 +1633,10 @@
       "version-key": "managed-micrometer-tracing-bridge-brave-h7de924ea55c5"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
       "after": "1.7.0",
       "authorities": [
         {
@@ -1316,6 +1652,10 @@
       "version-key": "managed-micrometer-tracing-bridge-otel-he56ec84f2b0f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
       "after": "1.7.0",
       "authorities": [
         {
@@ -1331,6 +1671,10 @@
       "version-key": "managed-micrometer-tracing-h5a2d98f31144"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
       "after": "1.7.0",
       "authorities": [
         {
@@ -1346,6 +1690,10 @@
       "version-key": "managed-micrometer-tracing-integration-test-h1462ec78085f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
       "after": "1.7.0",
       "authorities": [
         {
@@ -1361,6 +1709,10 @@
       "version-key": "managed-micrometer-tracing-test-h945eea8eda06"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.6.22"
+      },
       "after": "2.6.22",
       "authorities": [
         {
@@ -1376,6 +1728,10 @@
       "version-key": "managed-milvus-sdk-java-h565db6eded15"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.14.11"
+      },
       "after": "1.14.11",
       "authorities": [
         {
@@ -1391,6 +1747,10 @@
       "version-key": "managed-mockk-h9dd32a0538aa"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "11.1.0"
+      },
       "after": "11.1.0",
       "authorities": [
         {
@@ -1406,6 +1766,10 @@
       "version-key": "managed-neo4j-bolt-connection-bom-h7783d6d91aad"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "11.1.0"
+      },
       "after": "11.1.0",
       "authorities": [
         {
@@ -1421,6 +1785,10 @@
       "version-key": "managed-neo4j-bolt-connection-netty-hde6be92c15e6"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "11.1.0"
+      },
       "after": "11.1.0",
       "authorities": [
         {
@@ -1436,6 +1804,10 @@
       "version-key": "managed-neo4j-bolt-connection-pooled-h0355e6822c7f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.81.Final"
+      },
       "after": "2.0.81.Final",
       "authorities": [
         {
@@ -1451,6 +1823,10 @@
       "version-key": "managed-netty-tcnative-classes-h39fc93b48f6f"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.6"
+      },
       "after": "3.6",
       "authorities": [
         {
@@ -1466,6 +1842,10 @@
       "version-key": "managed-objenesis-h7460768a532c"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.18.1"
+      },
       "after": "3.18.1",
       "authorities": [
         {
@@ -1481,6 +1861,10 @@
       "version-key": "managed-okio-fakefilesystem-hc9121603de7d"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.18.1"
+      },
       "after": "3.18.1",
       "authorities": [
         {
@@ -1496,6 +1880,10 @@
       "version-key": "managed-okio-ha706f986164c"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.3"
+      },
       "after": "1.4.3",
       "authorities": [
         {
@@ -1511,6 +1899,10 @@
       "version-key": "managed-proj4j-epsg-h8f1aa4c45c67"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.3"
+      },
       "after": "1.4.3",
       "authorities": [
         {
@@ -1526,6 +1918,10 @@
       "version-key": "managed-proj4j-hd4cd408d5087"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.74.0"
+      },
       "after": "2.74.0",
       "authorities": [
         {
@@ -1541,6 +1937,10 @@
       "version-key": "managed-proto-google-common-protos-h5bc34896f941"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.51.0"
+      },
       "after": "8.51.0",
       "authorities": [
         {
@@ -1556,6 +1956,10 @@
       "version-key": "managed-sentry-logback-h65fc12a36c8c"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.1.0"
+      },
       "after": "4.1.0",
       "authorities": [
         {
@@ -1571,6 +1975,10 @@
       "version-key": "managed-spring-cloud-aws-bom-haebf9fb93e11"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.1.0"
+      },
       "after": "2.1.0",
       "authorities": [
         {
@@ -1586,6 +1994,10 @@
       "version-key": "managed-spring-modulith-bom-h2500740a4fa4"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.0.2"
+      },
       "after": "4.0.2",
       "authorities": [
         {
@@ -1601,6 +2013,10 @@
       "version-key": "managed-spring-statemachine-bom-h4672ad237870"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.0.2"
+      },
       "after": "4.0.2",
       "authorities": [
         {
@@ -1616,6 +2032,10 @@
       "version-key": "managed-spring-statemachine-core-hd0ee55525037"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.1.2"
+      },
       "after": "1.1.2",
       "authorities": [
         {
@@ -1631,6 +2051,10 @@
       "version-key": "managed-starrocks-connector-j-h5d416dd6b46c"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.20.0"
+      },
       "after": "5.20.0",
       "authorities": [
         {
@@ -1646,6 +2070,10 @@
       "version-key": "managed-tess4j-h8ef44ff63554"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.1.5"
+      },
       "after": "0.1.5",
       "authorities": [
         {
@@ -1661,6 +2089,10 @@
       "version-key": "managed-testcontainers-ministack-h8672eda0c12d"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.23.0"
+      },
       "after": "1.23.0",
       "authorities": [
         {
@@ -1676,6 +2108,10 @@
       "version-key": "managed-tink-h958d8d1f4e22"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.10.0"
+      },
       "after": "5.10.0",
       "authorities": [
         {
@@ -1691,6 +2127,10 @@
       "version-key": "managed-ucar-cdm-core-h6dd13f7ed579"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.3.0"
+      },
       "after": "6.3.0",
       "authorities": [
         {
@@ -1706,6 +2146,10 @@
       "version-key": "managed-weaviate-client-hef91a8fd7caa"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.0.3"
+      },
       "after": "9.0.3",
       "authorities": [
         {
@@ -1721,6 +2165,10 @@
       "version-key": "minio-v9"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.0.6"
+      },
       "after": "3.0.6",
       "authorities": [
         {
@@ -1736,6 +2184,10 @@
       "version-key": "mybatis-spring3"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.1.0"
+      },
       "after": "4.1.0",
       "authorities": [
         {
@@ -1751,6 +2203,10 @@
       "version-key": "mybatis-spring4"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.28.14"
+      },
       "after": "5.28.14",
       "authorities": [
         {
@@ -1766,6 +2222,10 @@
       "version-key": "neo4j-driver5"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.2.1"
+      },
       "after": "6.2.1",
       "authorities": [
         {
@@ -1781,6 +2241,10 @@
       "version-key": "neo4j-driver6"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.2.17.Final"
+      },
       "after": "4.2.17.Final",
       "authorities": [
         {
@@ -1796,21 +2260,10 @@
       "version-key": "netty"
     },
     {
-      "after": "1.8.1",
-      "authorities": [
-        {
-          "authority-key": "policy:library:org.lz4:lz4-java",
-          "coordinate-or-plugin-id": "org.lz4:lz4-java",
-          "disposition": "current",
-          "kind": "library"
-        }
-      ],
-      "before": "1.8.0",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "verification": "pending-resolved-graph",
-      "version-key": "org-lz4"
-    },
-    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.2.4"
+      },
       "after": "4.2.4",
       "authorities": [
         {
@@ -1832,6 +2285,10 @@
       "version-key": "pulsar4"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "7.5"
+      },
       "after": "7.5",
       "authorities": [
         {
@@ -1865,6 +2322,10 @@
       "version-key": "querydsl"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.7.0"
+      },
       "after": "4.7.0",
       "authorities": [
         {
@@ -1880,6 +2341,10 @@
       "version-key": "redisson"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.1.0"
+      },
       "after": "3.1.0",
       "authorities": [
         {
@@ -1895,6 +2360,10 @@
       "version-key": "springdoc-openapi"
     },
     {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.4.0"
+      },
       "after": "2.4.0",
       "authorities": [
         {
@@ -1911,6 +2380,6 @@
     }
   ],
   "rollout": "2026-08-05-issue-169-full-authority-audit",
-  "schema-version": 2,
+  "schema-version": 3,
   "status": "validation-pending"
 }

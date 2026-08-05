@@ -5,7 +5,6 @@ import sys
 import unittest
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 FIXTURE_WORKSPACE = REPO_ROOT / "tests" / "fixtures" / "catalog-adoption-clean"
@@ -22,7 +21,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
 
         self.assertIn("scripts/audit-latest-stable.py", script_step)
         self.assertIn(
-            "scripts/audit-latest-stable.py --check --summary",
+            "scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary",
             script_step,
         )
 

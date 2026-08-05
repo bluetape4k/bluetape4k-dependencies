@@ -45,11 +45,14 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     "authority-key": "catalog:library:example:one",
                     "coordinate-or-plugin-id": "example:one",
                     "kind": "library",
+                    "latest-stable": {"status": "verified"},
                     "current-lines": [
                         {
                             "current": "1.1.0",
                             "version-key": "example",
                             "disposition": "current",
+                            "disposition-reason": "Current latest compatible release.",
+                            "latest-compatible": "1.1.0",
                         }
                     ],
                 },
@@ -57,11 +60,14 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     "authority-key": "catalog:library:example:two",
                     "coordinate-or-plugin-id": "example:two",
                     "kind": "library",
+                    "latest-stable": {"status": "verified"},
                     "current-lines": [
                         {
                             "current": "1.1.0",
                             "version-key": "example",
                             "disposition": "current",
+                            "disposition-reason": "Current latest compatible release.",
+                            "latest-compatible": "1.1.0",
                         }
                     ],
                 },
@@ -78,18 +84,91 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             rollout="issue-169",
         )
 
-        self.assertEqual(ledger["schema-version"], 2)
+        self.assertEqual(ledger["schema-version"], 3)
         self.assertEqual(len(ledger["delta"]), 1)
         self.assertEqual(ledger["delta"][0]["version-key"], "example")
         self.assertEqual(ledger["delta"][0]["before"], "1.0.0")
         self.assertEqual(ledger["delta"][0]["after"], "1.1.0")
         self.assertEqual(len(ledger["delta"][0]["authorities"]), 2)
 
+    def test_build_delta_ledger_requires_verified_latest_compatible_evidence(self) -> None:
+        module = load_script()
+        audit = {
+            "inputs": {"inventory-sha256": "inventory"},
+            "records": [
+                {
+                    "authority-key": "catalog:library:example:one",
+                    "coordinate-or-plugin-id": "example:one",
+                    "kind": "library",
+                    "latest-stable": {"status": "metadata-unavailable"},
+                    "current-lines": [
+                        {
+                            "current": "1.1.0",
+                            "version-key": "example",
+                            "disposition": "hold-unavailable",
+                            "disposition-reason": "Metadata unavailable.",
+                            "latest-compatible": None,
+                        }
+                    ],
+                }
+            ],
+            "summary": {"line-dispositions": {"hold-unavailable": 1}},
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "verified latest-compatible"):
+            module.build_delta_ledger(
+                baseline_catalog='[versions]\nexample = "1.0.0"\n',
+                candidate_catalog='[versions]\nexample = "1.1.0"\n',
+                audit=audit,
+                baseline_ref="baseline",
+                audit_cutoff="2026-08-05",
+                rollout="issue-169",
+            )
+
+    def test_build_delta_ledger_records_verified_compatibility_alignment(self) -> None:
+        module = load_script()
+        audit = {
+            "inputs": {"inventory-sha256": "inventory"},
+            "records": [
+                {
+                    "authority-key": "catalog:library:example:one",
+                    "coordinate-or-plugin-id": "example:one",
+                    "kind": "library",
+                    "latest-stable": {"status": "verified"},
+                    "current-lines": [
+                        {
+                            "current": "1.5.34",
+                            "version-key": "example",
+                            "disposition": "hold-compatibility",
+                            "disposition-reason": "Align the managed ABI pair.",
+                            "latest-compatible": "1.6.1",
+                        }
+                    ],
+                }
+            ],
+            "summary": {"line-dispositions": {"hold-compatibility": 1}},
+        }
+
+        ledger = module.build_delta_ledger(
+            baseline_catalog='[versions]\nexample = "1.5.38"\n',
+            candidate_catalog='[versions]\nexample = "1.5.34"\n',
+            audit=audit,
+            baseline_ref="baseline",
+            audit_cutoff="2026-08-05",
+            rollout="issue-169",
+        )
+
+        self.assertEqual(
+            ledger["delta"][0]["adoption-evidence"]["classification"],
+            "verified-compatibility-alignment",
+        )
+        self.assertIn("compatibility constraint", ledger["delta"][0]["reason"])
+
     def test_ledger_has_strict_schema_and_exact_candidate_delta(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         versions = catalog_versions()
 
-        self.assertEqual(document["schema-version"], 2)
+        self.assertEqual(document["schema-version"], 3)
         self.assertEqual(document["rollout"], "2026-08-05-issue-169-full-authority-audit")
         self.assertEqual(document["audit-cutoff"], "2026-08-05")
         self.assertEqual(document["status"], "validation-pending")
@@ -106,7 +185,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 "delta",
             },
         )
-        self.assertEqual(len(document["delta"]), 122)
+        self.assertEqual(len(document["delta"]), 121)
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),
@@ -121,12 +200,21 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     "authorities",
                     "verification",
                     "reason",
+                    "adoption-evidence",
                 },
             )
             self.assertNotEqual(entry["before"], entry["after"])
             self.assertEqual(entry["after"], versions[entry["version-key"]])
             self.assertTrue(entry["authorities"])
             self.assertEqual(entry["verification"], "pending-resolved-graph")
+            self.assertIn(
+                entry["adoption-evidence"]["classification"],
+                {
+                    "verified-latest-compatible",
+                    "verified-compatibility-alignment",
+                },
+            )
+            self.assertEqual(entry["adoption-evidence"]["version"], entry["after"])
 
     def test_audit_closes_all_safe_adoption_candidates(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
@@ -134,9 +222,9 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
-        self.assertEqual(audit["summary"]["authority-count"], 510)
-        self.assertEqual(audit["summary"]["line-count"], 544)
-        self.assertEqual(audit["summary"]["metadata-verified"], 505)
+        self.assertEqual(audit["summary"]["authority-count"], 509)
+        self.assertEqual(audit["summary"]["line-count"], 543)
+        self.assertEqual(audit["summary"]["metadata-verified"], 504)
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:
         audit = json.loads(AUDIT.read_text(encoding="utf-8"))
@@ -147,6 +235,15 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         }
 
         self.assertEqual(lines[("org.apache.kafka:kafka-clients", "kafka4")]["current"], "4.2.1")
+        self.assertEqual(lines[("ch.qos.logback:logback-classic", "logback")]["current"], "1.5.34")
+        self.assertEqual(
+            lines[("ch.qos.logback:logback-classic", "logback")]["disposition"],
+            "hold-compatibility",
+        )
+        self.assertNotIn(
+            ("org.lz4:lz4-java", "org-lz4"),
+            lines,
+        )
         self.assertEqual(
             lines[("org.apache.kafka:kafka-clients", "kafka4")]["disposition"],
             "hold-compatibility",
