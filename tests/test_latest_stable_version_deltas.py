@@ -35,7 +35,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(document["audit-cutoff"], "2026-08-04")
         self.assertIn(
             document["status"],
-            {"validation-pending", "partial-validation", "verified"},
+            {"validation-pending", "partial-validation", "verified-batch"},
         )
         self.assertEqual(
             set(document),
@@ -271,6 +271,8 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         }.items():
             self.assertIn(f'{key} = "{version}"', catalog)
 
+        self.assertIn('maxmind-geoip2 = "5.2.0"', catalog)
+
     def test_unadopted_latest_versions_have_explicit_holds(self) -> None:
         ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
         held = {
@@ -285,7 +287,6 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     "gson",
                     "okio-global",
                     "rabbitmq-amqp-client",
-                    "maxmind-geoip2",
                     "jfalkordb",
                     "avro4k",
                     "tink",
@@ -296,7 +297,6 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 "gson": ("2.13.2", "2.14.0"),
                 "okio-global": ("3.17.0", "3.18.1"),
                 "rabbitmq-amqp-client": ("5.28.0", "5.34.0"),
-                "maxmind-geoip2": ("5.0.2", "5.2.0"),
                 "jfalkordb": ("0.8.0", "0.10.0"),
                 "avro4k": ("2.10.1", "2.12.0"),
                 "tink": ("1.20.0", "1.23.0"),

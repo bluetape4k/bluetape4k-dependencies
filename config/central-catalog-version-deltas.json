@@ -5,7 +5,7 @@
   "subsequent-rollouts": [
     {
       "rollout": "2026-08-04-issue-169-latest-compatible-stable",
-      "status": "partial-resolved-graph",
+      "status": "verified",
       "authority-delta-ledger": "config/latest-stable-version-deltas.json",
       "candidate-receipt": "docs/releases/2026-08-04-issue-169-candidate-receipt.json",
       "catalog-sha256": "034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a",
@@ -19,6 +19,94 @@
       },
       "resolved-graph-evidence": [
         {
+          "repository": "bluetape4k-aws",
+          "configuration": ":bluetape4k-aws-kotlin:runtimeClasspath",
+          "authority-key": "aws-kotlin",
+          "authority-coordinate": "aws.sdk.kotlin:aws-core",
+          "coordinate": "aws.sdk.kotlin:aws-core",
+          "authority-before": "1.8.0",
+          "before": "1.8.0",
+          "after": "1.8.22",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-aws",
+          "configuration": ":bluetape4k-aws-kotlin:runtimeClasspath",
+          "authority-key": "aws-smithy-kotlin",
+          "authority-coordinate": "aws.smithy.kotlin:http-jvm",
+          "coordinate": "aws.smithy.kotlin:http-jvm",
+          "authority-before": "1.6.14",
+          "before": "1.6.14",
+          "after": "1.7.4",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-aws",
+          "configuration": ":bluetape4k-aws-java:testRuntimeClasspath",
+          "authority-key": "aws2",
+          "authority-coordinate": "software.amazon.awssdk:bom",
+          "coordinate": "software.amazon.awssdk:s3",
+          "authority-before": "2.47.1",
+          "before": "2.47.1",
+          "after": "2.50.3",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-aws",
+          "configuration": ":bluetape4k-aws-java:testRuntimeClasspath",
+          "authority-key": "aws2-crt",
+          "authority-coordinate": "software.amazon.awssdk.crt:aws-crt",
+          "coordinate": "software.amazon.awssdk.crt:aws-crt",
+          "authority-before": "versionless",
+          "before": "versionless",
+          "after": "0.48.2",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-cassandra:runtimeClasspath",
+          "authority-key": "cassandra-java-driver",
+          "authority-coordinate": "org.apache.cassandra:java-driver-core",
+          "coordinate": "org.apache.cassandra:java-driver-core",
+          "authority-before": "4.19.2",
+          "before": "4.19.2",
+          "after": "4.19.3",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-core:compileClasspath",
+          "authority-key": "commons-codec",
+          "authority-coordinate": "commons-codec:commons-codec",
+          "coordinate": "commons-codec:commons-codec",
+          "authority-before": "1.22.0",
+          "before": "1.22.0",
+          "after": "1.22.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-feign:runtimeClasspath",
+          "authority-key": "feign",
+          "authority-coordinate": "io.github.openfeign:feign-bom",
+          "coordinate": "io.github.openfeign:feign-core",
+          "authority-before": "13.12",
+          "before": "13.12",
+          "after": "13.13",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-rule-engine:testRuntimeClasspath",
+          "authority-key": "groovy",
+          "authority-coordinate": "org.apache.groovy:groovy",
+          "coordinate": "org.apache.groovy:groovy",
+          "authority-before": "5.0.6",
+          "before": "5.0.6",
+          "after": "5.0.8",
+          "verification": "verified-local-candidate"
+        },
+        {
           "repository": "bluetape4k-projects",
           "configuration": ":bluetape4k-grpc:testRuntimeClasspath",
           "authority-key": "grpc-java",
@@ -27,6 +115,72 @@
           "authority-before": "1.81.0",
           "before": "1.80.0",
           "after": "1.83.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-hibernate:runtimeClasspath",
+          "authority-key": "hibernate",
+          "authority-coordinate": "org.hibernate.orm:hibernate-core",
+          "coordinate": "org.hibernate.orm:hibernate-core",
+          "authority-before": "7.4.4.Final",
+          "before": "7.4.4.Final",
+          "after": "7.4.5.Final",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-http:testRuntimeClasspath",
+          "authority-key": "httpclient5",
+          "authority-coordinate": "org.apache.httpcomponents.client5:httpclient5",
+          "coordinate": "org.apache.httpcomponents.client5:httpclient5",
+          "authority-before": "5.6.2",
+          "before": "5.6.2",
+          "after": "5.6.3",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-jackson2:runtimeClasspath",
+          "authority-key": "jackson2-generated-family",
+          "authority-coordinate": "com.fasterxml.jackson.core:jackson-core",
+          "coordinate": "com.fasterxml.jackson.core:jackson-core",
+          "authority-before": "2.22.0",
+          "before": "2.22.0",
+          "after": "2.22.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-jackson3:runtimeClasspath",
+          "authority-key": "jackson3",
+          "authority-coordinate": "tools.jackson:jackson-bom",
+          "coordinate": "tools.jackson.core:jackson-core",
+          "authority-before": "3.2.0",
+          "before": "3.2.0",
+          "after": "3.2.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-javers",
+          "configuration": ":bluetape4k-javers-core:runtimeClasspath",
+          "authority-key": "javers",
+          "authority-coordinate": "org.javers:javers-core",
+          "coordinate": "org.javers:javers-core",
+          "authority-before": "7.11.0",
+          "before": "7.11.0",
+          "after": "7.11.7",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-leader",
+          "configuration": ":bluetape4k-leader-ktor:testRuntimeClasspath",
+          "authority-key": "ktor",
+          "authority-coordinate": "io.ktor:ktor-bom",
+          "coordinate": "io.ktor:ktor-server-core",
+          "authority-before": "3.5.1",
+          "before": "3.5.1",
+          "after": "3.5.2",
           "verification": "verified-local-candidate"
         },
         {
@@ -52,14 +206,69 @@
           "verification": "verified-local-candidate"
         },
         {
-          "repository": "bluetape4k-aws",
-          "configuration": ":bluetape4k-aws-java:testRuntimeClasspath",
-          "authority-key": "aws2-crt",
-          "authority-coordinate": "software.amazon.awssdk.crt:aws-crt",
-          "coordinate": "software.amazon.awssdk.crt:aws-crt",
-          "authority-before": "versionless",
-          "before": "versionless",
-          "after": "0.48.2",
+          "repository": "bluetape4k-leader",
+          "configuration": ":bluetape4k-leader-k8s:runtimeClasspath",
+          "authority-key": "netty4",
+          "authority-coordinate": "io.netty:netty-all",
+          "coordinate": "io.netty:netty-common",
+          "authority-before": "4.1.133.Final",
+          "before": "4.1.133.Final",
+          "after": "4.1.136.Final",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-hibernate-reactive:runtimeClasspath",
+          "authority-key": "netty4-tcnative",
+          "authority-coordinate": "io.netty:netty-tcnative-classes",
+          "coordinate": "io.netty:netty-tcnative-classes",
+          "authority-before": "2.0.77.Final",
+          "before": "2.0.77.Final",
+          "after": "2.0.78.Final",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-http:testRuntimeClasspath",
+          "authority-key": "okhttp",
+          "authority-coordinate": "com.squareup.okhttp3:okhttp-bom",
+          "coordinate": "com.squareup.okhttp3:okhttp",
+          "authority-before": "5.3.2",
+          "before": "5.3.2",
+          "after": "5.4.0",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-opentelemetry:runtimeClasspath",
+          "authority-key": "opentelemetry",
+          "authority-coordinate": "io.opentelemetry:opentelemetry-bom",
+          "coordinate": "io.opentelemetry:opentelemetry-api",
+          "authority-before": "1.63.0",
+          "before": "1.63.0",
+          "after": "1.64.0",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-exposed",
+          "configuration": ":bluetape4k-exposed-r2dbc-tests:testRuntimeClasspath",
+          "authority-key": "r2dbc-mariadb",
+          "authority-coordinate": "org.mariadb:r2dbc-mariadb",
+          "coordinate": "org.mariadb:r2dbc-mariadb",
+          "authority-before": "1.4.0",
+          "before": "1.4.0",
+          "after": "1.4.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-exposed",
+          "configuration": ":bluetape4k-exposed-r2dbc-tests:testRuntimeClasspath",
+          "authority-key": "r2dbc-mysql",
+          "authority-coordinate": "io.asyncer:r2dbc-mysql",
+          "coordinate": "io.asyncer:r2dbc-mysql",
+          "authority-before": "1.4.2",
+          "before": "1.4.2",
+          "after": "1.4.3",
           "verification": "verified-local-candidate"
         },
         {
@@ -75,35 +284,35 @@
         },
         {
           "repository": "bluetape4k-projects",
-          "configuration": ":bluetape4k-jackson2:runtimeClasspath",
-          "authority-key": "jackson2-generated-family",
-          "authority-coordinate": "com.fasterxml.jackson.core:jackson-core",
-          "coordinate": "com.fasterxml.jackson.core:jackson-core",
-          "authority-before": "2.22.0",
-          "before": "2.22.0",
-          "after": "2.22.1",
+          "configuration": ":bluetape4k-testcontainers:testRuntimeClasspath",
+          "authority-key": "rest-assured",
+          "authority-coordinate": "io.rest-assured:rest-assured",
+          "coordinate": "io.rest-assured:rest-assured",
+          "authority-before": "6.0.0",
+          "before": "6.0.0",
+          "after": "6.0.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-image",
+          "configuration": ":bluetape4k-images:runtimeClasspath",
+          "authority-key": "scrimage",
+          "authority-coordinate": "com.sksamuel.scrimage:scrimage-core",
+          "coordinate": "com.sksamuel.scrimage:scrimage-core",
+          "authority-before": "4.6.5",
+          "before": "4.6.5",
+          "after": "4.6.7",
           "verification": "verified-local-candidate"
         },
         {
           "repository": "bluetape4k-projects",
-          "configuration": ":bluetape4k-feign:runtimeClasspath",
-          "authority-key": "feign",
-          "authority-coordinate": "io.github.openfeign:feign-bom",
-          "coordinate": "io.github.openfeign:feign-core",
-          "authority-before": "13.12",
-          "before": "13.12",
-          "after": "13.13",
-          "verification": "verified-local-candidate"
-        },
-        {
-          "repository": "bluetape4k-projects",
-          "configuration": ":bluetape4k-http:testRuntimeClasspath",
-          "authority-key": "okhttp",
-          "authority-coordinate": "com.squareup.okhttp3:okhttp-bom",
-          "coordinate": "com.squareup.okhttp3:okhttp",
-          "authority-before": "5.3.2",
-          "before": "5.3.2",
-          "after": "5.4.0",
+          "configuration": ":bluetape4k-feign:testRuntimeClasspath",
+          "authority-key": "spring-cloud",
+          "authority-coordinate": "org.springframework.cloud:spring-cloud-dependencies",
+          "coordinate": "org.springframework.cloud:spring-cloud-dependencies",
+          "authority-before": "2025.1.1",
+          "before": "2025.1.1",
+          "after": "2025.1.2",
           "verification": "verified-local-candidate"
         },
         {
@@ -127,9 +336,109 @@
           "before": "1.4.3",
           "after": "1.4.9",
           "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-vertx:runtimeClasspath",
+          "authority-key": "vertx",
+          "authority-coordinate": "io.vertx:vertx-dependencies",
+          "coordinate": "io.vertx:vertx-core",
+          "authority-before": "5.1.4",
+          "before": "5.1.4",
+          "after": "5.1.5",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-leader",
+          "configuration": ":bluetape4k-leader-k8s:runtimeClasspath",
+          "authority-key": "vertx4",
+          "authority-coordinate": "io.vertx:vertx-core",
+          "coordinate": "io.vertx:vertx-core",
+          "authority-before": "4.5.27",
+          "before": "4.5.27",
+          "after": "4.5.31",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-jwt:testRuntimeClasspath",
+          "authority-key": "zstd",
+          "authority-coordinate": "com.github.luben:zstd-jni",
+          "coordinate": "com.github.luben:zstd-jni",
+          "authority-before": "1.5.7-11",
+          "before": "1.5.7-11",
+          "after": "1.5.7-12",
+          "verification": "verified-local-candidate"
         }
       ],
-      "remote-immutable-ref-verification": "pending-central-push"
+      "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
+      "non-graph-evidence": [
+        {
+          "authority-key": "download",
+          "kind": "plugin-application",
+          "verification": "verified-nine-downstream-builds"
+        },
+        {
+          "authority-key": "gatling-plugin",
+          "kind": "plugin-application",
+          "verification": "verified-nine-downstream-builds"
+        },
+        {
+          "authority-key": "jib",
+          "kind": "plugin-application",
+          "verification": "verified-nine-downstream-builds"
+        },
+        {
+          "authority-key": "kover",
+          "kind": "plugin-application",
+          "verification": "verified-nine-downstream-builds"
+        },
+        {
+          "authority-key": "shadow",
+          "kind": "plugin-application",
+          "verification": "verified-nine-downstream-builds"
+        },
+        {
+          "authority-key": "classgraph",
+          "kind": "catalog-and-publication-pom",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "authority-key": "commons-validator",
+          "kind": "catalog-and-publication-pom",
+          "verification": "verified-local-candidate"
+        }
+      ],
+      "superseding-local-candidate": {
+        "status": "verified-local-candidate",
+        "catalog-commit": null,
+        "catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55",
+        "downstream-full-builds": {
+          "repositories": 9,
+          "failures": 0
+        },
+        "publication-pom-verification": {
+          "repositories": 9,
+          "files": 175,
+          "dependencies": 46023,
+          "maven-models": 175,
+          "failures": 0
+        },
+        "resolved-graph-evidence": [
+          {
+            "repository": "bluetape4k-projects",
+            "configuration": ":bluetape4k-geo:testRuntimeClasspath",
+            "authority-key": "maxmind-geoip2",
+            "authority-coordinate": "com.maxmind.geoip2:geoip2",
+            "coordinate": "com.maxmind.geoip2:geoip2",
+            "authority-before": "5.0.2",
+            "before": "5.0.2",
+            "after": "5.2.0",
+            "verification": "verified-local-candidate"
+          }
+        ],
+        "remote-immutable-ref-verification": "pending-new-candidate-commit-and-push"
+      }
     }
   ],
   "delta": [

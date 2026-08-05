@@ -83,8 +83,9 @@ jobs:
           done
       - name: Verify catalog scripts
         run: |
-          python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-managed-artifacts.py scripts/verify-publication-poms.py tests/*.py
+          python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-managed-artifacts.py scripts/verify-publication-poms.py tests/*.py
           python3 -m unittest discover -s tests -p 'test_*.py'
+          scripts/audit-latest-stable.py --check --summary
           scripts/sync-managed-catalog.py --check --summary
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && "${GITHUB_BASE_REF}" == "main" ]]; then
             scripts/verify-managed-artifacts.py --summary

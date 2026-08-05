@@ -214,6 +214,7 @@ changing central aliases:
 
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
+scripts/audit-latest-stable.py --check --summary
 scripts/verify-publication-poms.py --workspace .. --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary

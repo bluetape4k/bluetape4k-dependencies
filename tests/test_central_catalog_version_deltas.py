@@ -67,7 +67,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(
             rollout["rollout"], "2026-08-04-issue-169-latest-compatible-stable"
         )
-        self.assertEqual(rollout["status"], "partial-resolved-graph")
+        self.assertEqual(rollout["status"], "verified")
         self.assertEqual(
             rollout["authority-delta-ledger"],
             "config/latest-stable-version-deltas.json",
@@ -79,19 +79,24 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         )
         self.assertEqual(receipt["catalog"]["sha256"], rollout["catalog-sha256"])
         self.assertEqual(receipt["publication-poms"]["failures"], 0)
+        superseding = rollout["superseding-local-candidate"]
+        self.assertEqual(superseding["status"], "verified-local-candidate")
+        self.assertIsNone(superseding["catalog-commit"])
         self.assertEqual(
-            rollout["catalog-sha256"],
+            superseding["catalog-sha256"],
             (
                 LEDGER.parents[1] / "gradle" / "libs.versions.toml.sha256"
             ).read_text(encoding="utf-8").split()[0],
         )
+        self.assertEqual(superseding["downstream-full-builds"]["failures"], 0)
+        self.assertEqual(superseding["publication-pom-verification"]["failures"], 0)
         pom = rollout["publication-pom-verification"]
         self.assertEqual(pom["status"], "verified-local-candidate")
         self.assertEqual(pom["failures"], 0)
         self.assertEqual(pom["repositories"], 9)
 
         evidence = rollout["resolved-graph-evidence"]
-        self.assertEqual(len(evidence), 10)
+        self.assertEqual(len(evidence), 32)
         self.assertEqual(
             len({entry["authority-key"] for entry in evidence}), len(evidence)
         )
@@ -119,7 +124,9 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
                 flags=re.MULTILINE,
             )
         )
-        for entry in evidence:
+        superseding_evidence = superseding["resolved-graph-evidence"]
+        self.assertEqual(len(superseding_evidence), 1)
+        for entry in evidence + superseding_evidence:
             authority = authority_deltas[entry["authority-key"]]
             self.assertEqual(entry["authority-coordinate"], authority["coordinate"])
             self.assertEqual(entry["authority-before"], authority["before"])
@@ -143,8 +150,22 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
                 if inline_version:
                     resolved_versions.add(inline_version.group(1))
             self.assertIn(entry["after"], resolved_versions)
+        non_graph = rollout["non-graph-evidence"]
+        self.assertEqual(len(non_graph), 7)
         self.assertEqual(
-            rollout["remote-immutable-ref-verification"], "pending-central-push"
+            {
+                entry["authority-key"]
+                for entry in evidence + non_graph + superseding_evidence
+            },
+            set(authority_deltas),
+        )
+        self.assertEqual(
+            rollout["remote-immutable-ref-verification"],
+            "verified-fresh-remote-commit-ref",
+        )
+        self.assertEqual(
+            superseding["remote-immutable-ref-verification"],
+            "pending-new-candidate-commit-and-push",
         )
 
     def test_ledger_records_only_issue_168_reviewed_adoption_deltas(self) -> None:

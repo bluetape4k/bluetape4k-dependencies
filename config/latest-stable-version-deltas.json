@@ -2,7 +2,7 @@
   "schema-version": 1,
   "rollout": "2026-08-04-issue-169-latest-compatible-stable",
   "audit-cutoff": "2026-08-04",
-  "status": "partial-validation",
+  "status": "verified-batch",
   "delta": [
     {
       "authority-key": "kover",
@@ -11,7 +11,7 @@
       "before": "0.9.8",
       "after": "0.9.9",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://plugins.gradle.org/m2/org/jetbrains/kotlinx/kover/org.jetbrains.kotlinx.kover.gradle.plugin/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the existing Kover 0.9 line."
     },
@@ -22,7 +22,7 @@
       "before": "5.6.0",
       "after": "5.7.0",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://plugins.gradle.org/m2/de/undercouch/download/de.undercouch.download.gradle.plugin/maven-metadata.xml",
       "reason": "Adopt the latest stable release in the existing Download Task 5.x compatibility line."
     },
@@ -33,7 +33,7 @@
       "before": "3.15.1",
       "after": "3.15.1.2",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://plugins.gradle.org/m2/io/gatling/gradle/io.gatling.gradle.gradle.plugin/maven-metadata.xml",
       "reason": "The Gradle plugin release line advances independently from the Gatling libraries, so it requires a dedicated central version key."
     },
@@ -44,7 +44,7 @@
       "before": "3.4.4",
       "after": "3.5.4",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://plugins.gradle.org/m2/com/google/cloud/tools/jib/com.google.cloud.tools.jib.gradle.plugin/maven-metadata.xml",
       "reason": "Adopt the latest stable release in the existing Jib 3.x compatibility line."
     },
@@ -55,7 +55,7 @@
       "before": "9.5.1",
       "after": "9.6.1",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://plugins.gradle.org/m2/com/gradleup/shadow/com.gradleup.shadow.gradle.plugin/maven-metadata.xml",
       "reason": "Adopt the latest stable release in the existing Shadow 9.x compatibility line."
     },
@@ -66,7 +66,7 @@
       "before": "3.2.0",
       "after": "3.2.1",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/tools/jackson/jackson-bom/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Jackson 3.2 compatibility line."
     },
@@ -77,7 +77,7 @@
       "before": "2.47.1",
       "after": "2.50.3",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/bom/maven-metadata.xml",
       "reason": "Adopt the audit-cutoff latest stable AWS SDK Java 2.x BOM."
     },
@@ -88,7 +88,7 @@
       "before": "1.8.0",
       "after": "1.8.22",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/aws/sdk/kotlin/aws-core/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the AWS SDK for Kotlin 1.8 line."
     },
@@ -99,7 +99,7 @@
       "before": "versionless",
       "after": "0.48.2",
       "disposition": "adopt-compatible-parent-version",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/crt/aws-crt/maven-metadata.xml",
       "reason": "Pin the CRT version declared by the adopted AWS SDK Java 2.50.3 parent and consumed by aws-crt-client."
     },
@@ -110,7 +110,7 @@
       "before": "1.6.14",
       "after": "1.7.4",
       "disposition": "adopt-compatible-parent-version",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/aws/smithy/kotlin/runtime-core/maven-metadata.xml",
       "reason": "Align direct Smithy runtime aliases with the 1.7.4 runtime required by AWS SDK for Kotlin 1.8.22; global 1.7.5 is held until the SDK adopts it."
     },
@@ -121,7 +121,7 @@
       "before": "3.5.1",
       "after": "3.5.2",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/ktor/ktor-bom/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Ktor 3.5 line."
     },
@@ -132,7 +132,7 @@
       "before": "4.1.133.Final",
       "after": "4.1.136.Final",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/netty/netty-all/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Netty 4.1 line required by Vert.x 4 and Fabric8."
     },
@@ -143,7 +143,7 @@
       "before": "2.0.77.Final",
       "after": "2.0.78.Final",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/netty/netty-bom/4.1.136.Final/netty-bom-4.1.136.Final.pom",
       "reason": "Align the native classes artifact with the tcnative version declared by the adopted Netty 4.1.136 BOM."
     },
@@ -154,7 +154,7 @@
       "before": "1.63.0",
       "after": "1.64.0",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/opentelemetry/opentelemetry-bom/maven-metadata.xml",
       "reason": "Adopt the latest stable OpenTelemetry 1.x BOM release."
     },
@@ -165,7 +165,7 @@
       "before": "4.5.27",
       "after": "4.5.31",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/vertx/vertx-core/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Fabric8-compatible Vert.x 4.5 line."
     },
@@ -176,7 +176,7 @@
       "before": "5.1.4",
       "after": "5.1.5",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/vertx/vertx-core/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Vert.x 5.1 line."
     },
@@ -187,7 +187,7 @@
       "before": "4.8.184",
       "after": "4.8.186",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/github/classgraph/classgraph/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the ClassGraph 4.8 line."
     },
@@ -198,7 +198,7 @@
       "before": "5.6.2",
       "after": "5.6.3",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/apache/httpcomponents/client5/httpclient5/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the HttpClient 5.6 line."
     },
@@ -209,7 +209,7 @@
       "before": "7.4.4.Final",
       "after": "7.4.5.Final",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/hibernate/orm/hibernate-core/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Hibernate ORM 7.4 line."
     },
@@ -220,7 +220,7 @@
       "before": "1.5.7-11",
       "after": "1.5.7-12",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/com/github/luben/zstd-jni/maven-metadata.xml",
       "reason": "Adopt the latest stable native patch and keep the zstd compatibility alias aligned."
     },
@@ -231,7 +231,7 @@
       "before": "4.6.5",
       "after": "4.6.7",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/com/sksamuel/scrimage/scrimage-core/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Scrimage 4.6 line."
     },
@@ -242,7 +242,7 @@
       "before": "1.22.0",
       "after": "1.22.1",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/commons-codec/commons-codec/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the Commons Codec 1.22 line."
     },
@@ -253,7 +253,7 @@
       "before": "1.81.0",
       "after": "1.83.1",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/grpc/grpc-bom/maven-metadata.xml",
       "reason": "Adopt the latest stable gRPC Java 1.x release across the coordinated family."
     },
@@ -264,7 +264,7 @@
       "before": "4.19.2",
       "after": "4.19.3",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/apache/cassandra/java-driver-core/maven-metadata.xml",
       "reason": "Adopt the latest stable patch across the Cassandra Java driver family."
     },
@@ -275,7 +275,7 @@
       "before": "5.0.6",
       "after": "5.0.8",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/apache/groovy/groovy/maven-metadata.xml",
       "reason": "Adopt the latest stable patch across the Groovy 5.0 family."
     },
@@ -286,7 +286,7 @@
       "before": "7.11.0",
       "after": "7.11.7",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/javers/javers-core/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the JaVers 7.11 line."
     },
@@ -297,7 +297,7 @@
       "before": "5.7.0",
       "after": "5.9.1",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/mongodb/mongodb-driver-core/maven-metadata.xml",
       "reason": "Adopt the latest stable MongoDB Java driver 5.x release across the coordinated family."
     },
@@ -308,7 +308,7 @@
       "before": "3.2.0",
       "after": "3.3.0",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/smallrye/reactive/mutiny/maven-metadata.xml",
       "reason": "Adopt the latest stable Mutiny 3.x release across the Kotlin family."
     },
@@ -319,7 +319,7 @@
       "before": "1.4.0",
       "after": "1.4.1",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/mariadb/r2dbc-mariadb/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the R2DBC MariaDB 1.4 line."
     },
@@ -330,7 +330,7 @@
       "before": "1.4.2",
       "after": "1.4.3",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/asyncer/r2dbc-mysql/maven-metadata.xml",
       "reason": "Adopt the latest stable patch in the R2DBC MySQL 1.4 line."
     },
@@ -352,7 +352,7 @@
       "before": "6.0.0",
       "after": "6.0.1",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/rest-assured/rest-assured/maven-metadata.xml",
       "reason": "Adopt the latest stable patch across the REST Assured 6.0 family."
     },
@@ -363,7 +363,7 @@
       "before": "2025.1.1",
       "after": "2025.1.2",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/org/springframework/cloud/spring-cloud-dependencies/maven-metadata.xml",
       "reason": "Adopt the latest stable service release in the Spring Cloud 2025.1 line."
     },
@@ -432,6 +432,17 @@
       "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/commons-validator/commons-validator/maven-metadata.xml",
       "reason": "Adopt the latest stable Commons Validator 1.x release; its Commons Logging dependency remains aligned with the central catalog."
+    },
+    {
+      "authority-key": "maxmind-geoip2",
+      "kind": "library",
+      "coordinate": "com.maxmind.geoip2:geoip2",
+      "before": "5.0.2",
+      "after": "5.2.0",
+      "disposition": "adopt-latest",
+      "verification": "verified",
+      "source": "https://github.com/maxmind/GeoIP2-java/releases/tag/v5.2.0",
+      "reason": "Adopt the latest GeoIP2 5.x release after the Jackson 2.22.1 alignment and dedicated GeoIP tests prove compatibility."
     }
   ],
   "hold": [
@@ -470,10 +481,10 @@
       "kind": "library-family",
       "coordinate": "aws.smithy.kotlin:runtime-core",
       "current": "1.7.4",
-      "latest": "1.7.5",
+      "latest": "1.7.6",
       "disposition": "hold-compatibility",
       "source": "https://repo.maven.apache.org/maven2/aws/smithy/kotlin/runtime-core/maven-metadata.xml",
-      "reason": "AWS SDK for Kotlin 1.8.22 directly pins Smithy 1.7.4; hold the one-patch lead until the SDK family adopts it."
+      "reason": "AWS SDK for Kotlin 1.8.22 directly pins Smithy 1.7.4; hold the independent upstream lead until the SDK family adopts it and every HTTP engine passes compatibility validation."
     },
     {
       "authority-key": "google-common-protos",
@@ -514,16 +525,6 @@
       "disposition": "hold-compatibility",
       "source": "https://github.com/rabbitmq/rabbitmq-java-client/releases/tag/v5.34.0",
       "reason": "The latest client advances its Micrometer dependency line, so coordinate the transitive graph before adoption."
-    },
-    {
-      "authority-key": "maxmind-geoip2",
-      "kind": "library",
-      "coordinate": "com.maxmind.geoip2:geoip2",
-      "current": "5.0.2",
-      "latest": "5.2.0",
-      "disposition": "hold-compatibility",
-      "source": "https://github.com/maxmind/GeoIP2-java/releases/tag/v5.2.0",
-      "reason": "Adopt only after the Jackson 2.22.1 alignment is validated because this release also advances its MaxMind DB and Jackson dependency graph."
     },
     {
       "authority-key": "jfalkordb",

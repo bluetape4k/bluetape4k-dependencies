@@ -2,22 +2,26 @@
 
 ## 결론
 
-`1.4.0` 후보 catalog의 현재 batch는 로컬 build, 9개 library downstream full build,
-resolved graph 10건, 9개 publication repository의 POM/effective-model 검증을 통과했다.
+`1.4.0`의 superseding local candidate는 로컬 build, 9개 library downstream full build,
+resolved graph 33건, 9개 publication repository의 POM/effective-model 검증을 통과했다.
 그러나 Issue #169의 전체 latest-stable audit와 Maven Central publication gate가
-끝나지 않았으므로 배포 상태는 **PENDING**이다. 중앙 catalog의 remote immutable
-ref 검증은 2026-08-05에 통과했다.
+끝나지 않았으므로 배포 상태는 **PENDING**이다. 이전 candidate의 remote immutable
+commit-ref 검증은 2026-08-05에 통과했지만, superseding local candidate는 아직
+commit/tag/push되지 않았다.
 
 검증 대상 catalog bytes는 다음 checksum으로 고정한다.
 
 ```text
-034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a
+6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55
 ```
 
 ## 최신 버전 audit 범위
 
-2026-08-04 audit inventory는 396개의 고유 external version-authority key를
-식별했다.
+재현 가능한 `config/latest-stable-version-inventory.json`은 325개 managed-generated
+authority와 71개 policy subject, 총 396개의 고유 external version authority를
+catalog/policy SHA와 함께 식별한다. `scripts/audit-latest-stable.py --check`는 이
+집합이나 입력이 바뀌면 실패한다. 아직 전수 upstream 판정이 끝나지 않았으므로
+396개 record 모두 fail-closed `audit-pending`이다.
 
 | 분류 | 수량 | 현재 상태 |
 | --- | ---: | --- |
@@ -27,16 +31,17 @@ ref 검증은 2026-08-05에 통과했다.
 | versionless line | 1 | AWS CRT를 AWS Java SDK parent 호환 버전 `0.48.2`로 고정 |
 | non-Central/project metadata 필요 | 4 | UCAR/GeoTools 후속 audit 필요 |
 
-`config/latest-stable-version-deltas.json`은 현재 검증 batch의 39개 adoption과
-12개 hold/defer만 표현한다. 따라서 이 파일은 396개 전체 inventory의 완료 증거가
+`config/latest-stable-version-deltas.json`은 `verified-batch` 상태로 현재 검증 batch의 40개 adoption과
+11개 hold/defer만 표현한다. 따라서 이 파일은 396개 전체 inventory의 완료 증거가
 아니며, 나머지 key의 fresh evidence와 disposition은 release blocker다.
 
 추가 metadata sweep에서 확인한 Jackson core/Kotlin module `2.22.1`, Feign
 `13.13`, OkHttp `5.4.0`, TwelveMonkeys `3.14.0`, Typesafe Config `1.4.9`,
 Commons Validator `1.11.0`은 batch 03에서 채택하고 검증했다. Google common
-protos `2.74.0`, Gson `2.14.0`, Okio `3.18.1`, RabbitMQ `5.34`, MaxMind
-`5.2`, jfalkordb `0.10`, avro4k `2.12`, Tink `1.23.0`은 별도 호환성 검증이
-필요해 명시적으로 보류했다.
+protos `2.74.0`, Gson `2.14.0`, Okio `3.18.1`, RabbitMQ `5.34`, jfalkordb
+`0.10`, avro4k `2.12`, Tink `1.23.0`은 별도 호환성 검증이 필요해 명시적으로
+보류했다. MaxMind GeoIP2 `5.2.0`은 batch 04에서 전용 테스트와 resolved graph,
+9개 downstream full build, publication POM gate를 통과해 채택했다.
 
 ## 현재 채택 batch
 
@@ -54,6 +59,7 @@ protos `2.74.0`, Gson `2.14.0`, Okio `3.18.1`, RabbitMQ `5.34`, MaxMind
 - Batch 03: Jackson 2 core/Kotlin module `2.22.1`, Feign `13.13`, OkHttp
   `5.4.0`, TwelveMonkeys ImageIO `3.14.0`, Typesafe Config `1.4.9`, Commons
   Validator `1.11.0`
+- Batch 04: MaxMind GeoIP2 `5.2.0`
 
 ## 호환성 보류와 deferred migration
 
@@ -62,7 +68,7 @@ protos `2.74.0`, Gson `2.14.0`, Okio `3.18.1`, RabbitMQ `5.34`, MaxMind
 | Kotlin | `2.4.0` | `2.4.10` | projects/aws/exposed/graph/text의 `detekt*` task | hold-compatibility: detekt `2.0.0-alpha.5` 실행 호환성 실패 |
 | OWASP Dependency Check | `12.2.2` | `13.0.0` | projects/exposed의 `dependencyCheck*` task | defer-breaking-migration: major migration 별도 검토 필요 |
 | AWS CRT | `0.48.2` | `0.48.3` | aws `aws-java` compile/runtime, projects testcontainers test runtime | hold-compatibility: AWS Java SDK `2.50.3` parent-tested 버전 유지 |
-| Smithy Kotlin | `1.7.4` | `1.7.5` | aws `aws-kotlin` compile/runtime | hold-compatibility: AWS Kotlin SDK `1.8.22` 직접 요구 버전 유지 |
+| Smithy Kotlin | `1.7.4` | `1.7.6` | aws `aws-kotlin` compile/runtime | hold-compatibility: AWS Kotlin SDK `1.8.22` 직접 요구 버전 유지 |
 
 UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 disposition이
 없는 stale key는 `hold-unavailable`로 간주하지 않는다. 근거 수집과 분류가 끝나기
@@ -82,6 +88,11 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 | bluetape4k-leader | `50c5b65` | `b2d0e37` | Netty native regression 포함 | 통과 | 공통 ref/SHA 검증 통과 |
 | bluetape4k-text | `e5e666f` | `b2d0e37` | 포함 | 통과 | fresh remote fetch 통과 |
 
+아래 표는 이전 remote candidate의 exact downstream HEAD/commit ref 증거다. 이후
+GeoIP2 `5.2.0`을 추가한 superseding local candidate는 같은 9개 worktree에서 중앙
+catalog path override로 full build를 다시 통과했으며, remote immutable ref 검증은
+새 candidate commit/push 전까지 pending이다.
+
 대표 resolved graph에서 확인한 실제 선택 버전은 다음과 같다.
 
 - `io.grpc:grpc-core` -> `1.83.1`
@@ -94,11 +105,13 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 - `com.squareup.okhttp3:okhttp` -> `5.4.0`
 - `com.twelvemonkeys.imageio:imageio-core` -> `3.14.0`
 - `com.typesafe:config` -> `1.4.9`
+- `com.maxmind.geoip2:geoip2` -> `5.2.0`
 
 publication gate는 9개 repository, 175개 POM, 46,023개 dependency-management
 entry, 175개 Maven effective model을 검사했고 failure는 0이었다. Commons
 Validator는 9개 downstream에 direct consumer가 없어 catalog와 publication POM
-gate로 버전 및 dependency-management 완결성을 검증했다.
+gate로 버전 및 dependency-management 완결성을 검증했다. GeoIP2 채택 후에도 같은
+수량의 POM/effective-model gate를 재실행해 failure 0을 확인했다.
 
 candidate map 기준 `sync-shared-versions.py`, `sync-dependabot-ignores.py`,
 `sync-managed-catalog.py`는 통과했다. canonical default sibling checkout만 대상으로
@@ -121,8 +134,9 @@ remote ref는 동일 catalog bytes에 결박된다.
 ## 배포 차단 조건
 
 1. 396개 authority key 전수에 대한 fresh upstream evidence와 explicit disposition
-2. 문서화되지 않은 resolved-graph 변화가 없다는 before/after 비교
-3. Maven Central의 기존 stable POM 접근성과 실제 publication credential/dispatch gate
+2. 새 local candidate commit 및 downstream immutable ref 이관 후 fresh remote fetch
+3. 문서화되지 않은 resolved-graph 변화가 없다는 before/after 비교
+4. Maven Central의 기존 stable POM 접근성과 실제 publication credential/dispatch gate
 
 위 조건을 모두 충족하기 전에는 catalog tag, `1.4.0` publication, milestone 종료를
 진행하지 않는다.

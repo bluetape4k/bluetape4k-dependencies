@@ -98,9 +98,10 @@ PR CI 자체는 local fixture만 검사합니다. downstream 전체 상태는 ce
 스크립트는 반복 운영 도구이므로, 변경 시 다음 검증을 기본으로 수행합니다.
 
 ```bash
-python3 -m py_compile scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/verify-managed-artifacts.py scripts/verify-publication-poms.py tests/*.py
+python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/verify-managed-artifacts.py scripts/verify-publication-poms.py tests/*.py
 python3 -m unittest discover -s tests -p 'test_*.py'
 python3 -m unittest tests/test_catalog_checksum.py tests/test_central_catalog_version_deltas.py tests/test_ci_catalog_governance.py
+scripts/audit-latest-stable.py --check --summary
 scripts/sync-managed-catalog.py --check --summary
 scripts/verify-managed-artifacts.py --summary
 scripts/sync-shared-versions.py --workspace .. --check --summary
