@@ -14,19 +14,19 @@ bluetape4k-bom     = "1.12.1"  # https://mvnrepository.com/artifact/io.github.bl
 bluetape4k-aws-bom = "0.5.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "0.4.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
+bluetape4k-image-bom   = "0.4.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
+bluetape4k-text-bom    = "0.3.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "0.6.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
+bluetape4k-graph-bom   = "0.6.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
 
 # https://github.com/bluetape4k/bluetape4k-leader
 bluetape4k-leader-bom  = "0.5.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "1.12.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
+bluetape4k-exposed-bom = "1.12.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
 
 # https://github.com/bluetape4k/bluetape4k-javers
 bluetape4k-javers-bom  = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
@@ -63,9 +63,9 @@ fory              = "1.5.0"  # https://mvnrepository.com/artifact/org.apache.for
 fory-kotlin       = "1.5.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
-aws2              = "2.51.0"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
-aws2-crt          = "0.48.3"  # AWS SDK Java 2.51.0 parent-tested CRT compatibility version
-aws-kotlin        = "1.8.23"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
+aws2              = "2.51.1"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
+aws2-crt          = "0.48.3"  # AWS SDK Java 2.51.x parent-tested CRT compatibility version
+aws-kotlin        = "1.8.24"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.8.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
 ktor              = "3.5.2"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
 netty4            = "4.1.136.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
