@@ -16,9 +16,20 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import importlib.util
 import re
 import sys
 from pathlib import Path
+
+CANDIDATE_PATH = Path(__file__).resolve().with_name("catalog_candidate.py")
+CANDIDATE_SPEC = importlib.util.spec_from_file_location(
+    "catalog_candidate", CANDIDATE_PATH
+)
+if CANDIDATE_SPEC is None or CANDIDATE_SPEC.loader is None:
+    raise RuntimeError(f"Cannot load {CANDIDATE_PATH}")
+catalog_candidate = importlib.util.module_from_spec(CANDIDATE_SPEC)
+sys.modules.setdefault("catalog_candidate", catalog_candidate)
+CANDIDATE_SPEC.loader.exec_module(catalog_candidate)
 
 
 SCRIPT_NAME = "scripts/sync-managed-catalog.py"
@@ -162,7 +173,14 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         version_ref="bluetape4k-leader-bom",
         alias_mode="prefix",
         exclude_path_fragments=("examples", "benchmark"),
-        exclude_name_suffixes=("-demo", "-examples", "-benchmark", "-consul", "-etcd", "-k8s"),
+        exclude_name_suffixes=(
+            "-demo",
+            "-examples",
+            "-benchmark",
+            "-consul",
+            "-etcd",
+            "-k8s",
+        ),
     ),
     ManagedRepo(
         label="bluetape4k-exposed",
@@ -277,7 +295,9 @@ def parse_include_configs(settings_file: Path) -> list[IncludeConfig]:
             for token in re.findall(r"(?:^|,\s*)(true|false)(?=,|\s*,|\s*$)", args)
         ]
         with_project_name = (
-            positional_bools[0] if len(positional_bools) >= 1 else default_with_project_name
+            positional_bools[0]
+            if len(positional_bools) >= 1
+            else default_with_project_name
         )
         with_base_dir = positional_bools[1] if len(positional_bools) >= 2 else True
 
@@ -320,13 +340,17 @@ def parse_mapped_includes(settings_file: Path) -> list[MappedInclude]:
         values = re.findall(r'"([^"]+)"', args)
         if len(values) < 2:
             continue
-        mapped_includes.append(MappedInclude(module_path=values[0], project_name=values[1]))
+        mapped_includes.append(
+            MappedInclude(module_path=values[0], project_name=values[1])
+        )
 
     for args in function_call_args(text, "includeProject"):
         values = re.findall(r'"([^"]+)"', args)
         if len(values) < 2:
             continue
-        mapped_includes.append(MappedInclude(module_path=values[1], project_name=values[0]))
+        mapped_includes.append(
+            MappedInclude(module_path=values[1], project_name=values[0])
+        )
 
     return mapped_includes
 
@@ -389,7 +413,9 @@ def module_minimum_version(repo: ManagedRepo, artifact_id: str) -> str | None:
     return None
 
 
-def is_available_in_selected_version(repo: ManagedRepo, artifact_id: str, selected_version: str | None) -> bool:
+def is_available_in_selected_version(
+    repo: ManagedRepo, artifact_id: str, selected_version: str | None
+) -> bool:
     minimum_version = module_minimum_version(repo, artifact_id)
     if minimum_version is None:
         return True
@@ -412,7 +438,9 @@ def include_module(
     return is_available_in_selected_version(repo, artifact_id, selected_version)
 
 
-def direct_include_relative_path(root: Path, project_name: str, overrides: dict[str, str]) -> str | None:
+def direct_include_relative_path(
+    root: Path, project_name: str, overrides: dict[str, str]
+) -> str | None:
     candidates = []
     if project_name in overrides:
         candidates.append(Path(overrides[project_name]))
@@ -481,14 +509,14 @@ def catalog_reference_errors(
         referenced_aliases |= additional_referenced_aliases
 
     unreferenced_aliases = sorted(
-        set(catalog_versions)
-        - referenced_aliases
-        - set(allowed_version_only_aliases)
+        set(catalog_versions) - referenced_aliases - set(allowed_version_only_aliases)
     )
     if not unreferenced_aliases:
         return []
 
-    return ["Unreferenced catalog version aliases:\n  " + "\n  ".join(unreferenced_aliases)]
+    return [
+        "Unreferenced catalog version aliases:\n  " + "\n  ".join(unreferenced_aliases)
+    ]
 
 
 def bt4k_version_aliases_in_file(path: Path) -> set[str]:
@@ -510,11 +538,14 @@ def gradle_kts_files(root: Path) -> list[Path]:
 def downstream_bt4k_version_aliases(
     workspace_root: Path,
     managed_repos: tuple[ManagedRepo, ...] = MANAGED_REPOS,
+    repository_roots: dict[str, Path] | None = None,
 ) -> dict[str, set[str]]:
     aliases_by_repo: dict[str, set[str]] = {}
 
     for repo in managed_repos:
-        repo_root = workspace_root / repo.root_dir
+        repo_root = (repository_roots or {}).get(
+            repo.label, workspace_root / repo.root_dir
+        )
         aliases: set[str] = set()
         for gradle_file in gradle_kts_files(repo_root):
             aliases |= bt4k_version_aliases_in_file(gradle_file)
@@ -528,10 +559,13 @@ def downstream_bt4k_version_errors(
     workspace_root: Path,
     catalog_versions: dict[str, str],
     managed_repos: tuple[ManagedRepo, ...] = MANAGED_REPOS,
+    repository_roots: dict[str, Path] | None = None,
 ) -> list[str]:
     missing: list[str] = []
 
-    aliases_by_repo = downstream_bt4k_version_aliases(workspace_root, managed_repos)
+    aliases_by_repo = downstream_bt4k_version_aliases(
+        workspace_root, managed_repos, repository_roots
+    )
     for repo_label, aliases in sorted(aliases_by_repo.items()):
         for alias in sorted(aliases - set(catalog_versions)):
             missing.append(f"{repo_label}: {alias}")
@@ -539,22 +573,30 @@ def downstream_bt4k_version_errors(
     if not missing:
         return []
 
-    return ["Downstream bt4kVersion aliases missing from catalog versions:\n  " + "\n  ".join(missing)]
+    return [
+        "Downstream bt4kVersion aliases missing from catalog versions:\n  "
+        + "\n  ".join(missing)
+    ]
 
 
 def discover_repo_modules(
     workspace_root: Path,
     repo: ManagedRepo,
     selected_versions: dict[str, str] | None = None,
+    repository_root: Path | None = None,
 ) -> list[Module]:
-    root = (workspace_root / repo.root_dir).resolve()
+    root = (repository_root or workspace_root / repo.root_dir).resolve()
     settings_file = root / "settings.gradle.kts"
     if not settings_file.is_file():
         raise RuntimeError(f"Missing settings.gradle.kts: {settings_file}")
 
     modules: dict[str, Module] = {}
     overrides = parse_project_dir_overrides(settings_file)
-    selected_version = selected_versions.get(repo.version_ref) if selected_versions is not None else None
+    selected_version = (
+        selected_versions.get(repo.version_ref)
+        if selected_versions is not None
+        else None
+    )
 
     for project_path in parse_direct_includes(settings_file):
         project_name = project_path.split(":")[-1]
@@ -582,7 +624,10 @@ def discover_repo_modules(
             raise RuntimeError(f"Configured module base does not exist: {base}")
 
         for module_dir in sorted(path for path in base.iterdir() if path.is_dir()):
-            if module_dir.name.startswith(".") or module_dir.name in config.exclude_module_names:
+            if (
+                module_dir.name.startswith(".")
+                or module_dir.name in config.exclude_module_names
+            ):
                 continue
 
             if not (module_dir / "build.gradle.kts").is_file():
@@ -624,7 +669,9 @@ def discover_repo_modules(
         )
 
     if not modules:
-        raise RuntimeError(f"No managed modules discovered for {repo.label} under {root}")
+        raise RuntimeError(
+            f"No managed modules discovered for {repo.label} under {root}"
+        )
 
     return sorted(modules.values(), key=lambda module: module.alias)
 
@@ -632,9 +679,15 @@ def discover_repo_modules(
 def discover_all(
     workspace_root: Path,
     selected_versions: dict[str, str] | None = None,
+    repository_roots: dict[str, Path] | None = None,
 ) -> dict[ManagedRepo, list[Module]]:
     discovered = {
-        repo: discover_repo_modules(workspace_root, repo, selected_versions)
+        repo: discover_repo_modules(
+            workspace_root,
+            repo,
+            selected_versions,
+            (repository_roots or {}).get(repo.label),
+        )
         for repo in MANAGED_REPOS
     }
     validate_discovered(discovered)
@@ -655,7 +708,9 @@ def validate_discovered(discovered: dict[ManagedRepo, list[Module]]) -> None:
     aliases = [module.alias for repo in MANAGED_REPOS for module in discovered[repo]]
     duplicate_aliases = duplicate_values(aliases)
     if duplicate_aliases:
-        raise RuntimeError("Duplicate catalog aliases:\n  " + "\n  ".join(duplicate_aliases))
+        raise RuntimeError(
+            "Duplicate catalog aliases:\n  " + "\n  ".join(duplicate_aliases)
+        )
 
     gavs = [
         f"{module.group_id}:{module.artifact_id}"
@@ -664,7 +719,9 @@ def validate_discovered(discovered: dict[ManagedRepo, list[Module]]) -> None:
     ]
     duplicate_gavs = duplicate_values(gavs)
     if duplicate_gavs:
-        raise RuntimeError("Duplicate managed module coordinates:\n  " + "\n  ".join(duplicate_gavs))
+        raise RuntimeError(
+            "Duplicate managed module coordinates:\n  " + "\n  ".join(duplicate_gavs)
+        )
 
     for repo in MANAGED_REPOS:
         repo_aliases = [module.alias for module in discovered[repo]]
@@ -674,7 +731,9 @@ def validate_discovered(discovered: dict[ManagedRepo, list[Module]]) -> None:
 
 def render_catalog_section(discovered: dict[ManagedRepo, list[Module]]) -> str:
     modules = [module for repo in MANAGED_REPOS for module in discovered[repo]]
-    max_alias = max(MIN_CATALOG_ALIAS_WIDTH, max(len(module.alias) for module in modules))
+    max_alias = max(
+        MIN_CATALOG_ALIAS_WIDTH, max(len(module.alias) for module in modules)
+    )
     lines = [CATALOG_START]
 
     for repo in MANAGED_REPOS:
@@ -707,7 +766,9 @@ def replace_catalog(text: str, replacement: str) -> str:
         )
         return pattern.sub(replacement, text)
 
-    start_match = re.search(r"^# .+bluetape4k-projects .*modules.*\n", text, flags=re.MULTILINE)
+    start_match = re.search(
+        r"^# .+bluetape4k-projects .*modules.*\n", text, flags=re.MULTILINE
+    )
     if not start_match:
         raise RuntimeError("Could not find managed libraries start marker")
     return text[: start_match.start()] + replacement
@@ -721,11 +782,17 @@ def replace_constraints(text: str, replacement: str) -> str:
         )
         return pattern.sub(replacement, text)
 
-    start_match = re.search(r"^\s*// .+bluetape4k-projects .*modules.*\n", text, flags=re.MULTILINE)
+    start_match = re.search(
+        r"^\s*// .+bluetape4k-projects .*modules.*\n", text, flags=re.MULTILINE
+    )
     if not start_match:
         raise RuntimeError("Could not find managed constraints start marker")
 
-    close_match = re.search(r"^    }\n}\n\nextensions\.configure", text[start_match.start() :], flags=re.MULTILINE)
+    close_match = re.search(
+        r"^    }\n}\n\nextensions\.configure",
+        text[start_match.start() :],
+        flags=re.MULTILINE,
+    )
     if not close_match:
         raise RuntimeError("Could not find managed constraints end")
 
@@ -733,7 +800,9 @@ def replace_constraints(text: str, replacement: str) -> str:
     return text[: start_match.start()] + replacement + text[end:]
 
 
-def synced_text(repo_root: Path, discovered: dict[ManagedRepo, list[Module]]) -> tuple[str, str]:
+def synced_text(
+    repo_root: Path, discovered: dict[ManagedRepo, list[Module]]
+) -> tuple[str, str]:
     catalog_file = repo_root / "gradle" / "libs.versions.toml"
     build_file = repo_root / "build.gradle.kts"
     catalog_text = catalog_file.read_text(encoding="utf-8")
@@ -772,15 +841,20 @@ def verify(
     repo_root: Path,
     discovered: dict[ManagedRepo, list[Module]],
     workspace_root: Path,
+    repository_roots: dict[str, Path] | None = None,
 ) -> list[str]:
     catalog_file = repo_root / "gradle" / "libs.versions.toml"
     build_file = repo_root / "build.gradle.kts"
     errors: list[str] = []
-    expected_aliases = {module.alias for repo in MANAGED_REPOS for module in discovered[repo]}
+    expected_aliases = {
+        module.alias for repo in MANAGED_REPOS for module in discovered[repo]
+    }
     catalog_aliases = parse_catalog_aliases(catalog_file)
     build_accessors = parse_build_accessors(build_file)
     catalog_versions = parse_catalog_versions(catalog_file)
-    downstream_aliases_by_repo = downstream_bt4k_version_aliases(workspace_root)
+    downstream_aliases_by_repo = downstream_bt4k_version_aliases(
+        workspace_root, repository_roots=repository_roots
+    )
     downstream_referenced_aliases = {
         alias
         for aliases in downstream_aliases_by_repo.values()
@@ -799,22 +873,34 @@ def verify(
             additional_referenced_aliases=downstream_referenced_aliases,
         )
     )
-    errors.extend(downstream_bt4k_version_errors(workspace_root, catalog_versions))
+    errors.extend(
+        downstream_bt4k_version_errors(
+            workspace_root, catalog_versions, repository_roots=repository_roots
+        )
+    )
 
     missing_platforms = sorted(
         module.alias
         for repo in MANAGED_REPOS
         for module in discovered[repo]
-        if is_bom(module.artifact_id) and to_libs_accessor(module.alias) not in build_accessors
+        if is_bom(module.artifact_id)
+        and to_libs_accessor(module.alias) not in build_accessors
     )
     if missing_platforms:
-        errors.append("Missing build.gradle.kts platform BOM imports:\n  " + "\n  ".join(missing_platforms))
+        errors.append(
+            "Missing build.gradle.kts platform BOM imports:\n  "
+            + "\n  ".join(missing_platforms)
+        )
 
     expected_catalog, expected_build = synced_text(repo_root, discovered)
     if catalog_file.read_text(encoding="utf-8") != expected_catalog:
-        errors.append(f"{catalog_file} is not generated from the current managed module set")
+        errors.append(
+            f"{catalog_file} is not generated from the current managed module set"
+        )
     if build_file.read_text(encoding="utf-8") != expected_build:
-        errors.append(f"{build_file} is not generated from the current managed module set")
+        errors.append(
+            f"{build_file} is not generated from the current managed module set"
+        )
 
     return errors
 
@@ -833,9 +919,22 @@ def main() -> int:
         default=Path(".."),
         help="Path containing the managed sibling repositories",
     )
-    parser.add_argument("--write", action="store_true", help="Rewrite generated sections")
-    parser.add_argument("--check", action="store_true", help="Verify generated sections and fail on drift")
-    parser.add_argument("--summary", action="store_true", help="Print discovered module counts")
+    parser.add_argument(
+        "--write", action="store_true", help="Rewrite generated sections"
+    )
+    parser.add_argument(
+        "--repository-map",
+        type=Path,
+        help="Strict v1 candidate repository map; disables sibling discovery.",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Verify generated sections and fail on drift",
+    )
+    parser.add_argument(
+        "--summary", action="store_true", help="Print discovered module counts"
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[1]
@@ -843,12 +942,34 @@ def main() -> int:
     if not workspace_root.is_absolute():
         workspace_root = (repo_root / workspace_root).resolve()
 
-    selected_versions = parse_catalog_versions(repo_root / "gradle" / "libs.versions.toml")
-    discovered = discover_all(workspace_root, selected_versions)
+    repository_roots = None
+    if args.repository_map:
+        try:
+            loaded = catalog_candidate.load_repository_map_v1(
+                args.repository_map, workspace_root
+            )
+        except RuntimeError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        if loaded[0].root != repo_root:
+            print(
+                "repository map central root does not match the executing checkout",
+                file=sys.stderr,
+            )
+            return 2
+        repository_roots = {
+            item.name: item.root for item in loaded if item.key != "central"
+        }
+    selected_versions = parse_catalog_versions(
+        repo_root / "gradle" / "libs.versions.toml"
+    )
+    discovered = discover_all(workspace_root, selected_versions, repository_roots)
 
     if args.write:
         catalog_text, build_text = synced_text(repo_root, discovered)
-        changed_catalog = write_if_changed(repo_root / "gradle" / "libs.versions.toml", catalog_text)
+        changed_catalog = write_if_changed(
+            repo_root / "gradle" / "libs.versions.toml", catalog_text
+        )
         changed_build = write_if_changed(repo_root / "build.gradle.kts", build_text)
         print(f"Updated gradle/libs.versions.toml: {changed_catalog}")
         print(f"Updated build.gradle.kts: {changed_build}")
@@ -857,16 +978,21 @@ def main() -> int:
         print_summary(discovered)
 
     if args.check or not args.write:
-        errors = verify(repo_root, discovered, workspace_root)
+        errors = verify(repo_root, discovered, workspace_root, repository_roots)
         if errors:
             for error in errors:
                 print(error, file=sys.stderr)
             return 1
         total_aliases = sum(len(discovered[repo]) for repo in MANAGED_REPOS)
         total_sub_boms = sum(
-            1 for repo in MANAGED_REPOS for module in discovered[repo] if is_bom(module.artifact_id)
+            1
+            for repo in MANAGED_REPOS
+            for module in discovered[repo]
+            if is_bom(module.artifact_id)
         )
-        print(f"Verified managed modules: aliases={total_aliases}, sub-boms={total_sub_boms}")
+        print(
+            f"Verified managed modules: aliases={total_aliases}, sub-boms={total_sub_boms}"
+        )
 
     return 0
 

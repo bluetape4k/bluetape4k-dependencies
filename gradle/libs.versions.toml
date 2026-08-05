@@ -4,10 +4,10 @@
 [versions]
 # <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
-bluetape4k-dependencies = "1.3.1"  # Latest released catalog/BOM for downstream consumers; update after release.
+bluetape4k-dependencies = "1.4.0"  # Latest released catalog/BOM for downstream consumers; update after release.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "1.12.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
+bluetape4k-bom     = "1.12.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k/bluetape4k-bom
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
@@ -48,9 +48,9 @@ kotlinx-serialization = "1.11.0"  # https://mvnrepository.com/artifact/org.jetbr
 jackson           = "2.22.1"  # https://mvnrepository.com/artifact/com.fasterxml.jackson/jackson-bom
 jackson-annotations = "2.22"  # downstream alias compatibility for jackson-annotations
 jackson2          = "2.22.1"  # Jackson 2 compatibility line
-jackson3          = "3.2.0"  # Jackson 3 compatibility line
+jackson3          = "3.2.1"  # Jackson 3 compatibility line
 lettuce           = "7.6.0.RELEASE"  # https://mvnrepository.com/artifact/io.lettuce/lettuce-core
-exposed           = "1.3.1"  # https://mvnrepository.com/artifact/org.jetbrains.exposed/exposed-bom
+exposed           = "1.4.0"  # https://mvnrepository.com/artifact/org.jetbrains.exposed/exposed-bom
 ignite            = "2.18.0"  # Apache Ignite 2 compatibility line
 ignite3           = "3.1.0"  # Apache Ignite 3 compatibility line
 kafka3            = "3.9.2"  # Kafka 3 compatibility line
@@ -58,61 +58,63 @@ kafka4            = "4.2.1"  # https://mvnrepository.com/artifact/org.apache.kaf
 spring-kafka      = "3.3.16"  # Spring Kafka 3 compatibility line
 spring-kafka4     = "4.1.0"  # Spring Kafka 4 compatibility line
 testcontainers    = "2.0.5"  # https://mvnrepository.com/artifact/org.testcontainers/testcontainers-bom
-kover             = "0.9.8"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kover-gradle-plugin
-fory              = "1.3.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
-fory-kotlin       = "1.3.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
+kover             = "0.9.9"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kover-gradle-plugin
+fory              = "1.5.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
+fory-kotlin       = "1.5.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
-aws2              = "2.47.1"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
-aws-kotlin        = "1.8.0"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
+aws2              = "2.51.0"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
+aws2-crt          = "0.48.3"  # AWS SDK Java 2.51.0 parent-tested CRT compatibility version
+aws-kotlin        = "1.8.23"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.8.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
-ktor              = "3.5.1"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
-netty4            = "4.1.133.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
-netty             = "4.2.16.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
-opentelemetry     = "1.63.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
+ktor              = "3.5.2"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
+netty4            = "4.1.136.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
+netty             = "4.2.17.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
+opentelemetry     = "1.64.0"  # https://mvnrepository.com/artifact/io.opentelemetry/opentelemetry-bom
 opentelemetry-instrumentation-alpha = "2.29.0-alpha"  # Stable compatibility line used by bluetape4k-projects
 protobuf          = "4.35.1"  # https://mvnrepository.com/artifact/com.google.protobuf/protobuf-bom
 slf4j             = "2.0.18"  # https://mvnrepository.com/artifact/org.slf4j/slf4j-api
 log4j             = "2.26.1"  # https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-bom
-vertx4            = "4.5.27"  # Vert.x 4 compatibility line required by Fabric8
-vertx             = "5.1.4"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
-redisson          = "4.6.1"  # https://mvnrepository.com/artifact/org.redisson/redisson
-querydsl          = "7.4.0"  # https://mvnrepository.com/artifact/io.github.openfeign.querydsl/querydsl-apt
-bouncycastle-bcpg = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
-bouncycastle-bcpkix = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on
-bouncycastle-bcprov = "1.84"  # https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on
-classgraph        = "4.8.184"  # https://mvnrepository.com/artifact/io.github.classgraph/classgraph
+vertx4            = "4.5.31"  # Vert.x 4 compatibility line required by Fabric8
+vertx             = "5.1.6"  # https://mvnrepository.com/artifact/io.vertx/vertx-dependencies
+redisson          = "4.7.0"  # https://mvnrepository.com/artifact/org.redisson/redisson
+querydsl          = "7.5"  # https://mvnrepository.com/artifact/io.github.openfeign.querydsl/querydsl-apt
+bouncycastle-bcpg = "1.85"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
+bouncycastle-bcpkix = "1.85"  # https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on
+bouncycastle-bcprov = "1.85"  # https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on
+classgraph        = "4.8.186"  # https://mvnrepository.com/artifact/io.github.classgraph/classgraph
 tomcat            = "11.0.24"  # https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core
 zookeeper         = "3.9.5"  # https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper
 avro              = "1.12.1"  # https://mvnrepository.com/artifact/org.apache.avro/avro
 guava             = "33.6.0-jre"  # https://mvnrepository.com/artifact/com.google.guava/guava
-httpclient5       = "5.6.2"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5
+httpclient5       = "5.6.3"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5
 httpcore5         = "5.4.3"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5
-hibernate         = "7.4.4.Final"  # https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core
+hibernate         = "7.4.5.Final"  # https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core
 reflectasm        = "1.11.9"  # https://mvnrepository.com/artifact/com.esotericsoftware/reflectasm
 ow2-asm           = "9.10.1"  # https://mvnrepository.com/artifact/org.ow2.asm/asm
-zstd              = "1.5.7-11"  # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
-zstd-jni          = "1.5.7-11"  # downstream alias compatibility for zstd-jni
+zstd              = "1.5.7-12"  # https://mvnrepository.com/artifact/com.github.luben/zstd-jni
+zstd-jni          = "1.5.7-12"  # downstream alias compatibility for zstd-jni
 jakarta-activation = "2.1.4"  # https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api
 jakarta-xml-bind  = "4.0.5"  # https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api
 hazelcast         = "5.7.0"  # https://mvnrepository.com/artifact/com.hazelcast/hazelcast
-scrimage          = "4.6.5"  # https://mvnrepository.com/artifact/com.sksamuel.scrimage/scrimage-core
-timefold-solver   = "2.2.0"   # https://mvnrepository.com/artifact/ai.timefold.solver/timefold-solver-bom
-flyway            = "12.10.0"  # https://mvnrepository.com/artifact/org.flywaydb/flyway-core
-shadow            = "9.5.1"  # https://mvnrepository.com/artifact/com.gradleup.shadow/shadow-gradle-plugin
-springdoc-openapi = "3.0.3"  # https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
+scrimage          = "4.6.7"  # https://mvnrepository.com/artifact/com.sksamuel.scrimage/scrimage-core
+timefold-solver   = "2.4.0"   # https://mvnrepository.com/artifact/ai.timefold.solver/timefold-solver-bom
+flyway            = "12.11.0"  # https://mvnrepository.com/artifact/org.flywaydb/flyway-core
+shadow            = "9.6.1"  # https://mvnrepository.com/artifact/com.gradleup.shadow/shadow-gradle-plugin
+springdoc-openapi = "3.1.0"  # https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
 postgresql        = "42.7.13"  # https://mvnrepository.com/artifact/org.postgresql/postgresql
 postgresql-driver = "42.7.13"  # downstream alias compatibility for PostgreSQL JDBC
 mysql-connector-j = "9.7.0"  # https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
 r2dbc-h2          = "1.1.0.RELEASE"  # https://mvnrepository.com/artifact/io.r2dbc/r2dbc-h2
 reactor-bom       = "2025.0.6"  # https://mvnrepository.com/artifact/io.projectreactor/reactor-bom
 gatling           = "3.15.1"  # https://mvnrepository.com/artifact/io.gatling/gatling-app
+gatling-plugin    = "3.15.1.2"
 logcaptor         = "2.12.6"  # https://mvnrepository.com/artifact/io.github.hakky54/logcaptor
 hikaricp          = "7.1.0"  # https://mvnrepository.com/artifact/com.zaxxer/HikariCP
 agroal            = "3.2.1"  # https://mvnrepository.com/artifact/io.agroal/agroal-pool
 javamoney-moneta  = "1.4.5"  # https://mvnrepository.com/artifact/org.javamoney/moneta
 mybatis-dynamic-sql = "2.0.0"  # https://mvnrepository.com/artifact/org.mybatis.dynamic-sql/mybatis-dynamic-sql
-commons-codec     = "1.22.0"  # https://mvnrepository.com/artifact/commons-codec/commons-codec
+commons-codec     = "1.22.1"  # https://mvnrepository.com/artifact/commons-codec/commons-codec
 commons-compress  = "1.28.0"  # https://mvnrepository.com/artifact/org.apache.commons/commons-compress
 commons-csv       = "1.14.1"  # https://mvnrepository.com/artifact/org.apache.commons/commons-csv
 commons-exec      = "1.6.0"  # https://mvnrepository.com/artifact/org.apache.commons/commons-exec
@@ -123,6 +125,387 @@ commons-pool2     = "2.13.1"  # https://mvnrepository.com/artifact/org.apache.co
 assertj-core      = "3.27.7"  # https://mvnrepository.com/artifact/org.assertj/assertj-core
 awaitility        = "4.3.0"  # https://mvnrepository.com/artifact/org.awaitility/awaitility-kotlin
 random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.benas/random-beans
+# <generated-central-authority-versions by scripts/promote-catalog-authority.py>
+aspectj-post-compile-weaving = "9.5.0"
+at-yawk-lz4 = "1.11.1"
+avro-kotlin = "2.12.0"
+brave = "6.3.1"
+clickhouse-jdbc = "0.9.8"
+commons-rng-simple = "1.7"
+commons-text = "1.15.0"
+dependency-check = "12.2.2"
+detekt-dev = "2.0.0-alpha.5"
+detekt-formatting-legacy = "2.0.0-alpha.5"
+detekt-legacy = "1.23.8"
+download = "5.7.0"
+duckdb-jdbc = "1.5.5.1"
+elasticmq-rest-sqs = "1.7.1"
+foojay-resolver = "1.0.0"
+gatling-http-java = "3.15.1"
+geotools31 = "31.7"
+geotools34 = "34.4"
+google-maps-services = "2.2.0"
+h2-v1 = "1.4.200"
+h2-v2 = "2.4.240"
+hibernate-reactive-core = "4.5.2.Final"
+hibernate73 = "7.3.4.Final"
+jakarta-inject-api = "2.0.1.MR"
+jakarta-persistence-v31 = "3.1.0"
+jakarta-persistence-v32 = "3.2.0"
+jfalkordb = "0.8.0"
+jib = "3.5.4"
+jnats = "2.26.1"
+jsonassert-v1 = "1.5.3"
+jsonassert-v2 = "2.0-rc1"
+jsonpath-v2 = "2.10.0"
+jsonpath-v3 = "3.0.0"
+junit-platform1-runner = "1.14.4"
+junit-platform6-runner = "6.0.3"
+jvips-build69bf715 = "8.12.2-69bf715"
+jvips-buildf9dc8c9 = "8.12.2-f9dc8c9"
+kotlin20 = "2.0.21"
+libphonenumber-v8 = "8.13.55"
+libphonenumber-v9 = "9.0.36"
+logback = "1.5.34"
+managed-amqp-client-h639dbc3b57d0 = "5.34.0"
+managed-antlr4-runtime-h501fac563496 = "4.13.2"
+managed-antlr4-tool-hbd6f6a99b4ba = "4.13.2"
+managed-archunit-h1c89bbc7f4ec = "1.5.0"
+managed-archunit-junit5-hb22f43c6c707 = "1.5.0"
+managed-aspectjrt-hdf26bd4e3493 = "1.9.25.1"
+managed-aspectjweaver-hd7e10f6e7294 = "1.9.25.1"
+managed-assertj-core-h830d024e84c8 = "3.27.7"
+managed-avatica-core-hba1bf9decd49 = "1.28.0"
+managed-avro-plugin-hace42c31bdda = "1.9.1"
+managed-aws-dax-client-ha8827a8b0fcb = "2.0.11"
+managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467 = "1.7.6"
+managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5 = "1.7.6"
+managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604 = "1.7.6"
+managed-aws-smithy-kotlin-http-hea8fa947b4d3 = "1.7.6"
+managed-aws-smithy-kotlin-serde-hb6c6080166ba = "1.7.6"
+managed-aws-smithy-kotlin-serde-json-h39078dce8d4a = "1.7.6"
+managed-batik-codec-h3ee064576347 = "1.19"
+managed-batik-transcoder-h86723efb5618 = "1.19"
+managed-blaze-persistence-core-api-jakarta-heb5c993b1d4f = "1.6.20"
+managed-blaze-persistence-core-impl-jakarta-h68985a289b7f = "1.6.20"
+managed-blaze-persistence-entity-view-api-jakarta-h6c0e0444da3e = "1.6.20"
+managed-blaze-persistence-entity-view-impl-jakarta-h264b9a052d09 = "1.6.20"
+managed-blaze-persistence-integration-hibernate7-hf2969830ce8a = "1.6.16"
+managed-blaze-persistence-jpa-criteria-api-jakarta-hc8e49c83a834 = "1.6.20"
+managed-blaze-persistence-jpa-criteria-impl-jakarta-h82df0febb513 = "1.6.20"
+managed-blockhound-hb055fbbd9fc5 = "1.0.17.RELEASE"
+managed-blockhound-junit-platform-h797ad1fe6ad0 = "1.0.17.RELEASE"
+managed-brotli-dec-ha0d853dec13b = "0.1.2"
+managed-brotli4j-h4437d759d0e3 = "1.23.0"
+managed-brotli4j-native-hf7fa4d98af73 = "1.23.0"
+managed-bucket4j-caffeine-h2040f5a1af3f = "8.19.0"
+managed-bucket4j-core-hf97cbeb8c1b0 = "8.19.0"
+managed-bucket4j-hazelcast-all-ha7c9a74f33cc = "8.18.0"
+managed-bucket4j-hazelcast-h3d419bd694ff = "8.19.0"
+managed-bucket4j-ignite-h5676d8442ce0 = "8.19.0"
+managed-bucket4j-infinispan-all-h3d39ac15c97f = "8.18.0"
+managed-bucket4j-jcache-hfaa1c252ddcf = "8.19.0"
+managed-bucket4j-jdk17-lettuce-hc74871d952dc = "8.19.0"
+managed-bucket4j-redisson-h76c31c2384b7 = "8.19.0"
+managed-bucket4j-spring-boot-h9e165a39a013 = "0.13.0"
+managed-byte-buddy-agent-h4bb8401d3e42 = "1.18.11"
+managed-byte-buddy-hcc97bcb92c6c = "1.18.11"
+managed-cache2k-api-h3b8c9771f3f8 = "2.6.1.Final"
+managed-cache2k-core-h94dceed7f1c0 = "2.6.1.Final"
+managed-cache2k-jcache-h3fffa862ca25 = "2.6.1.Final"
+managed-cache2k-micrometer-h201b319e0d09 = "2.6.1.Final"
+managed-caffeine-hab48d8786c21 = "3.2.4"
+managed-caffeine-jcache-h8d431f051f8b = "3.2.4"
+managed-cassandra-java-driver-core-h6b77df45befe = "4.19.3"
+managed-cassandra-java-driver-core-shaded-h21923470239a = "4.19.3"
+managed-cassandra-java-driver-mapper-processor-ha66efc8f26b8 = "4.19.3"
+managed-cassandra-java-driver-mapper-runtime-hb79ea0fc6514 = "4.19.3"
+managed-cassandra-java-driver-metrics-micrometer-hd7e953cb0383 = "4.19.3"
+managed-cassandra-java-driver-query-builder-h2d9a372a6dcc = "4.19.3"
+managed-cassandra-java-driver-test-infra-h9985d453048c = "4.19.3"
+managed-chaos-monkey-spring-boot-h50f5cabacb36 = "4.0.0"
+managed-chronicle-wire-h06e3563f2bba = "2026.8"
+managed-commons-beanutils-h7574b415a4d9 = "1.11.0"
+managed-commons-collections4-h35d15f28a05a = "4.5.0"
+managed-commons-crypto-h5cbf9426ce21 = "1.2.0"
+managed-commons-digest3-hce0fda71c84d = "3.2"
+managed-commons-math3-hdd6a3a403590 = "3.6.1"
+managed-commons-math4-h2ac839d8e289 = "4.0-beta1"
+managed-commons-validator-hb769ab8b32c1 = "1.11.0"
+managed-curator-framework-hb4f00be0bc92 = "5.9.0"
+managed-curator-recipes-hcc5f007e45c3 = "5.9.0"
+managed-datafaker-h8e6439793185 = "2.7.0"
+managed-eclipse-collections-forkjoin-h5a851bdc88e1 = "13.0.0"
+managed-eclipse-collections-h1c86dd26d57b = "13.0.0"
+managed-eclipse-collections-testutils-h02668598348d = "13.0.0"
+managed-ehcache-clustered-h0a0edf676e4d = "3.12.0"
+managed-ehcache-he9dea86fd186 = "3.12.0"
+managed-ehcache-transactions-h8c2d00308bb1 = "3.12.0"
+managed-elasticsearch-java-h5984397084e4 = "9.5.0"
+managed-elasticsearch-rest-client-h89bafdaca9a6 = "9.5.0"
+managed-elasticsearch-rest-client-sniffer-h440b3d642cb0 = "9.5.0"
+managed-esri-geometry-api-h91fce33325cc = "2.2.4"
+managed-fastjson2-extension-hd772e403fe72 = "2.0.64"
+managed-fastjson2-extension-spring6-h8d2fb4434699 = "2.0.62"
+managed-fastjson2-h14dfaa6b626f = "2.0.64"
+managed-fastjson2-kotlin-ha7a4f6417cad = "2.0.64"
+managed-feign-bom-h4b8988368b53 = "13.13"
+managed-feign-core-h8669e7a2d5e6 = "13.13"
+managed-feign-gson-h5a6c842f930d = "13.13"
+managed-feign-hc5-hf648e5631615 = "13.13"
+managed-feign-httpclient-h7b3925f99279 = "13.13"
+managed-feign-jackson-hc7f6c1789b6c = "13.13"
+managed-feign-java11-h67cd17e71e91 = "13.13"
+managed-feign-jaxb-h62a08137f4e5 = "13.13"
+managed-feign-jaxrs-he8fea5942103 = "13.13"
+managed-feign-jaxrs2-haa7b5107498b = "13.13"
+managed-feign-kotlin-h747af15ee7f3 = "13.13"
+managed-feign-micrometer-h587706e11f57 = "13.13"
+managed-feign-mock-hbcaea42bc807 = "13.13"
+managed-feign-okhttp-h168d54f92d6d = "13.13"
+managed-feign-reactive-wrappers-haa168cbfb41a = "13.13"
+managed-feign-slf4j-hb5e63c6c5c07 = "13.13"
+managed-findbugs-h997b9e9970e7 = "3.0.2"
+managed-glassfish-expressly-h75ee2e103b0a = "6.0.0"
+managed-google-api-services-bigquery-h784b3443228d = "v2-rev20260707-2.0.0"
+managed-graalvm-native-h4df74ed993d6 = "1.1.7"
+managed-groovy-h1ef057f2b39e = "5.0.8"
+managed-groovy-jsr223-h7a8657ed8c7a = "5.0.8"
+managed-grpc-alts-h3218508eb39f = "1.83.1"
+managed-grpc-api-hdabf163ae157 = "1.83.1"
+managed-grpc-auth-h583e5ccc6223 = "1.83.1"
+managed-grpc-bom-hc75099432358 = "1.83.1"
+managed-grpc-context-h225448938a10 = "1.83.1"
+managed-grpc-core-h189dc7c8072a = "1.83.1"
+managed-grpc-google-common-protos-h49f5a7d50588 = "2.74.0"
+managed-grpc-grpclb-h9b313ba397a3 = "1.83.1"
+managed-grpc-inprocess-h565ab81cda0d = "1.83.1"
+managed-grpc-kotlin-stub-hb3943aafd993 = "1.5.0"
+managed-grpc-netty-h708b94fb93af = "1.83.1"
+managed-grpc-netty-shaded-h8085e740136c = "1.83.1"
+managed-grpc-okhttp-h0d955a8fb084 = "1.83.1"
+managed-grpc-protobuf-h35d35d06389c = "1.83.1"
+managed-grpc-protobuf-lite-h47c931bfc8ea = "1.83.1"
+managed-grpc-protoc-gen-grpc-java-h6c7443aec764 = "1.83.1"
+managed-grpc-protoc-gen-grpc-kotlin-h8643385749ff = "1.5.0"
+managed-grpc-services-h1af92d474331 = "1.83.1"
+managed-grpc-stub-h9b6f2f5dd399 = "1.83.1"
+managed-grpc-testing-h4a87d8390f04 = "1.83.1"
+managed-gson-h005f9a4ed5e8 = "2.14.0"
+managed-gson-javatime-serializers-hc8fb4565ebce = "1.1.2"
+managed-hibernate-validator-annotation-processor-h75eec762f706 = "9.1.0.Final"
+managed-hibernate-validator-h7d30a1cdc50f = "9.1.3.Final"
+managed-hsqldb-hd202426a1d17 = "2.7.4"
+managed-ignite-spring-cache-ext-hb26f604e9198 = "2.0.0"
+managed-ignite-spring-data-ext-h10132558c2df = "2.0.0"
+managed-immudb4j-h67918f282916 = "1.0.1"
+managed-influxdb-java-h5feae83b4728 = "2.25"
+managed-jackson-annotations-h5ef427554da9 = "2.22"
+managed-jackson-core-h40e274bcba5b = "2.22.1"
+managed-jackson-dataformat-msgpack-h2e3b8aad6dd7 = "0.9.12"
+managed-jackson-module-kotlin-ha5b389df3865 = "2.22.1"
+managed-jakarta-annotation-api-h52ab16cefc13 = "3.0.0"
+managed-jakarta-el-api-hbc327384c985 = "6.0.1"
+managed-jakarta-interceptor-api-hc384f774c62d = "2.2.0"
+managed-jakarta-jms-api-hb7ad3ee4a6b1 = "3.1.0"
+managed-jakarta-json-api-hfb0fbe402818 = "2.1.3"
+managed-jakarta-json-h11e82862dff8 = "2.0.1"
+managed-jakarta-servlet-api-hfbbb2c8a940c = "6.1.0"
+managed-jakarta-transaction-api-he286b1438e0e = "2.0.1"
+managed-jakarta-validation-api-hb8e885f83ced = "3.1.1"
+managed-jakarta-ws-rs-api-h382dc3038616 = "4.0.0"
+managed-janino-commons-compiler-h079dd297be76 = "3.1.12"
+managed-janino-hf73c9e4ee9ce = "3.1.12"
+managed-java-uuid-generator-h25806355c9c1 = "5.2.0"
+managed-javassist-ha87aa6d81eca = "3.32.0-GA"
+managed-javax-cache-api-h4e3ca544cac6 = "1.1.1"
+managed-javax-money-api-h2dc979164246 = "1.1"
+managed-javers-core-had7b72eff626 = "7.11.7"
+managed-jctools-core-he50deb03ab24 = "4.0.6"
+managed-jetbrains-annotations-h8e47d953b4fc = "26.1.0"
+managed-jetcd-core-hda3167e37563 = "0.8.6"
+managed-jjwt-api-h3e7a59adf22e = "0.13.0"
+managed-jjwt-extensions-heede014ce2e0 = "0.13.0"
+managed-jjwt-impl-h61f86d61bbc6 = "0.13.0"
+managed-jjwt-jackson-h20db328f3ac2 = "0.13.0"
+managed-jmh-core-h350a653f63e5 = "1.37"
+managed-jmh-generator-annprocess-he0aa0964b91a = "1.37"
+managed-jna-he2e3f813de81 = "5.19.1"
+managed-jna-platform-h90667451aeca = "5.19.1"
+managed-jts-core-haadd5e12cfd1 = "1.20.0"
+managed-junit-bom-h61cd2dcaa536 = "6.1.2"
+managed-junit-jupiter-api-hbdb647c8c063 = "6.1.2"
+managed-junit-jupiter-engine-h100e4f4488c1 = "6.1.2"
+managed-junit-jupiter-hc9d62f8dba36 = "6.1.2"
+managed-junit-jupiter-migrationsupport-hc68f8f05bd6d = "6.1.2"
+managed-junit-jupiter-params-hecee21232a80 = "6.1.2"
+managed-junit-platform-commons-he1ea011b202a = "6.1.2"
+managed-junit-platform-engine-ha913b5a2622e = "6.1.2"
+managed-junit-platform-launcher-h606d910fe011 = "6.1.2"
+managed-junit-platform-suite-api-h92cc87dc62ce = "6.1.2"
+managed-junit-platform-suite-engine-h0ac35326fce5 = "6.1.2"
+managed-junit-vintage-engine-hc9c190fac5a4 = "6.1.2"
+managed-keycloak-testcontainers-hcf9d84cd8012 = "3.9.1"
+managed-kotlinx-atomicfu-h030266c8e36a = "0.32.1"
+managed-kotlinx-atomicfu-h6c0deabac9bf = "0.32.1"
+managed-kotlinx-benchmark-ha2bb946de05b = "0.4.17"
+managed-kotlinx-benchmark-runtime-hb75fd55df187 = "0.4.17"
+managed-kotlinx-benchmark-runtime-jvm-hde0985ebfbfe = "0.4.17"
+managed-kryo-hf4c946aa49cc = "5.6.2"
+managed-kubernetes-client-java-h5d7d133e2fe3 = "24.0.0"
+managed-kuromoji-ipadic-hb7007407db11 = "0.9.0"
+managed-kuromoji-unidic-h0a17e0496ae8 = "0.9.0"
+managed-lingua-h4936611a8d42 = "1.2.2"
+managed-logback-slack-appender-h2b7fd566afe1 = "1.6.1"
+managed-mapstruct-h3b44cb74b734 = "1.6.3"
+managed-mapstruct-processor-h5742500cdc8a = "1.6.3"
+managed-mariadb-java-client-h168cf4e91ffa = "3.5.10"
+managed-metadata-extractor-h364d52ce1b74 = "2.21.0"
+managed-micrometer-bom-h46388331a0e5 = "1.17.0"
+managed-micrometer-context-propagation-heeb642cde50d = "1.2.1"
+managed-micrometer-tracing-bom-h5811d99b9094 = "1.7.0"
+managed-micrometer-tracing-bridge-brave-h7de924ea55c5 = "1.7.0"
+managed-micrometer-tracing-bridge-otel-he56ec84f2b0f = "1.7.0"
+managed-micrometer-tracing-h5a2d98f31144 = "1.7.0"
+managed-micrometer-tracing-integration-test-h1462ec78085f = "1.7.0"
+managed-micrometer-tracing-test-h945eea8eda06 = "1.7.0"
+managed-milvus-sdk-java-h565db6eded15 = "2.6.23"
+managed-mockk-h9dd32a0538aa = "1.14.11"
+managed-mockserver-client-java-hd19fa6cd8095 = "5.15.0"
+managed-mockserver-netty-h61f0a64eb51b = "5.15.0"
+managed-mongo-bson-h61803c883cff = "5.9.1"
+managed-mongo-bson-kotlin-hed39b6e511ea = "5.9.1"
+managed-mongo-bson-kotlinx-he01bd4afeff0 = "5.9.1"
+managed-mongodb-driver-core-hbfb90642694b = "5.9.1"
+managed-mongodb-driver-kotlin-coroutine-he8bb92bed8d2 = "5.9.1"
+managed-mongodb-driver-kotlin-extensions-h34903876c948 = "5.9.1"
+managed-mongodb-driver-kotlin-sync-hc2b49ebaef09 = "5.9.1"
+managed-mongodb-driver-legacy-he38e622ffa40 = "5.9.1"
+managed-mongodb-driver-reactivestreams-h52d3041ea8a5 = "5.9.1"
+managed-mongodb-driver-sync-h8beacb2ba830 = "5.9.1"
+managed-mutiny-h947c6d130999 = "3.3.0"
+managed-mutiny-kotlin-hf287e2847d9d = "3.3.0"
+managed-mvel2-h2ea4dbeb0e11 = "2.5.2.Final"
+managed-mybatis-h0fef8d8f7f76 = "3.5.19"
+managed-nats-spring-cloud-stream-binder-he637bb522350 = "0.6.2+3.5"
+managed-nats-spring-h9ddf1b6453e3 = "0.6.2+3.5"
+managed-neo4j-bolt-connection-bom-h7783d6d91aad = "11.1.0"
+managed-neo4j-bolt-connection-netty-hde6be92c15e6 = "11.1.0"
+managed-neo4j-bolt-connection-pooled-h0355e6822c7f = "11.1.0"
+managed-netty-tcnative-classes-h39fc93b48f6f = "2.0.81.Final"
+managed-objenesis-h7460768a532c = "3.6"
+managed-okhttp3-bom-h2c1e6cd75f1f = "5.4.0"
+managed-okhttp3-coroutines-h9d5eb12a5613 = "5.4.0"
+managed-okhttp3-hb831cda848c0 = "5.4.0"
+managed-okhttp3-logging-interceptor-he5852804ba5f = "5.4.0"
+managed-okhttp3-mockwebserver-h4a80e9408983 = "5.4.0"
+managed-okhttp3-sse-h168da156924d = "5.4.0"
+managed-okhttp3-urlconnection-h8e4dad6b26fc = "5.4.0"
+managed-okio-fakefilesystem-hc9121603de7d = "3.18.1"
+managed-okio-ha706f986164c = "3.18.1"
+managed-opentelemetry-alpha-bom-h1c695c9ae5d6 = "1.63.0-alpha"
+managed-oracle-ojdbc8-h64c1ef0eb450 = "19.3.0.0"
+managed-pgjdbc-ng-h1e2a5c3724aa = "0.8.9"
+managed-pgvector-h4d188455fc16 = "0.1.6"
+managed-proj4j-epsg-h8f1aa4c45c67 = "1.4.3"
+managed-proj4j-hd4cd408d5087 = "1.4.3"
+managed-prometheus-simpleclient-common-h129396431424 = "0.16.0"
+managed-prometheus-simpleclient-dropwizard-hfc48a62a0f58 = "0.16.0"
+managed-prometheus-simpleclient-hb811bfb87959 = "0.16.0"
+managed-prometheus-simpleclient-httpserver-h90aaf7257454 = "0.16.0"
+managed-prometheus-simpleclient-pushgateway-h8272c48a3443 = "0.16.0"
+managed-prometheus-simpleclient-spring-boot-h8962ad0c759d = "0.16.0"
+managed-prometheus-simpleclient-tracer-common-h45e4a6ef99cd = "0.16.0"
+managed-prometheus-simpleclient-tracer-otel-agent-h04172e704c8e = "0.16.0"
+managed-prometheus-simpleclient-tracer-otel-h086a8faa8923 = "0.16.0"
+managed-proto-google-common-protos-h5bc34896f941 = "2.74.0"
+managed-protobuf-plugin-hb190890cedfa = "0.10.0"
+managed-r2dbc-mariadb-h5b11561e1948 = "1.4.1"
+managed-r2dbc-mysql-hd139bc72be49 = "1.4.3"
+managed-r2dbc-pool-had88f2f0087e = "1.0.2.RELEASE"
+managed-r2dbc-postgresql-h38255c5a2805 = "1.1.2.RELEASE"
+managed-r2dbc-proxy-h39152492a2ef = "1.1.6.RELEASE"
+managed-r2dbc-spi-hf93a51b06f68 = "1.0.0.RELEASE"
+managed-reactor-kafka-hbc32b6659f95 = "1.3.25"
+managed-reflectasm-h291c5317805f = "1.11.9"
+managed-resilience4j-all-h494ab7c18cb6 = "2.4.0"
+managed-resilience4j-annotations-hd2539f10c3c9 = "2.4.0"
+managed-resilience4j-bom-h0120ef1f893c = "2.4.0"
+managed-resilience4j-bulkhead-ha3a8f33e1edf = "2.4.0"
+managed-resilience4j-cache-ha27ae566c860 = "2.4.0"
+managed-resilience4j-circuitbreaker-h9910e7daf408 = "2.4.0"
+managed-resilience4j-core-h21a5f3d95169 = "2.4.0"
+managed-resilience4j-feign-h7abc65ba6bc9 = "2.4.0"
+managed-resilience4j-kotlin-h0aaa4cede2a4 = "2.4.0"
+managed-resilience4j-metrics-h274ab6d559d2 = "2.4.0"
+managed-resilience4j-micrometer-hba78480fc2f5 = "2.4.0"
+managed-resilience4j-ratelimiter-hb9bda7e25744 = "2.4.0"
+managed-resilience4j-reactor-h34941d7ab1fd = "2.4.0"
+managed-resilience4j-retry-h8e41dab66bce = "2.4.0"
+managed-resilience4j-spring-h3ee754776801 = "2.4.0"
+managed-resilience4j-timelimiter-h3180152373df = "2.4.0"
+managed-rest-assured-all-hb5e501ab9ca8 = "6.0.1"
+managed-rest-assured-h659337b872cf = "6.0.1"
+managed-rest-assured-json-path-h17123d79a31d = "6.0.1"
+managed-rest-assured-kotlin-hdf2489fdc603 = "6.0.1"
+managed-retrofit2-adapter-java8-h0caee0bb0527 = "3.0.0"
+managed-retrofit2-adapter-reactor-h02159a9afe31 = "2.1.0"
+managed-retrofit2-adapter-rxjava2-hc063bddee4a5 = "3.0.0"
+managed-retrofit2-adapter-rxjava3-h631e71d3b60b = "3.0.0"
+managed-retrofit2-converter-jackson-hced01312a2e9 = "3.0.0"
+managed-retrofit2-converter-moshi-hea255a0c7b10 = "3.0.0"
+managed-retrofit2-converter-protobuf-h981151e9543c = "3.0.0"
+managed-retrofit2-converter-scalars-h43e676f7461c = "3.0.0"
+managed-retrofit2-hc7e93e72db68 = "3.0.0"
+managed-retrofit2-mock-hbcb0b5f68a85 = "3.0.0"
+managed-sentry-logback-h65fc12a36c8c = "8.52.0"
+managed-snakeyaml-h08ebcb48b48a = "2.6"
+managed-snappy-java-h6a6d7f53de0b = "1.1.10.8"
+managed-spring-cloud-aws-bom-haebf9fb93e11 = "4.1.0"
+managed-spring-cloud-dependencies-hfea315df9a2c = "2025.1.2"
+managed-spring-modulith-bom-h2500740a4fa4 = "2.1.0"
+managed-spring-statemachine-bom-h4672ad237870 = "4.0.2"
+managed-spring-statemachine-core-hd0ee55525037 = "4.0.2"
+managed-springmockk-h5eca79ba4c97 = "5.0.1"
+managed-starrocks-connector-j-h5d416dd6b46c = "1.1.2"
+managed-tess4j-h8ef44ff63554 = "5.20.0"
+managed-test-logger-h65ff1704d5b5 = "4.0.0"
+managed-testcontainers-ministack-h8672eda0c12d = "0.1.5"
+managed-testcontainers-opensearch-h481cd99f489d = "4.1.0"
+managed-tink-h958d8d1f4e22 = "1.23.0"
+managed-tinkergraph-gremlin-h3519ae0db798 = "3.8.1"
+managed-tinkerpop-gremlin-core-h01c4bf1b8f0e = "3.8.1"
+managed-turbine-h3f508fcc25de = "1.2.1"
+managed-turbine-jvm-h7ab4029cd45c = "1.2.1"
+managed-twelvemonkeys-imageio-core-hb707b0907e80 = "3.14.0"
+managed-twelvemonkeys-imageio-metadata-haa9e13fb9011 = "3.14.0"
+managed-twelvemonkeys-imageio-tiff-h567707adb501 = "3.14.0"
+managed-typesafe-config-hff95437ffd9d = "1.4.9"
+managed-ucar-cdm-core-h6dd13f7ed579 = "5.10.0"
+managed-ucar-netcdf4-hb6fb82574668 = "5.9.1"
+managed-uuid-creator-h4df8319fa29b = "6.1.1"
+managed-vault-java-driver-had2baeed8662 = "5.1.0"
+managed-vips-ffm-hb3445974524e = "1.9.8"
+managed-weaviate-client-hef91a8fd7caa = "6.3.0"
+managed-wiremock-hc4d32ce4fece = "3.13.2"
+managed-xz-h8acc86c069bd = "1.12"
+managed-zero-allocation-hashing-h93f685c6dbfd = "2026.0"
+managed-zxing-core-hca5061ea4926 = "3.5.4"
+managed-zxing-javase-hfc56b4ec065f = "3.5.4"
+maxmind-geoip2 = "5.2.0"
+minio-v8 = "8.6.0"
+minio-v9 = "9.0.3"
+mybatis-spring3 = "3.0.6"
+mybatis-spring4 = "4.1.0"
+neo4j-driver5 = "5.28.14"
+neo4j-driver6 = "6.2.1"
+open-korean-text = "2.3.1"
+postgis-y2024 = "2024.1.0"
+postgis-y2025 = "2025.1.1"
+pulsar3 = "3.3.9"
+pulsar4 = "4.2.4"
+trino-jdbc = "480"
+# </generated-central-authority-versions>
 # </shared-version-source-of-truth>
 
 # ────────────────────────────────────────────────────────────────────────────
@@ -137,7 +520,7 @@ kotlin-spring         = { id = "org.jetbrains.kotlin.plugin.spring",  version.re
 byte-buddy-gradle     = { id = "net.bytebuddy.byte-buddy-gradle-plugin", version.ref = "byte-buddy" }
 dependency-management = { id = "io.spring.dependency-management",     version.ref = "dependency-management" }
 dokka                 = { id = "org.jetbrains.dokka",                  version.ref = "dokka" }
-gatling               = { id = "io.gatling.gradle",                    version.ref = "gatling" }
+gatling               = { id = "io.gatling.gradle",                    version.ref = "gatling-plugin" }
 kover                 = { id = "org.jetbrains.kotlinx.kover",          version.ref = "kover" }
 nmcp                  = { id = "com.gradleup.nmcp",                    version.ref = "nmcp" }
 nmcp-aggregation      = { id = "com.gradleup.nmcp.aggregation",        version.ref = "nmcp" }
@@ -148,6 +531,21 @@ spring-boot3          = { id = "org.springframework.boot",             version.r
 spring-boot4          = { id = "org.springframework.boot",             version.ref = "spring-boot4" }
 
 # ────────────────────────────────────────────────────────────────────────────
+# <generated-central-authority-plugins by scripts/promote-catalog-authority.py>
+aspectj-post-compile-weaving = { id = "io.freefair.aspectj.post-compile-weaving", version.ref = "aspectj-post-compile-weaving" }
+avro-plugin = { id = "com.github.davidmc24.gradle.plugin.avro", version.ref = "managed-avro-plugin-hace42c31bdda" }
+dependency-check = { id = "org.owasp.dependencycheck", version.ref = "dependency-check" }
+detekt-dev = { id = "dev.detekt", version.ref = "detekt-dev" }
+detekt-legacy = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt-legacy" }
+download = { id = "de.undercouch.download", version.ref = "download" }
+foojay-resolver = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay-resolver" }
+graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "managed-graalvm-native-h4df74ed993d6" }
+jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
+kotlinx-atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "managed-kotlinx-atomicfu-h6c0deabac9bf" }
+kotlinx-benchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "managed-kotlinx-benchmark-ha2bb946de05b" }
+protobuf-plugin = { id = "com.google.protobuf", version.ref = "managed-protobuf-plugin-hb190890cedfa" }
+test-logger = { id = "com.adarshr.test-logger", version.ref = "managed-test-logger-h65ff1704d5b5" }
+# </generated-central-authority-plugins>
 [libraries]
 bluetape4k-dependencies                       = { module = "io.github.bluetape4k:bluetape4k-dependencies", version.ref = "bluetape4k-dependencies" }
 
@@ -255,6 +653,7 @@ jul-to-slf4j                                  = { module = "org.slf4j:jul-to-slf
 log4j-over-slf4j                              = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
 spring-boot3-dependencies                     = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot3" }
 spring-boot4-dependencies                     = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot4" }
+spring-boot-http-converter                    = { module = "org.springframework.boot:spring-boot-http-converter", version.ref = "spring-boot4" }
 spring-kafka                                  = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka" }
 spring-kafka-test                             = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "spring-kafka" }
 spring-kafka4                                 = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka4" }
@@ -269,6 +668,414 @@ vertx-core                                    = { module = "io.vertx:vertx-core"
 vertx-dependencies                            = { module = "io.vertx:vertx-dependencies", version.ref = "vertx" }
 zookeeper                                     = { module = "org.apache.zookeeper:zookeeper", version.ref = "zookeeper" }
 zstd-jni                                      = { module = "com.github.luben:zstd-jni", version.ref = "zstd-jni" }
+# <generated-central-authority-libraries by scripts/promote-catalog-authority.py>
+amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "managed-amqp-client-h639dbc3b57d0" }
+antlr4-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "managed-antlr4-runtime-h501fac563496" }
+antlr4-tool = { module = "org.antlr:antlr4", version.ref = "managed-antlr4-tool-hbd6f6a99b4ba" }
+archunit = { module = "com.tngtech.archunit:archunit", version.ref = "managed-archunit-h1c89bbc7f4ec" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "managed-archunit-junit5-hb22f43c6c707" }
+aspectjrt = { module = "org.aspectj:aspectjrt", version.ref = "managed-aspectjrt-hdf26bd4e3493" }
+aspectjweaver = { module = "org.aspectj:aspectjweaver", version.ref = "managed-aspectjweaver-hd7e10f6e7294" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "managed-assertj-core-h830d024e84c8" }
+at-yawk-lz4-java = { module = "at.yawk.lz4:lz4-java", version.ref = "at-yawk-lz4" }
+avatica-core = { module = "org.apache.calcite.avatica:avatica-core", version.ref = "managed-avatica-core-hba1bf9decd49" }
+avro-kotlin = { module = "com.github.avro-kotlin.avro4k:avro4k-core", version.ref = "avro-kotlin" }
+aws-dax-client = { module = "software.amazon.dax:amazon-dax-client", version.ref = "managed-aws-dax-client-ha8827a8b0fcb" }
+aws-smithy-kotlin-http = { module = "aws.smithy.kotlin:http-jvm", version.ref = "managed-aws-smithy-kotlin-http-hea8fa947b4d3" }
+aws-smithy-kotlin-http-client-engine-crt = { module = "aws.smithy.kotlin:http-client-engine-crt", version.ref = "managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467" }
+aws-smithy-kotlin-http-client-engine-default = { module = "aws.smithy.kotlin:http-client-engine-default", version.ref = "managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5" }
+aws-smithy-kotlin-http-client-engine-okhttp = { module = "aws.smithy.kotlin:http-client-engine-okhttp", version.ref = "managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604" }
+aws-smithy-kotlin-serde = { module = "aws.smithy.kotlin:serde-jvm", version.ref = "managed-aws-smithy-kotlin-serde-hb6c6080166ba" }
+aws-smithy-kotlin-serde-json = { module = "aws.smithy.kotlin:serde-json-jvm", version.ref = "managed-aws-smithy-kotlin-serde-json-h39078dce8d4a" }
+aws2-aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version.ref = "aws2-crt" }
+batik-codec = { module = "org.apache.xmlgraphics:batik-codec", version.ref = "managed-batik-codec-h3ee064576347" }
+batik-transcoder = { module = "org.apache.xmlgraphics:batik-transcoder", version.ref = "managed-batik-transcoder-h86723efb5618" }
+blaze-persistence-core-api-jakarta = { module = "com.blazebit:blaze-persistence-core-api-jakarta", version.ref = "managed-blaze-persistence-core-api-jakarta-heb5c993b1d4f" }
+blaze-persistence-core-impl-jakarta = { module = "com.blazebit:blaze-persistence-core-impl-jakarta", version.ref = "managed-blaze-persistence-core-impl-jakarta-h68985a289b7f" }
+blaze-persistence-entity-view-api-jakarta = { module = "com.blazebit:blaze-persistence-entity-view-api-jakarta", version.ref = "managed-blaze-persistence-entity-view-api-jakarta-h6c0e0444da3e" }
+blaze-persistence-entity-view-impl-jakarta = { module = "com.blazebit:blaze-persistence-entity-view-impl-jakarta", version.ref = "managed-blaze-persistence-entity-view-impl-jakarta-h264b9a052d09" }
+blaze-persistence-integration-hibernate7 = { module = "com.blazebit:blaze-persistence-integration-hibernate-7.0", version.ref = "managed-blaze-persistence-integration-hibernate7-hf2969830ce8a" }
+blaze-persistence-jpa-criteria-api-jakarta = { module = "com.blazebit:blaze-persistence-jpa-criteria-api-jakarta", version.ref = "managed-blaze-persistence-jpa-criteria-api-jakarta-hc8e49c83a834" }
+blaze-persistence-jpa-criteria-impl-jakarta = { module = "com.blazebit:blaze-persistence-jpa-criteria-impl-jakarta", version.ref = "managed-blaze-persistence-jpa-criteria-impl-jakarta-h82df0febb513" }
+blockhound = { module = "io.projectreactor.tools:blockhound", version.ref = "managed-blockhound-hb055fbbd9fc5" }
+blockhound-junit-platform = { module = "io.projectreactor.tools:blockhound-junit-platform", version.ref = "managed-blockhound-junit-platform-h797ad1fe6ad0" }
+brotli-dec = { module = "org.brotli:dec", version.ref = "managed-brotli-dec-ha0d853dec13b" }
+brotli4j = { module = "com.aayushatharva.brotli4j:brotli4j", version.ref = "managed-brotli4j-h4437d759d0e3" }
+brotli4j-native = { module = "com.aayushatharva.brotli4j:native-linux-x86_64", version.ref = "managed-brotli4j-native-hf7fa4d98af73" }
+bucket4j-caffeine = { module = "com.bucket4j:bucket4j_jdk17-caffeine", version.ref = "managed-bucket4j-caffeine-h2040f5a1af3f" }
+bucket4j-core = { module = "com.bucket4j:bucket4j_jdk17-core", version.ref = "managed-bucket4j-core-hf97cbeb8c1b0" }
+bucket4j-hazelcast = { module = "com.bucket4j:bucket4j_jdk17-hazelcast", version.ref = "managed-bucket4j-hazelcast-h3d419bd694ff" }
+bucket4j-hazelcast-all = { module = "com.bucket4j:bucket4j_jdk17-hazelcast-all", version.ref = "managed-bucket4j-hazelcast-all-ha7c9a74f33cc" }
+bucket4j-ignite = { module = "com.bucket4j:bucket4j_jdk17-ignite", version.ref = "managed-bucket4j-ignite-h5676d8442ce0" }
+bucket4j-infinispan-all = { module = "com.bucket4j:bucket4j_jdk17-infinispan-all", version.ref = "managed-bucket4j-infinispan-all-h3d39ac15c97f" }
+bucket4j-jcache = { module = "com.bucket4j:bucket4j_jdk17-jcache", version.ref = "managed-bucket4j-jcache-hfaa1c252ddcf" }
+bucket4j-jdk17-core = { module = "com.bucket4j:bucket4j_jdk17-core", version.ref = "managed-bucket4j-core-hf97cbeb8c1b0" }
+bucket4j-jdk17-lettuce = { module = "com.bucket4j:bucket4j_jdk17-lettuce", version.ref = "managed-bucket4j-jdk17-lettuce-hc74871d952dc" }
+bucket4j-lettuce = { module = "com.bucket4j:bucket4j_jdk17-lettuce", version.ref = "managed-bucket4j-jdk17-lettuce-hc74871d952dc" }
+bucket4j-redisson = { module = "com.bucket4j:bucket4j_jdk17-redisson", version.ref = "managed-bucket4j-redisson-h76c31c2384b7" }
+bucket4j-spring-boot = { module = "com.giffing.bucket4j.spring.boot.starter:bucket4j-spring-boot-starter", version.ref = "managed-bucket4j-spring-boot-h9e165a39a013" }
+byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "managed-byte-buddy-hcc97bcb92c6c" }
+byte-buddy-agent = { module = "net.bytebuddy:byte-buddy-agent", version.ref = "managed-byte-buddy-agent-h4bb8401d3e42" }
+cache2k-api = { module = "org.cache2k:cache2k-api", version.ref = "managed-cache2k-api-h3b8c9771f3f8" }
+cache2k-core = { module = "org.cache2k:cache2k-core", version.ref = "managed-cache2k-core-h94dceed7f1c0" }
+cache2k-jcache = { module = "org.cache2k:cache2k-jcache", version.ref = "managed-cache2k-jcache-h3fffa862ca25" }
+cache2k-micrometer = { module = "org.cache2k:cache2k-micrometer", version.ref = "managed-cache2k-micrometer-h201b319e0d09" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "managed-caffeine-hab48d8786c21" }
+caffeine-core = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "managed-caffeine-hab48d8786c21" }
+caffeine-jcache = { module = "com.github.ben-manes.caffeine:jcache", version.ref = "managed-caffeine-jcache-h8d431f051f8b" }
+caffeine-lib = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "managed-caffeine-hab48d8786c21" }
+cassandra-java-driver-core = { module = "org.apache.cassandra:java-driver-core", version.ref = "managed-cassandra-java-driver-core-h6b77df45befe" }
+cassandra-java-driver-core-shaded = { module = "org.apache.cassandra:java-driver-core-shaded", version.ref = "managed-cassandra-java-driver-core-shaded-h21923470239a" }
+cassandra-java-driver-mapper-processor = { module = "org.apache.cassandra:java-driver-mapper-processor", version.ref = "managed-cassandra-java-driver-mapper-processor-ha66efc8f26b8" }
+cassandra-java-driver-mapper-runtime = { module = "org.apache.cassandra:java-driver-mapper-runtime", version.ref = "managed-cassandra-java-driver-mapper-runtime-hb79ea0fc6514" }
+cassandra-java-driver-metrics-micrometer = { module = "org.apache.cassandra:java-driver-metrics-micrometer", version.ref = "managed-cassandra-java-driver-metrics-micrometer-hd7e953cb0383" }
+cassandra-java-driver-query-builder = { module = "org.apache.cassandra:java-driver-query-builder", version.ref = "managed-cassandra-java-driver-query-builder-h2d9a372a6dcc" }
+cassandra-java-driver-test-infra = { module = "org.apache.cassandra:java-driver-test-infra", version.ref = "managed-cassandra-java-driver-test-infra-h9985d453048c" }
+chaos-monkey-spring-boot = { module = "de.codecentric:chaos-monkey-spring-boot", version.ref = "managed-chaos-monkey-spring-boot-h50f5cabacb36" }
+chronicle-wire = { module = "net.openhft:chronicle-wire", version.ref = "managed-chronicle-wire-h06e3563f2bba" }
+clickhouse-jdbc = { module = "com.clickhouse:clickhouse-jdbc", version.ref = "clickhouse-jdbc" }
+commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "managed-commons-beanutils-h7574b415a4d9" }
+commons-collections4 = { module = "org.apache.commons:commons-collections4", version.ref = "managed-commons-collections4-h35d15f28a05a" }
+commons-crypto = { module = "org.apache.commons:commons-crypto", version.ref = "managed-commons-crypto-h5cbf9426ce21" }
+commons-digest3 = { module = "org.apache.commons:commons-digester3", version.ref = "managed-commons-digest3-hce0fda71c84d" }
+commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "managed-commons-math3-hdd6a3a403590" }
+commons-math4 = { module = "org.apache.commons:commons-math4-core", version.ref = "managed-commons-math4-h2ac839d8e289" }
+commons-rng-simple = { module = "org.apache.commons:commons-rng-simple", version.ref = "commons-rng-simple" }
+commons-text = { module = "org.apache.commons:commons-text", version.ref = "commons-text" }
+commons-validator = { module = "commons-validator:commons-validator", version.ref = "managed-commons-validator-hb769ab8b32c1" }
+curator-framework = { module = "org.apache.curator:curator-framework", version.ref = "managed-curator-framework-hb4f00be0bc92" }
+curator-recipes = { module = "org.apache.curator:curator-recipes", version.ref = "managed-curator-recipes-hcc5f007e45c3" }
+datafaker = { module = "net.datafaker:datafaker", version.ref = "managed-datafaker-h8e6439793185" }
+detekt-formatting-legacy = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt-formatting-legacy" }
+detekt-rules-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt-dev" }
+duckdb-jdbc = { module = "org.duckdb:duckdb_jdbc", version.ref = "duckdb-jdbc" }
+eclipse-collections = { module = "org.eclipse.collections:eclipse-collections", version.ref = "managed-eclipse-collections-h1c86dd26d57b" }
+eclipse-collections-forkjoin = { module = "org.eclipse.collections:eclipse-collections-forkjoin", version.ref = "managed-eclipse-collections-forkjoin-h5a851bdc88e1" }
+eclipse-collections-testutils = { module = "org.eclipse.collections:eclipse-collections-testutils", version.ref = "managed-eclipse-collections-testutils-h02668598348d" }
+ehcache = { module = "org.ehcache:ehcache", version.ref = "managed-ehcache-he9dea86fd186" }
+ehcache-clustered = { module = "org.ehcache:ehcache-clustered", version.ref = "managed-ehcache-clustered-h0a0edf676e4d" }
+ehcache-transactions = { module = "org.ehcache:ehcache-transactions", version.ref = "managed-ehcache-transactions-h8c2d00308bb1" }
+elasticmq-rest-sqs = { module = "org.elasticmq:elasticmq-rest-sqs_2.13", version.ref = "elasticmq-rest-sqs" }
+elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "managed-elasticsearch-java-h5984397084e4" }
+elasticsearch-rest-client = { module = "org.elasticsearch.client:elasticsearch-rest-client", version.ref = "managed-elasticsearch-rest-client-h89bafdaca9a6" }
+elasticsearch-rest-client-sniffer = { module = "org.elasticsearch.client:elasticsearch-rest-client-sniffer", version.ref = "managed-elasticsearch-rest-client-sniffer-h440b3d642cb0" }
+esri-geometry-api = { module = "com.esri.geometry:esri-geometry-api", version.ref = "managed-esri-geometry-api-h91fce33325cc" }
+fastjson2 = { module = "com.alibaba.fastjson2:fastjson2", version.ref = "managed-fastjson2-h14dfaa6b626f" }
+fastjson2-extension = { module = "com.alibaba.fastjson2:fastjson2-extension", version.ref = "managed-fastjson2-extension-hd772e403fe72" }
+fastjson2-extension-spring6 = { module = "com.alibaba.fastjson2:fastjson2-extension-spring6", version.ref = "managed-fastjson2-extension-spring6-h8d2fb4434699" }
+fastjson2-kotlin = { module = "com.alibaba.fastjson2:fastjson2-kotlin", version.ref = "managed-fastjson2-kotlin-ha7a4f6417cad" }
+feign-bom = { module = "io.github.openfeign:feign-bom", version.ref = "managed-feign-bom-h4b8988368b53" }
+feign-core = { module = "io.github.openfeign:feign-core", version.ref = "managed-feign-core-h8669e7a2d5e6" }
+feign-gson = { module = "io.github.openfeign:feign-gson", version.ref = "managed-feign-gson-h5a6c842f930d" }
+feign-hc5 = { module = "io.github.openfeign:feign-hc5", version.ref = "managed-feign-hc5-hf648e5631615" }
+feign-httpclient = { module = "io.github.openfeign:feign-httpclient", version.ref = "managed-feign-httpclient-h7b3925f99279" }
+feign-jackson = { module = "io.github.openfeign:feign-jackson", version.ref = "managed-feign-jackson-hc7f6c1789b6c" }
+feign-java11 = { module = "io.github.openfeign:feign-java11", version.ref = "managed-feign-java11-h67cd17e71e91" }
+feign-jaxb = { module = "io.github.openfeign:feign-jaxb", version.ref = "managed-feign-jaxb-h62a08137f4e5" }
+feign-jaxrs = { module = "io.github.openfeign:feign-jaxrs", version.ref = "managed-feign-jaxrs-he8fea5942103" }
+feign-jaxrs2 = { module = "io.github.openfeign:feign-jaxrs2", version.ref = "managed-feign-jaxrs2-haa7b5107498b" }
+feign-kotlin = { module = "io.github.openfeign:feign-kotlin", version.ref = "managed-feign-kotlin-h747af15ee7f3" }
+feign-micrometer = { module = "io.github.openfeign:feign-micrometer", version.ref = "managed-feign-micrometer-h587706e11f57" }
+feign-mock = { module = "io.github.openfeign:feign-mock", version.ref = "managed-feign-mock-hbcaea42bc807" }
+feign-okhttp = { module = "io.github.openfeign:feign-okhttp", version.ref = "managed-feign-okhttp-h168d54f92d6d" }
+feign-reactive-wrappers = { module = "io.github.openfeign:feign-reactive-wrappers", version.ref = "managed-feign-reactive-wrappers-haa168cbfb41a" }
+feign-slf4j = { module = "io.github.openfeign:feign-slf4j", version.ref = "managed-feign-slf4j-hb5e63c6c5c07" }
+findbugs = { module = "com.google.code.findbugs:jsr305", version.ref = "managed-findbugs-h997b9e9970e7" }
+gatling-charts-highcharts = { module = "io.gatling.highcharts:gatling-charts-highcharts", version.ref = "gatling" }
+gatling-core-java = { module = "io.gatling:gatling-core-java", version.ref = "gatling" }
+gatling-http-java = { module = "io.gatling:gatling-http-java", version.ref = "gatling-http-java" }
+geotools31-epsg-hsql = { module = "org.geotools:gt-epsg-hsql", version.ref = "geotools31" }
+geotools31-referencing = { module = "org.geotools:gt-referencing", version.ref = "geotools31" }
+geotools31-shapefile = { module = "org.geotools:gt-shapefile", version.ref = "geotools31" }
+geotools34-epsg-hsql = { module = "org.geotools:gt-epsg-hsql", version.ref = "geotools34" }
+geotools34-referencing = { module = "org.geotools:gt-referencing", version.ref = "geotools34" }
+geotools34-shapefile = { module = "org.geotools:gt-shapefile", version.ref = "geotools34" }
+glassfish-expressly = { module = "org.glassfish.expressly:expressly", version.ref = "managed-glassfish-expressly-h75ee2e103b0a" }
+google-api-services-bigquery = { module = "com.google.apis:google-api-services-bigquery", version.ref = "managed-google-api-services-bigquery-h784b3443228d" }
+google-maps-services = { module = "com.google.maps:google-maps-services", version.ref = "google-maps-services" }
+groovy = { module = "org.apache.groovy:groovy", version.ref = "managed-groovy-h1ef057f2b39e" }
+groovy-jsr223 = { module = "org.apache.groovy:groovy-jsr223", version.ref = "managed-groovy-jsr223-h7a8657ed8c7a" }
+grpc-alts = { module = "io.grpc:grpc-alts", version.ref = "managed-grpc-alts-h3218508eb39f" }
+grpc-api = { module = "io.grpc:grpc-api", version.ref = "managed-grpc-api-hdabf163ae157" }
+grpc-auth = { module = "io.grpc:grpc-auth", version.ref = "managed-grpc-auth-h583e5ccc6223" }
+grpc-bom = { module = "io.grpc:grpc-bom", version.ref = "managed-grpc-bom-hc75099432358" }
+grpc-context = { module = "io.grpc:grpc-context", version.ref = "managed-grpc-context-h225448938a10" }
+grpc-core = { module = "io.grpc:grpc-core", version.ref = "managed-grpc-core-h189dc7c8072a" }
+grpc-google-common-protos = { module = "com.google.api.grpc:grpc-google-common-protos", version.ref = "managed-grpc-google-common-protos-h49f5a7d50588" }
+grpc-grpclb = { module = "io.grpc:grpc-grpclb", version.ref = "managed-grpc-grpclb-h9b313ba397a3" }
+grpc-inprocess = { module = "io.grpc:grpc-inprocess", version.ref = "managed-grpc-inprocess-h565ab81cda0d" }
+grpc-kotlin-stub = { module = "io.grpc:grpc-kotlin-stub", version.ref = "managed-grpc-kotlin-stub-hb3943aafd993" }
+grpc-netty = { module = "io.grpc:grpc-netty", version.ref = "managed-grpc-netty-h708b94fb93af" }
+grpc-netty-shaded = { module = "io.grpc:grpc-netty-shaded", version.ref = "managed-grpc-netty-shaded-h8085e740136c" }
+grpc-okhttp = { module = "io.grpc:grpc-okhttp", version.ref = "managed-grpc-okhttp-h0d955a8fb084" }
+grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "managed-grpc-protobuf-h35d35d06389c" }
+grpc-protobuf-lite = { module = "io.grpc:grpc-protobuf-lite", version.ref = "managed-grpc-protobuf-lite-h47c931bfc8ea" }
+grpc-protoc-gen-grpc-java = { module = "io.grpc:protoc-gen-grpc-java", version.ref = "managed-grpc-protoc-gen-grpc-java-h6c7443aec764" }
+grpc-protoc-gen-grpc-kotlin = { module = "io.grpc:protoc-gen-grpc-kotlin", version.ref = "managed-grpc-protoc-gen-grpc-kotlin-h8643385749ff" }
+grpc-services = { module = "io.grpc:grpc-services", version.ref = "managed-grpc-services-h1af92d474331" }
+grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "managed-grpc-stub-h9b6f2f5dd399" }
+grpc-testing = { module = "io.grpc:grpc-testing", version.ref = "managed-grpc-testing-h4a87d8390f04" }
+gson = { module = "com.google.code.gson:gson", version.ref = "managed-gson-h005f9a4ed5e8" }
+gson-javatime-serializers = { module = "com.fatboyindustrial.gson-javatime-serialisers:gson-javatime-serialisers", version.ref = "managed-gson-javatime-serializers-hc8fb4565ebce" }
+h2-v1 = { module = "com.h2database:h2", version.ref = "h2-v1" }
+h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
+hibernate-reactive-core = { module = "org.hibernate.reactive:hibernate-reactive-core", version.ref = "hibernate-reactive-core" }
+hibernate-validator = { module = "org.hibernate.validator:hibernate-validator", version.ref = "managed-hibernate-validator-h7d30a1cdc50f" }
+hibernate-validator-annotation-processor = { module = "org.hibernate:hibernate-validator-annotation-processor", version.ref = "managed-hibernate-validator-annotation-processor-h75eec762f706" }
+hibernate73-envers = { module = "org.hibernate.orm:hibernate-envers", version.ref = "hibernate73" }
+hsqldb = { module = "org.hsqldb:hsqldb", version.ref = "managed-hsqldb-hd202426a1d17" }
+ignite-spring-cache-ext = { module = "org.apache.ignite:ignite-spring-cache-ext", version.ref = "managed-ignite-spring-cache-ext-hb26f604e9198" }
+ignite-spring-data-ext = { module = "org.apache.ignite:ignite-spring-data-2.2-ext", version.ref = "managed-ignite-spring-data-ext-h10132558c2df" }
+immudb4j = { module = "io.codenotary:immudb4j", version.ref = "managed-immudb4j-h67918f282916" }
+influxdb-java = { module = "org.influxdb:influxdb-java", version.ref = "managed-influxdb-java-h5feae83b4728" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "managed-jackson-annotations-h5ef427554da9" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "managed-jackson-core-h40e274bcba5b" }
+jackson-dataformat-msgpack = { module = "org.msgpack:jackson-dataformat-msgpack", version.ref = "managed-jackson-dataformat-msgpack-h2e3b8aad6dd7" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "managed-jackson-module-kotlin-ha5b389df3865" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson2" }
+jackson3-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson3" }
+jakarta-annotation-api = { module = "jakarta.annotation:jakarta.annotation-api", version.ref = "managed-jakarta-annotation-api-h52ab16cefc13" }
+jakarta-el-api = { module = "jakarta.el:jakarta.el-api", version.ref = "managed-jakarta-el-api-hbc327384c985" }
+jakarta-inject-api = { module = "jakarta.inject:jakarta.inject-api", version.ref = "jakarta-inject-api" }
+jakarta-interceptor-api = { module = "jakarta.interceptor:jakarta.interceptor-api", version.ref = "managed-jakarta-interceptor-api-hc384f774c62d" }
+jakarta-jms-api = { module = "jakarta.jms:jakarta.jms-api", version.ref = "managed-jakarta-jms-api-hb7ad3ee4a6b1" }
+jakarta-json = { module = "org.glassfish:jakarta.json", version.ref = "managed-jakarta-json-h11e82862dff8" }
+jakarta-json-api = { module = "jakarta.json:jakarta.json-api", version.ref = "managed-jakarta-json-api-hfb0fbe402818" }
+jakarta-json-glassfish = { module = "org.glassfish:jakarta.json", version.ref = "managed-jakarta-json-h11e82862dff8" }
+jakarta-json-impl = { module = "org.glassfish:jakarta.json", version.ref = "managed-jakarta-json-h11e82862dff8" }
+jakarta-persistence-v31 = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence-v31" }
+jakarta-persistence-v32 = { module = "jakarta.persistence:jakarta.persistence-api", version.ref = "jakarta-persistence-v32" }
+jakarta-servlet-api = { module = "jakarta.servlet:jakarta.servlet-api", version.ref = "managed-jakarta-servlet-api-hfbbb2c8a940c" }
+jakarta-transaction-api = { module = "jakarta.transaction:jakarta.transaction-api", version.ref = "managed-jakarta-transaction-api-he286b1438e0e" }
+jakarta-validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "managed-jakarta-validation-api-hb8e885f83ced" }
+jakarta-ws-rs-api = { module = "jakarta.ws.rs:jakarta.ws.rs-api", version.ref = "managed-jakarta-ws-rs-api-h382dc3038616" }
+janino = { module = "org.codehaus.janino:janino", version.ref = "managed-janino-hf73c9e4ee9ce" }
+janino-commons-compiler = { module = "org.codehaus.janino:commons-compiler", version.ref = "managed-janino-commons-compiler-h079dd297be76" }
+java-uuid-generator = { module = "com.fasterxml.uuid:java-uuid-generator", version.ref = "managed-java-uuid-generator-h25806355c9c1" }
+javassist = { module = "org.javassist:javassist", version.ref = "managed-javassist-ha87aa6d81eca" }
+javax-cache-api = { module = "javax.cache:cache-api", version.ref = "managed-javax-cache-api-h4e3ca544cac6" }
+javax-money-api = { module = "javax.money:money-api", version.ref = "managed-javax-money-api-h2dc979164246" }
+javers-core = { module = "org.javers:javers-core", version.ref = "managed-javers-core-had7b72eff626" }
+jctools-core = { module = "org.jctools:jctools-core", version.ref = "managed-jctools-core-he50deb03ab24" }
+jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "managed-jetbrains-annotations-h8e47d953b4fc" }
+jetcd-core = { module = "io.etcd:jetcd-core", version.ref = "managed-jetcd-core-hda3167e37563" }
+jfalkordb = { module = "com.falkordb:jfalkordb", version.ref = "jfalkordb" }
+jjwt-api = { module = "io.jsonwebtoken:jjwt-api", version.ref = "managed-jjwt-api-h3e7a59adf22e" }
+jjwt-extensions = { module = "io.jsonwebtoken:jjwt-extensions", version.ref = "managed-jjwt-extensions-heede014ce2e0" }
+jjwt-impl = { module = "io.jsonwebtoken:jjwt-impl", version.ref = "managed-jjwt-impl-h61f86d61bbc6" }
+jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "managed-jjwt-jackson-h20db328f3ac2" }
+jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "managed-jmh-core-h350a653f63e5" }
+jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "managed-jmh-generator-annprocess-he0aa0964b91a" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "managed-jna-he2e3f813de81" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "managed-jna-platform-h90667451aeca" }
+jnats = { module = "io.nats:jnats", version.ref = "jnats" }
+jsonassert-v1 = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert-v1" }
+jsonassert-v2 = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert-v2" }
+jsonpath-v2 = { module = "com.jayway.jsonpath:json-path", version.ref = "jsonpath-v2" }
+jsonpath-v3 = { module = "com.jayway.jsonpath:json-path", version.ref = "jsonpath-v3" }
+jts-core = { module = "org.locationtech.jts:jts-core", version.ref = "managed-jts-core-haadd5e12cfd1" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "managed-junit-bom-h61cd2dcaa536" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "managed-junit-jupiter-hc9d62f8dba36" }
+junit-jupiter-all = { module = "org.junit.jupiter:junit-jupiter", version.ref = "managed-junit-jupiter-hc9d62f8dba36" }
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "managed-junit-jupiter-api-hbdb647c8c063" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "managed-junit-jupiter-engine-h100e4f4488c1" }
+junit-jupiter-migrationsupport = { module = "org.junit.jupiter:junit-jupiter-migrationsupport", version.ref = "managed-junit-jupiter-migrationsupport-hc68f8f05bd6d" }
+junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "managed-junit-jupiter-params-hecee21232a80" }
+junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version.ref = "managed-junit-platform-commons-he1ea011b202a" }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version.ref = "managed-junit-platform-engine-ha913b5a2622e" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "managed-junit-platform-launcher-h606d910fe011" }
+junit-platform-suite-api = { module = "org.junit.platform:junit-platform-suite-api", version.ref = "managed-junit-platform-suite-api-h92cc87dc62ce" }
+junit-platform-suite-engine = { module = "org.junit.platform:junit-platform-suite-engine", version.ref = "managed-junit-platform-suite-engine-h0ac35326fce5" }
+junit-platform1-runner = { module = "org.junit.platform:junit-platform-runner", version.ref = "junit-platform1-runner" }
+junit-platform6-runner = { module = "org.junit.platform:junit-platform-runner", version.ref = "junit-platform6-runner" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "managed-junit-vintage-engine-hc9c190fac5a4" }
+jvips-build69bf715 = { module = "com.criteo:jvips", version.ref = "jvips-build69bf715" }
+jvips-buildf9dc8c9 = { module = "com.criteo:jvips", version.ref = "jvips-buildf9dc8c9" }
+keycloak-testcontainers = { module = "com.github.dasniko:testcontainers-keycloak", version.ref = "managed-keycloak-testcontainers-hcf9d84cd8012" }
+kotlin20-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin20" }
+kotlin20-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin20" }
+kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "managed-kotlinx-atomicfu-h030266c8e36a" }
+kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "managed-kotlinx-benchmark-runtime-hb75fd55df187" }
+kotlinx-benchmark-runtime-jvm = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime-jvm", version.ref = "managed-kotlinx-benchmark-runtime-jvm-hde0985ebfbfe" }
+kotlinx-benchmark-runtimejvm = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime-jvm", version.ref = "managed-kotlinx-benchmark-runtime-jvm-hde0985ebfbfe" }
+kryo = { module = "com.esotericsoftware:kryo", version.ref = "managed-kryo-hf4c946aa49cc" }
+kryo5 = { module = "com.esotericsoftware:kryo", version.ref = "managed-kryo-hf4c946aa49cc" }
+kubernetes-client-java = { module = "io.kubernetes:client-java", version.ref = "managed-kubernetes-client-java-h5d7d133e2fe3" }
+kuromoji-ipadic = { module = "com.atilika.kuromoji:kuromoji-ipadic", version.ref = "managed-kuromoji-ipadic-hb7007407db11" }
+kuromoji-unidic = { module = "com.atilika.kuromoji:kuromoji-unidic", version.ref = "managed-kuromoji-unidic-h0a17e0496ae8" }
+libphonenumber-v8 = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumber-v8" }
+libphonenumber-v9 = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumber-v9" }
+lingua = { module = "com.github.pemistahl:lingua", version.ref = "managed-lingua-h4936611a8d42" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+logback-core = { module = "ch.qos.logback:logback-core", version.ref = "logback" }
+logback-slack-appender = { module = "com.github.maricn:logback-slack-appender", version.ref = "managed-logback-slack-appender-h2b7fd566afe1" }
+mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "managed-mapstruct-h3b44cb74b734" }
+mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "managed-mapstruct-processor-h5742500cdc8a" }
+mariadb-java-client = { module = "org.mariadb.jdbc:mariadb-java-client", version.ref = "managed-mariadb-java-client-h168cf4e91ffa" }
+maxmind-geoip2 = { module = "com.maxmind.geoip2:geoip2", version.ref = "maxmind-geoip2" }
+metadata-extractor = { module = "com.drewnoakes:metadata-extractor", version.ref = "managed-metadata-extractor-h364d52ce1b74" }
+micrometer-bom = { module = "io.micrometer:micrometer-bom", version.ref = "managed-micrometer-bom-h46388331a0e5" }
+micrometer-context-propagation = { module = "io.micrometer:context-propagation", version.ref = "managed-micrometer-context-propagation-heeb642cde50d" }
+micrometer-tracing = { module = "io.micrometer:micrometer-tracing", version.ref = "managed-micrometer-tracing-h5a2d98f31144" }
+micrometer-tracing-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "managed-micrometer-tracing-bom-h5811d99b9094" }
+micrometer-tracing-bridge-brave = { module = "io.micrometer:micrometer-tracing-bridge-brave", version.ref = "managed-micrometer-tracing-bridge-brave-h7de924ea55c5" }
+micrometer-tracing-bridge-otel = { module = "io.micrometer:micrometer-tracing-bridge-otel", version.ref = "managed-micrometer-tracing-bridge-otel-he56ec84f2b0f" }
+micrometer-tracing-integration-test = { module = "io.micrometer:micrometer-tracing-integration-test", version.ref = "managed-micrometer-tracing-integration-test-h1462ec78085f" }
+micrometer-tracing-test = { module = "io.micrometer:micrometer-tracing-test", version.ref = "managed-micrometer-tracing-test-h945eea8eda06" }
+milvus-sdk-java = { module = "io.milvus:milvus-sdk-java", version.ref = "managed-milvus-sdk-java-h565db6eded15" }
+minio-v8 = { module = "io.minio:minio", version.ref = "minio-v8" }
+minio-v9 = { module = "io.minio:minio", version.ref = "minio-v9" }
+mockk = { module = "io.mockk:mockk", version.ref = "managed-mockk-h9dd32a0538aa" }
+mockserver-client-java = { module = "org.mock-server:mockserver-client-java", version.ref = "managed-mockserver-client-java-hd19fa6cd8095" }
+mockserver-netty = { module = "org.mock-server:mockserver-netty", version.ref = "managed-mockserver-netty-h61f0a64eb51b" }
+mongo-bson = { module = "org.mongodb:bson", version.ref = "managed-mongo-bson-h61803c883cff" }
+mongo-bson-kotlin = { module = "org.mongodb:bson-kotlin", version.ref = "managed-mongo-bson-kotlin-hed39b6e511ea" }
+mongo-bson-kotlinx = { module = "org.mongodb:bson-kotlinx", version.ref = "managed-mongo-bson-kotlinx-he01bd4afeff0" }
+mongodb-driver-core = { module = "org.mongodb:mongodb-driver-core", version.ref = "managed-mongodb-driver-core-hbfb90642694b" }
+mongodb-driver-kotlin-coroutine = { module = "org.mongodb:mongodb-driver-kotlin-coroutine", version.ref = "managed-mongodb-driver-kotlin-coroutine-he8bb92bed8d2" }
+mongodb-driver-kotlin-extensions = { module = "org.mongodb:mongodb-driver-kotlin-extensions", version.ref = "managed-mongodb-driver-kotlin-extensions-h34903876c948" }
+mongodb-driver-kotlin-sync = { module = "org.mongodb:mongodb-driver-kotlin-sync", version.ref = "managed-mongodb-driver-kotlin-sync-hc2b49ebaef09" }
+mongodb-driver-legacy = { module = "org.mongodb:mongodb-driver-legacy", version.ref = "managed-mongodb-driver-legacy-he38e622ffa40" }
+mongodb-driver-reactivestreams = { module = "org.mongodb:mongodb-driver-reactivestreams", version.ref = "managed-mongodb-driver-reactivestreams-h52d3041ea8a5" }
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync", version.ref = "managed-mongodb-driver-sync-h8beacb2ba830" }
+mutiny = { module = "io.smallrye.reactive:mutiny", version.ref = "managed-mutiny-h947c6d130999" }
+mutiny-kotlin = { module = "io.smallrye.reactive:mutiny-kotlin", version.ref = "managed-mutiny-kotlin-hf287e2847d9d" }
+mvel2 = { module = "org.mvel:mvel2", version.ref = "managed-mvel2-h2ea4dbeb0e11" }
+mybatis = { module = "org.mybatis:mybatis", version.ref = "managed-mybatis-h0fef8d8f7f76" }
+mybatis-spring3 = { module = "org.mybatis:mybatis-spring", version.ref = "mybatis-spring3" }
+mybatis-spring4 = { module = "org.mybatis:mybatis-spring", version.ref = "mybatis-spring4" }
+nats-spring = { module = "io.nats:nats-spring", version.ref = "managed-nats-spring-h9ddf1b6453e3" }
+nats-spring-cloud-stream-binder = { module = "io.nats:nats-spring-cloud-stream-binder", version.ref = "managed-nats-spring-cloud-stream-binder-he637bb522350" }
+neo4j-bolt-connection-bom = { module = "org.neo4j.bolt:neo4j-bolt-connection-bom", version.ref = "managed-neo4j-bolt-connection-bom-h7783d6d91aad" }
+neo4j-bolt-connection-netty = { module = "org.neo4j.bolt:neo4j-bolt-connection-netty", version.ref = "managed-neo4j-bolt-connection-netty-hde6be92c15e6" }
+neo4j-bolt-connection-pooled = { module = "org.neo4j.bolt:neo4j-bolt-connection-pooled", version.ref = "managed-neo4j-bolt-connection-pooled-h0355e6822c7f" }
+neo4j-driver5 = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4j-driver5" }
+neo4j-driver6 = { module = "org.neo4j.driver:neo4j-java-driver", version.ref = "neo4j-driver6" }
+netty-tcnative-classes = { module = "io.netty:netty-tcnative-classes", version.ref = "managed-netty-tcnative-classes-h39fc93b48f6f" }
+netty4-all = { module = "io.netty:netty-all", version.ref = "netty4" }
+netty4-buffer = { module = "io.netty:netty-buffer", version.ref = "netty4" }
+netty4-codec = { module = "io.netty:netty-codec", version.ref = "netty4" }
+netty4-codec-dns = { module = "io.netty:netty-codec-dns", version.ref = "netty4" }
+netty4-codec-http = { module = "io.netty:netty-codec-http", version.ref = "netty4" }
+netty4-codec-http2 = { module = "io.netty:netty-codec-http2", version.ref = "netty4" }
+netty4-codec-socks = { module = "io.netty:netty-codec-socks", version.ref = "netty4" }
+netty4-common = { module = "io.netty:netty-common", version.ref = "netty4" }
+netty4-handler = { module = "io.netty:netty-handler", version.ref = "netty4" }
+netty4-handler-proxy = { module = "io.netty:netty-handler-proxy", version.ref = "netty4" }
+netty4-resolver = { module = "io.netty:netty-resolver", version.ref = "netty4" }
+netty4-resolver-dns = { module = "io.netty:netty-resolver-dns", version.ref = "netty4" }
+netty4-transport = { module = "io.netty:netty-transport", version.ref = "netty4" }
+objenesis = { module = "org.objenesis:objenesis", version.ref = "managed-objenesis-h7460768a532c" }
+okhttp3 = { module = "com.squareup.okhttp3:okhttp", version.ref = "managed-okhttp3-hb831cda848c0" }
+okhttp3-bom = { module = "com.squareup.okhttp3:okhttp-bom", version.ref = "managed-okhttp3-bom-h2c1e6cd75f1f" }
+okhttp3-coroutines = { module = "com.squareup.okhttp3:okhttp-coroutines", version.ref = "managed-okhttp3-coroutines-h9d5eb12a5613" }
+okhttp3-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "managed-okhttp3-logging-interceptor-he5852804ba5f" }
+okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "managed-okhttp3-mockwebserver-h4a80e9408983" }
+okhttp3-sse = { module = "com.squareup.okhttp3:okhttp-sse", version.ref = "managed-okhttp3-sse-h168da156924d" }
+okhttp3-urlconnection = { module = "com.squareup.okhttp3:okhttp-urlconnection", version.ref = "managed-okhttp3-urlconnection-h8e4dad6b26fc" }
+okio = { module = "com.squareup.okio:okio", version.ref = "managed-okio-ha706f986164c" }
+okio-fakefilesystem = { module = "com.squareup.okio:okio-fakefilesystem", version.ref = "managed-okio-fakefilesystem-hc9121603de7d" }
+open-korean-text = { module = "org.openkoreantext:open-korean-text", version.ref = "open-korean-text" }
+opentelemetry-alpha-bom = { module = "io.opentelemetry:opentelemetry-bom-alpha", version.ref = "managed-opentelemetry-alpha-bom-h1c695c9ae5d6" }
+oracle-ojdbc8 = { module = "com.oracle.ojdbc:ojdbc8", version.ref = "managed-oracle-ojdbc8-h64c1ef0eb450" }
+pgjdbc-ng = { module = "com.impossibl.pgjdbc-ng:pgjdbc-ng", version.ref = "managed-pgjdbc-ng-h1e2a5c3724aa" }
+pgvector = { module = "com.pgvector:pgvector", version.ref = "managed-pgvector-h4d188455fc16" }
+postgis-y2024 = { module = "net.postgis:postgis-jdbc", version.ref = "postgis-y2024" }
+postgis-y2025 = { module = "net.postgis:postgis-jdbc", version.ref = "postgis-y2025" }
+proj4j = { module = "org.locationtech.proj4j:proj4j", version.ref = "managed-proj4j-hd4cd408d5087" }
+proj4j-epsg = { module = "org.locationtech.proj4j:proj4j-epsg", version.ref = "managed-proj4j-epsg-h8f1aa4c45c67" }
+prometheus-simpleclient = { module = "io.prometheus:simpleclient", version.ref = "managed-prometheus-simpleclient-hb811bfb87959" }
+prometheus-simpleclient-common = { module = "io.prometheus:simpleclient_common", version.ref = "managed-prometheus-simpleclient-common-h129396431424" }
+prometheus-simpleclient-dropwizard = { module = "io.prometheus:simpleclient_dropwizard", version.ref = "managed-prometheus-simpleclient-dropwizard-hfc48a62a0f58" }
+prometheus-simpleclient-httpserver = { module = "io.prometheus:simpleclient_httpserver", version.ref = "managed-prometheus-simpleclient-httpserver-h90aaf7257454" }
+prometheus-simpleclient-pushgateway = { module = "io.prometheus:simpleclient_pushgateway", version.ref = "managed-prometheus-simpleclient-pushgateway-h8272c48a3443" }
+prometheus-simpleclient-spring-boot = { module = "io.prometheus:simpleclient_spring_boot", version.ref = "managed-prometheus-simpleclient-spring-boot-h8962ad0c759d" }
+prometheus-simpleclient-tracer-common = { module = "io.prometheus:simpleclient_tracer_common", version.ref = "managed-prometheus-simpleclient-tracer-common-h45e4a6ef99cd" }
+prometheus-simpleclient-tracer-otel = { module = "io.prometheus:simpleclient_tracer_otel", version.ref = "managed-prometheus-simpleclient-tracer-otel-h086a8faa8923" }
+prometheus-simpleclient-tracer-otel-agent = { module = "io.prometheus:simpleclient_tracer_otel_agent", version.ref = "managed-prometheus-simpleclient-tracer-otel-agent-h04172e704c8e" }
+proto-google-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version.ref = "managed-proto-google-common-protos-h5bc34896f941" }
+pulsar3-client = { module = "org.apache.pulsar:pulsar-client", version.ref = "pulsar3" }
+pulsar3-client-api = { module = "org.apache.pulsar:pulsar-client-api", version.ref = "pulsar3" }
+pulsar4-client = { module = "org.apache.pulsar:pulsar-client", version.ref = "pulsar4" }
+pulsar4-client-api = { module = "org.apache.pulsar:pulsar-client-api", version.ref = "pulsar4" }
+r2dbc-mariadb = { module = "org.mariadb:r2dbc-mariadb", version.ref = "managed-r2dbc-mariadb-h5b11561e1948" }
+r2dbc-mysql = { module = "io.asyncer:r2dbc-mysql", version.ref = "managed-r2dbc-mysql-hd139bc72be49" }
+r2dbc-pool = { module = "io.r2dbc:r2dbc-pool", version.ref = "managed-r2dbc-pool-had88f2f0087e" }
+r2dbc-postgresql = { module = "org.postgresql:r2dbc-postgresql", version.ref = "managed-r2dbc-postgresql-h38255c5a2805" }
+r2dbc-proxy = { module = "io.r2dbc:r2dbc-proxy", version.ref = "managed-r2dbc-proxy-h39152492a2ef" }
+r2dbc-spi = { module = "io.r2dbc:r2dbc-spi", version.ref = "managed-r2dbc-spi-hf93a51b06f68" }
+reactor-kafka = { module = "io.projectreactor.kafka:reactor-kafka", version.ref = "managed-reactor-kafka-hbc32b6659f95" }
+reactor-kafka4 = { module = "io.projectreactor.kafka:reactor-kafka", version.ref = "managed-reactor-kafka-hbc32b6659f95" }
+reflectasm = { module = "com.esotericsoftware:reflectasm", version.ref = "managed-reflectasm-h291c5317805f" }
+resilience4j-all = { module = "io.github.resilience4j:resilience4j-all", version.ref = "managed-resilience4j-all-h494ab7c18cb6" }
+resilience4j-annotations = { module = "io.github.resilience4j:resilience4j-annotations", version.ref = "managed-resilience4j-annotations-hd2539f10c3c9" }
+resilience4j-bom = { module = "io.github.resilience4j:resilience4j-bom", version.ref = "managed-resilience4j-bom-h0120ef1f893c" }
+resilience4j-bulkhead = { module = "io.github.resilience4j:resilience4j-bulkhead", version.ref = "managed-resilience4j-bulkhead-ha3a8f33e1edf" }
+resilience4j-cache = { module = "io.github.resilience4j:resilience4j-cache", version.ref = "managed-resilience4j-cache-ha27ae566c860" }
+resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "managed-resilience4j-circuitbreaker-h9910e7daf408" }
+resilience4j-core = { module = "io.github.resilience4j:resilience4j-core", version.ref = "managed-resilience4j-core-h21a5f3d95169" }
+resilience4j-feign = { module = "io.github.resilience4j:resilience4j-feign", version.ref = "managed-resilience4j-feign-h7abc65ba6bc9" }
+resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "managed-resilience4j-kotlin-h0aaa4cede2a4" }
+resilience4j-metrics = { module = "io.github.resilience4j:resilience4j-metrics", version.ref = "managed-resilience4j-metrics-h274ab6d559d2" }
+resilience4j-micrometer = { module = "io.github.resilience4j:resilience4j-micrometer", version.ref = "managed-resilience4j-micrometer-hba78480fc2f5" }
+resilience4j-ratelimiter = { module = "io.github.resilience4j:resilience4j-ratelimiter", version.ref = "managed-resilience4j-ratelimiter-hb9bda7e25744" }
+resilience4j-reactor = { module = "io.github.resilience4j:resilience4j-reactor", version.ref = "managed-resilience4j-reactor-h34941d7ab1fd" }
+resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "managed-resilience4j-retry-h8e41dab66bce" }
+resilience4j-spring = { module = "io.github.resilience4j:resilience4j-spring", version.ref = "managed-resilience4j-spring-h3ee754776801" }
+resilience4j-timelimiter = { module = "io.github.resilience4j:resilience4j-timelimiter", version.ref = "managed-resilience4j-timelimiter-h3180152373df" }
+rest-assured = { module = "io.rest-assured:rest-assured", version.ref = "managed-rest-assured-h659337b872cf" }
+rest-assured-all = { module = "io.rest-assured:rest-assured-all", version.ref = "managed-rest-assured-all-hb5e501ab9ca8" }
+rest-assured-json-path = { module = "io.rest-assured:json-path", version.ref = "managed-rest-assured-json-path-h17123d79a31d" }
+rest-assured-kotlin = { module = "io.rest-assured:kotlin-extensions", version.ref = "managed-rest-assured-kotlin-hdf2489fdc603" }
+retrofit2 = { module = "com.squareup.retrofit2:retrofit", version.ref = "managed-retrofit2-hc7e93e72db68" }
+retrofit2-adapter-java8 = { module = "com.squareup.retrofit2:adapter-java8", version.ref = "managed-retrofit2-adapter-java8-h0caee0bb0527" }
+retrofit2-adapter-reactor = { module = "com.jakewharton.retrofit:retrofit2-reactor-adapter", version.ref = "managed-retrofit2-adapter-reactor-h02159a9afe31" }
+retrofit2-adapter-rxjava2 = { module = "com.squareup.retrofit2:adapter-rxjava2", version.ref = "managed-retrofit2-adapter-rxjava2-hc063bddee4a5" }
+retrofit2-adapter-rxjava3 = { module = "com.squareup.retrofit2:adapter-rxjava3", version.ref = "managed-retrofit2-adapter-rxjava3-h631e71d3b60b" }
+retrofit2-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "managed-retrofit2-converter-jackson-hced01312a2e9" }
+retrofit2-converter-moshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "managed-retrofit2-converter-moshi-hea255a0c7b10" }
+retrofit2-converter-protobuf = { module = "com.squareup.retrofit2:converter-protobuf", version.ref = "managed-retrofit2-converter-protobuf-h981151e9543c" }
+retrofit2-converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "managed-retrofit2-converter-scalars-h43e676f7461c" }
+retrofit2-mock = { module = "com.squareup.retrofit2:retrofit-mock", version.ref = "managed-retrofit2-mock-hbcb0b5f68a85" }
+sentry-logback = { module = "io.sentry:sentry-logback", version.ref = "managed-sentry-logback-h65fc12a36c8c" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "managed-snakeyaml-h08ebcb48b48a" }
+snappy-java = { module = "org.xerial.snappy:snappy-java", version.ref = "managed-snappy-java-h6a6d7f53de0b" }
+spring-cloud-aws-bom = { module = "io.awspring.cloud:spring-cloud-aws-dependencies", version.ref = "managed-spring-cloud-aws-bom-haebf9fb93e11" }
+spring-cloud-dependencies = { module = "org.springframework.cloud:spring-cloud-dependencies", version.ref = "managed-spring-cloud-dependencies-hfea315df9a2c" }
+spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "managed-spring-modulith-bom-h2500740a4fa4" }
+spring-statemachine-bom = { module = "org.springframework.statemachine:spring-statemachine-bom", version.ref = "managed-spring-statemachine-bom-h4672ad237870" }
+spring-statemachine-core = { module = "org.springframework.statemachine:spring-statemachine-core", version.ref = "managed-spring-statemachine-core-hd0ee55525037" }
+springmockk = { module = "com.ninja-squad:springmockk", version.ref = "managed-springmockk-h5eca79ba4c97" }
+starrocks-connector-j = { module = "com.starrocks:starrocks-connector-j", version.ref = "managed-starrocks-connector-j-h5d416dd6b46c" }
+tess4j = { module = "net.sourceforge.tess4j:tess4j", version.ref = "managed-tess4j-h8ef44ff63554" }
+testcontainers-ministack = { module = "org.ministack:testcontainers-ministack", version.ref = "managed-testcontainers-ministack-h8672eda0c12d" }
+testcontainers-opensearch = { module = "org.opensearch:opensearch-testcontainers", version.ref = "managed-testcontainers-opensearch-h481cd99f489d" }
+tink = { module = "com.google.crypto.tink:tink", version.ref = "managed-tink-h958d8d1f4e22" }
+tinkergraph-gremlin = { module = "org.apache.tinkerpop:tinkergraph-gremlin", version.ref = "managed-tinkergraph-gremlin-h3519ae0db798" }
+tinkerpop-gremlin-core = { module = "org.apache.tinkerpop:gremlin-core", version.ref = "managed-tinkerpop-gremlin-core-h01c4bf1b8f0e" }
+trino-jdbc = { module = "io.trino:trino-jdbc", version.ref = "trino-jdbc" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "managed-turbine-h3f508fcc25de" }
+turbine-jvm = { module = "app.cash.turbine:turbine-jvm", version.ref = "managed-turbine-jvm-h7ab4029cd45c" }
+twelvemonkeys-imageio-core = { module = "com.twelvemonkeys.imageio:imageio-core", version.ref = "managed-twelvemonkeys-imageio-core-hb707b0907e80" }
+twelvemonkeys-imageio-metadata = { module = "com.twelvemonkeys.imageio:imageio-metadata", version.ref = "managed-twelvemonkeys-imageio-metadata-haa9e13fb9011" }
+twelvemonkeys-imageio-tiff = { module = "com.twelvemonkeys.imageio:imageio-tiff", version.ref = "managed-twelvemonkeys-imageio-tiff-h567707adb501" }
+typesafe-config = { module = "com.typesafe:config", version.ref = "managed-typesafe-config-hff95437ffd9d" }
+ucar-cdm-core = { module = "edu.ucar:cdm-core", version.ref = "managed-ucar-cdm-core-h6dd13f7ed579" }
+ucar-netcdf4 = { module = "edu.ucar:netcdf4", version.ref = "managed-ucar-netcdf4-hb6fb82574668" }
+uuid-creator = { module = "com.github.f4b6a3:uuid-creator", version.ref = "managed-uuid-creator-h4df8319fa29b" }
+vault-java-driver = { module = "com.bettercloud:vault-java-driver", version.ref = "managed-vault-java-driver-had2baeed8662" }
+vertx4-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx4" }
+vertx4-web-common = { module = "io.vertx:vertx-web-common", version.ref = "vertx4" }
+vips-ffm = { module = "app.photofox.vips-ffm:vips-ffm-core", version.ref = "managed-vips-ffm-hb3445974524e" }
+weaviate-client = { module = "io.weaviate:client6", version.ref = "managed-weaviate-client-hef91a8fd7caa" }
+wiremock = { module = "org.wiremock:wiremock", version.ref = "managed-wiremock-hc4d32ce4fece" }
+xz = { module = "org.tukaani:xz", version.ref = "managed-xz-h8acc86c069bd" }
+zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version.ref = "managed-zero-allocation-hashing-h93f685c6dbfd" }
+zipkin-brave = { module = "io.zipkin.brave:brave", version.ref = "brave" }
+zipkin-brave-tests = { module = "io.zipkin.brave:brave-tests", version.ref = "brave" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "managed-zxing-core-hca5061ea4926" }
+zxing-javase = { module = "com.google.zxing:javase", version.ref = "managed-zxing-javase-hfc56b4ec065f" }
+# </generated-central-authority-libraries>
 # </external-managed-modules by dependency governance>
 
 # <generated-managed-modules by scripts/sync-managed-catalog.py>

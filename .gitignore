@@ -30,6 +30,8 @@ Thumbs.db
 # Local env
 local.properties
 .env
+__pycache__/
+*.py[cod]
 .omx/
 
 **/.profileconfig.json

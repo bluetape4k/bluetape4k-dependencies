@@ -1,0 +1,8 @@
+[versions]
+demo-version = "1.0.0"
+
+[libraries]
+demo = { module = "org.example:demo", version.ref = "demo-version" }
+
+[bundles]
+demo-bundle = ["demo"]

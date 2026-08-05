@@ -1,0 +1,96 @@
+{
+  "catalog": {
+    "carrier-head": "5afc259a6d97870bcec2b9a1089e0f4bbb70f980",
+    "content-commit": "5afc259a6d97870bcec2b9a1089e0f4bbb70f980",
+    "sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c"
+  },
+  "full-builds": {
+    "failures": 0,
+    "repositories": {
+      "bluetape4k-aws": {
+        "head": "7584c2f39855034e4f4237e123544b25170d449f",
+        "log-sha256": "78d733dddc8507b89242e4ba49324100e8d9614e27cc29ddbb25984a63f0e796"
+      },
+      "bluetape4k-experimental": {
+        "head": "533082b6dc819689f94e0a91e77a7760baf1a2c4",
+        "log-sha256": "e7ba1306eefb2bb30c7cb7e321f76d800e80b20ac55f3e0ecd7873e1b7af5b4b"
+      },
+      "bluetape4k-exposed": {
+        "head": "16a8fed2253e729216d4499baf87e0ef0a7fad2a",
+        "log-sha256": "4389f9f1bdf57b4076ba2c6a0ec859521d20fe48303fdbc66135f6f0aa75adba"
+      },
+      "bluetape4k-graph": {
+        "head": "95677bb7d691ff7f77a95ad14203c7fa4009a553",
+        "log-sha256": "3b104460785ca3ebe42b8951dba43e43615b2adc7b9089d0b340f380c52c2db6"
+      },
+      "bluetape4k-image": {
+        "head": "295c7228d679c0cdc56f5d7fb4eaf4dfa14a9cbe",
+        "log-sha256": "bf46f033b15411a0ec3c3412b47939c81222098b26d97a0e69a8fa583071cc7a"
+      },
+      "bluetape4k-javers": {
+        "head": "6ac3b824bfeb6d43977166bce8e1bbef4ce25108",
+        "log-sha256": "46b44ea804f3f3fe5994d835a00d3974ef0c320113e537038592ecf3977ef0c6"
+      },
+      "bluetape4k-leader": {
+        "head": "7f6bcc51db0bf3fcb8dc9794dd12aac17d22a65d",
+        "log-sha256": "63aaa748df59edd12b6ddd9d837209dfc999205eeecb6c11e9658b9cdc89d9c4"
+      },
+      "bluetape4k-projects": {
+        "head": "10c3781344597d2f97a24d466907bfbd1010310f",
+        "log-sha256": "4e9981821ea12f478ef9216c0607672d0a457c3c4422dc75b65ddf88dea3041b"
+      },
+      "bluetape4k-text": {
+        "head": "dedfb886cb9d1df75e8f2922013e241ccfac4ae4",
+        "log-sha256": "453210d9274dce22393052cc0793e5afab6448450f2b60d7ea04409ffde5be47"
+      }
+    },
+    "status": "verified-local-candidate"
+  },
+  "publication-poms": {
+    "dependencies": 46023,
+    "failures": 0,
+    "files": 175,
+    "log-sha256": "5cb6b0d8a48a3b43de787dcaa243eea6d36da4d1e025aab490f319a4bca7be1d",
+    "maven-models": 175,
+    "repositories": 9,
+    "status": "verified-local-candidate"
+  },
+  "resolved-graphs": {
+    "observation-count": 286,
+    "receipt": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
+    "receipt-sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+    "spec-count": 143,
+    "status": "verified-resolved-graph"
+  },
+  "schema-version": 1,
+  "scope": {
+    "excluded": [
+      "bluetape4k-workshop",
+      "clinic-appointment",
+      "exposed-r2dbc-workshop",
+      "exposed-workshop",
+      "timefold-workshop"
+    ],
+    "included": [
+      "bluetape4k-projects",
+      "bluetape4k-aws",
+      "bluetape4k-experimental",
+      "bluetape4k-exposed",
+      "bluetape4k-graph",
+      "bluetape4k-image",
+      "bluetape4k-javers",
+      "bluetape4k-leader",
+      "bluetape4k-text"
+    ]
+  },
+  "side-effects": {
+    "catalog-tag-created": false,
+    "merged": false,
+    "published": false,
+    "release-created": false,
+    "semver-tag-created": false,
+    "workflow-dispatched": false
+  },
+  "status": "verified-local-candidate",
+  "verified-at": "2026-08-06"
+}

@@ -1,0 +1,113 @@
+{
+  "schema-version": 1,
+  "rollout": "2026-08-04-issue-169-latest-compatible-stable",
+  "catalog": {
+    "commit": "b2d0e37c0e7f5046f20e61ca530bf5c5edf5af84",
+    "sha256": "034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a"
+  },
+  "scope": {
+    "publishers": 9,
+    "catalog-consumers": 9,
+    "excluded": [
+      "bluetape4k-workshop",
+      "clinic-appointment",
+      "exposed-r2dbc-workshop",
+      "exposed-workshop",
+      "timefold-workshop"
+    ]
+  },
+  "repositories": {
+    "bluetape4k-projects": "13e8cb248c99566c73ca6b78253f8587fddd242d",
+    "bluetape4k-aws": "e9a50c626b08b0e1c3c1e7cd80269d29d1264567",
+    "bluetape4k-experimental": "8696248b9f7453edc5f86df9953ec6c9a716d36f",
+    "bluetape4k-exposed": "438b34d1de4eba3baec0c16ad2f503105caab845",
+    "bluetape4k-graph": "718d3dd500cd97d813cf6d8366fd989ffd95217d",
+    "bluetape4k-image": "5f4098bec00042f98cec2e56aad5d0f83dcd5612",
+    "bluetape4k-javers": "c9d2b87bb3318acf6b76b45cbba450a88c38cb7d",
+    "bluetape4k-leader": "50c5b65ce46594706badf2d1bba294a999b15d0a",
+    "bluetape4k-text": "e5e666f20a9cf19f1f83e48f481919d08ad46453"
+  },
+  "candidate-map-verification": {
+    "clean-worktrees": 10,
+    "settings-and-ci-ref-files-per-downstream": 2,
+    "sync-shared-versions": "pass",
+    "sync-dependabot-ignores": "pass",
+    "sync-managed-catalog": "pass"
+  },
+  "candidate-artifacts": {
+    "repository-map": {
+      "path": "build/issue-169/prepare/candidate-repositories.json",
+      "sha256": "12b7011c286c67df66b0ddf3fdca7eaa71d490eee1286ac86ceea695cd9644ec"
+    },
+    "cache-manifest": {
+      "path": "build/issue-169/prepare/cache-manifest.json",
+      "sha256": "d56e4f4f8b05875da8c1631ec225da4a45e913e9b4d2609e1fed2264e8f63aba"
+    },
+    "candidate-manifest": {
+      "path": "build/issue-169/prepare/candidate-manifest.json",
+      "sha256": "8a918d826b8894af463b1727d5bd4c0a99b16f377275e9bf195197a5f8388cbf"
+    },
+    "candidate-ledger": {
+      "path": "build/issue-169/prepare/candidate-ledger.json",
+      "sha256": "6fe9030dbb93933e0dd4ea0c052eb7cb125ced0abae365bc77f9e8a92c2c3313"
+    },
+    "catalog-lock-sha256": "e1be96547530ddba8e7cfec854fbbe3cfb5b9138b0e2dab96d782268a2bbf75f"
+  },
+  "command-receipts": {
+    "sync-shared-versions": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-candidate-b2d0",
+      "command": "scripts/sync-shared-versions.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
+      "exit": 0,
+      "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/sync-shared-versions.log",
+      "output-sha256": "8998ab4908d0a75d55424626af5d07542091d0ee25b6507de249140e7fcdb353"
+    },
+    "sync-dependabot-ignores": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-candidate-b2d0",
+      "command": "scripts/sync-dependabot-ignores.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
+      "exit": 0,
+      "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/sync-dependabot-ignores.log",
+      "output-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "sync-managed-catalog": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-candidate-b2d0",
+      "command": "scripts/sync-managed-catalog.py --workspace-root /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
+      "exit": 0,
+      "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/sync-managed-catalog.log",
+      "output-sha256": "81dc648a3a3ca232d258b7fd0f15383675341425aacc684b6472229bf43b8e7c"
+    },
+    "verify-publication-poms": {
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-candidate-b2d0",
+      "command": "scripts/verify-publication-poms.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --summary",
+      "exit": 0,
+      "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/verify-publication-poms.log",
+      "output-sha256": "5cb6b0d8a48a3b43de787dcaa243eea6d36da4d1e025aab490f319a4bca7be1d"
+    }
+  },
+  "publication-poms": {
+    "final-command-exit": 0,
+    "repositories": 9,
+    "files": 175,
+    "dependencies": 46023,
+    "maven-models": 175,
+    "failures": 0,
+    "intermittent-observation": "No failure occurred in the final batch-03 publication POM verification."
+  },
+  "remote-immutable-ref": {
+    "status": "pass",
+    "verified-at": "2026-08-05",
+    "remote-branch": "issue/169-latest-compatible-stable",
+    "catalog-carrier-head-at-retrieval": "924554a3675b3076b8f7b8dcb0f185f3ff730b17",
+    "catalog-ref": "b2d0e37c0e7f5046f20e61ca530bf5c5edf5af84",
+    "consumer": "bluetape4k-text",
+    "consumer-head": "e5e666f20a9cf19f1f83e48f481919d08ad46453",
+    "catalog-source": "https://raw.githubusercontent.com/bluetape4k/bluetape4k-dependencies/b2d0e37c0e7f5046f20e61ca530bf5c5edf5af84/gradle",
+    "local-catalog-override": false,
+    "isolated-gradle-user-home": true,
+    "command": "./gradlew help --no-daemon --console=plain",
+    "result": "BUILD SUCCESSFUL in 1m 52s",
+    "catalog-sha256": "034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a",
+    "checksum-file-sha256": "917161c6f6f1ec1a2d9dc5d078e977198917d2fbe82774f75314cb5db335e166",
+    "output": "build/issue-169/outputs/remote-immutable-ref-text-help.log",
+    "output-sha256": "0e01acfb24192b7f88875348e79554ec337a2e108c2f54a7d0a19a26a8e46527"
+  }
+}

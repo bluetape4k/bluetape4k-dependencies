@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "central": {},
+  "repositories": {
+    "projects": {"catalog": "/workspace/../outside.toml"},
+    "aws": {},
+    "experimental": {},
+    "exposed": {},
+    "graph": {},
+    "image": {},
+    "javers": {},
+    "leader": {},
+    "text": {}
+  }
+}

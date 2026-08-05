@@ -1,0 +1,2900 @@
+{
+  "audit": {
+    "path": "config/latest-stable-version-audit.json",
+    "sha256": "1bded9b4b05f92d6b23a580f6f60c5e2eff398e69ea92c7041ad7a0e2caf1c77",
+    "summary": {
+      "authority-count": 509,
+      "line-count": 543,
+      "line-dispositions": {
+        "current": 432,
+        "defer-breaking-migration": 22,
+        "hold-compatibility": 81,
+        "hold-unavailable": 8
+      },
+      "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
+      "metadata-verified": 504
+    }
+  },
+  "audit-cutoff": "2026-08-05",
+  "baseline": {
+    "catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
+    "catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55"
+  },
+  "candidate": {
+    "catalog-sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c"
+  },
+  "candidate-validation-evidence": {
+    "downstream-full-builds": {
+      "failures": 0,
+      "repositories": 9
+    },
+    "path": "docs/releases/2026-08-05-issue-169-full-candidate-receipt.json",
+    "publication-poms": {
+      "dependencies": 46023,
+      "failures": 0,
+      "files": 175,
+      "maven-models": 175,
+      "repositories": 9
+    },
+    "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
+    "sha256": "b8e1445370755d46fb1cc55d6afd3837452924713e48fbe4598ef948931b0b75"
+  },
+  "delta": [
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.12.0"
+      },
+      "after": "2.12.0",
+      "authorities": [
+        {
+          "authority-key": "policy:library:com.github.avro-kotlin.avro4k:avro4k-core",
+          "coordinate-or-plugin-id": "com.github.avro-kotlin.avro4k:avro4k-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.10.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "3f18a471b8dc9598c340130754b2078542b7eaf1786f50244d686b14d87ff8c7"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "avro-kotlin"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.8.23"
+      },
+      "after": "1.8.23",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:aws.sdk.kotlin:aws-core",
+          "coordinate-or-plugin-id": "aws.sdk.kotlin:aws-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.8.22",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "45280ca8cc37077426acf2675646bc793f60857f3f17a0f9483962726e9d87a6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "aws-kotlin"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.51.0"
+      },
+      "after": "2.51.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:software.amazon.awssdk:bom",
+          "coordinate-or-plugin-id": "software.amazon.awssdk:bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.50.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "1c0797cee28167fa85e48d259dad3369fe6f5d7a24ec272e5362a5df5d73faca"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "aws2"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.48.3"
+      },
+      "after": "0.48.3",
+      "authorities": [
+        {
+          "authority-key": "policy:library:software.amazon.awssdk.crt:aws-crt",
+          "coordinate-or-plugin-id": "software.amazon.awssdk.crt:aws-crt",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "0.48.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "66cd97318cdff3080ca648e1fe12767daa18fbf7e8794719167f955efe5ddca0"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "aws2-crt"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.85"
+      },
+      "after": "1.85",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.bouncycastle:bcpg-jdk18on",
+          "coordinate-or-plugin-id": "org.bouncycastle:bcpg-jdk18on",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.84",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "46780d9353296d3ab4a252fbb6ffc2b9c880df6aa763f0567fd7a8923bb845ef"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "bouncycastle-bcpg"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.85"
+      },
+      "after": "1.85",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.bouncycastle:bcpkix-jdk18on",
+          "coordinate-or-plugin-id": "org.bouncycastle:bcpkix-jdk18on",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.84",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "6dc8752fc8723d4286e92c1b0e28c7c6abebcf11e29ff1f2d1e417585c5fc7f4"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "bouncycastle-bcpkix"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.85"
+      },
+      "after": "1.85",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.bouncycastle:bcprov-jdk18on",
+          "coordinate-or-plugin-id": "org.bouncycastle:bcprov-jdk18on",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.84",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "251ecd39847ff093adc82bbf37e8710e2a166469b38ff55b11ecab7efb5a9df2"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "bouncycastle-bcprov"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.5.1"
+      },
+      "after": "1.5.5.1",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.duckdb:duckdb_jdbc",
+          "coordinate-or-plugin-id": "org.duckdb:duckdb_jdbc",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.5.2.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "6462438d19e595d4c80fe60bd738aa757e5230197413b284174414e69bb7af83"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "duckdb-jdbc"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.0"
+      },
+      "after": "1.4.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-bom",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-bom",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-core",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-core",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-dao",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-dao",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-java-time",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-java-time",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-jdbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-jdbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-json",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-json",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-migration-jdbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-migration-jdbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-migration-r2dbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-migration-r2dbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-r2dbc",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-r2dbc",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:exposed-spring-boot4-starter",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:exposed-spring-boot4-starter",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.jetbrains.exposed:spring7-transaction",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed:spring7-transaction",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.exposed.plugin",
+          "coordinate-or-plugin-id": "org.jetbrains.exposed.plugin",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "1.3.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "251554a86a8c57bb3244dd31a98d245f933fc5bf61f8c09e261889443f0264d6",
+        "2b1ad3157e3cc925804e82d9c5490e2a64ce476e6d4fa0e4f0f66dab77ec04b6",
+        "427803a3595207c92372934394a72216850490739b8bf1eba8f38cf75778eb65",
+        "559ad414cac7cbb401639c076f042bf7b1183bbe7d20ede04bd4a0e63e883ce3",
+        "5b0ff32ae681c727ee5b46f3a07da2ae28ca6abad58c5e09ccd7ac8f57e23055",
+        "68e49630f0c2aa75e71e85407ab9aac146d5ffd4f03ceb0db8a1ee506d6e6c73",
+        "7c1e12610aa063699e66a9cfff779a1d86dddda413f32b781a78a57524509f28",
+        "8fb12efdc02c14f1045e0d75e853277636dd3c05727d79117292e35a41391e39",
+        "a5e26c63403233031c007b5eff1f3023800feb2005aad258ef5c97b679803cd6",
+        "b3234b06912878e2b17eb6aa4d97b6d584f1ba0189d4ac2022097790a53f653d",
+        "b36e955f25e9a3e28837f20b8ba8703c778f941986e4c5130d1a7a5685721526",
+        "dade60044bdd9e237632634e05de01ea9da83c0dbf3149474e0f08efb6fdb5da"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "exposed"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "12.11.0"
+      },
+      "after": "12.11.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.flywaydb:flyway-core",
+          "coordinate-or-plugin-id": "org.flywaydb:flyway-core",
+          "disposition": "defer-breaking-migration",
+          "kind": "library"
+        }
+      ],
+      "before": "12.10.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "eada12bd2114082b69ab653ce3e2b33d0f2d758c611313eb903b70a5ece21840"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "flyway"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
+      "after": "1.5.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.apache.fory:fory-core",
+          "coordinate-or-plugin-id": "org.apache.fory:fory-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.3.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "69c6b3d10057060a13f4b9924d15d39c0ab54a4b5a0ffb46d09d049ab25aa8e0"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "fory"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
+      "after": "1.5.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.apache.fory:fory-kotlin",
+          "coordinate-or-plugin-id": "org.apache.fory:fory-kotlin",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.3.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0a1df9e7b7064c12086cf2dabf805239b0b5c60f5d8238f95a2e50c3e0e15f64"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "fory-kotlin"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "31.7"
+      },
+      "after": "31.7",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.geotools:gt-epsg-hsql",
+          "coordinate-or-plugin-id": "org.geotools:gt-epsg-hsql",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:org.geotools:gt-referencing",
+          "coordinate-or-plugin-id": "org.geotools:gt-referencing",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:org.geotools:gt-shapefile",
+          "coordinate-or-plugin-id": "org.geotools:gt-shapefile",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "31.6",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "1f50ab9661932ca92a90f326213d84df3387688224c68ee3b6321ee50232d96e",
+        "b43eb3f620f3ca4a02c235681d31dc29aa1daf781cb556f88b77b09edf310275",
+        "f1b3c74832bf9f793b0d6b6564dd23ae8816fcb18dbb40940ace6a93ef4cb059"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "geotools31"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "34.4"
+      },
+      "after": "34.4",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.geotools:gt-epsg-hsql",
+          "coordinate-or-plugin-id": "org.geotools:gt-epsg-hsql",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:org.geotools:gt-referencing",
+          "coordinate-or-plugin-id": "org.geotools:gt-referencing",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:org.geotools:gt-shapefile",
+          "coordinate-or-plugin-id": "org.geotools:gt-shapefile",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "34.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0193adf16d3634da7bf4ee5392b0faa243d8e96c1021b872cc493d77ed516c55",
+        "062aaa96f49c589780dc69e085a39ef49678f32e4ca8594fbcf9f2f9a726a215",
+        "6c7228ef080569d7488ba6390e68ca682c9e982ae4a2a7f6d5baeeb8e2ac1052"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "geotools34"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.200"
+      },
+      "after": "1.4.200",
+      "authorities": [
+        {
+          "authority-key": "policy:library:com.h2database:h2",
+          "coordinate-or-plugin-id": "com.h2database:h2",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "1.4.197",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "3bdca5b4dbe05c392f32f0d977ef967d7d87f76a903fe00d2927b4a403173cd9"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "h2-v1"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.5.2.Final"
+      },
+      "after": "4.5.2.Final",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.hibernate.reactive:hibernate-reactive-core",
+          "coordinate-or-plugin-id": "org.hibernate.reactive:hibernate-reactive-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.5.0.Final",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e01eef31bdba5bc0b9dc4a3af1e1bcc61533d89bdd2351a89f68e8615dd521a3"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "hibernate-reactive-core"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.1.MR"
+      },
+      "after": "2.0.1.MR",
+      "authorities": [
+        {
+          "authority-key": "policy:library:jakarta.inject:jakarta.inject-api",
+          "coordinate-or-plugin-id": "jakarta.inject:jakarta.inject-api",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.0.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "487240560a8846bc5f07d83b183cfe6fbbba5a95f068a5f805c23b6d0bf5c760"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "jakarta-inject-api"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.26.1"
+      },
+      "after": "2.26.1",
+      "authorities": [
+        {
+          "authority-key": "policy:library:io.nats:jnats",
+          "coordinate-or-plugin-id": "io.nats:jnats",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.25.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0c84036790a6564d219cc52b5223c5f8e12a5bb1343d3708376d696e2abbdc73"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "jnats"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.13.55"
+      },
+      "after": "8.13.55",
+      "authorities": [
+        {
+          "authority-key": "policy:library:com.googlecode.libphonenumber:libphonenumber",
+          "coordinate-or-plugin-id": "com.googlecode.libphonenumber:libphonenumber",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "8.13.52",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "4c0f0bfeaf62e670eb2e261eb224d8840e2bdf54550126ef6d070b3b3bec87c3"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "libphonenumber-v8"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.0.36"
+      },
+      "after": "9.0.36",
+      "authorities": [
+        {
+          "authority-key": "policy:library:com.googlecode.libphonenumber:libphonenumber",
+          "coordinate-or-plugin-id": "com.googlecode.libphonenumber:libphonenumber",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "9.0.30",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d5b0699e5a5df003bfc3dc0f381cc0225f180bcf3f745eaec4337bbef3c80812"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "libphonenumber-v9"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-compatibility-alignment",
+        "version": "1.5.34"
+      },
+      "after": "1.5.34",
+      "authorities": [
+        {
+          "authority-key": "policy:library:ch.qos.logback:logback-classic",
+          "coordinate-or-plugin-id": "ch.qos.logback:logback-classic",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:ch.qos.logback:logback-core",
+          "coordinate-or-plugin-id": "ch.qos.logback:logback-core",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "1.5.38",
+      "reason": "Align to the explicitly audited compatibility constraint shared by every governed authority.",
+      "resolved-graph-specs": [
+        "0ff4d3dbbd0b158f6fc082c81746a56a347711f598d36c77756325fceae88f0a",
+        "bc36e19bdcacb0fb84f29324b3aa603d3c24ed6be7c5a269de1b5fe4fbff510f"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "logback"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.34.0"
+      },
+      "after": "5.34.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-amqp-client-h639dbc3b57d0",
+          "coordinate-or-plugin-id": "com.rabbitmq:amqp-client",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.28.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "8c1e5f326a58cd3714154f150e70c98e1d68864fc8904ebdb30fff8f2ed21e58"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-amqp-client-h639dbc3b57d0"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
+      "after": "1.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-archunit-h1c89bbc7f4ec",
+          "coordinate-or-plugin-id": "com.tngtech.archunit:archunit",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.4.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "f02f9b75f5cf3240f831ef4ff97f11f8668cd238b0ca7e86e31b2e6ae6d14246"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-archunit-h1c89bbc7f4ec"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.0"
+      },
+      "after": "1.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-archunit-junit5-hb22f43c6c707",
+          "coordinate-or-plugin-id": "com.tngtech.archunit:archunit-junit5",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.4.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "a0d4ed8bd779f881c352eaebb9eb10bc5cce6f0420046ce29ac63db05244f57c"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-archunit-junit5-hb22f43c6c707"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.28.0"
+      },
+      "after": "1.28.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-avatica-core-hba1bf9decd49",
+          "coordinate-or-plugin-id": "org.apache.calcite.avatica:avatica-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.27.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "367446be70294c5a427cac0f5b9ded34a5535ddf8bad2c8e280d7a357fd58e11"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-avatica-core-hba1bf9decd49"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.11"
+      },
+      "after": "2.0.11",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-aws-dax-client-ha8827a8b0fcb",
+          "coordinate-or-plugin-id": "software.amazon.dax:amazon-dax-client",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.0.9",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0ab62f0a9c99b3cbd1cdf0abd65775e2f66e7956ad64e6cf38d07f28721face3"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-aws-dax-client-ha8827a8b0fcb"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
+      "after": "1.7.6",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467",
+          "coordinate-or-plugin-id": "aws.smithy.kotlin:http-client-engine-crt",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.7.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "f427da72afe9bab3eaf00fa83cd6569196b15be5a6661012f46969b63453ac69"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-aws-smithy-kotlin-http-client-engine-crt-h0fe03f75a467"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
+      "after": "1.7.6",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5",
+          "coordinate-or-plugin-id": "aws.smithy.kotlin:http-client-engine-default",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.7.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "6a07f6d663c0cf9f5dcad0ecc67518d168c3388df643a9c56a7dd26312fbd154"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-aws-smithy-kotlin-http-client-engine-default-h007ac9aa53c5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
+      "after": "1.7.6",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604",
+          "coordinate-or-plugin-id": "aws.smithy.kotlin:http-client-engine-okhttp",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.7.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "98828ec817392e4c0260007efb97dc61c543d0137da3298a2c3913c093c65d40"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-aws-smithy-kotlin-http-client-engine-okhttp-hfedd9fc31604"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
+      "after": "1.7.6",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-aws-smithy-kotlin-http-hea8fa947b4d3",
+          "coordinate-or-plugin-id": "aws.smithy.kotlin:http-jvm",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.7.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2a6e9b9b2116996d9119147c128383b20ed41858ee9aa6855ee246f6f5fe4c0f"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-aws-smithy-kotlin-http-hea8fa947b4d3"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
+      "after": "1.7.6",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-aws-smithy-kotlin-serde-hb6c6080166ba",
+          "coordinate-or-plugin-id": "aws.smithy.kotlin:serde-jvm",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.7.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "dec7cb6ea382c8278f1931f012152fd6dad2702e2662702c4b7ee95ece2c39b4"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-aws-smithy-kotlin-serde-hb6c6080166ba"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.6"
+      },
+      "after": "1.7.6",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-aws-smithy-kotlin-serde-json-h39078dce8d4a",
+          "coordinate-or-plugin-id": "aws.smithy.kotlin:serde-json-jvm",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.7.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "39f66b0b6cef7dd38a6e753e55e79aee41d50f8e4defc5f085f1b4d211ec74e0"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-aws-smithy-kotlin-serde-json-h39078dce8d4a"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
+      "after": "1.6.20",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blaze-persistence-core-api-jakarta-heb5c993b1d4f",
+          "coordinate-or-plugin-id": "com.blazebit:blaze-persistence-core-api-jakarta",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.16",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "dffe4b7342021e03deda3a01948a6ca76943ce53c96e0c645ea50363adb4aebd"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blaze-persistence-core-api-jakarta-heb5c993b1d4f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
+      "after": "1.6.20",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blaze-persistence-core-impl-jakarta-h68985a289b7f",
+          "coordinate-or-plugin-id": "com.blazebit:blaze-persistence-core-impl-jakarta",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.16",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d66291a820daadbdef0f1fc000f5a8c32a842999350d4396987c1391f348be64"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blaze-persistence-core-impl-jakarta-h68985a289b7f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
+      "after": "1.6.20",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blaze-persistence-entity-view-api-jakarta-h6c0e0444da3e",
+          "coordinate-or-plugin-id": "com.blazebit:blaze-persistence-entity-view-api-jakarta",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.16",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "c31e9e87fc62b03f857243823e518eef0a2f16cbd8c5f033c6ae2a38d18a53ab"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blaze-persistence-entity-view-api-jakarta-h6c0e0444da3e"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
+      "after": "1.6.20",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blaze-persistence-entity-view-impl-jakarta-h264b9a052d09",
+          "coordinate-or-plugin-id": "com.blazebit:blaze-persistence-entity-view-impl-jakarta",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.16",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d543140819eaf7d89744516d24bf5eea0aea3d92709aa4c2aa8a7351f198b34b"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blaze-persistence-entity-view-impl-jakarta-h264b9a052d09"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
+      "after": "1.6.20",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blaze-persistence-jpa-criteria-api-jakarta-hc8e49c83a834",
+          "coordinate-or-plugin-id": "com.blazebit:blaze-persistence-jpa-criteria-api-jakarta",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.16",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "cdc2bb9c7ae08a0212c7d6507b518bee5e78db3dce91f45e1289fcd5dc6aaa14"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blaze-persistence-jpa-criteria-api-jakarta-hc8e49c83a834"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.20"
+      },
+      "after": "1.6.20",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blaze-persistence-jpa-criteria-impl-jakarta-h82df0febb513",
+          "coordinate-or-plugin-id": "com.blazebit:blaze-persistence-jpa-criteria-impl-jakarta",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.16",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "721b190e7880b524ecaf8c9eef7170b4941fc2adb006f9007b395a172081c10e"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blaze-persistence-jpa-criteria-impl-jakarta-h82df0febb513"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.0.17.RELEASE"
+      },
+      "after": "1.0.17.RELEASE",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blockhound-hb055fbbd9fc5",
+          "coordinate-or-plugin-id": "io.projectreactor.tools:blockhound",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.0.16.RELEASE",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "96afa298381d9b62db65ef8a68b80d7dfb9cff64e57e1d3a0487fbf3b1a88685"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blockhound-hb055fbbd9fc5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.0.17.RELEASE"
+      },
+      "after": "1.0.17.RELEASE",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-blockhound-junit-platform-h797ad1fe6ad0",
+          "coordinate-or-plugin-id": "io.projectreactor.tools:blockhound-junit-platform",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.0.16.RELEASE",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "8e3fc1f72127538be5a53964f9ecb2ca565b2c5c4ba750071e9c6f9cfaf42089"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-blockhound-junit-platform-h797ad1fe6ad0"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.23.0"
+      },
+      "after": "1.23.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-brotli4j-h4437d759d0e3",
+          "coordinate-or-plugin-id": "com.aayushatharva.brotli4j:brotli4j",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.20.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "78e52dfb505f6ad898fdb549006929f0fc85ddbe2083b52cceff947ffa008dcd"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-brotli4j-h4437d759d0e3"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.23.0"
+      },
+      "after": "1.23.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-brotli4j-native-hf7fa4d98af73",
+          "coordinate-or-plugin-id": "com.aayushatharva.brotli4j:native-linux-x86_64",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.20.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "37a561651681181f6cd314aa70dda90905fff103363b3ab2b07904d681d1f9fc"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-brotli4j-native-hf7fa4d98af73"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
+      "after": "8.19.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-bucket4j-caffeine-h2040f5a1af3f",
+          "coordinate-or-plugin-id": "com.bucket4j:bucket4j_jdk17-caffeine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.18.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "9386a7b99d3d712fe0593f81f488f59a702eda0ab5df0217960a91ed9457a11c"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-bucket4j-caffeine-h2040f5a1af3f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
+      "after": "8.19.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-bucket4j-core-hf97cbeb8c1b0",
+          "coordinate-or-plugin-id": "com.bucket4j:bucket4j_jdk17-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.18.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "9b17a70ced25e05cc45d950765bd7b1238a57acef22b4657e1b449eae63af29a"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-bucket4j-core-hf97cbeb8c1b0"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
+      "after": "8.19.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-bucket4j-hazelcast-h3d419bd694ff",
+          "coordinate-or-plugin-id": "com.bucket4j:bucket4j_jdk17-hazelcast",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.18.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0c5e4caade9823ee241e09c5a9e305f0e7c4a3b4bdb3881de967fe34fd11d87d"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-bucket4j-hazelcast-h3d419bd694ff"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
+      "after": "8.19.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-bucket4j-ignite-h5676d8442ce0",
+          "coordinate-or-plugin-id": "com.bucket4j:bucket4j_jdk17-ignite",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.18.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "bc89c26efbd0b5911d8af4a8974d8a9cee051b565fc6679072a44efaf58aee36"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-bucket4j-ignite-h5676d8442ce0"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
+      "after": "8.19.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-bucket4j-jcache-hfaa1c252ddcf",
+          "coordinate-or-plugin-id": "com.bucket4j:bucket4j_jdk17-jcache",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.18.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "8af8a5a4397513999303fda64c1d85f861a580bf7c217e81d556c023a0d97f1f"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-bucket4j-jcache-hfaa1c252ddcf"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
+      "after": "8.19.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-bucket4j-jdk17-lettuce-hc74871d952dc",
+          "coordinate-or-plugin-id": "com.bucket4j:bucket4j_jdk17-lettuce",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.18.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2bc2fcc73ab61a73718bf2dfb408948febbbd929e18e7ae6a13a37f0163bc187"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-bucket4j-jdk17-lettuce-hc74871d952dc"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.19.0"
+      },
+      "after": "8.19.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-bucket4j-redisson-h76c31c2384b7",
+          "coordinate-or-plugin-id": "com.bucket4j:bucket4j_jdk17-redisson",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.18.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "9f00330d2711bd722294f4527c971d95cd332be5af030c98f7ee17359e40c313"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-bucket4j-redisson-h76c31c2384b7"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.18.11"
+      },
+      "after": "1.18.11",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-byte-buddy-agent-h4bb8401d3e42",
+          "coordinate-or-plugin-id": "net.bytebuddy:byte-buddy-agent",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "1.18.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0ccd8160b44e1f74bc18278130d0f0094c160fdd65ed5df2771795bc43a4717b"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-byte-buddy-agent-h4bb8401d3e42"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2026.8"
+      },
+      "after": "2026.8",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-chronicle-wire-h06e3563f2bba",
+          "coordinate-or-plugin-id": "net.openhft:chronicle-wire",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2026.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "156745c0b04993d031720f219a663c777f4899ef8c3060bdd6bb17a95eaec666"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-chronicle-wire-h06e3563f2bba"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.7.0"
+      },
+      "after": "2.7.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-datafaker-h8e6439793185",
+          "coordinate-or-plugin-id": "net.datafaker:datafaker",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.5.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "8bfe56428e7d605a05808af6fc8010660da9d8daf244b806aaec32c5300ef774"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-datafaker-h8e6439793185"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.5.0"
+      },
+      "after": "9.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-elasticsearch-java-h5984397084e4",
+          "coordinate-or-plugin-id": "co.elastic.clients:elasticsearch-java",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "9.4.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "ba1645b7524065ffc73a310c9674da159721b85019e5def33637f3d5955438d7"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-elasticsearch-java-h5984397084e4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.5.0"
+      },
+      "after": "9.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-elasticsearch-rest-client-h89bafdaca9a6",
+          "coordinate-or-plugin-id": "org.elasticsearch.client:elasticsearch-rest-client",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "9.4.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "08072eda58e41b53bfa45010c4e6492a9a39dd588a02ba5f122548cbfe6a029d"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-elasticsearch-rest-client-h89bafdaca9a6"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.5.0"
+      },
+      "after": "9.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-elasticsearch-rest-client-sniffer-h440b3d642cb0",
+          "coordinate-or-plugin-id": "org.elasticsearch.client:elasticsearch-rest-client-sniffer",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "9.4.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7b42f5ff8e7d3f4eaa91a1214fda4fe0640e77be7d03046c0d2fb9496b3258aa"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-elasticsearch-rest-client-sniffer-h440b3d642cb0"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.64"
+      },
+      "after": "2.0.64",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-fastjson2-extension-hd772e403fe72",
+          "coordinate-or-plugin-id": "com.alibaba.fastjson2:fastjson2-extension",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.0.62",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "09186a194b5f08ead811a5d43b9bb4e21e1865a1edfa88af119d181be698176c"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-fastjson2-extension-hd772e403fe72"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.64"
+      },
+      "after": "2.0.64",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-fastjson2-h14dfaa6b626f",
+          "coordinate-or-plugin-id": "com.alibaba.fastjson2:fastjson2",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "2.0.62",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "5829b16c38b62dec468090e4e35af1426877240e0ccc8f20cc36797b933af4b6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-fastjson2-h14dfaa6b626f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.64"
+      },
+      "after": "2.0.64",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-fastjson2-kotlin-ha7a4f6417cad",
+          "coordinate-or-plugin-id": "com.alibaba.fastjson2:fastjson2-kotlin",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.0.62",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "99d83fe1ce37d50a9fb44417bdfa49b35fa14e34debba7a6bdce9a698ef32eac"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-fastjson2-kotlin-ha7a4f6417cad"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "v2-rev20260707-2.0.0"
+      },
+      "after": "v2-rev20260707-2.0.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-google-api-services-bigquery-h784b3443228d",
+          "coordinate-or-plugin-id": "com.google.apis:google-api-services-bigquery",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "v2-rev20240919-2.0.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7e2c789b0db7aac92ef8e5e6973bcbd23738ba8322412c550e896e5e9f0807ae"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-google-api-services-bigquery-h784b3443228d"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.1.7"
+      },
+      "after": "1.1.7",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-graalvm-native-h4df74ed993d6",
+          "coordinate-or-plugin-id": "org.graalvm.buildtools.native",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "1.1.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "f3615ebd7b283a3345f7a38eda7196c47ad04e9396f1f206d2fe94cf9f51ebc2"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-graalvm-native-h4df74ed993d6"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.74.0"
+      },
+      "after": "2.74.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-grpc-google-common-protos-h49f5a7d50588",
+          "coordinate-or-plugin-id": "com.google.api.grpc:grpc-google-common-protos",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.71.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "fbadfee0142c10bb65e30bced877221691c11318d4688be6bb965e07dd6b2241"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-grpc-google-common-protos-h49f5a7d50588"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.14.0"
+      },
+      "after": "2.14.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-gson-h005f9a4ed5e8",
+          "coordinate-or-plugin-id": "com.google.code.gson:gson",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.13.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "f3b3847baed0ef3bb8f3000bfb0e6b26d7fd88ec4c571d6208c8c431c4636047"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-gson-h005f9a4ed5e8"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.1.3.Final"
+      },
+      "after": "9.1.3.Final",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-hibernate-validator-h7d30a1cdc50f",
+          "coordinate-or-plugin-id": "org.hibernate.validator:hibernate-validator",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "9.1.0.Final",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2a2114d3acfee7ce8bf6af50bf2820face95f9246c30c0875be68c38eed7102e"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-hibernate-validator-h7d30a1cdc50f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.32.0-GA"
+      },
+      "after": "3.32.0-GA",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-javassist-ha87aa6d81eca",
+          "coordinate-or-plugin-id": "org.javassist:javassist",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.30.2-GA",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2b113ceae33a4cf8bd89f49ab4b894e8dd62a1df863ff607b98cb708a959745a"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-javassist-ha87aa6d81eca"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.19.1"
+      },
+      "after": "5.19.1",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-jna-he2e3f813de81",
+          "coordinate-or-plugin-id": "net.java.dev.jna:jna",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.18.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2b33a1d689ee9c3e984b0b4c6e55efef8032b819f625b0e9b8efbe84e06ba172"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-jna-he2e3f813de81"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.19.1"
+      },
+      "after": "5.19.1",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-jna-platform-h90667451aeca",
+          "coordinate-or-plugin-id": "net.java.dev.jna:jna-platform",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.18.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "ce7b1f46ccbd970cd2017a31fd14aced7fb9c67bfc82b8d4c14ae43753c1614f"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-jna-platform-h90667451aeca"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-bom-h61cd2dcaa536",
+          "coordinate-or-plugin-id": "org.junit:junit-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e4e629b03a81fac1c108bb1a439ee2db8bab026594e8dc8ceb32eb3cb027a9cf"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-bom-h61cd2dcaa536"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-api-hbdb647c8c063",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-api",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7e2dd632db5b97c1e08848a73cba9416eb46c706c60a41a516d717b7524a4ab6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-api-hbdb647c8c063"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-engine-h100e4f4488c1",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "4a43e04dfda7d64d8812803360d20e7d841210e46b390956bddb42ff3af429f2"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-engine-h100e4f4488c1"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-hc9d62f8dba36",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e99649dd3ed15686ab218ec00aba4bfac60ed6e0de9b3ddf64933ebd24b5caab"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-hc9d62f8dba36"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-migrationsupport-hc68f8f05bd6d",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-migrationsupport",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7078644f6df7dbec0f720827105a99c4c7ffd07392a3aa8d3431e149cfdbd165"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-migrationsupport-hc68f8f05bd6d"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-params-hecee21232a80",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-params",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "34ebdbc164f00057e28e58ad9afff418d14daa4a5876be65a6368c7af05c6aab"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-params-hecee21232a80"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-commons-he1ea011b202a",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-commons",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d020cc1257c180846979f48887c1e6ad0a46c7147a58a428097c4d26e5f483bf"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-commons-he1ea011b202a"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-engine-ha913b5a2622e",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "b0353f98e4bf2cc5d427e43c54e404e56de2f0319050428b5e66aee0426b24c6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-engine-ha913b5a2622e"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-launcher-h606d910fe011",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-launcher",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "c434921b14f54a98f2aea56a59c5c0b0f68366c2922a95eb8aa03e6372197d06"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-launcher-h606d910fe011"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-suite-api-h92cc87dc62ce",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-suite-api",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "75c6d9c8e2ba5ad6766d6db97bbcc61a1e27714e6a603706681f642d5aba7a82"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-suite-api-h92cc87dc62ce"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-suite-engine-h0ac35326fce5",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-suite-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e49b81ce1ba9e3e619a01c98ca965b87b21d9b61510e9b6dfe589b65d569edcb"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-suite-engine-h0ac35326fce5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.2"
+      },
+      "after": "6.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-vintage-engine-hc9c190fac5a4",
+          "coordinate-or-plugin-id": "org.junit.vintage:junit-vintage-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "4f2d0e0a920626106d73d9b152b0eedffc4ab8d2b4627f47393809c71c59162b"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-vintage-engine-hc9c190fac5a4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.9.1"
+      },
+      "after": "3.9.1",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-keycloak-testcontainers-hcf9d84cd8012",
+          "coordinate-or-plugin-id": "com.github.dasniko:testcontainers-keycloak",
+          "disposition": "defer-breaking-migration",
+          "kind": "library"
+        }
+      ],
+      "before": "3.7.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "c1a7962f00bd532a7316ed4afa80153ae8f767a3252de1f1b5624a02b9384c28"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-keycloak-testcontainers-hcf9d84cd8012"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.5.10"
+      },
+      "after": "3.5.10",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-mariadb-java-client-h168cf4e91ffa",
+          "coordinate-or-plugin-id": "org.mariadb.jdbc:mariadb-java-client",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.5.8",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e32e102ad1c792ecd49ba4b88bed99c6e813b2a1aa9e8924e57a4d65a6d1db05"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-mariadb-java-client-h168cf4e91ffa"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.21.0"
+      },
+      "after": "2.21.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-metadata-extractor-h364d52ce1b74",
+          "coordinate-or-plugin-id": "com.drewnoakes:metadata-extractor",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.20.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "248ffc713edb12a1c988d1a016300c8772216abc26550bb31e6d042a0ee81dcc"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-metadata-extractor-h364d52ce1b74"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.17.0"
+      },
+      "after": "1.17.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-micrometer-bom-h46388331a0e5",
+          "coordinate-or-plugin-id": "io.micrometer:micrometer-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.16.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "cf4e4a84c3de144a7576e04afc0d2435bce2ccd970131540a9966f095e34b2e7"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-micrometer-bom-h46388331a0e5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
+      "after": "1.7.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-micrometer-tracing-bom-h5811d99b9094",
+          "coordinate-or-plugin-id": "io.micrometer:micrometer-tracing-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "54307a8ba32c96b9f346d38a9bc4c9eb3292a9d6d4dbd2c5e3787f56808cd02f"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-micrometer-tracing-bom-h5811d99b9094"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
+      "after": "1.7.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-micrometer-tracing-bridge-brave-h7de924ea55c5",
+          "coordinate-or-plugin-id": "io.micrometer:micrometer-tracing-bridge-brave",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "38bdf2f26564227d59ee94aabb649d0541a9678fb3705f682d5bb1ff286348f1"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-micrometer-tracing-bridge-brave-h7de924ea55c5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
+      "after": "1.7.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-micrometer-tracing-bridge-otel-he56ec84f2b0f",
+          "coordinate-or-plugin-id": "io.micrometer:micrometer-tracing-bridge-otel",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "5aa5f03d45a5aa164f155102f3ba22e80959f8f6e5308d625ff8ddf87a07b3e8"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-micrometer-tracing-bridge-otel-he56ec84f2b0f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
+      "after": "1.7.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-micrometer-tracing-h5a2d98f31144",
+          "coordinate-or-plugin-id": "io.micrometer:micrometer-tracing",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "554e80c9339a4391fe67f4f7a87bbe007935568d5b42c0b35e51eac7f54124e4"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-micrometer-tracing-h5a2d98f31144"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
+      "after": "1.7.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-micrometer-tracing-integration-test-h1462ec78085f",
+          "coordinate-or-plugin-id": "io.micrometer:micrometer-tracing-integration-test",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "5d449a4551bef64cbaf4493e4a494c3980a516c8395a354e99755a0162c2c91c"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-micrometer-tracing-integration-test-h1462ec78085f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.7.0"
+      },
+      "after": "1.7.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-micrometer-tracing-test-h945eea8eda06",
+          "coordinate-or-plugin-id": "io.micrometer:micrometer-tracing-test",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.6.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7e15fd214176418806fd39dfddd095ad6aa1dc0bc0bd64e327f064d0631dbcd0"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-micrometer-tracing-test-h945eea8eda06"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.6.23"
+      },
+      "after": "2.6.23",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-milvus-sdk-java-h565db6eded15",
+          "coordinate-or-plugin-id": "io.milvus:milvus-sdk-java",
+          "disposition": "defer-breaking-migration",
+          "kind": "library"
+        }
+      ],
+      "before": "2.6.13",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "34eee68e9a67f2fe62fae17d5be13dc0a73bf6b3beee70d01b5e62f2cab91623"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-milvus-sdk-java-h565db6eded15"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.14.11"
+      },
+      "after": "1.14.11",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-mockk-h9dd32a0538aa",
+          "coordinate-or-plugin-id": "io.mockk:mockk",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.14.9",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "152d81ca1bccb283c0103dfc7bc4cedd5fbf5706194ca3d5d41363dfb4c2dbbb"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-mockk-h9dd32a0538aa"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "11.1.0"
+      },
+      "after": "11.1.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-neo4j-bolt-connection-bom-h7783d6d91aad",
+          "coordinate-or-plugin-id": "org.neo4j.bolt:neo4j-bolt-connection-bom",
+          "disposition": "defer-breaking-migration",
+          "kind": "library"
+        }
+      ],
+      "before": "11.0.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "a83ee56d99628a2dd9686b59d03795ee28ac7f6b8d50f667988a03fbec1b5ae4"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-neo4j-bolt-connection-bom-h7783d6d91aad"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "11.1.0"
+      },
+      "after": "11.1.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-neo4j-bolt-connection-netty-hde6be92c15e6",
+          "coordinate-or-plugin-id": "org.neo4j.bolt:neo4j-bolt-connection-netty",
+          "disposition": "defer-breaking-migration",
+          "kind": "library"
+        }
+      ],
+      "before": "11.0.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d2c4dfaa7affbac26b3b2bc424ff306599656651099b11c35e724c87c17623ee"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-neo4j-bolt-connection-netty-hde6be92c15e6"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "11.1.0"
+      },
+      "after": "11.1.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-neo4j-bolt-connection-pooled-h0355e6822c7f",
+          "coordinate-or-plugin-id": "org.neo4j.bolt:neo4j-bolt-connection-pooled",
+          "disposition": "defer-breaking-migration",
+          "kind": "library"
+        }
+      ],
+      "before": "11.0.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2c7dab063912464abd6191ee82d40c09c6d66e9be79a1e7b577a7253b3a01c24"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-neo4j-bolt-connection-pooled-h0355e6822c7f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.0.81.Final"
+      },
+      "after": "2.0.81.Final",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-netty-tcnative-classes-h39fc93b48f6f",
+          "coordinate-or-plugin-id": "io.netty:netty-tcnative-classes",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.0.78.Final",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "920ae1245b732f284d97289ec6c11d52c2abf2e9eef0d17ff5f9f71867bdce0a"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-netty-tcnative-classes-h39fc93b48f6f"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.6"
+      },
+      "after": "3.6",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-objenesis-h7460768a532c",
+          "coordinate-or-plugin-id": "org.objenesis:objenesis",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "cfaeedc163bd5aabf30ffaa049cf4da099e9855606480a8600836ad08f3e1d62"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-objenesis-h7460768a532c"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.18.1"
+      },
+      "after": "3.18.1",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-okio-fakefilesystem-hc9121603de7d",
+          "coordinate-or-plugin-id": "com.squareup.okio:okio-fakefilesystem",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.17.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2b5155487e0df8e162f6563615e02e2499e61127f1e67c94f32abd17c062d6bb"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-okio-fakefilesystem-hc9121603de7d"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.18.1"
+      },
+      "after": "3.18.1",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-okio-ha706f986164c",
+          "coordinate-or-plugin-id": "com.squareup.okio:okio",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.17.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0d324624dc9bcf24f21d66fef1b750e0bcead165ce21cd6560a15959733182c6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-okio-ha706f986164c"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.3"
+      },
+      "after": "1.4.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-proj4j-epsg-h8f1aa4c45c67",
+          "coordinate-or-plugin-id": "org.locationtech.proj4j:proj4j-epsg",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.3.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "bad338753a1c193ad4c471a1ca4b5b6e8a272fa61d6e8e63bf039833a92434a2"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-proj4j-epsg-h8f1aa4c45c67"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.4.3"
+      },
+      "after": "1.4.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-proj4j-hd4cd408d5087",
+          "coordinate-or-plugin-id": "org.locationtech.proj4j:proj4j",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.3.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "966af3e07769b5a1b3c8a35bde07d920fc8aef33594243f1734363786da4698b"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-proj4j-hd4cd408d5087"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.74.0"
+      },
+      "after": "2.74.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-proto-google-common-protos-h5bc34896f941",
+          "coordinate-or-plugin-id": "com.google.api.grpc:proto-google-common-protos",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.71.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "a2c8a2ed872ba05e7459b8c2ce80f4f48f96215ddaf632872f24141ff71995b7"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-proto-google-common-protos-h5bc34896f941"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "8.52.0"
+      },
+      "after": "8.52.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-sentry-logback-h65fc12a36c8c",
+          "coordinate-or-plugin-id": "io.sentry:sentry-logback",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "8.41.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d2cbd1f413fdad921dd7c6d8169d2594a890ac2f0df36755df4e44ed6525aa98"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-sentry-logback-h65fc12a36c8c"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.1.0"
+      },
+      "after": "4.1.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-spring-cloud-aws-bom-haebf9fb93e11",
+          "coordinate-or-plugin-id": "io.awspring.cloud:spring-cloud-aws-dependencies",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.0.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "c4e8cae6bfd0663902e32957fa88b2deb1c81f6a537a156a495cdda0a181ea42"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-spring-cloud-aws-bom-haebf9fb93e11"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.1.0"
+      },
+      "after": "2.1.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-spring-modulith-bom-h2500740a4fa4",
+          "coordinate-or-plugin-id": "org.springframework.modulith:spring-modulith-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.0.6",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "edddceb99cc57964dd7329f5410f2e034db346edff7c5d7e11005cfe369178aa"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-spring-modulith-bom-h2500740a4fa4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.0.2"
+      },
+      "after": "4.0.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-spring-statemachine-bom-h4672ad237870",
+          "coordinate-or-plugin-id": "org.springframework.statemachine:spring-statemachine-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.0.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "b259de95f98c44a2275ec20f2859dd3578ebd208683199a2c9fd6d21a825770c"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-spring-statemachine-bom-h4672ad237870"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.0.2"
+      },
+      "after": "4.0.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-spring-statemachine-core-hd0ee55525037",
+          "coordinate-or-plugin-id": "org.springframework.statemachine:spring-statemachine-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.0.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "fe9ec9076ea0ebf4b9dc1f89b63d25307a6a218dca981442dd1092a6e6d37816"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-spring-statemachine-core-hd0ee55525037"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.1.2"
+      },
+      "after": "1.1.2",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-starrocks-connector-j-h5d416dd6b46c",
+          "coordinate-or-plugin-id": "com.starrocks:starrocks-connector-j",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.1.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "76ac605a0bee7770df860c2b7945de7ff7be1a286d27dd5646bfb681a71dfd0e"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-starrocks-connector-j-h5d416dd6b46c"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.20.0"
+      },
+      "after": "5.20.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-tess4j-h8ef44ff63554",
+          "coordinate-or-plugin-id": "net.sourceforge.tess4j:tess4j",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.19.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2c13b42a2507c13efd1d130354ad64f05cfe8c322fbb61ec00a6f74c88ae6f58"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-tess4j-h8ef44ff63554"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.1.5"
+      },
+      "after": "0.1.5",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-testcontainers-ministack-h8672eda0c12d",
+          "coordinate-or-plugin-id": "org.ministack:testcontainers-ministack",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "0.1.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e183584841a5b461e9b7b80be44881198a6cb2455f802091ee1b13b81829a7f0"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-testcontainers-ministack-h8672eda0c12d"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.23.0"
+      },
+      "after": "1.23.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-tink-h958d8d1f4e22",
+          "coordinate-or-plugin-id": "com.google.crypto.tink:tink",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.20.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "864940987840a355ad507d69491ede20a20089346b5068db74741793b13266c1"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-tink-h958d8d1f4e22"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.10.0"
+      },
+      "after": "5.10.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-ucar-cdm-core-h6dd13f7ed579",
+          "coordinate-or-plugin-id": "edu.ucar:cdm-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.9.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e1e08a79189796b89172bb6a2e0bc7e677134f19a316bb7d2b131b2f46941936"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-ucar-cdm-core-h6dd13f7ed579"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.3.0"
+      },
+      "after": "6.3.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-weaviate-client-hef91a8fd7caa",
+          "coordinate-or-plugin-id": "io.weaviate:client6",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.2.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d6053db6769725b432f7fcf5a89f7e62610fccd215e372882b10a46b07535771"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-weaviate-client-hef91a8fd7caa"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "9.0.3"
+      },
+      "after": "9.0.3",
+      "authorities": [
+        {
+          "authority-key": "policy:library:io.minio:minio",
+          "coordinate-or-plugin-id": "io.minio:minio",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "9.0.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "03917667702420ba4300ea3f12e9a866f9576225230427769af138668bd4c562"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "minio-v9"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.0.6"
+      },
+      "after": "3.0.6",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.mybatis:mybatis-spring",
+          "coordinate-or-plugin-id": "org.mybatis:mybatis-spring",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "3.0.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "98dd976e9a19548de4f8544f262d345d4a43202c64aff327c8a41f8baf482fcd"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "mybatis-spring3"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.1.0"
+      },
+      "after": "4.1.0",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.mybatis:mybatis-spring",
+          "coordinate-or-plugin-id": "org.mybatis:mybatis-spring",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.0.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "05f057543b7e418f17dea5fc6f40dc05b3f6325d42a3eb3a4b0bf7b4d0009062"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "mybatis-spring4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.28.14"
+      },
+      "after": "5.28.14",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.neo4j.driver:neo4j-java-driver",
+          "coordinate-or-plugin-id": "org.neo4j.driver:neo4j-java-driver",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "5.28.4",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "a8dfc3706b9d49025d7da5addae5eeb5cc35cb60168266b4f464ef9fcba020a1"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "neo4j-driver5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.2.1"
+      },
+      "after": "6.2.1",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.neo4j.driver:neo4j-java-driver",
+          "coordinate-or-plugin-id": "org.neo4j.driver:neo4j-java-driver",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7ed2798b44ab34052faa987239b70bf744bff73071fff2bd5e0e1435126fee11"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "neo4j-driver6"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.2.17.Final"
+      },
+      "after": "4.2.17.Final",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.netty:netty-bom",
+          "coordinate-or-plugin-id": "io.netty:netty-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.2.16.Final",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "15d01711f92d9758a0034a740c34b98fe931f99bb8632805b016b9771aef08cd"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "netty"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.2.4"
+      },
+      "after": "4.2.4",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.apache.pulsar:pulsar-client",
+          "coordinate-or-plugin-id": "org.apache.pulsar:pulsar-client",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:org.apache.pulsar:pulsar-client-api",
+          "coordinate-or-plugin-id": "org.apache.pulsar:pulsar-client-api",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.2.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "dff56c7b282b3df376209518c5a9047af858c6dcbff29e312aa650c3d695b265",
+        "e631787b3b99ba45f5fb1a7b354f4d432be3b0ac1afd0756e276e0df7219346e"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "pulsar4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "7.5"
+      },
+      "after": "7.5",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.github.openfeign.querydsl:querydsl-apt",
+          "coordinate-or-plugin-id": "io.github.openfeign.querydsl:querydsl-apt",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:io.github.openfeign.querydsl:querydsl-core",
+          "coordinate-or-plugin-id": "io.github.openfeign.querydsl:querydsl-core",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:io.github.openfeign.querydsl:querydsl-jpa",
+          "coordinate-or-plugin-id": "io.github.openfeign.querydsl:querydsl-jpa",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:io.github.openfeign.querydsl:querydsl-sql",
+          "coordinate-or-plugin-id": "io.github.openfeign.querydsl:querydsl-sql",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "7.4.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "07d388bf5a95f9a835435a2e58bd37bfce5c613a12477f27d0442c70823b0131",
+        "1fc8be562a03faa58070f6b14230fa9c2adfcd5bdfe5c412e1dcb196f17296bf",
+        "f56a4708f48f7e326aeb154d516dbf6b75589206e36c4ceea2dfd72038601042",
+        "f8b065704e1443ab01cc004743f79392f4f43682edd37bd755b83007bc74db1f"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "querydsl"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.7.0"
+      },
+      "after": "4.7.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.redisson:redisson",
+          "coordinate-or-plugin-id": "org.redisson:redisson",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.6.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "72eacc7960cbae50c7ca4f95a866586e78c3cb4faa7f440592e0a50d59be2d8f"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "redisson"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.1.0"
+      },
+      "after": "3.1.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.springdoc:springdoc-openapi-starter-webmvc-ui",
+          "coordinate-or-plugin-id": "org.springdoc:springdoc-openapi-starter-webmvc-ui",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.0.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "3f6682e4600ae65099e896bb238c7c0ae230b3c627ca5190cda7a8108e5963ca"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "springdoc-openapi"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.4.0"
+      },
+      "after": "2.4.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:ai.timefold.solver:timefold-solver-bom",
+          "coordinate-or-plugin-id": "ai.timefold.solver:timefold-solver-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.2.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7b4beefe61524ee29ced9bb6af544a98db035e09371ffd3571de16700972cbb3"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "timefold-solver"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.1.6"
+      },
+      "after": "5.1.6",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.vertx:vertx-dependencies",
+          "coordinate-or-plugin-id": "io.vertx:vertx-dependencies",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.1.5",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "91430bf323051acf04e9582019976754069111ef15c63063004636f93bde9092"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "vertx"
+    }
+  ],
+  "resolved-graph-evidence": {
+    "observation-count": 286,
+    "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
+    "sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+    "spec-count": 143
+  },
+  "rollout": "2026-08-05-issue-169-full-authority-audit",
+  "schema-version": 3,
+  "status": "verified-resolved-graph"
+}

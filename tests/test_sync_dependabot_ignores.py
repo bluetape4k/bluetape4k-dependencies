@@ -7,8 +7,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
-SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "sync-dependabot-ignores.py"
+SCRIPT_PATH = (
+    Path(__file__).resolve().parents[1] / "scripts" / "sync-dependabot-ignores.py"
+)
 SPEC = importlib.util.spec_from_file_location("sync_dependabot_ignores", SCRIPT_PATH)
 assert SPEC is not None
 assert SPEC.loader is not None
@@ -18,11 +19,48 @@ SPEC.loader.exec_module(sync)
 
 
 class SyncDependabotIgnoresTest(unittest.TestCase):
+    def test_cli_exposes_shared_strict_repository_map(self) -> None:
+        self.assertTrue(
+            callable(sync.sync_shared_versions.catalog_candidate.load_repository_map_v1)
+        )
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH), "--help"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("--repository-map", result.stdout)
+
+    def test_candidate_dependabot_file_rejects_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            outside = Path(tmp) / "outside.yml"
+            outside.write_text("version: 2\n", encoding="utf-8")
+            config = root / ".github" / "dependabot.yml"
+            config.parent.mkdir(parents=True)
+            config.symlink_to(outside)
+            with self.assertRaisesRegex(RuntimeError, "non-symlink"):
+                sync.candidate_dependabot_file(root)
+
+    def test_candidate_repository_root_uses_catalog_owner(self) -> None:
+        catalog = Path("/workspace/repo/gradle/libs.versions.toml")
+        self.assertEqual(
+            sync.candidate_repository_root(catalog),
+            Path("/workspace/repo"),
+        )
+        with self.assertRaisesRegex(RuntimeError, "not canonical"):
+            sync.candidate_repository_root(Path("/workspace/repo/catalog.toml"))
+
     def test_default_workspace_matches_repository_workspace(self) -> None:
         original_file = sync.__file__
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp) / "bluetape4k"
-            script = workspace / "bluetape4k-dependencies" / "scripts" / "sync-dependabot-ignores.py"
+            script = (
+                workspace
+                / "bluetape4k-dependencies"
+                / "scripts"
+                / "sync-dependabot-ignores.py"
+            )
             script.parent.mkdir(parents=True)
             script.touch()
 
@@ -79,7 +117,14 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         self.assertIn('dependency-name: "org.slf4j:*"', synced)
         self.assertIn('dependency-name: "org.bouncycastle:*"', synced)
         self.assertIn('dependency-name: "org.apache.tomcat.embed:*"', synced)
+        self.assertIn('dependency-name: "software.amazon.awssdk.crt:*"', synced)
         self.assertIn('dependency-name: "org.springframework.boot"', synced)
+
+    def test_aws_crt_is_governed_outside_the_aws_sdk_group(self) -> None:
+        self.assertIn(
+            "software.amazon.awssdk.crt:*",
+            sync.CENTRAL_DEPENDENCY_IGNORES,
+        )
 
     def test_sync_text_adds_ignore_section_when_missing(self) -> None:
         text = "\n".join(
@@ -97,7 +142,10 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         synced = sync.sync_text(text)
 
         self.assertIn("    ignore:", synced)
-        self.assertLess(synced.index("    ignore:"), synced.index('  - package-ecosystem: "github-actions"'))
+        self.assertLess(
+            synced.index("    ignore:"),
+            synced.index('  - package-ecosystem: "github-actions"'),
+        )
 
     def test_sync_text_leaves_actions_only_config_unchanged(self) -> None:
         text = "\n".join(

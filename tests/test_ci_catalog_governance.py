@@ -5,7 +5,6 @@ import sys
 import unittest
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = REPO_ROOT / ".github" / "workflows" / "ci.yml"
 FIXTURE_WORKSPACE = REPO_ROOT / "tests" / "fixtures" / "catalog-adoption-clean"
@@ -13,6 +12,20 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
+    def test_ci_checks_the_latest_stable_inventory(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        script_step = workflow.split(
+            "      - name: Verify catalog scripts\n",
+            1,
+        )[1].split("      - name:", 1)[0]
+
+        self.assertIn("scripts/audit-latest-stable.py", script_step)
+        self.assertIn("scripts/verify-latest-stable-resolved-graphs.py", script_step)
+        self.assertIn(
+            "scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary",
+            script_step,
+        )
+
     def test_pull_requests_use_repo_local_fixture_for_the_adoption_guard(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 

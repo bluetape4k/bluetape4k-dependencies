@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
-
+from unittest import mock
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "verify-publication-poms.py"
 SPEC = importlib.util.spec_from_file_location("verify_publication_poms", SCRIPT_PATH)
@@ -61,6 +63,191 @@ class VerifyPublicationPomsTest(unittest.TestCase):
                 "generatePomFileForBluetapeLeaderBomPublication",
             ),
         )
+
+    def test_candidate_mode_uses_exact_eight_downstream_publishers(self) -> None:
+        self.assertEqual(
+            verify.CANDIDATE_PUBLISHERS,
+            tuple(
+                repository
+                for repository in verify.PUBLISHERS
+                if repository != verify.SELF_REPOSITORY
+            ),
+        )
+        self.assertEqual(len(verify.CANDIDATE_PUBLISHERS), 8)
+        self.assertEqual(verify.CANDIDATE_MAX_WORKERS, 2)
+        self.assertEqual(verify.CANDIDATE_PUBLISHER_TIMEOUT_SECONDS, 25 * 60)
+        self.assertEqual(verify.CANDIDATE_MAVEN_TIMEOUT_SECONDS, 20 * 60)
+
+    def test_candidate_gradle_command_is_offline_and_credential_free(self) -> None:
+        command = verify.generation_command(
+            Path("/workspace/repo/gradlew"),
+            verify.PUBLISHERS["bluetape4k-projects"],
+            offline=True,
+        )
+        self.assertIn("--offline", command)
+        self.assertNotIn("publish", " ".join(command).lower())
+        self.assertNotIn("sign", " ".join(command).lower())
+        self.assertNotIn("upload", " ".join(command).lower())
+
+    def test_candidate_maven_command_is_offline_without_update_flag(self) -> None:
+        command = verify.maven_model_command(
+            "mvn",
+            Path("/workspace/settings.xml"),
+            Path("/workspace/reactor/pom.xml"),
+            offline=True,
+        )
+        self.assertIn("--offline", command)
+        self.assertNotIn("-U", command)
+        ordinary = verify.maven_model_command(
+            "mvn",
+            Path("/workspace/settings.xml"),
+            Path("/workspace/reactor/pom.xml"),
+            offline=False,
+        )
+        self.assertIn("-U", ordinary)
+        self.assertNotIn("--offline", ordinary)
+
+    def test_candidate_effective_model_runs_once_with_twenty_minute_bound(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pom_path = root / "pom.xml"
+            settings = root / "settings.xml"
+            pom_path.write_text(pom("candidate"), encoding="utf-8")
+            settings.write_text("<settings/>", encoding="utf-8")
+            result = verify.CommandResult(0, "", "", False, None)
+            with mock.patch.object(
+                verify, "run_bounded_command", return_value=result
+            ) as bounded:
+                verify.validate_maven_models(
+                    [pom_path],
+                    settings=settings,
+                    maven_command="mvn",
+                    offline=True,
+                )
+
+        bounded.assert_called_once()
+        call = bounded.call_args
+        self.assertIn("--offline", call.args[0])
+        self.assertEqual(
+            call.kwargs["timeout_seconds"], verify.CANDIDATE_MAVEN_TIMEOUT_SECONDS
+        )
+
+    def test_candidate_options_require_manifest_offline_and_two_workers(self) -> None:
+        manifest = Path("/workspace/candidate-manifest.json")
+        repositories = verify.validate_candidate_options(
+            candidate_manifest=manifest,
+            offline=True,
+            max_workers=2,
+            requested_repositories=None,
+            repository_map=None,
+        )
+        self.assertEqual(repositories, verify.CANDIDATE_PUBLISHERS)
+        for offline, workers, message in (
+            (False, 2, "--offline"),
+            (True, 1, "--max-workers 2"),
+            (True, 3, "--max-workers 2"),
+        ):
+            with (
+                self.subTest(offline=offline, workers=workers),
+                self.assertRaisesRegex(RuntimeError, message),
+            ):
+                verify.validate_candidate_options(
+                    candidate_manifest=manifest,
+                    offline=offline,
+                    max_workers=workers,
+                    requested_repositories=None,
+                    repository_map=None,
+                )
+
+    def test_candidate_options_reject_custom_repo_or_repository_map(self) -> None:
+        manifest = Path("/workspace/candidate-manifest.json")
+        with self.assertRaisesRegex(RuntimeError, "fixed eight"):
+            verify.validate_candidate_options(
+                candidate_manifest=manifest,
+                offline=True,
+                max_workers=2,
+                requested_repositories=("bluetape4k-projects",),
+                repository_map=None,
+            )
+        with self.assertRaisesRegex(RuntimeError, "manifest owns"):
+            verify.validate_candidate_options(
+                candidate_manifest=manifest,
+                offline=True,
+                max_workers=2,
+                requested_repositories=None,
+                repository_map=Path("/workspace/map.json"),
+            )
+
+    def test_ordinary_mode_rejects_candidate_only_flags(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "candidate-only"):
+            verify.validate_candidate_options(
+                candidate_manifest=None,
+                offline=True,
+                max_workers=None,
+                requested_repositories=None,
+                repository_map=None,
+            )
+
+    def test_candidate_environment_strips_credentials_proxies_and_gradle_injection(self) -> None:
+        environment = verify.generation_environment(
+            {
+                "PATH": "/bin",
+                "JAVA_HOME": "/jdk",
+                "LANG": "C.UTF-8",
+                "HOME": "/tmp/home",
+                "GRADLE_USER_HOME": "/tmp/gradle",
+                "TMPDIR": "/tmp/runtime",
+                "CENTRAL_PASSWORD": "secret",
+                "HTTPS_PROXY": "http://proxy",
+                "SSH_AUTH_SOCK": "/tmp/ssh",
+                "GRADLE_OPTS": "-I evil.gradle",
+            },
+            Path("/workspace/catalog.toml"),
+            candidate=True,
+        )
+        self.assertEqual(
+            set(environment),
+            {
+                "PATH",
+                "JAVA_HOME",
+                "LANG",
+                "HOME",
+                "GRADLE_USER_HOME",
+                "TMPDIR",
+                "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH",
+            },
+        )
+
+    def test_bounded_scheduler_stops_new_jobs_after_first_failure(self) -> None:
+        started: list[str] = []
+
+        def worker(item: str) -> str:
+            started.append(item)
+            if item == "fail":
+                raise RuntimeError("publisher failed")
+            time.sleep(0.05)
+            return item
+
+        with self.assertRaisesRegex(RuntimeError, "publisher failed"):
+            verify.run_bounded_jobs(
+                ("fail", "in-flight", "must-not-start"),
+                worker,
+                max_workers=2,
+            )
+        self.assertNotIn("must-not-start", started)
+
+    def test_bounded_command_times_out_process_group(self) -> None:
+        result = verify.run_bounded_command(
+            (sys.executable, "-c", "import time; time.sleep(60)"),
+            cwd=Path.cwd(),
+            environment={"PATH": os.environ.get("PATH", "")},
+            timeout_seconds=0.05,
+            terminate_grace_seconds=0.05,
+            drain_seconds=0.2,
+        )
+        self.assertTrue(result.timed_out)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(result.termination_signal, ("SIGTERM", "SIGKILL"))
 
     def test_inventory_rejects_managed_or_workflow_publisher_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -201,9 +388,11 @@ class VerifyPublicationPomsTest(unittest.TestCase):
         self.assertIn("publication POM profiles are unsupported: optional-stack", result.errors[0])
 
     def test_discover_poms_rejects_empty_publication_output(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(RuntimeError, "no publication POM files found"):
-                verify.discover_poms(Path(tmp), "bluetape4k-sample")
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            self.assertRaisesRegex(RuntimeError, "no publication POM files found"),
+        ):
+            verify.discover_poms(Path(tmp), "bluetape4k-sample")
 
     def test_clear_publication_poms_removes_only_current_worktree_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

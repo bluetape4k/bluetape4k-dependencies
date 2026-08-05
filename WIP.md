@@ -1,84 +1,66 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-06-26 KST
-Scope: dependencies 1.3.0 development line.
-Open count: 0 issues.
+Snapshot: 2026-08-05 KST
+Scope: dependencies 1.4.0 coordinated stable release train.
+Milestone: 1.4.0, 2 open issues (#168 and #169).
 
 ## Current Direction
 
-`1.2.0` is published. It consumes the following stable upstream BOMs:
+`1.4.0` is the final BOM in a coordinated upstream release train. The external
+catalog upgrade candidate is locally verified, but the current BOM imports eight
+unpublished snapshot BOMs and is not a stable publication candidate yet.
 
-- `bluetape4k-bom:1.10.0`
-- `bluetape4k-aws-bom:0.3.1`
-- `bluetape4k-exposed-bom:1.10.0`
-- `bluetape4k-graph-bom:0.5.0`
-- `bluetape4k-image-bom:0.2.0`
-- `bluetape4k-javers-bom:0.2.0`
-- `bluetape4k-leader-bom:0.3.1`
-- `bluetape4k-text-bom:0.2.0`
+The release order is:
 
-Keep `develop` open for snapshot validation, but do not treat the raw
-`*-SNAPSHOT` refs as the final `1.3.0` stable inputs. The current snapshot
-development refs are:
+1. `bluetape4k-projects:1.12.0`
+2. `bluetape4k-exposed:1.12.0`, `bluetape4k-image:0.4.0`,
+   `bluetape4k-text:0.3.0`, `bluetape4k-graph:0.6.0`, and
+   `bluetape4k-javers:0.3.0`
+3. `bluetape4k-aws:0.5.0` and `bluetape4k-leader:0.5.0`
+4. Replace all eight snapshot BOM refs with Maven Central-visible stable refs,
+   cut a new catalog train ref, repeat downstream/POM gates, then publish
+   `bluetape4k-dependencies:1.4.0`.
 
-- `bluetape4k-bom:1.11.0-SNAPSHOT`
-- `bluetape4k-aws-bom:0.4.0-SNAPSHOT`
-- `bluetape4k-exposed-bom:1.11.0-SNAPSHOT`
-- `bluetape4k-graph-bom:0.6.0-SNAPSHOT`
-- `bluetape4k-image-bom:0.3.0-SNAPSHOT`
-- `bluetape4k-javers-bom:0.3.0-SNAPSHOT`
-- `bluetape4k-leader-bom:0.4.0-SNAPSHOT`
-- `bluetape4k-text-bom:0.3.0-SNAPSHOT`
+`bluetape4k-workshop` and other example repositories are outside the stable
+release train. `bluetape4k-experimental` participated only in catalog consumer
+validation and does not publish a stable BOM for this train.
 
-## 1.3.0 Stable Candidate Matrix
+## Candidate Evidence
 
-These are the intended stable BOM inputs to compare against
-`bluetape4k-dependencies:1.2.0` before publishing `1.3.0`. A candidate must be
-tagged, released, and Maven Central-visible before the dependencies catalog is
-pinned to the stable version.
+- Central candidate HEAD: `188f27c012801e011c416ee4e0cfded9294293d9`
+- Catalog source commit: `fbb6df78d04fcb9d7252ce0a1338ee67af9fa817`
+- Catalog SHA-256: `9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df`
+- External-version audit: 509 authorities and 543 compatibility lines.
+- Adoption ledger: 121 deltas, 130 authorities, 260 exact before/after
+  resolved-graph observations, all verified.
+- Consumer validation: nine library repositories passed full local builds at
+  their pinned candidate heads; 175 generated POMs and Maven effective models
+  passed with zero failures.
 
-| Upstream BOM | `1.2.0` stable input | `1.3.0` stable candidate | Notes |
-|---|---:|---:|---|
-| `bluetape4k-bom` | `1.10.0` | `1.11.0` | Pending stable release. |
-| `bluetape4k-aws-bom` | `0.3.1` | `0.4.0` | Pending stable release. |
-| `bluetape4k-image-bom` | `0.2.0` | `0.3.0` | Pending stable release. |
-| `bluetape4k-text-bom` | `0.2.0` | `0.2.1` | Patch train; do not substitute `0.3.0-SNAPSHOT`. |
-| `bluetape4k-graph-bom` | `0.5.0` | `0.5.1` | Patch train; `0.6.0` is the next development line, not this stable input. |
-| `bluetape4k-leader-bom` | `0.3.1` | `0.4.0` | Pending stable release. |
-| `bluetape4k-exposed-bom` | `1.10.0` | `1.11.0` | Pending stable release. |
-| `bluetape4k-javers-bom` | `0.2.0` | `0.2.1` | Patch train; `0.3.0` is the next development line, not this stable input. |
+## Current Blockers
 
-## Release Gate
-
-- `bluetape4k-dependencies:1.2.0` is published and Maven Central-visible.
-- The next train remains a snapshot validation line until each selected
-  upstream repository publishes the matching stable artifact.
-- Generated managed aliases and BOM constraints must be regenerated after the
-  BOM version selection so newly published modules such as `bluetape4k-images-ktor`,
-  `javers-ddd`, and `javers-exposed` are included only when their selected BOMs
-  publish them.
-
-## Verification Evidence
-
-- Maven Central returned HTTP 200 for every retained or promoted upstream BOM in
-  the 1.2.0 matrix.
-- `bluetape4k-exposed-bom:1.10.0` returned HTTP 200 after release workflow
-  `https://github.com/bluetape4k/bluetape4k-exposed/actions/runs/26736279613`.
-- `bluetape4k-graph-bom:0.5.0` returned HTTP 200 after release workflow
-  `https://github.com/bluetape4k/bluetape4k-graph/actions/runs/26734244764`.
-- `bluetape4k-aws-bom:0.3.1` returned HTTP 200 after release workflow
-  `https://github.com/bluetape4k/bluetape4k-aws/actions/runs/26737796498`.
-- `bluetape4k-leader-bom:0.3.1` returned HTTP 200 after release workflow
-  `https://github.com/bluetape4k/bluetape4k-leader/actions/runs/26754212311`.
-- Live release/tag checks on 2026-06-26 KST show the `1.3.0` stable candidates
-  above are not yet tagged or published.
+- All eight target stable upstream BOM POMs return Maven Central HTTP 404.
+- The generated `1.4.0` POM still imports all eight `*-SNAPSHOT` BOMs.
+- Exact candidate full CI/Nightly evidence is absent across the upstream train.
+- Upstream changelogs and WIP/release notes are incomplete or stale.
+- Release-affecting open PRs require explicit merge, close, or waiver decisions.
+- Catalog tags, semver tags, workflow dispatch, publication, releases, merges,
+  milestone closure, and cleanup remain separate approval gates.
 
 ## Priority Queue
 
-No assigned open issues are required for this release train.
+1. Make `bluetape4k-projects:1.12.0` release-ready and publish it.
+2. Promote core consumers to the public stable BOM and complete their exact-head
+   validation and release notes.
+3. Publish the remaining upstream BOMs in dependency order.
+4. Replace snapshot refs in this repository, cut the final catalog candidate,
+   and repeat the POM, downstream, and resolved-graph gates.
+5. Request fresh approval for the `1.4.0` tag and release workflow dispatch.
 
 ## WIP Limits
 
 | Lane | Limit | Current next |
 |---|---:|---|
-| Release | 1 | Triage the next dependencies governance train before selecting 1.3.0 inputs. |
+| Stable release | 1 | Prepare and verify `bluetape4k-projects:1.12.0`. |
+| Catalog promotion | 1 | Hold until every selected stable upstream POM is HTTP 200. |
+| Publication | 0 | No tag or dispatch before the final stable-POM gate. |
