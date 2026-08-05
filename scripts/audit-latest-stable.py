@@ -626,6 +626,10 @@ def validate_audit(
     }
     if audit.get("summary") != expected_summary:
         raise RuntimeError("audit summary does not match audited records")
+    if metadata_statuses["metadata-unavailable"]:
+        raise RuntimeError(
+            "audit contains unavailable upstream metadata and cannot be promoted"
+        )
 
 
 def fetch_metadata(url: str, timeout: float) -> bytes:

@@ -523,6 +523,45 @@ class LatestStableInventoryTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "summary"):
             module.validate_audit(audit, inventory)
 
+    def test_validate_audit_rejects_a_coherent_all_unavailable_snapshot(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+        for record in audit["records"]:
+            record["latest-stable"] = {
+                "latest": None,
+                "metadata-sha256": None,
+                "reason": "The authoritative metadata source was unavailable.",
+                "retrieved-at": audit["retrieved-at"],
+                "source": module.metadata_url(
+                    record["kind"], record["coordinate-or-plugin-id"]
+                ),
+                "status": "metadata-unavailable",
+            }
+            for line in record["current-lines"]:
+                line["disposition"] = "hold-unavailable"
+                line["disposition-reason"] = module.disposition_reason(
+                    "hold-unavailable"
+                )
+                line["latest-compatible"] = None
+        audit["summary"] = {
+            "authority-count": len(audit["records"]),
+            "line-count": sum(
+                len(record["current-lines"]) for record in audit["records"]
+            ),
+            "line-dispositions": {
+                "hold-unavailable": sum(
+                    len(record["current-lines"]) for record in audit["records"]
+                )
+            },
+            "metadata-preview-only": 0,
+            "metadata-unavailable": len(audit["records"]),
+            "metadata-verified": 0,
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "unavailable upstream metadata"):
+            module.validate_audit(audit, inventory)
+
     def test_cli_runs_with_the_active_python(self) -> None:
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--check", "--summary"],
