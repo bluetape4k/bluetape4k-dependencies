@@ -7,7 +7,8 @@ resolved graph 33건, 9개 publication repository의 POM/effective-model 검증�
 그러나 Issue #169의 전체 latest-stable audit와 Maven Central publication gate가
 끝나지 않았으므로 배포 상태는 **PENDING**이다. 이전 candidate의 remote immutable
 commit-ref 검증은 2026-08-05에 통과했지만, superseding local candidate는 아직
-commit/tag/push되지 않았다.
+catalog bytes는 local commit `b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749`에
+고정됐지만 아직 tag/push되지 않았다.
 
 검증 대상 catalog bytes는 다음 checksum으로 고정한다.
 

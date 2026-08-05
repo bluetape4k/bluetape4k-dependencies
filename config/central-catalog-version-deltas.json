@@ -411,7 +411,7 @@
       ],
       "superseding-local-candidate": {
         "status": "verified-local-candidate",
-        "catalog-commit": null,
+        "catalog-commit": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
         "catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55",
         "downstream-full-builds": {
           "repositories": 9,

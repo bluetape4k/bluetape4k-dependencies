@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -81,7 +82,16 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(receipt["publication-poms"]["failures"], 0)
         superseding = rollout["superseding-local-candidate"]
         self.assertEqual(superseding["status"], "verified-local-candidate")
-        self.assertIsNone(superseding["catalog-commit"])
+        self.assertRegex(superseding["catalog-commit"], r"^[0-9a-f]{40}$")
+        self.assertEqual(
+            subprocess.run(
+                ["git", "show", f"{superseding['catalog-commit']}:gradle/libs.versions.toml"],
+                cwd=LEDGER.parents[1],
+                check=True,
+                capture_output=True,
+            ).stdout,
+            CATALOG.read_bytes(),
+        )
         self.assertEqual(
             superseding["catalog-sha256"],
             (
