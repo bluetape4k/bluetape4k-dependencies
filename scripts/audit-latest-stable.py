@@ -465,16 +465,28 @@ def upsert_catalog_rollout(
     document: dict[str, Any], authority_ledger: dict[str, Any]
 ) -> dict[str, Any]:
     updated = copy.deepcopy(document)
+    candidate_evidence = authority_ledger.get("candidate-validation-evidence", {})
+    downstream_evidence = candidate_evidence.get(
+        "downstream-full-builds", {"repositories": 9, "status": "pending"}
+    )
+    publication_evidence = candidate_evidence.get(
+        "publication-poms", {"repositories": 9, "status": "pending"}
+    )
     rollout = {
         "audit": authority_ledger["audit"]["path"],
         "authority-delta-ledger": "config/latest-stable-version-deltas.json",
         "baseline-catalog-ref": authority_ledger["baseline"]["catalog-ref"],
         "catalog-sha256": authority_ledger["candidate"]["catalog-sha256"],
         "delta-count": len(authority_ledger["delta"]),
-        "downstream-full-builds": {"repositories": 9, "status": "pending"},
-        "publication-pom-verification": {"repositories": 9, "status": "pending"},
-        "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-        "resolved-graph-evidence": [],
+        "downstream-full-builds": copy.deepcopy(downstream_evidence),
+        "publication-pom-verification": copy.deepcopy(publication_evidence),
+        "remote-immutable-ref-verification": candidate_evidence.get(
+            "remote-immutable-ref-verification",
+            "pending-candidate-commit-and-push",
+        ),
+        "resolved-graph-evidence": copy.deepcopy(
+            authority_ledger.get("resolved-graph-evidence", [])
+        ),
         "rollout": authority_ledger["rollout"],
         "status": authority_ledger["status"],
     }

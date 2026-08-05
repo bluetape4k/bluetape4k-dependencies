@@ -57,7 +57,41 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertIn("2026-08-04-issue-169-latest-compatible-stable", rollout_ids)
         self.assertIn("2026-08-05-issue-169-full-authority-audit", rollout_ids)
 
-    def test_full_authority_rollout_links_pending_evidence(self) -> None:
+    def test_upsert_catalog_rollout_carries_verified_candidate_evidence(self) -> None:
+        module = load_script()
+        document = {
+            "schema-version": 2,
+            "rollout": "issue-168",
+            "status": "pending-resolved-graph",
+            "delta": [],
+            "subsequent-rollouts": [],
+        }
+        authority = {
+            "rollout": "current",
+            "status": "verified-resolved-graph",
+            "baseline": {"catalog-ref": "baseline"},
+            "candidate": {"catalog-sha256": "candidate"},
+            "audit": {"path": "config/latest-stable-version-audit.json"},
+            "delta": [{"version-key": "example"}],
+            "resolved-graph-evidence": {"path": "graphs.json", "spec-count": 1},
+            "candidate-validation-evidence": {
+                "downstream-full-builds": {"repositories": 9, "failures": 0},
+                "publication-poms": {"repositories": 9, "failures": 0},
+                "remote-immutable-ref-verification": "verified",
+            },
+        }
+
+        rollout = module.upsert_catalog_rollout(document, authority)[
+            "subsequent-rollouts"
+        ][0]
+
+        self.assertEqual(rollout["status"], "verified-resolved-graph")
+        self.assertEqual(rollout["resolved-graph-evidence"]["spec-count"], 1)
+        self.assertEqual(rollout["downstream-full-builds"]["failures"], 0)
+        self.assertEqual(rollout["publication-pom-verification"]["failures"], 0)
+        self.assertEqual(rollout["remote-immutable-ref-verification"], "verified")
+
+    def test_full_authority_rollout_links_verified_evidence(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         authority = json.loads(AUTHORITY_LEDGER.read_text(encoding="utf-8"))
         rollout = next(
@@ -66,7 +100,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             if item["rollout"] == "2026-08-05-issue-169-full-authority-audit"
         )
 
-        self.assertEqual(rollout["status"], "validation-pending")
+        self.assertEqual(rollout["status"], "verified-resolved-graph")
         self.assertEqual(
             rollout["authority-delta-ledger"],
             "config/latest-stable-version-deltas.json",
@@ -79,12 +113,12 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["baseline-catalog-ref"], authority["baseline"]["catalog-ref"])
         self.assertEqual(rollout["audit"], authority["audit"]["path"])
         self.assertEqual(rollout["delta-count"], 121)
-        self.assertEqual(rollout["resolved-graph-evidence"], [])
-        self.assertEqual(rollout["downstream-full-builds"]["status"], "pending")
-        self.assertEqual(rollout["publication-pom-verification"]["status"], "pending")
+        self.assertEqual(rollout["resolved-graph-evidence"]["spec-count"], 130)
+        self.assertEqual(rollout["downstream-full-builds"]["failures"], 0)
+        self.assertEqual(rollout["publication-pom-verification"]["failures"], 0)
         self.assertEqual(
             rollout["remote-immutable-ref-verification"],
-            "pending-candidate-commit-and-push",
+            "verified-fresh-remote-commit-ref",
         )
 
     def test_compatibility_lines_are_not_issue_168_adoption_deltas(self) -> None:

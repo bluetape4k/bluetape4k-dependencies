@@ -20,6 +20,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         )[1].split("      - name:", 1)[0]
 
         self.assertIn("scripts/audit-latest-stable.py", script_step)
+        self.assertIn("scripts/verify-latest-stable-resolved-graphs.py", script_step)
         self.assertIn(
             "scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary",
             script_step,

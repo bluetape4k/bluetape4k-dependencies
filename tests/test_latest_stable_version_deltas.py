@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import re
@@ -8,6 +9,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "audit-latest-stable.py"
+RESOLVER = REPO_ROOT / "scripts" / "verify-latest-stable-resolved-graphs.py"
 CATALOG = REPO_ROOT / "gradle" / "libs.versions.toml"
 LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
 AUDIT = REPO_ROOT / "config" / "latest-stable-version-audit.json"
@@ -19,6 +21,17 @@ def load_script():
     spec = importlib.util.spec_from_file_location("audit_latest_stable", SCRIPT)
     if spec is None or spec.loader is None:
         raise RuntimeError("cannot load audit-latest-stable.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_resolver():
+    spec = importlib.util.spec_from_file_location(
+        "verify_latest_stable_resolved_graphs", RESOLVER
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load resolved graph verifier")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -171,7 +184,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(document["schema-version"], 3)
         self.assertEqual(document["rollout"], "2026-08-05-issue-169-full-authority-audit")
         self.assertEqual(document["audit-cutoff"], "2026-08-05")
-        self.assertEqual(document["status"], "validation-pending")
+        self.assertEqual(document["status"], "verified-resolved-graph")
         self.assertEqual(
             set(document),
             {
@@ -181,8 +194,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 "status",
                 "baseline",
                 "candidate",
+                "candidate-validation-evidence",
                 "audit",
                 "delta",
+                "resolved-graph-evidence",
             },
         )
         self.assertEqual(len(document["delta"]), 121)
@@ -201,12 +216,20 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     "verification",
                     "reason",
                     "adoption-evidence",
+                    "resolved-graph-specs",
                 },
             )
             self.assertNotEqual(entry["before"], entry["after"])
             self.assertEqual(entry["after"], versions[entry["version-key"]])
             self.assertTrue(entry["authorities"])
-            self.assertEqual(entry["verification"], "pending-resolved-graph")
+            self.assertEqual(entry["verification"], "verified-resolved-graph")
+            self.assertTrue(entry["resolved-graph-specs"])
+            self.assertTrue(
+                all(
+                    re.fullmatch(r"[0-9a-f]{64}", spec_id)
+                    for spec_id in entry["resolved-graph-specs"]
+                )
+            )
             self.assertIn(
                 entry["adoption-evidence"]["classification"],
                 {
@@ -215,6 +238,48 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 },
             )
             self.assertEqual(entry["adoption-evidence"]["version"], entry["after"])
+
+        evidence = document["resolved-graph-evidence"]
+        receipt_path = REPO_ROOT / evidence["path"]
+        receipt_bytes = receipt_path.read_bytes()
+        receipt = json.loads(receipt_bytes)
+        validated_receipt = load_resolver().validate_receipt(document, receipt)
+        self.assertEqual(hashlib.sha256(receipt_bytes).hexdigest(), evidence["sha256"])
+        self.assertEqual(receipt["status"], "verified-resolved-graph")
+        self.assertEqual(receipt["catalog-sha256"], document["candidate"]["catalog-sha256"])
+        self.assertEqual(receipt["spec-count"], evidence["spec-count"])
+        self.assertEqual(receipt["observation-count"], evidence["observation-count"])
+        self.assertEqual(len(receipt["observations"]), evidence["observation-count"])
+        self.assertEqual(len(validated_receipt), evidence["observation-count"])
+        self.assertEqual(
+            {
+                observation["spec_id"]
+                for observation in receipt["observations"]
+            },
+            {
+                spec_id
+                for entry in document["delta"]
+                for spec_id in entry["resolved-graph-specs"]
+            },
+        )
+
+        candidate_evidence = document["candidate-validation-evidence"]
+        candidate_receipt_path = REPO_ROOT / candidate_evidence["path"]
+        candidate_receipt_bytes = candidate_receipt_path.read_bytes()
+        candidate_receipt = json.loads(candidate_receipt_bytes)
+        self.assertEqual(
+            hashlib.sha256(candidate_receipt_bytes).hexdigest(),
+            candidate_evidence["sha256"],
+        )
+        self.assertEqual(candidate_receipt["status"], "verified-local-candidate")
+        self.assertEqual(
+            candidate_receipt["catalog"]["sha256"],
+            document["candidate"]["catalog-sha256"],
+        )
+        self.assertEqual(candidate_receipt["full-builds"]["failures"], 0)
+        self.assertEqual(len(candidate_receipt["full-builds"]["repositories"]), 9)
+        self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
+        self.assertEqual(candidate_receipt["publication-poms"]["files"], 175)
 
     def test_audit_closes_all_safe_adoption_candidates(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))

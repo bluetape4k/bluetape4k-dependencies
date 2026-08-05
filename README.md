@@ -215,11 +215,20 @@ changing central aliases:
 ```bash
 scripts/sync-shared-versions.py --workspace .. --check --summary
 scripts/audit-latest-stable.py --check --summary
+python3 scripts/verify-latest-stable-resolved-graphs.py \
+  --receipt docs/releases/latest-stable-resolved-graphs.json \
+  --log build/latest-stable-resolved-graphs.log
 scripts/verify-publication-poms.py --workspace .. --summary
 scripts/sync-dependabot-ignores.py --workspace .. --check --summary
 scripts/sync-dependabot-ignores.py --workspace .. --write --check --summary
 scripts/triage-dependabot-alerts.py --repo bluetape4k-projects
 ```
+
+The command above revalidates either a pending or already promoted ledger without
+editing it. For a first-time promotion only, after the pending receipt has been
+reviewed and approved, rerun the same command with `--promote`. For an already
+promoted ledger whose receipt was intentionally regenerated, use
+`--refresh-evidence` instead. Never combine the two mutation flags.
 
 The checker is report-only: `--write` is retained as a deprecated compatibility flag and
 never edits downstream repositories. A governed repository should use `bt4k.<alias>`

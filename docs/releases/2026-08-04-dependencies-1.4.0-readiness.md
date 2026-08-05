@@ -2,145 +2,110 @@
 
 ## 결론
 
-`1.4.0`의 superseding remote candidate는 로컬 build, 9개 library downstream full build,
-resolved graph 33건, 9개 publication repository의 POM/effective-model 검증을 통과했다.
-그러나 Issue #169의 전체 latest-stable audit와 Maven Central publication gate가
-끝나지 않았으므로 배포 상태는 **PENDING**이다. catalog bytes는 commit
-`b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749`에 고정했고 central carrier HEAD
-`fd8064d5944031a204addf279ddc1efe9c4cb969` 및 9개 downstream 후보 브랜치를
-force 없이 push했다. tag, PR, merge, workflow dispatch, publication은 수행하지 않았다.
+`bluetape4k-dependencies:1.4.0`의 외부 의존성 최신 호환 버전 통일과 로컬
+소비자 검증은 완료했다. 다만 현재 생성되는 `1.4.0` POM이 아직 8개의 내부
+`*-SNAPSHOT` BOM을 import하고, 대응하는 안정 버전 POM은 Maven Central에서 모두
+HTTP 404다. 따라서 현재 상태는 **PENDING**이며 tag, workflow dispatch, publication을
+실행할 수 없다.
 
-검증 대상 catalog bytes는 다음 checksum으로 고정한다.
+## 고정된 후보
+
+| 항목 | 값 |
+|---|---|
+| dependencies candidate HEAD | `188f27c012801e011c416ee4e0cfded9294293d9` |
+| catalog source commit | `fbb6df78d04fcb9d7252ce0a1338ee67af9fa817` |
+| catalog SHA-256 | `9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df` |
+| audit 범위 | 509 authorities / 543 compatibility lines |
+| 채택 delta | 121 version keys / 130 authorities |
+| resolved graph | 260 exact before/after observations, failures 0 |
+| downstream full build | 9 library repositories, failures 0 |
+| publication POM gate | 175 POMs / 175 effective models / failures 0 |
+
+resolved graph의 source-controlled receipt는
+[`2026-08-05-issue-169-exhaustive-resolved-graphs.json`](2026-08-05-issue-169-exhaustive-resolved-graphs.json)이며,
+SHA-256은 `1f019f350fa9c52c82f0152f2dd517fed55d93be354123b46df0d017f63d7c97`다.
+각 authority를 독립 Gradle configuration으로 분리해 baseline과 candidate 버전을
+정확히 요청하고, 실제 선택 버전, 전체 component 목록과 graph hash, before/after
+added/removed component delta를 기록했다. 실행 전에 현재 catalog bytes와 checksum
+sidecar, ledger candidate SHA, 121개 candidate version을 상호 검증하고, 전이 artifact
+하나라도 resolve되지 않으면 실패한다.
+9개 downstream exact HEAD와 full-build/POM 로그 hash는
+[`2026-08-05-issue-169-full-candidate-receipt.json`](2026-08-05-issue-169-full-candidate-receipt.json)에
+고정했다.
+
+## 안정 배포 DAG
 
 ```text
-6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55
+projects 1.12.0
+  ├─ exposed 1.12.0 ─┬─ aws 0.5.0
+  │                  └─ leader 0.5.0
+  ├─ image 0.4.0
+  ├─ text 0.3.0
+  ├─ graph 0.6.0
+  └─ javers 0.3.0
+            ↓
+stable catalog ref + downstream/POM 재검증
+            ↓
+dependencies 1.4.0
 ```
 
-## 최신 버전 audit 범위
+`bluetape4k-workshop`과 예제 저장소는 안정 배포 train에서 제외한다.
+`bluetape4k-experimental`은 catalog 소비자 검증에만 포함하며 공개 BOM 선행 배포
+대상이 아니다.
 
-재현 가능한 `config/latest-stable-version-inventory.json`은 325개 managed-generated
-authority와 71개 policy subject, 총 396개의 고유 external version authority를
-catalog/policy SHA와 함께 식별한다. `scripts/audit-latest-stable.py --check`는 이
-집합이나 입력이 바뀌면 실패한다. 아직 전수 upstream 판정이 끝나지 않았으므로
-396개 record 모두 fail-closed `audit-pending`이다.
+## upstream preflight
 
-| 분류 | 수량 | 현재 상태 |
-| --- | ---: | --- |
-| upstream metadata상 이미 최신 | 164 | 발견 완료, 전수 disposition artifact 미완료 |
-| stale로 발견된 일반 key | 200 | 39개 adoption delta만 현재 batch ledger에 기록 |
-| 명시적 compatibility line | 27 | 현재 batch에는 Kotlin, AWS CRT, Smithy 등을 포함한 12개 hold/defer 기록 |
-| versionless line | 1 | AWS CRT를 AWS Java SDK parent 호환 버전 `0.48.2`로 고정 |
-| non-Central/project metadata 필요 | 4 | UCAR/GeoTools 후속 audit 필요 |
+| Repository | Target | Exact candidate HEAD | Stable POM | 판정 |
+|---|---:|---|---:|---|
+| projects | `1.12.0` | `66fe47d3` | 404 | PENDING |
+| exposed | `1.12.0` | `16a8fed2` | 404 | PENDING |
+| image | `0.4.0` | `295c7228` | 404 | PENDING |
+| text | `0.3.0` | `dedfb886` | 404 | PENDING |
+| graph | `0.6.0` | `95677bb7` | 404 | PENDING |
+| javers | `0.3.0` | `6ac3b824` | 404 | PENDING |
+| aws | `0.5.0` | `7584c2f3` | 404 | PENDING |
+| leader | `0.5.0` | `7f6bcc51` | 404 | PENDING |
 
-`config/latest-stable-version-deltas.json`은 `verified-batch` 상태로 현재 검증 batch의 40개 adoption과
-11개 hold/defer만 표현한다. 따라서 이 파일은 396개 전체 inventory의 완료 증거가
-아니며, 나머지 key의 fresh evidence와 disposition은 release blocker다.
+모든 후보 worktree는 clean하고 local HEAD가 origin과 일치한다. 그러나 exact 후보
+SHA의 full CI/Nightly/Snapshot 증거는 없거나 dependency submission만 존재한다.
+기존 develop Nightly 성공은 SHA가 달라 대체 증거로 사용할 수 없다.
 
-추가 metadata sweep에서 확인한 Jackson core/Kotlin module `2.22.1`, Feign
-`13.13`, OkHttp `5.4.0`, TwelveMonkeys `3.14.0`, Typesafe Config `1.4.9`,
-Commons Validator `1.11.0`은 batch 03에서 채택하고 검증했다. Google common
-protos `2.74.0`, Gson `2.14.0`, Okio `3.18.1`, RabbitMQ `5.34`, jfalkordb
-`0.10`, avro4k `2.12`, Tink `1.23.0`은 별도 호환성 검증이 필요해 명시적으로
-보류했다. MaxMind GeoIP2 `5.2.0`은 batch 04에서 전용 테스트와 resolved graph,
-9개 downstream full build, publication POM gate를 통과해 채택했다.
+문서 차단도 남아 있다. projects는 `1.12.0 — Unreleased`이고 release 문서 PR
+`#1310`이 열려 있다. image는 `0.4.0 - TBD`, graph는 `[Unreleased]`, leader는
+`0.5.0 — 미공개`, javers/text도 미공개·미배포 상태다. AWS WIP도 현재 merge 상태와
+맞지 않는다. Javers `#292`, Text `#229` 등 release workflow를 변경하는 open PR은
+배포 전 명시적으로 merge, close, 또는 waiver 처리해야 한다.
 
-## 현재 채택 batch
+## 현재 POM 차단
 
-- Gradle plugin: Kover `0.9.9`, Download `5.7.0`, Gatling plugin
-  `3.15.1.2`, Jib `3.5.4`, Shadow `9.6.1`
-- AWS: Java SDK BOM `2.50.3`, Kotlin SDK `1.8.22`, SDK-parent 호환 CRT
-  `0.48.2`, Kotlin SDK 호환 Smithy `1.7.4`
-- Runtime/platform: Jackson 3 `3.2.1`, Ktor `3.5.2`, Netty 4
-  `4.1.136.Final`, OpenTelemetry `1.64.0`, Vert.x 4 `4.5.31`, Vert.x 5
-  `5.1.5`
-- Library families: gRPC Java `1.83.1`, Cassandra driver `4.19.3`, Groovy
-  `5.0.8`, JaVers `7.11.7`, MongoDB driver `5.9.1`, Mutiny `3.3.0`, R2DBC
-  MariaDB/MySQL/PostgreSQL `1.4.1`/`1.4.3`/`1.1.2.RELEASE`, REST Assured
-  `6.0.1`, Spring Cloud `2025.1.2`
-- Batch 03: Jackson 2 core/Kotlin module `2.22.1`, Feign `13.13`, OkHttp
-  `5.4.0`, TwelveMonkeys ImageIO `3.14.0`, Typesafe Config `1.4.9`, Commons
-  Validator `1.11.0`
-- Batch 04: MaxMind GeoIP2 `5.2.0`
+`generatePomFileForBluetapeDependenciesPublication`은 성공하지만 결과 POM에는 다음
+8개 snapshot import가 남는다.
 
-## 호환성 보류와 deferred migration
+- `bluetape4k-bom:1.12.0-SNAPSHOT`
+- `bluetape4k-aws-bom:0.5.0-SNAPSHOT`
+- `bluetape4k-image-bom:0.4.0-SNAPSHOT`
+- `bluetape4k-text-bom:0.3.0-SNAPSHOT`
+- `bluetape4k-graph-bom:0.6.0-SNAPSHOT`
+- `bluetape4k-leader-bom:0.5.0-SNAPSHOT`
+- `bluetape4k-exposed-bom:1.12.0-SNAPSHOT`
+- `bluetape4k-javers-bom:0.3.0-SNAPSHOT`
 
-| 계열 | 현재 | upstream latest | 영향 범위 | disposition / 이유 |
-| --- | --- | --- | --- | --- |
-| Kotlin | `2.4.0` | `2.4.10` | projects/aws/exposed/graph/text의 `detekt*` task | hold-compatibility: detekt `2.0.0-alpha.5` 실행 호환성 실패 |
-| OWASP Dependency Check | `12.2.2` | `13.0.0` | projects/exposed의 `dependencyCheck*` task | defer-breaking-migration: major migration 별도 검토 필요 |
-| AWS CRT | `0.48.2` | `0.48.3` | aws `aws-java` compile/runtime, projects testcontainers test runtime | hold-compatibility: AWS Java SDK `2.50.3` parent-tested 버전 유지 |
-| Smithy Kotlin | `1.7.4` | `1.7.6` | aws `aws-kotlin` compile/runtime | hold-compatibility: AWS Kotlin SDK `1.8.22` 직접 요구 버전 유지 |
+snapshot metadata는 모두 존재하지만 안정 POM은 모두 404다. 안정 upstream 공개
+전에는 단순히 `-SNAPSHOT` 문자열만 제거하지 않는다. 먼저 각 BOM을 실제로 배포해
+HTTP 200을 확인한 다음 catalog를 안정 버전으로 전환하고 전체 POM/effective-model,
+downstream build, resolved-graph 검증을 다시 수행해야 한다.
 
-UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 disposition이
-없는 stale key는 `hold-unavailable`로 간주하지 않는다. 근거 수집과 분류가 끝나기
-전까지는 단순히 **audit 미완료**다.
+## 남은 배포 게이트
 
-## downstream 검증 상태
+1. 각 upstream의 changelog/WIP와 release-affecting PR 상태 정리
+2. exact candidate의 full CI/Nightly 및 publication POM 검증
+3. dependency DAG 순서대로 semver tag와 stable BOM 배포
+4. 각 target stable POM의 Maven Central HTTP 200 확인
+5. central catalog의 8개 BOM ref를 stable로 변경하고 새 catalog train ref 고정
+6. downstream full build, 175 POM/effective-model, resolved graph 재검증
+7. dependencies open PR/issue 및 changelog/release checklist 정리
+8. exact final HEAD, CI, credentials, workflow inputs를 재확인한 뒤 별도 승인
+9. `1.4.0` tag와 release workflow dispatch, Maven Central/GitHub Release 검증
 
-| repository | candidate HEAD | catalog ref | 대표 compile/test | full build | remote immutable ref |
-| --- | --- | --- | --- | --- | --- |
-| bluetape4k-projects | `a7c2c15` | `b6667cf` | GeoIP2 test/graph 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-aws | `15907fb` | `b6667cf` | 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-experimental | `cf78226` | `b6667cf` | snapshot consumer | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-exposed | `189f9cd` | `b6667cf` | R2DBC 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-graph | `973369f` | `b6667cf` | 관련 regression 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-image | `f908b60` | `b6667cf` | TwelveMonkeys 포함 | catalog-byte full build 통과 | fresh remote fetch 통과 |
-| bluetape4k-javers | `8e8f9fb` | `b6667cf` | JaVers core 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-leader | `96474e8` | `b6667cf` | Netty native regression 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-text | `bbf1798` | `b6667cf` | 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
-
-위 표는 superseding remote candidate의 exact downstream HEAD/commit ref 증거다.
-GeoIP2 `5.2.0`을 추가한 catalog bytes로 같은 9개 worktree의 full build를 통과했고,
-remote immutable fetch에서 받은 SHA-256이 그 full-build 입력과 일치함을 확인했다.
-
-대표 resolved graph에서 확인한 실제 선택 버전은 다음과 같다.
-
-- `io.grpc:grpc-core` -> `1.83.1`
-- `org.mongodb:mongodb-driver-core` -> `5.9.1`
-- `io.smallrye.reactive:mutiny` -> `3.3.0`
-- `software.amazon.awssdk.crt:aws-crt` -> `0.48.2`
-- `org.postgresql:r2dbc-postgresql` -> `1.1.2.RELEASE`
-- `com.fasterxml.jackson.core:jackson-core` -> `2.22.1`
-- `io.github.openfeign:feign-core` -> `13.13`
-- `com.squareup.okhttp3:okhttp` -> `5.4.0`
-- `com.twelvemonkeys.imageio:imageio-core` -> `3.14.0`
-- `com.typesafe:config` -> `1.4.9`
-- `com.maxmind.geoip2:geoip2` -> `5.2.0`
-
-publication gate는 9개 repository, 175개 POM, 46,023개 dependency-management
-entry, 175개 Maven effective model을 검사했고 failure는 0이었다. Commons
-Validator는 9개 downstream에 direct consumer가 없어 catalog와 publication POM
-gate로 버전 및 dependency-management 완결성을 검증했다. GeoIP2 채택 후에도 같은
-수량의 POM/effective-model gate를 재실행해 failure 0을 확인했다.
-
-candidate map 기준 `sync-shared-versions.py`, `sync-dependabot-ignores.py`,
-`sync-managed-catalog.py`는 통과했다. canonical default sibling checkout만 대상으로
-실행하면 작업 branch가 아니라 기존 branch를 읽어 adoption gap을 보고하므로, 이
-train의 판정에는
-[`2026-08-04-issue-169-candidate-receipt.json`](2026-08-04-issue-169-candidate-receipt.json)의
-exact worktree/head map을 사용한다. Receipt는 생성된 repository map, catalog lock,
-candidate manifest/ledger와 네 개 검증 명령의 output SHA-256을 함께 고정한다.
-
-2026-08-05에는 superseding central branch를 force 없이 push하고 원격 HEAD가
-`fd8064d5944031a204addf279ddc1efe9c4cb969`임을 read-back했다. 이어
-`bluetape4k-image`에서 local catalog override와 기존 Gradle user home을 배제하고
-commit ref `b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749`로 `./gradlew help`를 실행했다.
-원격에서 받은 catalog SHA-256은 기존 full-build 입력과 동일한
-`6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55`였고 Gradle
-configuration은 `BUILD SUCCESSFUL`이었다. 9개 downstream의 settings/CI ref를
-동일 commit으로 커밋·push한 뒤 GeoIP2 test/resolved graph와 9-repository POM gate를
-새 exact heads에서 재검증했다. POM gate의 최초 한 번은 Gradle 구성 중 중단됐으나
-로그를 보존하지 못했고, 코드 변경 없이 이어진 두 번의 전체 재실행은 모두
-175 POM/46,023 dependency-management entry/175 effective model/failure 0으로 통과했다.
-상세 증거는
-[`2026-08-05-issue-169-superseding-remote-receipt.json`](2026-08-05-issue-169-superseding-remote-receipt.json)에 기록한다.
-
-## 배포 차단 조건
-
-1. 396개 authority key 전수에 대한 fresh upstream evidence와 explicit disposition
-2. 후보 branch의 PR review/merge gate와 최종 catalog tag 별도 승인
-3. 문서화되지 않은 resolved-graph 변화가 없다는 before/after 비교
-4. Maven Central의 기존 stable POM 접근성과 실제 publication credential/dispatch gate
-
-위 조건을 모두 충족하기 전에는 catalog tag, `1.4.0` publication, milestone 종료를
-진행하지 않는다.
+위 조건이 충족되기 전에는 catalog tag, semver tag, workflow dispatch, publication,
+release, merge, milestone 종료를 수행하지 않는다.

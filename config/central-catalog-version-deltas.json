@@ -447,17 +447,25 @@
       "catalog-sha256": "9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df",
       "delta-count": 121,
       "downstream-full-builds": {
-        "repositories": 9,
-        "status": "pending"
+        "failures": 0,
+        "repositories": 9
       },
       "publication-pom-verification": {
-        "repositories": 9,
-        "status": "pending"
+        "dependencies": 46023,
+        "failures": 0,
+        "files": 175,
+        "maven-models": 175,
+        "repositories": 9
       },
-      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-      "resolved-graph-evidence": [],
+      "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
+      "resolved-graph-evidence": {
+        "observation-count": 260,
+        "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
+        "sha256": "1f019f350fa9c52c82f0152f2dd517fed55d93be354123b46df0d017f63d7c97",
+        "spec-count": 130
+      },
       "rollout": "2026-08-05-issue-169-full-authority-audit",
-      "status": "validation-pending"
+      "status": "verified-resolved-graph"
     }
   ],
   "delta": [
