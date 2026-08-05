@@ -2,13 +2,13 @@
 
 ## 결론
 
-`1.4.0`의 superseding local candidate는 로컬 build, 9개 library downstream full build,
+`1.4.0`의 superseding remote candidate는 로컬 build, 9개 library downstream full build,
 resolved graph 33건, 9개 publication repository의 POM/effective-model 검증을 통과했다.
 그러나 Issue #169의 전체 latest-stable audit와 Maven Central publication gate가
-끝나지 않았으므로 배포 상태는 **PENDING**이다. 이전 candidate의 remote immutable
-commit-ref 검증은 2026-08-05에 통과했지만, superseding local candidate는 아직
-catalog bytes는 local commit `b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749`에
-고정됐지만 아직 tag/push되지 않았다.
+끝나지 않았으므로 배포 상태는 **PENDING**이다. catalog bytes는 commit
+`b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749`에 고정했고 central carrier HEAD
+`fd8064d5944031a204addf279ddc1efe9c4cb969` 및 9개 downstream 후보 브랜치를
+force 없이 push했다. tag, PR, merge, workflow dispatch, publication은 수행하지 않았다.
 
 검증 대상 catalog bytes는 다음 checksum으로 고정한다.
 
@@ -79,20 +79,19 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 
 | repository | candidate HEAD | catalog ref | 대표 compile/test | full build | remote immutable ref |
 | --- | --- | --- | --- | --- | --- |
-| bluetape4k-projects | `13e8cb2` | `b2d0e37` | Jackson/Feign/OkHttp/Config 포함 | 통과, 1,019 tasks | 공통 ref/SHA 검증 통과 |
-| bluetape4k-aws | `e9a50c6` | `b2d0e37` | 포함 | 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-experimental | `8696248` | `b2d0e37` | snapshot consumer platform 보강 | 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-exposed | `438b34d` | `b2d0e37` | R2DBC 포함 | 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-graph | `718d3dd` | `b2d0e37` | 관련 regression 포함 | 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-image | `5f4098b` | `b2d0e37` | TwelveMonkeys 포함 | 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-javers | `c9d2b87` | `b2d0e37` | JaVers core 포함 | 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-leader | `50c5b65` | `b2d0e37` | Netty native regression 포함 | 통과 | 공통 ref/SHA 검증 통과 |
-| bluetape4k-text | `e5e666f` | `b2d0e37` | 포함 | 통과 | fresh remote fetch 통과 |
+| bluetape4k-projects | `a7c2c15` | `b6667cf` | GeoIP2 test/graph 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
+| bluetape4k-aws | `15907fb` | `b6667cf` | 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
+| bluetape4k-experimental | `cf78226` | `b6667cf` | snapshot consumer | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
+| bluetape4k-exposed | `189f9cd` | `b6667cf` | R2DBC 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
+| bluetape4k-graph | `973369f` | `b6667cf` | 관련 regression 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
+| bluetape4k-image | `f908b60` | `b6667cf` | TwelveMonkeys 포함 | catalog-byte full build 통과 | fresh remote fetch 통과 |
+| bluetape4k-javers | `8e8f9fb` | `b6667cf` | JaVers core 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
+| bluetape4k-leader | `96474e8` | `b6667cf` | Netty native regression 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
+| bluetape4k-text | `bbf1798` | `b6667cf` | 포함 | catalog-byte full build 통과 | 공통 ref/SHA 검증 통과 |
 
-아래 표는 이전 remote candidate의 exact downstream HEAD/commit ref 증거다. 이후
-GeoIP2 `5.2.0`을 추가한 superseding local candidate는 같은 9개 worktree에서 중앙
-catalog path override로 full build를 다시 통과했으며, remote immutable ref 검증은
-새 candidate commit/push 전까지 pending이다.
+위 표는 superseding remote candidate의 exact downstream HEAD/commit ref 증거다.
+GeoIP2 `5.2.0`을 추가한 catalog bytes로 같은 9개 worktree의 full build를 통과했고,
+remote immutable fetch에서 받은 SHA-256이 그 full-build 입력과 일치함을 확인했다.
 
 대표 resolved graph에서 확인한 실제 선택 버전은 다음과 같다.
 
@@ -122,20 +121,24 @@ train의 판정에는
 exact worktree/head map을 사용한다. Receipt는 생성된 repository map, catalog lock,
 candidate manifest/ledger와 네 개 검증 명령의 output SHA-256을 함께 고정한다.
 
-2026-08-05에는 central branch `issue/169-latest-compatible-stable`을 force 없이
-push하고 원격 HEAD가 `924554a3675b3076b8f7b8dcb0f185f3ff730b17`임을 read-back했다.
-이어 `bluetape4k-text`의 exact candidate HEAD `e5e666f20a9cf19f1f83e48f481919d08ad46453`를
-임시 detached worktree로 만들고, local catalog override와 기존 Gradle cache를
-배제한 상태에서 commit ref `b2d0e37c0e7f5046f20e61ca530bf5c5edf5af84`로
-`./gradlew help`를 실행했다. 원격에서 받은 catalog SHA-256은 기존 full-build
-입력과 동일한 `034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a`였고
-Gradle configuration은 `BUILD SUCCESSFUL`이었다. 따라서 이전 9개 full build와
-remote ref는 동일 catalog bytes에 결박된다.
+2026-08-05에는 superseding central branch를 force 없이 push하고 원격 HEAD가
+`fd8064d5944031a204addf279ddc1efe9c4cb969`임을 read-back했다. 이어
+`bluetape4k-image`에서 local catalog override와 기존 Gradle user home을 배제하고
+commit ref `b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749`로 `./gradlew help`를 실행했다.
+원격에서 받은 catalog SHA-256은 기존 full-build 입력과 동일한
+`6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55`였고 Gradle
+configuration은 `BUILD SUCCESSFUL`이었다. 9개 downstream의 settings/CI ref를
+동일 commit으로 커밋·push한 뒤 GeoIP2 test/resolved graph와 9-repository POM gate를
+새 exact heads에서 재검증했다. POM gate의 최초 한 번은 Gradle 구성 중 중단됐으나
+로그를 보존하지 못했고, 코드 변경 없이 이어진 두 번의 전체 재실행은 모두
+175 POM/46,023 dependency-management entry/175 effective model/failure 0으로 통과했다.
+상세 증거는
+[`2026-08-05-issue-169-superseding-remote-receipt.json`](2026-08-05-issue-169-superseding-remote-receipt.json)에 기록한다.
 
 ## 배포 차단 조건
 
 1. 396개 authority key 전수에 대한 fresh upstream evidence와 explicit disposition
-2. 새 local candidate commit 및 downstream immutable ref 이관 후 fresh remote fetch
+2. 후보 branch의 PR review/merge gate와 최종 catalog tag 별도 승인
 3. 문서화되지 않은 resolved-graph 변화가 없다는 before/after 비교
 4. Maven Central의 기존 stable POM 접근성과 실제 publication credential/dispatch gate
 

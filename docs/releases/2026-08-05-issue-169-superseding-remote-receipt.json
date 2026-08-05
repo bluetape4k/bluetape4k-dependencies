@@ -1,0 +1,95 @@
+{
+  "schema-version": 1,
+  "status": "verified-consumer-sync",
+  "verified-at": "2026-08-05",
+  "catalog": {
+    "content-commit": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
+    "carrier-head-at-remote-retrieval": "fd8064d5944031a204addf279ddc1efe9c4cb969",
+    "remote-branch": "issue/169-latest-compatible-stable",
+    "sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55"
+  },
+  "scope": {
+    "included": [
+      "bluetape4k-projects",
+      "bluetape4k-aws",
+      "bluetape4k-experimental",
+      "bluetape4k-exposed",
+      "bluetape4k-graph",
+      "bluetape4k-image",
+      "bluetape4k-javers",
+      "bluetape4k-leader",
+      "bluetape4k-text"
+    ],
+    "excluded": [
+      "bluetape4k-workshop",
+      "example repositories",
+      "application repositories"
+    ]
+  },
+  "repositories": {
+    "bluetape4k-projects": "a7c2c15a6fe0b316469949a1311a89ffac719468",
+    "bluetape4k-aws": "15907fb5752dc2a975eac1784da4ee5ec41164fa",
+    "bluetape4k-experimental": "cf78226ef76b93396eabf3a163d2b9ee395f4b41",
+    "bluetape4k-exposed": "189f9cd9943b56f71c29a48a6b0a95e0fd7512de",
+    "bluetape4k-graph": "973369f6267d4a90c33ba0e33b4d7f03c925663d",
+    "bluetape4k-image": "f908b6016f04cbeb08c254b5e72e42e66e730957",
+    "bluetape4k-javers": "8e8f9fb8975251c62762584f94cdf5eba582a0dd",
+    "bluetape4k-leader": "96474e8db5b55e79a46b0ee01dba73ac7019dd9f",
+    "bluetape4k-text": "bbf1798a128efce417d7325e83a170caeb50f056"
+  },
+  "validation": {
+    "remote-fetch": {
+      "consumer": "bluetape4k-image",
+      "consumer-head": "f908b6016f04cbeb08c254b5e72e42e66e730957",
+      "command": "./gradlew help --no-daemon --console=plain",
+      "result": "BUILD SUCCESSFUL in 58s",
+      "local-catalog-override": false,
+      "isolated-gradle-user-home": true,
+      "downloaded-catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55"
+    },
+    "targeted-test": {
+      "command": "./gradlew :bluetape4k-geo:test --no-daemon --console=plain",
+      "result": "BUILD SUCCESSFUL in 16s"
+    },
+    "resolved-graph": {
+      "command": "./gradlew :bluetape4k-geo:dependencyInsight --dependency com.maxmind.geoip2:geoip2 --configuration testRuntimeClasspath --no-daemon --console=plain",
+      "selected": "com.maxmind.geoip2:geoip2:5.2.0 (selected by rule)",
+      "result": "BUILD SUCCESSFUL in 8s"
+    },
+    "catalog-governance": {
+      "shared-version-sync": "pass",
+      "dependabot-ignore-sync": "pass",
+      "managed-catalog": "pass: aliases=168 sub-boms=8",
+      "latest-stable-inventory": "pass: authority=396 managed=325 policy=71 audit-pending=396"
+    },
+    "publication-poms": {
+      "repositories": 9,
+      "files": 175,
+      "dependencies": 46023,
+      "maven-models": 175,
+      "failures": 0,
+      "consecutive-passes-after-initial-failure": 2,
+      "intermittent-observation": "The first run stopped during Gradle configuration and its isolated temporary log was not retained. Two unchanged exact-head reruns passed consecutively."
+    },
+    "full-build-binding": {
+      "result": "pass",
+      "repositories": 9,
+      "basis": "The previously completed nine full builds consumed catalog bytes with the same SHA-256 later retrieved through the immutable remote ref. Ref-only downstream commits do not alter the catalog bytes or project sources."
+    }
+  },
+  "side-effects": {
+    "central-branch-pushed": true,
+    "downstream-branches-pushed": true,
+    "pull-requests-created": false,
+    "merged": false,
+    "catalog-tag-created": false,
+    "workflow-dispatched": false,
+    "published": false
+  },
+  "remaining-gates": [
+    "Complete fresh upstream evidence and explicit disposition for all 396 authorities.",
+    "Review and deliver the candidate branches through the separately authorized PR and merge gates.",
+    "Obtain separate approval for the final catalog tag.",
+    "Pass Maven Central stable-artifact, credential, workflow-input, and dispatch holds before dependencies 1.4.0 publication."
+  ]
+}
