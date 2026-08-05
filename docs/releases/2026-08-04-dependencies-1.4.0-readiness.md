@@ -71,15 +71,15 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 
 | repository | candidate HEAD | catalog ref | 대표 compile/test | full build | remote immutable ref |
 | --- | --- | --- | --- | --- | --- |
-| bluetape4k-projects | `dd4959e` | `e02f728` | Jackson/Feign/OkHttp/Config 포함 | 통과, 1,019 tasks | 중앙 push 전 PENDING |
-| bluetape4k-aws | `8f1732e` | `e02f728` | 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-experimental | `ba5631d` | `e02f728` | snapshot consumer platform 보강 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-exposed | `94d2f44` | `e02f728` | R2DBC 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-graph | `e36e0cc` | `e02f728` | 관련 regression 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-image | `7aae618` | `e02f728` | TwelveMonkeys 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-javers | `a25d594` | `e02f728` | JaVers core 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-leader | `9a62ac9` | `e02f728` | Netty native regression 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-text | `59ef470` | `e02f728` | 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-projects | `13e8cb2` | `b2d0e37` | Jackson/Feign/OkHttp/Config 포함 | 통과, 1,019 tasks | 중앙 push 전 PENDING |
+| bluetape4k-aws | `e9a50c6` | `b2d0e37` | 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-experimental | `8696248` | `b2d0e37` | snapshot consumer platform 보강 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-exposed | `438b34d` | `b2d0e37` | R2DBC 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-graph | `718d3dd` | `b2d0e37` | 관련 regression 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-image | `5f4098b` | `b2d0e37` | TwelveMonkeys 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-javers | `c9d2b87` | `b2d0e37` | JaVers core 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-leader | `50c5b65` | `b2d0e37` | Netty native regression 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-text | `e5e666f` | `b2d0e37` | 포함 | 통과 | 중앙 push 전 PENDING |
 
 대표 resolved graph에서 확인한 실제 선택 버전은 다음과 같다.
 
