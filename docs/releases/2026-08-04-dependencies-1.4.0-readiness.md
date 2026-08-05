@@ -2,15 +2,15 @@
 
 ## 결론
 
-`1.4.0` 후보 catalog의 현재 batch는 로컬 build, 대표 downstream 테스트,
-resolved graph 5건, 9개 publication repository의 POM/effective-model 검증을 통과했다.
-그러나 Issue #169의 전체 latest-stable audit와 9개 downstream의 exact remote ref
-full build가 끝나지 않았으므로 배포 상태는 **PENDING**이다.
+`1.4.0` 후보 catalog의 현재 batch는 로컬 build, 9개 library downstream full build,
+resolved graph 10건, 9개 publication repository의 POM/effective-model 검증을 통과했다.
+그러나 Issue #169의 전체 latest-stable audit와 중앙 catalog의 remote immutable ref
+검증이 끝나지 않았으므로 배포 상태는 **PENDING**이다.
 
 검증 대상 catalog bytes는 다음 checksum으로 고정한다.
 
 ```text
-eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093
+034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a
 ```
 
 ## 최신 버전 audit 범위
@@ -21,21 +21,21 @@ eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093
 | 분류 | 수량 | 현재 상태 |
 | --- | ---: | --- |
 | upstream metadata상 이미 최신 | 164 | 발견 완료, 전수 disposition artifact 미완료 |
-| stale로 발견된 일반 key | 200 | 33개 adoption delta만 현재 batch ledger에 기록 |
-| 명시적 compatibility line | 27 | 현재 batch에는 Kotlin, AWS CRT, Smithy 등 4개 hold/defer 기록 |
+| stale로 발견된 일반 key | 200 | 39개 adoption delta만 현재 batch ledger에 기록 |
+| 명시적 compatibility line | 27 | 현재 batch에는 Kotlin, AWS CRT, Smithy 등을 포함한 12개 hold/defer 기록 |
 | versionless line | 1 | AWS CRT를 AWS Java SDK parent 호환 버전 `0.48.2`로 고정 |
 | non-Central/project metadata 필요 | 4 | UCAR/GeoTools 후속 audit 필요 |
 
-`config/latest-stable-version-deltas.json`은 현재 검증 batch의 33개 adoption과
-4개 hold/defer만 표현한다. 따라서 이 파일은 396개 전체 inventory의 완료 증거가
+`config/latest-stable-version-deltas.json`은 현재 검증 batch의 39개 adoption과
+12개 hold/defer만 표현한다. 따라서 이 파일은 396개 전체 inventory의 완료 증거가
 아니며, 나머지 key의 fresh evidence와 disposition은 release blocker다.
 
-추가 metadata sweep에서 확인됐지만 아직 채택/보류 결정을 하지 않은 예로
-Google common protos `2.71.0 -> 2.74.0`, Jackson core/Kotlin module
-`2.22.0 -> 2.22.1`, Gson `2.13.2 -> 2.14.0`, OkHttp `5.3.2 -> 5.4.0`,
-Okio `3.17.0 -> 3.18.1`, Feign `13.12 -> 13.13`, Typesafe Config
-`1.4.3 -> 1.4.9`, Tink `1.20.0 -> 1.23.0` 등이 있다. 이들을 현재 batch에
-근거 없이 포함하지 않고 후속 family batch와 resolved-graph 검증 대상으로 남긴다.
+추가 metadata sweep에서 확인한 Jackson core/Kotlin module `2.22.1`, Feign
+`13.13`, OkHttp `5.4.0`, TwelveMonkeys `3.14.0`, Typesafe Config `1.4.9`,
+Commons Validator `1.11.0`은 batch 03에서 채택하고 검증했다. Google common
+protos `2.74.0`, Gson `2.14.0`, Okio `3.18.1`, RabbitMQ `5.34`, MaxMind
+`5.2`, jfalkordb `0.10`, avro4k `2.12`, Tink `1.23.0`은 별도 호환성 검증이
+필요해 명시적으로 보류했다.
 
 ## 현재 채택 batch
 
@@ -50,6 +50,9 @@ Okio `3.17.0 -> 3.18.1`, Feign `13.12 -> 13.13`, Typesafe Config
   `5.0.8`, JaVers `7.11.7`, MongoDB driver `5.9.1`, Mutiny `3.3.0`, R2DBC
   MariaDB/MySQL/PostgreSQL `1.4.1`/`1.4.3`/`1.1.2.RELEASE`, REST Assured
   `6.0.1`, Spring Cloud `2025.1.2`
+- Batch 03: Jackson 2 core/Kotlin module `2.22.1`, Feign `13.13`, OkHttp
+  `5.4.0`, TwelveMonkeys ImageIO `3.14.0`, Typesafe Config `1.4.9`, Commons
+  Validator `1.11.0`
 
 ## 호환성 보류와 deferred migration
 
@@ -68,15 +71,15 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 
 | repository | candidate HEAD | catalog ref | 대표 compile/test | full build | remote immutable ref |
 | --- | --- | --- | --- | --- | --- |
-| bluetape4k-projects | `69e551c` | `d6898be` | gRPC, Cassandra, MongoDB, Mutiny 통과 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-aws | `a1c068d` | `d6898be` | 포함 | 통과 | 중앙 push 전 PENDING |
-| bluetape4k-experimental | `e4a7f66` | `d6898be` | 미실행 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-exposed | `e4a9083` | `d6898be` | R2DBC 통과 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-graph | `0a574e8` | `d6898be` | 관련 regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
-| bluetape4k-image | `b7d0884` | `d6898be` | benchmark contract regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
-| bluetape4k-javers | `770481c` | `d6898be` | JaVers core 통과 | 미완료 | 중앙 push 전 PENDING |
-| bluetape4k-leader | `2ca7ad1` | `d6898be` | Netty native regression 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
-| bluetape4k-text | `20482d6` | `d6898be` | 포함 | 이전 batch 통과, exact 최종 batch 미실행 | 중앙 push 전 PENDING |
+| bluetape4k-projects | `dd4959e` | `e02f728` | Jackson/Feign/OkHttp/Config 포함 | 통과, 1,019 tasks | 중앙 push 전 PENDING |
+| bluetape4k-aws | `8f1732e` | `e02f728` | 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-experimental | `ba5631d` | `e02f728` | snapshot consumer platform 보강 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-exposed | `94d2f44` | `e02f728` | R2DBC 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-graph | `e36e0cc` | `e02f728` | 관련 regression 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-image | `7aae618` | `e02f728` | TwelveMonkeys 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-javers | `a25d594` | `e02f728` | JaVers core 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-leader | `9a62ac9` | `e02f728` | Netty native regression 포함 | 통과 | 중앙 push 전 PENDING |
+| bluetape4k-text | `59ef470` | `e02f728` | 포함 | 통과 | 중앙 push 전 PENDING |
 
 대표 resolved graph에서 확인한 실제 선택 버전은 다음과 같다.
 
@@ -85,12 +88,16 @@ UCAR/GeoTools처럼 Maven Central 외 metadata가 필요한 artifact와 아직 d
 - `io.smallrye.reactive:mutiny` -> `3.3.0`
 - `software.amazon.awssdk.crt:aws-crt` -> `0.48.2`
 - `org.postgresql:r2dbc-postgresql` -> `1.1.2.RELEASE`
+- `com.fasterxml.jackson.core:jackson-core` -> `2.22.1`
+- `io.github.openfeign:feign-core` -> `13.13`
+- `com.squareup.okhttp3:okhttp` -> `5.4.0`
+- `com.twelvemonkeys.imageio:imageio-core` -> `3.14.0`
+- `com.typesafe:config` -> `1.4.9`
 
 publication gate는 9개 repository, 175개 POM, 46,023개 dependency-management
-entry, 175개 Maven effective model을 검사했고 최종 재실행의 failure는 0이었다.
-중간 재실행 1회에서 AWS Dokka plugin classpath 오류가 발생했으나 동일 AWS task의
-단독 실행과 다음 전체 실행은 통과했다. 따라서 결과 수치는 유효하지만 반복 실행
-안정성은 release 전 재확인 대상으로 남긴다.
+entry, 175개 Maven effective model을 검사했고 failure는 0이었다. Commons
+Validator는 9개 downstream에 direct consumer가 없어 catalog와 publication POM
+gate로 버전 및 dependency-management 완결성을 검증했다.
 
 candidate map 기준 `sync-shared-versions.py`, `sync-dependabot-ignores.py`,
 `sync-managed-catalog.py`는 통과했다. canonical default sibling checkout만 대상으로
@@ -104,9 +111,8 @@ candidate manifest/ledger와 네 개 검증 명령의 output SHA-256을 함께 �
 
 1. 396개 authority key 전수에 대한 fresh upstream evidence와 explicit disposition
 2. 문서화되지 않은 resolved-graph 변화가 없다는 before/after 비교
-3. 동일한 exact catalog ref를 사용하는 9개 downstream full build
-4. 중앙 commit push 후 remote immutable ref retrieval 검증
-5. Maven Central의 기존 stable POM 접근성과 실제 publication credential/dispatch gate
+3. 중앙 commit push 후 remote immutable ref retrieval 검증
+4. Maven Central의 기존 stable POM 접근성과 실제 publication credential/dispatch gate
 
 위 조건을 모두 충족하기 전에는 catalog tag, `1.4.0` publication, milestone 종료를
 진행하지 않는다.

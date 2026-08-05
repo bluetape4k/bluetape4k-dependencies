@@ -8,9 +8,9 @@
       "status": "partial-resolved-graph",
       "authority-delta-ledger": "config/latest-stable-version-deltas.json",
       "candidate-receipt": "docs/releases/2026-08-04-issue-169-candidate-receipt.json",
-      "catalog-sha256": "eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093",
+      "catalog-sha256": "034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a",
       "publication-pom-verification": {
-        "status": "verified-local-candidate-with-intermittent-retry",
+        "status": "verified-local-candidate",
         "repositories": 9,
         "files": 175,
         "dependencies": 46023,
@@ -71,6 +71,61 @@
           "authority-before": "1.1.1.RELEASE",
           "before": "1.1.1.RELEASE",
           "after": "1.1.2.RELEASE",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-jackson2:runtimeClasspath",
+          "authority-key": "jackson2-generated-family",
+          "authority-coordinate": "com.fasterxml.jackson.core:jackson-core",
+          "coordinate": "com.fasterxml.jackson.core:jackson-core",
+          "authority-before": "2.22.0",
+          "before": "2.22.0",
+          "after": "2.22.1",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-feign:runtimeClasspath",
+          "authority-key": "feign",
+          "authority-coordinate": "io.github.openfeign:feign-bom",
+          "coordinate": "io.github.openfeign:feign-core",
+          "authority-before": "13.12",
+          "before": "13.12",
+          "after": "13.13",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-http:testRuntimeClasspath",
+          "authority-key": "okhttp",
+          "authority-coordinate": "com.squareup.okhttp3:okhttp-bom",
+          "coordinate": "com.squareup.okhttp3:okhttp",
+          "authority-before": "5.3.2",
+          "before": "5.3.2",
+          "after": "5.4.0",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-image",
+          "configuration": ":bluetape4k-images:runtimeClasspath",
+          "authority-key": "twelvemonkeys-imageio",
+          "authority-coordinate": "com.twelvemonkeys.imageio:imageio-core",
+          "coordinate": "com.twelvemonkeys.imageio:imageio-core",
+          "authority-before": "3.13.1",
+          "before": "3.13.1",
+          "after": "3.14.0",
+          "verification": "verified-local-candidate"
+        },
+        {
+          "repository": "bluetape4k-projects",
+          "configuration": ":bluetape4k-rule-engine:testRuntimeClasspath",
+          "authority-key": "typesafe-config",
+          "authority-coordinate": "com.typesafe:config",
+          "coordinate": "com.typesafe:config",
+          "authority-before": "1.4.3",
+          "before": "1.4.3",
+          "after": "1.4.9",
           "verification": "verified-local-candidate"
         }
       ],

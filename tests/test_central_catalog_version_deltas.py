@@ -86,14 +86,12 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             ).read_text(encoding="utf-8").split()[0],
         )
         pom = rollout["publication-pom-verification"]
-        self.assertEqual(
-            pom["status"], "verified-local-candidate-with-intermittent-retry"
-        )
+        self.assertEqual(pom["status"], "verified-local-candidate")
         self.assertEqual(pom["failures"], 0)
         self.assertEqual(pom["repositories"], 9)
 
         evidence = rollout["resolved-graph-evidence"]
-        self.assertEqual(len(evidence), 5)
+        self.assertEqual(len(evidence), 10)
         self.assertEqual(
             len({entry["authority-key"] for entry in evidence}), len(evidence)
         )

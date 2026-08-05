@@ -20,3 +20,18 @@ Google common protos, Gson, Okio, RabbitMQ, MaxMind, jfalkordb, avro4k, Tink은
 breaking change, Kotlin serialization ABI, 암호화 호환성 검증이 선행되어야 한다.
 각 current/latest와 보류 이유는 `config/latest-stable-version-deltas.json`의
 `hold`에 기록한다.
+
+## 검증 결과
+
+- 9개 library downstream full build 통과. `bluetape4k-workshop`과 example app은
+  검증 범위에서 제외했다.
+- OkHttp `5.4.0`의 `Call.addEventListener` 계약을 HC5/Vert.x transport adapter에
+  보강하고 lifecycle/clone/cancel 회귀 테스트를 통과했다.
+- Spring Cloud OpenFeign `5.0.2` test context는 중앙 catalog의
+  `spring-boot-http-converter` alias로 converter wiring을 복구했다.
+- published snapshot의 versionless Gradle metadata를 소비하는 experimental
+  benchmark 경계에는 `bt4k` catalog 기반 Exposed, Spring Boot, Testcontainers
+  platform을 명시했다. repo-local version은 추가하지 않았다.
+- 대표 resolved graph 5건과 9개 publication repository의 175개 POM 및 Maven
+  effective model을 검증했다. Commons Validator는 direct consumer가 없어 catalog와
+  POM gate로 검증했다.

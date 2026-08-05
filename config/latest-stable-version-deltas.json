@@ -374,7 +374,7 @@
       "before": "2.22.0",
       "after": "2.22.1",
       "disposition": "adopt-compatible-parent-version",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/jackson-bom/2.22.1/jackson-bom-2.22.1.pom",
       "reason": "Align generated Jackson core and Kotlin module aliases with the already adopted Jackson 2.22.1 BOM; annotations intentionally remains on the BOM-declared 2.22 line."
     },
@@ -385,7 +385,7 @@
       "before": "13.12",
       "after": "13.13",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/io/github/openfeign/feign-bom/maven-metadata.xml",
       "reason": "Adopt the latest stable Feign 13.x BOM and align every generated Feign module alias to it."
     },
@@ -396,7 +396,7 @@
       "before": "5.3.2",
       "after": "5.4.0",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/com/squareup/okhttp3/okhttp-bom/maven-metadata.xml",
       "reason": "Adopt the latest stable OkHttp 5.x BOM and align its seven generated module aliases; Okio stays on the version declared by the OkHttp POM."
     },
@@ -407,7 +407,7 @@
       "before": "3.13.1",
       "after": "3.14.0",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/com/twelvemonkeys/imageio/imageio-core/maven-metadata.xml",
       "reason": "Adopt the latest stable TwelveMonkeys 3.x release across the core, metadata, and TIFF aliases."
     },
@@ -418,7 +418,7 @@
       "before": "1.4.3",
       "after": "1.4.9",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/com/typesafe/config/maven-metadata.xml",
       "reason": "Adopt the latest stable release in the existing Typesafe Config 1.4 line."
     },
@@ -429,7 +429,7 @@
       "before": "1.10.1",
       "after": "1.11.0",
       "disposition": "adopt-latest",
-      "verification": "pending",
+      "verification": "verified",
       "source": "https://repo.maven.apache.org/maven2/commons-validator/commons-validator/maven-metadata.xml",
       "reason": "Adopt the latest stable Commons Validator 1.x release; its Commons Logging dependency remains aligned with the central catalog."
     }

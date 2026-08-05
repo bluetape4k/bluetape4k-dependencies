@@ -2,8 +2,8 @@
   "schema-version": 1,
   "rollout": "2026-08-04-issue-169-latest-compatible-stable",
   "catalog": {
-    "commit": "d6898bebdfa2c623e9a4d625bbb54074e7d011bf",
-    "sha256": "eec28b1836b9df530545db1a1b74140df4b60e5319a3a0a9825e58e3c4de3093"
+    "commit": "e02f7288408b522b6a92996f091adaf124f41c2d",
+    "sha256": "034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a"
   },
   "scope": {
     "publishers": 9,
@@ -17,15 +17,15 @@
     ]
   },
   "repositories": {
-    "bluetape4k-projects": "69e551cda74a263dab8a8ded14f9db9c5da97c7d",
-    "bluetape4k-aws": "a1c068d79fddb933df70c8f4909a7dccd5a80ea9",
-    "bluetape4k-experimental": "e4a7f66c37cf11a3fec19fe2bfbc4c90fd23039e",
-    "bluetape4k-exposed": "e4a9083259ca8c2eb15a87e87dc34819429e6b05",
-    "bluetape4k-graph": "0a574e86932e605498fbd944c2ab596cd9a7f245",
-    "bluetape4k-image": "b7d08849d1f5cf20cd9ca321a64f870833c9a1e7",
-    "bluetape4k-javers": "770481c2f716f60a5cb87f1c2456d9f1b46f4a18",
-    "bluetape4k-leader": "2ca7ad1ab53689695dc256bafe74e22e5a7a11b5",
-    "bluetape4k-text": "20482d67e5818b577767667e187e7c68466d79a3"
+    "bluetape4k-projects": "dd4959e8485365bf025a461f2486c127dc9fb6cc",
+    "bluetape4k-aws": "8f1732ec520a5f33d451a5b913b5e5cc93d1ac61",
+    "bluetape4k-experimental": "ba5631dd8b1d7d59b4eada075d1b943c2838ab21",
+    "bluetape4k-exposed": "94d2f448a8e2bc8c48f8b4e9d164bdc5ac09e9db",
+    "bluetape4k-graph": "e36e0cc5eb3869530e85eb0af0cfb05cc5acf158",
+    "bluetape4k-image": "7aae618ad1311b1120fe053dd1aa7f2a67c3122a",
+    "bluetape4k-javers": "a25d59472fa09a89f2b7a14a602ee578ef43caa2",
+    "bluetape4k-leader": "9a62ac9715d250f6483ce23ec699f8bd378b4019",
+    "bluetape4k-text": "59ef470723e20abfe22cc744279695cbeef7fe12"
   },
   "candidate-map-verification": {
     "clean-worktrees": 10,
@@ -55,28 +55,28 @@
   },
   "command-receipts": {
     "sync-shared-versions": {
-      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable",
       "command": "scripts/sync-shared-versions.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
       "exit": 0,
       "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/sync-shared-versions.log",
       "output-sha256": "8998ab4908d0a75d55424626af5d07542091d0ee25b6507de249140e7fcdb353"
     },
     "sync-dependabot-ignores": {
-      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable",
       "command": "scripts/sync-dependabot-ignores.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
       "exit": 0,
       "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/sync-dependabot-ignores.log",
       "output-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "sync-managed-catalog": {
-      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable",
       "command": "scripts/sync-managed-catalog.py --workspace-root /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --check --summary",
       "exit": 0,
       "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/sync-managed-catalog.log",
       "output-sha256": "81dc648a3a3ca232d258b7fd0f15383675341425aacc684b6472229bf43b8e7c"
     },
     "verify-publication-poms": {
-      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-catalog-d689",
+      "working-directory": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable",
       "command": "scripts/verify-publication-poms.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/prepare/candidate-repositories.json --summary",
       "exit": 0,
       "output": "/Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/issue-169-latest-compatible-stable/build/issue-169/outputs/verify-publication-poms.log",
@@ -90,7 +90,7 @@
     "dependencies": 46023,
     "maven-models": 175,
     "failures": 0,
-    "intermittent-observation": "One intervening full run failed while applying Dokka in bluetape4k-aws; the isolated AWS task and the next full run passed."
+    "intermittent-observation": "No failure occurred in the final batch-03 publication POM verification."
   },
   "remote-immutable-ref": "pending-central-push"
 }
