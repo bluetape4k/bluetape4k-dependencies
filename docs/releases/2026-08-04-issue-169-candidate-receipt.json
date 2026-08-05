@@ -92,5 +92,22 @@
     "failures": 0,
     "intermittent-observation": "No failure occurred in the final batch-03 publication POM verification."
   },
-  "remote-immutable-ref": "pending-central-push"
+  "remote-immutable-ref": {
+    "status": "pass",
+    "verified-at": "2026-08-05",
+    "remote-branch": "issue/169-latest-compatible-stable",
+    "catalog-carrier-head-at-retrieval": "924554a3675b3076b8f7b8dcb0f185f3ff730b17",
+    "catalog-ref": "b2d0e37c0e7f5046f20e61ca530bf5c5edf5af84",
+    "consumer": "bluetape4k-text",
+    "consumer-head": "e5e666f20a9cf19f1f83e48f481919d08ad46453",
+    "catalog-source": "https://raw.githubusercontent.com/bluetape4k/bluetape4k-dependencies/b2d0e37c0e7f5046f20e61ca530bf5c5edf5af84/gradle",
+    "local-catalog-override": false,
+    "isolated-gradle-user-home": true,
+    "command": "./gradlew help --no-daemon --console=plain",
+    "result": "BUILD SUCCESSFUL in 1m 52s",
+    "catalog-sha256": "034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a",
+    "checksum-file-sha256": "917161c6f6f1ec1a2d9dc5d078e977198917d2fbe82774f75314cb5db335e166",
+    "output": "build/issue-169/outputs/remote-immutable-ref-text-help.log",
+    "output-sha256": "0e01acfb24192b7f88875348e79554ec337a2e108c2f54a7d0a19a26a8e46527"
+  }
 }
