@@ -439,6 +439,25 @@
         ],
         "remote-immutable-ref-verification": "pending-new-candidate-commit-and-push"
       }
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "baseline-catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
+      "catalog-sha256": "4cdabfe15b398986a0c2b9ecddc02e7f4f41070b79637f8337b4ce7abd623681",
+      "delta-count": 122,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-08-05-issue-169-full-authority-audit",
+      "status": "validation-pending"
     }
   ],
   "delta": [
