@@ -1,4 +1,4 @@
-title = "bluetape4k-leader gitleaks config"
+title = "bluetape4k-dependencies gitleaks config"
 
 [extend]
 useDefault = true
@@ -22,4 +22,5 @@ regexes = [
     '''YOUR_.*_HERE''',
     '''example[-_]key''',
     '''test[-_]api[-_]key''',
+    '''^(?:maxmind-geoip2|jakarta-persistence-v3[12])$''',
 ]
