@@ -1,5 +1,5 @@
 {
-  "catalog-sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36",
+  "catalog-sha256": "6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34",
   "command": [
     "./gradlew",
     "-p",
@@ -2311,8 +2311,8 @@
       "spec_id": "fe9ec9076ea0ebf4b9dc1f89b63d25307a6a218dca981442dd1092a6e6d37816"
     }
   ],
-  "ledger-contract-sha256": "72e678af346b12593f9923ec48cbe6a52775d31697b7a8ab7317890bf945d6ac",
-  "log-sha256": "2403f5b2ca00677c7e161bcbabfad14c137144cb33f8363caa34ae3d86b7fc4c",
+  "ledger-contract-sha256": "072145eae9b9d22524fb4b749f0a11c9dfdbdfe5b070e961e8317bb7f4090a45",
+  "log-sha256": "38f1ecfc03cb462ac8be5f72ef8fadf2ccef2004c73dc13f18f480283310576b",
   "observation-count": 286,
   "observations": [
     {

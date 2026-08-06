@@ -1,7 +1,7 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "866821dbf9b6e1413ea8325d11549230d2f8968b115533a2674976b6b81dc264",
+    "sha256": "bf43263b875c8b711457b1e01602c41e9b65aaea405839a582dada8ef4f95a8b",
     "summary": {
       "authority-count": 512,
       "line-count": 546,
@@ -22,7 +22,7 @@
     "catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55"
   },
   "candidate": {
-    "catalog-sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36"
+    "catalog-sha256": "6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34"
   },
   "candidate-validation-evidence": {
     "downstream-full-builds": {
@@ -38,7 +38,7 @@
       "repositories": 9
     },
     "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
-    "sha256": "2eed0a4751ca864a4dda21027c374c51ff160bfbab33482ee47219243690a2e0"
+    "sha256": "37f66a1a99f48c0be27f697625c06eb2240d023f4b487cb2d36df47c07d24a1c"
   },
   "delta": [
     {
@@ -2891,10 +2891,10 @@
   "resolved-graph-evidence": {
     "observation-count": 286,
     "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-    "sha256": "4f8978f79a6726eb3e5b90c87ec20c4f131707d05897f609c4494a99d7cf54f2",
+    "sha256": "2b1735f5684aa7eb843d91237dae38edf613dc0485d9550537bfe9312ab5652c",
     "spec-count": 143
   },
-  "rollout": "2026-08-05-issue-169-full-authority-audit",
+  "rollout": "2026-08-06-dependencies-1.4.0-final-stable",
   "schema-version": 3,
   "status": "verified-resolved-graph"
 }

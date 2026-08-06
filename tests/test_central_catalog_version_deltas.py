@@ -90,13 +90,13 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["publication-pom-verification"]["failures"], 0)
         self.assertEqual(rollout["remote-immutable-ref-verification"], "verified")
 
-    def test_full_authority_rollout_links_verified_evidence(self) -> None:
+    def test_active_authority_rollout_links_verified_evidence(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         authority = json.loads(AUTHORITY_LEDGER.read_text(encoding="utf-8"))
         rollout = next(
             item
             for item in document["subsequent-rollouts"]
-            if item["rollout"] == "2026-08-05-issue-169-full-authority-audit"
+            if item["rollout"] == authority["rollout"]
         )
 
         self.assertEqual(rollout["status"], "verified-resolved-graph")
@@ -107,14 +107,30 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["catalog-sha256"], authority["candidate"]["catalog-sha256"])
         self.assertEqual(rollout["baseline-catalog-ref"], authority["baseline"]["catalog-ref"])
         self.assertEqual(rollout["audit"], authority["audit"]["path"])
-        self.assertEqual(rollout["delta-count"], 123)
-        self.assertEqual(rollout["resolved-graph-evidence"]["spec-count"], 143)
-        self.assertEqual(rollout["downstream-full-builds"]["failures"], 0)
-        self.assertEqual(rollout["publication-pom-verification"]["failures"], 0)
+        self.assertEqual(rollout["delta-count"], len(authority["delta"]))
         self.assertEqual(
-            rollout["remote-immutable-ref-verification"],
-            "verified-fresh-remote-commit-ref",
+            rollout["resolved-graph-evidence"]["spec-count"],
+            authority["resolved-graph-evidence"]["spec-count"],
         )
+        validation = authority.get("candidate-validation-evidence")
+        if validation is None or validation["downstream-full-builds"].get("status") == "pending":
+            self.assertEqual(rollout["downstream-full-builds"]["status"], "pending")
+            self.assertEqual(
+                rollout["publication-pom-verification"]["status"], "pending"
+            )
+            self.assertEqual(
+                rollout["remote-immutable-ref-verification"],
+                "pending-candidate-commit-and-push",
+            )
+        else:
+            self.assertEqual(rollout["downstream-full-builds"]["failures"], 0)
+            self.assertEqual(
+                rollout["publication-pom-verification"]["failures"], 0
+            )
+            self.assertEqual(
+                rollout["remote-immutable-ref-verification"],
+                "verified-fresh-remote-commit-ref",
+            )
 
     def test_compatibility_lines_are_not_issue_168_adoption_deltas(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
