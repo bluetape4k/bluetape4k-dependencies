@@ -444,24 +444,24 @@
       "audit": "config/latest-stable-version-audit.json",
       "authority-delta-ledger": "config/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
-      "catalog-sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c",
+      "catalog-sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36",
       "delta-count": 123,
       "downstream-full-builds": {
         "failures": 0,
         "repositories": 9
       },
       "publication-pom-verification": {
-        "dependencies": 46023,
+        "dependencies": 45211,
         "failures": 0,
-        "files": 175,
-        "maven-models": 175,
+        "files": 173,
+        "maven-models": 173,
         "repositories": 9
       },
       "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
       "resolved-graph-evidence": {
         "observation-count": 286,
         "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-        "sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+        "sha256": "4f8978f79a6726eb3e5b90c87ec20c4f131707d05897f609c4494a99d7cf54f2",
         "spec-count": 143
       },
       "rollout": "2026-08-05-issue-169-full-authority-audit",

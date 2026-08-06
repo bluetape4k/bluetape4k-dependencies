@@ -305,7 +305,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(candidate_receipt["full-builds"]["failures"], 0)
         self.assertEqual(len(candidate_receipt["full-builds"]["repositories"]), 9)
         self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
-        self.assertEqual(candidate_receipt["publication-poms"]["files"], 175)
+        self.assertEqual(candidate_receipt["publication-poms"]["files"], 173)
 
     def test_audit_closes_all_safe_adoption_candidates(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
