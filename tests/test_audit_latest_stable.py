@@ -572,22 +572,22 @@ class LatestStableInventoryTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("authority=509", result.stdout)
+        self.assertIn("authority=512", result.stdout)
 
     def test_inventory_reconstructs_the_exact_authority_universe(self) -> None:
         module = load_script()
         inventory = module.build_inventory(CATALOG, POLICY)
 
         self.assertEqual(inventory["schema-version"], 1)
-        self.assertEqual(inventory["summary"]["authority-count"], 509)
-        self.assertEqual(inventory["summary"]["catalog-direct"], 114)
+        self.assertEqual(inventory["summary"]["authority-count"], 512)
+        self.assertEqual(inventory["summary"]["catalog-direct"], 117)
         self.assertEqual(inventory["summary"]["managed-generated"], 325)
         self.assertEqual(inventory["summary"]["policy-subjects"], 70)
-        self.assertEqual(inventory["summary"]["audit-pending"], 509)
-        self.assertEqual(len(inventory["records"]), 509)
+        self.assertEqual(inventory["summary"]["audit-pending"], 512)
+        self.assertEqual(len(inventory["records"]), 512)
         self.assertEqual(
             len({record["authority-key"] for record in inventory["records"]}),
-            509,
+            512,
         )
         self.assertNotIn("bluetape4k-workshop", inventory["scope"]["repositories"])
         self.assertIn("bluetape4k-workshop", inventory["scope"]["excluded"])

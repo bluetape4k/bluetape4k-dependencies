@@ -1,44 +1,28 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "1bded9b4b05f92d6b23a580f6f60c5e2eff398e69ea92c7041ad7a0e2caf1c77",
+    "sha256": "866821dbf9b6e1413ea8325d11549230d2f8968b115533a2674976b6b81dc264",
     "summary": {
-      "authority-count": 509,
-      "line-count": 543,
+      "authority-count": 512,
+      "line-count": 546,
       "line-dispositions": {
-        "current": 432,
+        "current": 435,
         "defer-breaking-migration": 22,
         "hold-compatibility": 81,
         "hold-unavailable": 8
       },
       "metadata-preview-only": 5,
       "metadata-unavailable": 0,
-      "metadata-verified": 504
+      "metadata-verified": 507
     }
   },
-  "audit-cutoff": "2026-08-05",
+  "audit-cutoff": "2026-08-06",
   "baseline": {
     "catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
     "catalog-sha256": "6fb588bd79539fbc48a98bfdaadbacdd10ce5fc9cf659a9b8cd188e8f143dd55"
   },
   "candidate": {
-    "catalog-sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c"
-  },
-  "candidate-validation-evidence": {
-    "downstream-full-builds": {
-      "failures": 0,
-      "repositories": 9
-    },
-    "path": "docs/releases/2026-08-05-issue-169-full-candidate-receipt.json",
-    "publication-poms": {
-      "dependencies": 46023,
-      "failures": 0,
-      "files": 175,
-      "maven-models": 175,
-      "repositories": 9
-    },
-    "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
-    "sha256": "b8e1445370755d46fb1cc55d6afd3837452924713e48fbe4598ef948931b0b75"
+    "catalog-sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36"
   },
   "delta": [
     {
@@ -66,9 +50,9 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "1.8.23"
+        "version": "1.8.24"
       },
-      "after": "1.8.23",
+      "after": "1.8.24",
       "authorities": [
         {
           "authority-key": "catalog:library:aws.sdk.kotlin:aws-core",
@@ -88,9 +72,9 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "2.51.0"
+        "version": "2.51.1"
       },
-      "after": "2.51.0",
+      "after": "2.51.1",
       "authorities": [
         {
           "authority-key": "catalog:library:software.amazon.awssdk:bom",
@@ -2891,7 +2875,7 @@
   "resolved-graph-evidence": {
     "observation-count": 286,
     "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-    "sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+    "sha256": "4f8978f79a6726eb3e5b90c87ec20c4f131707d05897f609c4494a99d7cf54f2",
     "spec-count": 143
   },
   "rollout": "2026-08-05-issue-169-full-authority-audit",
