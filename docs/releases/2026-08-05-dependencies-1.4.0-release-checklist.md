@@ -1,6 +1,6 @@
 # bluetape4k-dependencies 1.4.0 Release Checklist
 
-Status: **RELEASE PR READY / PUBLICATION PENDING**
+Status: **PUBLISHED / COMPLETE**
 Target version: `1.4.0`
 Latest observed external version: `1.3.1`
 Release authority: the user explicitly authorized the complete stable train,
@@ -24,8 +24,8 @@ milestone closure, follow-up work, and safe cleanup on 2026-08-06.
   is GitHub-verified and peels to the exact catalog merge.
 - Catalog Type P receipt: run `20260806T044439Z-c93bded1`, sequence 14,
   checksum `ad45b248d312f19025cab497b7472d41739600183599e9c54c7b675126e1ad47`.
-- Dispatch hold: dependencies publication remains held only until this release
-  PR passes exact-head CI and its merge is revalidated for the signed `1.4.0` tag.
+- Dispatch hold: released after exact-head PR and post-merge CI passed at merge
+  `8a738f084de98323b5651c548b9d2c354fb22329`.
 
 ## Stable Upstream Matrix
 
@@ -62,10 +62,13 @@ components without SNAPSHOT versions.
 - [x] **PUB-08 / REL-06 — Merge and sign the final stable catalog.**
   PR #173 and post-merge CI passed, the signed catalog tag is valid, and all
   nine downstream declared refs were adopted through exact-head PRs.
-- [ ] **PUB-09 / REL-07 — Publish dependencies 1.4.0.**
-  Require exact release-head CI, stable-only generated POM, signed `1.4.0`,
-  successful Publish Release, Maven Central visibility, and Central-only consumer.
-- [ ] **PUB-10 / REL-08 — Complete public documentation and milestone handoff.**
+- [x] **PUB-09 / REL-07 — Publish dependencies 1.4.0.**
+  PR CI `31079582802`, post-merge CI `31080318880`, signed tag `1.4.0`,
+  Publish Release `31081143359`, Maven Central metadata, and the Central-only
+  consumer all passed.
+- [x] **PUB-10 / REL-08 — Complete public documentation and milestone handoff.**
+  GitHub Release `1.4.0` is public; issues #168/#171 and milestone `1.4.0` are
+  closed; Type P receipt `20260806T074128Z-5d92140b` is complete.
 
 ## Final Candidate Evidence
 
@@ -90,20 +93,20 @@ components without SNAPSHOT versions.
   missing versions 0, SNAPSHOT entries 0, SHA-256
   `d6b4305d5fba5ec960532b34864254fd9ed844cb67adbecff1d00eca8f0eb967`.
 
-## Remaining Release Sequence
+## Completion Evidence
 
-1. Verify this release PR exact-head CI, reviews, threads, and mergeability;
-   merge the exact head.
-2. Regenerate the stable-only POM from the merge and verify the remote tag is absent.
-3. Create and verify signed tag `1.4.0`; let the tag-triggered Publish Release run.
-4. Verify public BOM POM/module, every imported stable BOM, Central-only
-   resolution, GitHub Release, issue #171, milestone `1.4.0`, receipt, and next
-   development version.
-5. Remove only worktrees proven clean, merged, and no longer needed.
+1. Release PR #174 merged as `8a738f084de98323b5651c548b9d2c354fb22329`
+   after all exact-head checks and zero unresolved review threads.
+2. Generated and public POM SHA-256 both equal
+   `d6b4305d5fba5ec960532b34864254fd9ed844cb67adbecff1d00eca8f0eb967`.
+3. GitHub verified signed tag `1.4.0` as valid and exact-head; release run
+   `31081143359` completed successfully.
+4. Maven Central-only resolution imported `bluetape4k-dependencies:1.4.0` and
+   resolved eight representative modules without explicit module versions.
+5. The repository moved to the `1.5.0` development line after public validation.
 
 ## Stop Condition
 
-Do not tag or publish `1.4.0` before the release PR exact head is merged and the
-stable-only POM is regenerated from that merge. Stop only after public Maven
-Central visibility, GitHub Release, receipts, follow-up versioning, milestone
-closure, and conservative cleanup all pass.
+The `1.4.0` train is closed. Do not create another stable tag or publication
+without a new approved release checklist, exact-head validation, and explicit
+publication authority.
