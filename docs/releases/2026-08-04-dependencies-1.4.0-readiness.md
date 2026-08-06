@@ -8,10 +8,9 @@ catalog에는 Bluetape SNAPSHOT import가 없다. exact catalog SHA에서 9개 d
 full build, 173개 publication POM/effective-model, 143개 resolved-graph spec과 286개
 observation이 모두 통과했다.
 
-현재 상태는 **RELEASE PR READY**다. 최종 catalog PR/merge/서명 tag와 9개
-downstream declared-ref 이관까지 완료했다. 남은 순서는 이 문서 변경을 포함한
-`dependencies 1.4.0` release PR의 exact-head CI를 통과한 뒤 서명 tag와
-publication을 수행하는 것이다.
+현재 상태는 **PUBLISHED / COMPLETE**다. 최종 catalog PR/merge/서명 tag와 9개
+downstream declared-ref 이관, `dependencies 1.4.0` 서명 tag, Maven Central
+publication, GitHub Release와 Central-only consumer 검증을 모두 완료했다.
 
 ## 고정된 최종 후보
 
@@ -76,14 +75,15 @@ AWS/Javers/Leader 30개 component의 Maven Central-only versionless consumer도 
 `bluetape4k-experimental`은 catalog-only downstream 검증에는 포함하지만 공개 BOM
 배포 대상은 아니다.
 
-## 남은 배포 게이트
+## 배포 마감
 
-1. `dependencies 1.4.0` release PR exact-head CI와 mergeability를 검증하고 merge한다.
-2. merge head에서 stable-only POM과 workflow input을 다시 검증한다.
-3. 서명 tag `1.4.0`을 생성해 tag-triggered Publish Release workflow를 실행한다.
-4. Maven Central BOM POM/module, imported BOM 전부의 stable/public 상태와
-   Central-only consumer, GitHub Release를 확인한다.
-5. issue #168/#171, milestone `1.4.0`, Type P receipt, 다음 개발 버전과 안전 cleanup을 마감한다.
-
-최종 catalog tag 또는 `1.4.0` tag는 각 단계 직전 exact head와 live GitHub 상태를
-다시 확인한 후에만 생성한다.
+1. Release PR #174 exact-head CI `31079582802`와 post-merge CI
+   `31080318880`이 통과했고 merge `8a738f084de98323b5651c548b9d2c354fb22329`에
+   서명 tag `1.4.0`을 고정했다.
+2. Publish Release `31081143359`와 GitHub Release가 성공했다.
+3. Maven Central POM/module은 HTTP 200이며 공개 POM SHA-256이 생성 후보와
+   일치한다.
+4. Central-only consumer가 8개 대표 모듈을 versionless로 해석했다.
+5. issue #168/#171과 milestone `1.4.0`을 닫고 Type P receipt
+   `20260806T074128Z-5d92140b`를 완료했다.
+6. 후속 개발 버전은 `1.5.0`으로 전환했다.
