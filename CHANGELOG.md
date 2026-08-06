@@ -7,6 +7,8 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-06
+
 ### Added
 
 - Added centrally governed Kotlinx Serialization 1.11.0 BOM and JSON catalog
@@ -20,6 +22,9 @@ This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Centralized shared external library and Gradle plugin versions consumed by
   the managed bluetape4k library repositories, while retaining explicit
   compatibility lines for intentionally divergent consumers.
+- Retired the final 50 downstream compatibility-line selectors after all nine
+  managed repositories eliminated explicit external library/plugin authority;
+  only the nine settings-time Foojay plugin declarations remain structural.
 - Updated 121 catalog version keys to their audited latest-compatible stable
   releases and verified all 130 affected library/plugin authorities in isolated
   Gradle resolution configurations.
