@@ -466,6 +466,30 @@
       },
       "rollout": "2026-08-05-issue-169-full-authority-audit",
       "status": "verified-resolved-graph"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "baseline-catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
+      "catalog-sha256": "6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34",
+      "delta-count": 123,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": {
+        "observation-count": 286,
+        "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
+        "sha256": "2b1735f5684aa7eb843d91237dae38edf613dc0485d9550537bfe9312ab5652c",
+        "spec-count": 143
+      },
+      "rollout": "2026-08-06-dependencies-1.4.0-final-stable",
+      "status": "verified-resolved-graph"
     }
   ],
   "delta": [

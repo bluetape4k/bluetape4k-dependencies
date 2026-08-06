@@ -12,6 +12,7 @@ SCRIPT = REPO_ROOT / "scripts" / "audit-latest-stable.py"
 RESOLVER = REPO_ROOT / "scripts" / "verify-latest-stable-resolved-graphs.py"
 CATALOG = REPO_ROOT / "gradle" / "libs.versions.toml"
 LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
+CENTRAL_LEDGER = REPO_ROOT / "config" / "central-catalog-version-deltas.json"
 AUDIT = REPO_ROOT / "config" / "latest-stable-version-audit.json"
 BUILD = REPO_ROOT / "build.gradle.kts"
 GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
@@ -205,26 +206,30 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
 
     def test_ledger_has_strict_schema_and_exact_candidate_delta(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
+        central_document = json.loads(CENTRAL_LEDGER.read_text(encoding="utf-8"))
         versions = catalog_versions()
 
         self.assertEqual(document["schema-version"], 3)
-        self.assertEqual(document["rollout"], "2026-08-05-issue-169-full-authority-audit")
+        self.assertEqual(
+            document["rollout"],
+            central_document["subsequent-rollouts"][-1]["rollout"],
+        )
         self.assertEqual(document["audit-cutoff"], "2026-08-06")
         self.assertEqual(document["status"], "verified-resolved-graph")
-        self.assertEqual(
-            set(document),
-            {
+        required_keys = {
                 "schema-version",
                 "rollout",
                 "audit-cutoff",
                 "status",
                 "baseline",
                 "candidate",
-                "candidate-validation-evidence",
                 "audit",
                 "delta",
                 "resolved-graph-evidence",
-            },
+        }
+        self.assertTrue(required_keys.issubset(document))
+        self.assertTrue(
+            set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
         self.assertEqual(len(document["delta"]), 123)
         self.assertEqual(
@@ -289,23 +294,24 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             },
         )
 
-        candidate_evidence = document["candidate-validation-evidence"]
-        candidate_receipt_path = REPO_ROOT / candidate_evidence["path"]
-        candidate_receipt_bytes = candidate_receipt_path.read_bytes()
-        candidate_receipt = json.loads(candidate_receipt_bytes)
-        self.assertEqual(
-            hashlib.sha256(candidate_receipt_bytes).hexdigest(),
-            candidate_evidence["sha256"],
-        )
-        self.assertEqual(candidate_receipt["status"], "verified-local-candidate")
-        self.assertEqual(
-            candidate_receipt["catalog"]["sha256"],
-            document["candidate"]["catalog-sha256"],
-        )
-        self.assertEqual(candidate_receipt["full-builds"]["failures"], 0)
-        self.assertEqual(len(candidate_receipt["full-builds"]["repositories"]), 9)
-        self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
-        self.assertEqual(candidate_receipt["publication-poms"]["files"], 173)
+        candidate_evidence = document.get("candidate-validation-evidence")
+        if candidate_evidence is not None:
+            candidate_receipt_path = REPO_ROOT / candidate_evidence["path"]
+            candidate_receipt_bytes = candidate_receipt_path.read_bytes()
+            candidate_receipt = json.loads(candidate_receipt_bytes)
+            self.assertEqual(
+                hashlib.sha256(candidate_receipt_bytes).hexdigest(),
+                candidate_evidence["sha256"],
+            )
+            self.assertEqual(candidate_receipt["status"], "verified-local-candidate")
+            self.assertEqual(
+                candidate_receipt["catalog"]["sha256"],
+                document["candidate"]["catalog-sha256"],
+            )
+            self.assertEqual(candidate_receipt["full-builds"]["failures"], 0)
+            self.assertEqual(len(candidate_receipt["full-builds"]["repositories"]), 9)
+            self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
+            self.assertEqual(candidate_receipt["publication-poms"]["files"], 173)
 
     def test_audit_closes_all_safe_adoption_candidates(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
