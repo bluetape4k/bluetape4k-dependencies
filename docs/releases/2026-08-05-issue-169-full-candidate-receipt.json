@@ -1,47 +1,47 @@
 {
   "catalog": {
-    "carrier-head": "f065ad74439d4ae7b62b2f573d371d96876d02de",
-    "content-commit": "f065ad74439d4ae7b62b2f573d371d96876d02de",
-    "sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36"
+    "carrier-head": "03eb9fe120670e55c77bee998dc318df8184c755",
+    "content-commit": "03eb9fe120670e55c77bee998dc318df8184c755",
+    "sha256": "6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34"
   },
   "full-builds": {
     "failures": 0,
     "repositories": {
       "bluetape4k-aws": {
-        "head": "7952e678bc9018146d8c2297abe70fabacb4d831",
-        "log-sha256": "264686eb051d38d8d54938cb6110917e79955bcd77c25ca21a22dcfb425a1569"
+        "head": "664e4dfb544a3c19db484b0f9a8e023a73774b49",
+        "log-sha256": "7020b62a1e3713e3da0c8eb900ff2820cd6aa4052214631d94d8a3f59d182dea"
       },
       "bluetape4k-experimental": {
         "head": "57b7f578578e2ea3261167e1f4e3b46b8899dd05",
-        "log-sha256": "a52782436f6530dcfe105ea6a31e4cb2e95fb916804fa9e9322c51775350da54"
+        "log-sha256": "2b6172d338bb3cca499d454bc37c69a1e45c91ed4ec2d7d2d4b3e23326930498"
       },
       "bluetape4k-exposed": {
         "head": "4cc2cce07087241ec24a597d8464615434ea2b81",
-        "log-sha256": "83887ad58f442de89b442b82f193389983f0bc98f049ebff0880ebe4f2b0e9ff"
+        "log-sha256": "7063f1c24ac090df66e7e05f42b44fd4d2aad25f12e1c0bfcc050324e326a0c4"
       },
       "bluetape4k-graph": {
         "head": "72c0256e2e1cf61101d29852210e3c827ca93bc0",
-        "log-sha256": "64220721d0092354a83751439826c56ccfaf52330856fa461fba7bff302b01f1"
+        "log-sha256": "1e287d2f80766e8303d7e65382888310ee3805684d541e630b83c19fd52b885d"
       },
       "bluetape4k-image": {
         "head": "9961d45d039d14a425c16b0871ecbc5421e311cd",
-        "log-sha256": "d550b5688c9bb5f445fc26cc9b3ccf708b073fdc43ff6027be4df08ad844fa32"
+        "log-sha256": "42406a6afd7b4dba8567fb6f642e180f500ddad0a4b63ab85bad65ea60cd88e4"
       },
       "bluetape4k-javers": {
-        "head": "fa7909fe1bc6187315e43fd34243cc069488cfd3",
-        "log-sha256": "5ef93c3c81a4f8559b04e1ff9f1f3056ce0a5c9c387eea5f853df2419dbb60c1"
+        "head": "978d0490fc438570e7520643aed50e20614772d1",
+        "log-sha256": "7045b1f9552dd9df219fd6de8961e31cad10a7cd8bc3607370becba719b267ef"
       },
       "bluetape4k-leader": {
-        "head": "912662b371b8439f3a73d02faf081a5567eb5b77",
-        "log-sha256": "1ba6851bb81ee82b61d1b6ac693f6a1c36761b512a288751e78c69d5465fdd2f"
+        "head": "721a9a3808f67489d2bdb8177734325981c24977",
+        "log-sha256": "fe3c80563859137cc9746808a5351af62dc37b939b1b2b8030831e8445cab3fe"
       },
       "bluetape4k-projects": {
         "head": "7cf0b73646af05c0f8872cc4f6a16983949c4e3e",
-        "log-sha256": "a70ac9f9fc9bfbd7d165e73fb395ab9f5c59131825c471330cab27b9b5f965a5"
+        "log-sha256": "6c15649e988341effbf81d043ef804584be470215d04d5abb84b754f3caec02d"
       },
       "bluetape4k-text": {
         "head": "aead213d2d25307d7d3684226943a5f95c7411f2",
-        "log-sha256": "27dbe7638725ca6f19c54a0c39da0eeea25399251b02f776cae691752172a511"
+        "log-sha256": "dc821867f7c7d52cc61bf0c58756918f29a1fdfeaad031a258727b5742abdd64"
       }
     },
     "status": "verified-local-candidate"
@@ -58,7 +58,7 @@
   "resolved-graphs": {
     "observation-count": 286,
     "receipt": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-    "receipt-sha256": "4f8978f79a6726eb3e5b90c87ec20c4f131707d05897f609c4494a99d7cf54f2",
+    "receipt-sha256": "2b1735f5684aa7eb843d91237dae38edf613dc0485d9550537bfe9312ab5652c",
     "spec-count": 143,
     "status": "verified-resolved-graph"
   },

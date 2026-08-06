@@ -2,110 +2,86 @@
 
 ## 결론
 
-`bluetape4k-dependencies:1.4.0`의 외부 의존성 최신 호환 버전 통일과 로컬
-소비자 검증은 완료했다. 다만 현재 생성되는 `1.4.0` POM이 아직 8개의 내부
-`*-SNAPSHOT` BOM을 import하고, 대응하는 안정 버전 POM은 Maven Central에서 모두
-HTTP 404다. 따라서 현재 상태는 **PENDING**이며 tag, workflow dispatch, publication을
-실행할 수 없다.
+`bluetape4k-dependencies:1.4.0`의 선행 라이브러리 배포와 최종 안정 catalog
+후보 검증을 완료했다. 8개 공개 BOM은 모두 Maven Central에서 조회되고, 최종
+catalog에는 Bluetape SNAPSHOT import가 없다. exact catalog SHA에서 9개 downstream
+full build, 173개 publication POM/effective-model, 143개 resolved-graph spec과 286개
+observation이 모두 통과했다.
 
-## 고정된 후보
+현재 상태는 **CATALOG READY**다. 남은 순서는 최종 catalog PR의 exact-head CI,
+merge, 서명 tag `catalog/2026-08-06-03`을 완료한 뒤, 그 merge head에서
+`dependencies 1.4.0` release PR/CI와 서명 tag 및 publication을 수행하는 것이다.
+
+## 고정된 최종 후보
 
 | 항목 | 값 |
 |---|---|
-| dependencies candidate HEAD | `188f27c012801e011c416ee4e0cfded9294293d9` |
-| catalog source commit | `fbb6df78d04fcb9d7252ce0a1338ee67af9fa817` |
-| catalog SHA-256 | `9c9469f516e818dd4c0503babaff182613d7994b109441e78acf3bc4842c25df` |
-| audit 범위 | 509 authorities / 543 compatibility lines |
-| 채택 delta | 121 version keys / 130 authorities |
-| resolved graph | 260 exact before/after observations, failures 0 |
-| downstream full build | 9 library repositories, failures 0 |
-| publication POM gate | 175 POMs / 175 effective models / failures 0 |
+| immutable candidate commit | `03eb9fe120670e55c77bee998dc318df8184c755` |
+| catalog SHA-256 | `6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34` |
+| audit 범위 | 512 authorities / 546 compatibility lines |
+| 외부 version delta | 123 version keys |
+| resolved graph | 143 specs / 286 observations / failures 0 |
+| downstream full build | 9 repositories / failures 0 |
+| publication POM gate | 173 POMs / 173 effective models / failures 0 |
+| Maven dependency entries | 45,211 |
 
 resolved graph의 source-controlled receipt는
-[`2026-08-05-issue-169-exhaustive-resolved-graphs.json`](2026-08-05-issue-169-exhaustive-resolved-graphs.json)이며,
-SHA-256은 `1f019f350fa9c52c82f0152f2dd517fed55d93be354123b46df0d017f63d7c97`다.
-각 authority를 독립 Gradle configuration으로 분리해 baseline과 candidate 버전을
-정확히 요청하고, 실제 선택 버전, 전체 component 목록과 graph hash, before/after
-added/removed component delta를 기록했다. 실행 전에 현재 catalog bytes와 checksum
-sidecar, ledger candidate SHA, 121개 candidate version을 상호 검증하고, 전이 artifact
-하나라도 resolve되지 않으면 실패한다.
-9개 downstream exact HEAD와 full-build/POM 로그 hash는
+[`2026-08-05-issue-169-exhaustive-resolved-graphs.json`](2026-08-05-issue-169-exhaustive-resolved-graphs.json)이며
+SHA-256은 `2b1735f5684aa7eb843d91237dae38edf613dc0485d9550537bfe9312ab5652c`다.
+9개 downstream exact HEAD와 full-build/POM 증적은
 [`2026-08-05-issue-169-full-candidate-receipt.json`](2026-08-05-issue-169-full-candidate-receipt.json)에
-고정했다.
+고정했으며 SHA-256은
+`37f66a1a99f48c0be27f697625c06eb2240d023f4b487cb2d36df47c07d24a1c`다.
 
-## 안정 배포 DAG
+## 공개 upstream 상태
 
-```text
-projects 1.12.0
-  ├─ exposed 1.12.0 ─┬─ aws 0.5.0
-  │                  └─ leader 0.5.0
-  ├─ image 0.4.0
-  ├─ text 0.3.0
-  ├─ graph 0.6.0
-  └─ javers 0.3.0
-            ↓
-stable catalog ref + downstream/POM 재검증
-            ↓
-dependencies 1.4.0
-```
-
-`bluetape4k-workshop`과 예제 저장소는 안정 배포 train에서 제외한다.
-`bluetape4k-experimental`은 catalog 소비자 검증에만 포함하며 공개 BOM 선행 배포
-대상이 아니다.
-
-## upstream preflight
-
-| Repository | Target | Exact candidate HEAD | Stable POM | 판정 |
+| Repository | Version | Exact release HEAD | Maven Central | 판정 |
 |---|---:|---|---:|---|
-| projects | `1.12.0` | `66fe47d3` | 404 | PENDING |
-| exposed | `1.12.0` | `16a8fed2` | 404 | PENDING |
-| image | `0.4.0` | `295c7228` | 404 | PENDING |
-| text | `0.3.0` | `dedfb886` | 404 | PENDING |
-| graph | `0.6.0` | `95677bb7` | 404 | PENDING |
-| javers | `0.3.0` | `6ac3b824` | 404 | PENDING |
-| aws | `0.5.0` | `7584c2f3` | 404 | PENDING |
-| leader | `0.5.0` | `7f6bcc51` | 404 | PENDING |
+| projects | `1.12.1` | `7cf0b736` | 75 publications | PASS |
+| exposed | `1.12.1` | `4cc2cce0` | 35 publications | PASS |
+| image | `0.4.0` | `9961d45d` | 11 publications | PASS |
+| text | `0.3.0` | `aead213d` | 6 publications | PASS |
+| graph | `0.6.0` | `72c0256e` | 15 publications | PASS |
+| javers | `0.3.0` | `978d0490` | 7 publications | PASS |
+| aws | `0.5.0` | `664e4dfb` | 6 publications | PASS |
+| leader | `0.5.0` | `721a9a38` | 17 publications | PASS |
 
-모든 후보 worktree는 clean하고 local HEAD가 origin과 일치한다. 그러나 exact 후보
-SHA의 full CI/Nightly/Snapshot 증거는 없거나 dependency submission만 존재한다.
-기존 develop Nightly 성공은 SHA가 달라 대체 증거로 사용할 수 없다.
+각 release tag는 exact merge HEAD를 가리키는 서명 tag이며, release workflow와
+GitHub Release가 성공했다. 모든 stable BOM POM과 Gradle module metadata가 공개됐고,
+AWS/Javers/Leader 30개 component의 Maven Central-only versionless consumer도 통과했다.
 
-문서 차단도 남아 있다. projects는 `1.12.0 — Unreleased`이고 release 문서 PR
-`#1310`이 열려 있다. image는 `0.4.0 - TBD`, graph는 `[Unreleased]`, leader는
-`0.5.0 — 미공개`, javers/text도 미공개·미배포 상태다. AWS WIP도 현재 merge 상태와
-맞지 않는다. Javers `#292`, Text `#229` 등 release workflow를 변경하는 open PR은
-배포 전 명시적으로 merge, close, 또는 waiver 처리해야 한다.
+## 최종 catalog 검증
 
-## 현재 POM 차단
+- `bluetape4k-aws-bom=0.5.0`
+- `bluetape4k-javers-bom=0.3.0`
+- `bluetape4k-leader-bom=0.5.0`
+- 나머지 5개 공개 BOM도 모두 위 표의 stable version으로 고정됐다.
+- catalog checksum sidecar와 실제 bytes가 일치한다.
+- 512개 authority metadata 중 507개 stable metadata와 5개 preview-only line을
+  정책대로 검증했고 metadata-unavailable은 0이다.
+- central catalog adoption, managed catalog 168 aliases/8 sub-BOMs, downstream
+  Dependabot ignore가 strict repository map에서 통과했다.
+- 9개 downstream full build가 exact release HEAD와 동일 catalog SHA에서 통과했다.
+- Projects의 최초 병렬 실행에서 Elasticsearch/Pulsar Testcontainers timeout이
+  발생했으나 두 targeted test가 통과했고, `--max-workers=2` full build 1,019 tasks가
+  성공해 catalog 회귀가 아님을 확인했다.
+- 9개 publisher와 dependencies BOM을 포함한 173개 POM 및 173개 Maven effective
+  model이 통과했으며 versionless dependency-management entry는 없다.
 
-`generatePomFileForBluetapeDependenciesPublication`은 성공하지만 결과 POM에는 다음
-8개 snapshot import가 남는다.
-
-- `bluetape4k-bom:1.12.0-SNAPSHOT`
-- `bluetape4k-aws-bom:0.5.0-SNAPSHOT`
-- `bluetape4k-image-bom:0.4.0-SNAPSHOT`
-- `bluetape4k-text-bom:0.3.0-SNAPSHOT`
-- `bluetape4k-graph-bom:0.6.0-SNAPSHOT`
-- `bluetape4k-leader-bom:0.5.0-SNAPSHOT`
-- `bluetape4k-exposed-bom:1.12.0-SNAPSHOT`
-- `bluetape4k-javers-bom:0.3.0-SNAPSHOT`
-
-snapshot metadata는 모두 존재하지만 안정 POM은 모두 404다. 안정 upstream 공개
-전에는 단순히 `-SNAPSHOT` 문자열만 제거하지 않는다. 먼저 각 BOM을 실제로 배포해
-HTTP 200을 확인한 다음 catalog를 안정 버전으로 전환하고 전체 POM/effective-model,
-downstream build, resolved-graph 검증을 다시 수행해야 한다.
+`bluetape4k-workshop`과 예제/application 저장소는 안정 배포 train에서 제외한다.
+`bluetape4k-experimental`은 catalog-only downstream 검증에는 포함하지만 공개 BOM
+배포 대상은 아니다.
 
 ## 남은 배포 게이트
 
-1. 각 upstream의 changelog/WIP와 release-affecting PR 상태 정리
-2. exact candidate의 full CI/Nightly 및 publication POM 검증
-3. dependency DAG 순서대로 semver tag와 stable BOM 배포
-4. 각 target stable POM의 Maven Central HTTP 200 확인
-5. central catalog의 8개 BOM ref를 stable로 변경하고 새 catalog train ref 고정
-6. downstream full build, 175 POM/effective-model, resolved graph 재검증
-7. dependencies open PR/issue 및 changelog/release checklist 정리
-8. exact final HEAD, CI, credentials, workflow inputs를 재확인한 뒤 별도 승인
-9. `1.4.0` tag와 release workflow dispatch, Maven Central/GitHub Release 검증
+1. 최종 catalog PR exact-head CI와 mergeability를 확인하고 merge한다.
+2. merge head에 서명 tag `catalog/2026-08-06-03`을 생성하고 signature/peeled commit을 검증한다.
+3. downstream이 선언한 catalog ref를 최종 tag로 이관한다.
+4. `dependencies 1.4.0` release head의 stable-only POM, CI, workflow input을 재검증한다.
+5. 서명 tag `1.4.0`을 생성해 Publish Release workflow를 실행한다.
+6. Maven Central BOM POM/module, imported BOM 전부의 stable/public 상태와
+   Central-only consumer, GitHub Release를 확인한다.
+7. issue #171, milestone `1.4.0`, Type P receipt, 다음 개발 버전과 안전 cleanup을 마감한다.
 
-위 조건이 충족되기 전에는 catalog tag, semver tag, workflow dispatch, publication,
-release, merge, milestone 종료를 수행하지 않는다.
+최종 catalog tag 또는 `1.4.0` tag는 각 단계 직전 exact head와 live GitHub 상태를
+다시 확인한 후에만 생성한다.

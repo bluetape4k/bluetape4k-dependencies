@@ -24,6 +24,22 @@
   "candidate": {
     "catalog-sha256": "6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34"
   },
+  "candidate-validation-evidence": {
+    "downstream-full-builds": {
+      "failures": 0,
+      "repositories": 9
+    },
+    "path": "docs/releases/2026-08-05-issue-169-full-candidate-receipt.json",
+    "publication-poms": {
+      "dependencies": 45211,
+      "failures": 0,
+      "files": 173,
+      "maven-models": 173,
+      "repositories": 9
+    },
+    "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
+    "sha256": "37f66a1a99f48c0be27f697625c06eb2240d023f4b487cb2d36df47c07d24a1c"
+  },
   "delta": [
     {
       "adoption-evidence": {

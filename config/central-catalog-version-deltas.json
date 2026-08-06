@@ -474,14 +474,17 @@
       "catalog-sha256": "6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34",
       "delta-count": 123,
       "downstream-full-builds": {
-        "repositories": 9,
-        "status": "pending"
+        "failures": 0,
+        "repositories": 9
       },
       "publication-pom-verification": {
-        "repositories": 9,
-        "status": "pending"
+        "dependencies": 45211,
+        "failures": 0,
+        "files": 173,
+        "maven-models": 173,
+        "repositories": 9
       },
-      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
       "resolved-graph-evidence": {
         "observation-count": 286,
         "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
