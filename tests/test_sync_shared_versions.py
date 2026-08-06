@@ -467,7 +467,7 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
                 manifest, {("a" * 64, "default")}, today=date(2026, 8, 4)
             )
 
-    def test_real_workspace_has_approved_explicit_external_library_baseline(
+    def test_real_workspace_has_no_downstream_explicit_external_authority(
         self,
     ) -> None:
         if sys.version_info < (3, 11):
@@ -498,49 +498,11 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
         )
         sync.validate_authority_line_usage(authority_lines, used_authority_lines)
 
-        self.assertEqual(
-            sum(record["subject-kind"] == "library" for record in records), 533
-        )
-        self.assertEqual(
-            sum(record["subject-kind"] == "plugin" for record in records), 36
-        )
-        self.assertEqual(
-            len(
-                {
-                    record["coordinate-or-plugin-id"]
-                    for record in records
-                    if record["subject-kind"] == "plugin"
-                }
-            ),
-            9,
-        )
+        self.assertEqual(records, [])
         compatibility_records = [
             record for record in records if record["line-id"] != "default"
         ]
-        self.assertEqual(len(compatibility_records), 31)
-        self.assertEqual(
-            {record["line-id"] for record in compatibility_records},
-            {
-                "geotools-31",
-                "h2-2",
-                "jakarta-persistence-32",
-                "jsonassert-1",
-                "jsonassert-2",
-                "jsonpath-2",
-                "jsonpath-3",
-                "junit-platform-1",
-                "junit-platform-6",
-                "jvips-69bf715",
-                "jvips-f9dc8c9",
-                "libphonenumber-8",
-                "minio-8",
-                "mybatis-spring-4",
-                "neo4j-driver-5",
-                "neo4j-driver-6",
-                "postgis-2025",
-                "pulsar-3",
-            },
-        )
+        self.assertEqual(compatibility_records, [])
         self.assertEqual(
             records,
             sorted(
@@ -565,7 +527,7 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             workspace, sync.DEFAULT_REPOSITORIES
         )
 
-        self.assertEqual(len(records), 30)
+        self.assertEqual(len(records), 9)
         self.assertEqual(
             sum(
                 record["coordinate-or-plugin-id"]

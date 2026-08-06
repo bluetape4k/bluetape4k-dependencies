@@ -8,9 +8,10 @@ catalog에는 Bluetape SNAPSHOT import가 없다. exact catalog SHA에서 9개 d
 full build, 173개 publication POM/effective-model, 143개 resolved-graph spec과 286개
 observation이 모두 통과했다.
 
-현재 상태는 **CATALOG READY**다. 남은 순서는 최종 catalog PR의 exact-head CI,
-merge, 서명 tag `catalog/2026-08-06-03`을 완료한 뒤, 그 merge head에서
-`dependencies 1.4.0` release PR/CI와 서명 tag 및 publication을 수행하는 것이다.
+현재 상태는 **RELEASE PR READY**다. 최종 catalog PR/merge/서명 tag와 9개
+downstream declared-ref 이관까지 완료했다. 남은 순서는 이 문서 변경을 포함한
+`dependencies 1.4.0` release PR의 exact-head CI를 통과한 뒤 서명 tag와
+publication을 수행하는 것이다.
 
 ## 고정된 최종 후보
 
@@ -24,6 +25,9 @@ merge, 서명 tag `catalog/2026-08-06-03`을 완료한 뒤, 그 merge head에서
 | downstream full build | 9 repositories / failures 0 |
 | publication POM gate | 173 POMs / 173 effective models / failures 0 |
 | Maven dependency entries | 45,211 |
+| catalog merge / signed tag | `3d2fb6e0` / `catalog/2026-08-06-03` |
+| downstream ref adoption | 9 PRs merged / failures 0 |
+| generated 1.4.0 POM | 77 entries / SNAPSHOT 0 / missing version 0 |
 
 resolved graph의 source-controlled receipt는
 [`2026-08-05-issue-169-exhaustive-resolved-graphs.json`](2026-08-05-issue-169-exhaustive-resolved-graphs.json)이며
@@ -74,14 +78,12 @@ AWS/Javers/Leader 30개 component의 Maven Central-only versionless consumer도 
 
 ## 남은 배포 게이트
 
-1. 최종 catalog PR exact-head CI와 mergeability를 확인하고 merge한다.
-2. merge head에 서명 tag `catalog/2026-08-06-03`을 생성하고 signature/peeled commit을 검증한다.
-3. downstream이 선언한 catalog ref를 최종 tag로 이관한다.
-4. `dependencies 1.4.0` release head의 stable-only POM, CI, workflow input을 재검증한다.
-5. 서명 tag `1.4.0`을 생성해 Publish Release workflow를 실행한다.
-6. Maven Central BOM POM/module, imported BOM 전부의 stable/public 상태와
+1. `dependencies 1.4.0` release PR exact-head CI와 mergeability를 검증하고 merge한다.
+2. merge head에서 stable-only POM과 workflow input을 다시 검증한다.
+3. 서명 tag `1.4.0`을 생성해 tag-triggered Publish Release workflow를 실행한다.
+4. Maven Central BOM POM/module, imported BOM 전부의 stable/public 상태와
    Central-only consumer, GitHub Release를 확인한다.
-7. issue #171, milestone `1.4.0`, Type P receipt, 다음 개발 버전과 안전 cleanup을 마감한다.
+5. issue #168/#171, milestone `1.4.0`, Type P receipt, 다음 개발 버전과 안전 cleanup을 마감한다.
 
 최종 catalog tag 또는 `1.4.0` tag는 각 단계 직전 exact head와 live GitHub 상태를
 다시 확인한 후에만 생성한다.

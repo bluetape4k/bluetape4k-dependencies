@@ -1,6 +1,6 @@
 # bluetape4k-dependencies 1.4.0 Release Checklist
 
-Status: **CATALOG READY / RELEASE PENDING**
+Status: **RELEASE PR READY / PUBLICATION PENDING**
 Target version: `1.4.0`
 Latest observed external version: `1.3.1`
 Release authority: the user explicitly authorized the complete stable train,
@@ -19,10 +19,13 @@ milestone closure, follow-up work, and safe cleanup on 2026-08-06.
   `bluetape4k-experimental` for catalog-only validation.
 - Excluded scope: `bluetape4k-workshop` and all example application/workshop
   repositories.
-- Target catalog tag: `catalog/2026-08-06-03`.
-- Dispatch hold: dependencies publication remains held until the catalog PR is
-  merged, the signed catalog tag peels to that merge, and the exact release head
-  passes CI.
+- Catalog merge: `3d2fb6e0087a6bbef5418aee8024bba9dd527e26`.
+- Signed catalog tag: `catalog/2026-08-06-03`; remote tag object `97d89596`
+  is GitHub-verified and peels to the exact catalog merge.
+- Catalog Type P receipt: run `20260806T044439Z-c93bded1`, sequence 14,
+  checksum `ad45b248d312f19025cab497b7472d41739600183599e9c54c7b675126e1ad47`.
+- Dispatch hold: dependencies publication remains held only until this release
+  PR passes exact-head CI and its merge is revalidated for the signed `1.4.0` tag.
 
 ## Stable Upstream Matrix
 
@@ -56,9 +59,9 @@ components without SNAPSHOT versions.
   and explicit authority were re-read immediately before candidate publication.
 - [x] **PUB-06 — Dispatch upstream releases in dependency order.**
 - [x] **PUB-07 — Verify every public stable upstream artifact.**
-- [ ] **PUB-08 / REL-06 — Merge and sign the final stable catalog.**
-  Require exact-head PR CI, mergeability, signed `catalog/2026-08-06-03`, and
-  downstream declared-ref adoption.
+- [x] **PUB-08 / REL-06 — Merge and sign the final stable catalog.**
+  PR #173 and post-merge CI passed, the signed catalog tag is valid, and all
+  nine downstream declared refs were adopted through exact-head PRs.
 - [ ] **PUB-09 / REL-07 — Publish dependencies 1.4.0.**
   Require exact release-head CI, stable-only generated POM, signed `1.4.0`,
   successful Publish Release, Maven Central visibility, and Central-only consumer.
@@ -77,23 +80,30 @@ components without SNAPSHOT versions.
   effective models, failures 0.
 - Candidate repository state: all downstream exact HEADs clean; remote catalog
   commit `03eb9fe120670e55c77bee998dc318df8184c755` verified.
+- Catalog PR CI `31075340907` and post-merge CI `31076033049`: PASS.
+- Downstream adoption PRs: Projects #1317, AWS #444, Experimental #88,
+  Exposed #622, Graph #453, Image #469, Javers #295, Leader #655, and Text #231;
+  every exact head passed CI and merged with zero unresolved review threads.
+- Fresh merged-default publication contract: 9 repositories, 173 POMs,
+  45,211 dependency entries, 173 Maven effective models, failures 0.
+- Generated `1.4.0` POM: 77 dependency-management entries, 18 imported BOMs,
+  missing versions 0, SNAPSHOT entries 0, SHA-256
+  `d6b4305d5fba5ec960532b34864254fd9ed844cb67adbecff1d00eca8f0eb967`.
 
 ## Remaining Release Sequence
 
-1. Open the catalog PR from `catalog/2026-08-06-03-final-stable` to `develop`.
-2. Verify exact-head CI, reviews, threads, and mergeability; merge the exact head.
-3. Create and verify signed tag `catalog/2026-08-06-03` at the merge commit.
-4. Move all nine downstream declared catalog refs to that immutable tag.
-5. Re-run dependencies stable-POM, build, and exact-head CI gates.
-6. Create and verify signed tag `1.4.0`; let the tag-triggered Publish Release run.
-7. Verify public BOM POM/module, every imported stable BOM, Central-only
+1. Verify this release PR exact-head CI, reviews, threads, and mergeability;
+   merge the exact head.
+2. Regenerate the stable-only POM from the merge and verify the remote tag is absent.
+3. Create and verify signed tag `1.4.0`; let the tag-triggered Publish Release run.
+4. Verify public BOM POM/module, every imported stable BOM, Central-only
    resolution, GitHub Release, issue #171, milestone `1.4.0`, receipt, and next
    development version.
-8. Remove only worktrees proven clean, merged, and no longer needed.
+5. Remove only worktrees proven clean, merged, and no longer needed.
 
 ## Stop Condition
 
-Do not tag the catalog before its exact PR head is merged. Do not tag or publish
-`1.4.0` before the signed catalog tag and release-head CI are verified. Stop only
-after public Maven Central visibility, GitHub Release, receipts, follow-up
-versioning, milestone closure, and conservative cleanup all pass.
+Do not tag or publish `1.4.0` before the release PR exact head is merged and the
+stable-only POM is regenerated from that merge. Stop only after public Maven
+Central visibility, GitHub Release, receipts, follow-up versioning, milestone
+closure, and conservative cleanup all pass.
