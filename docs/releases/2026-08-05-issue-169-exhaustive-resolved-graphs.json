@@ -1,5 +1,5 @@
 {
-  "catalog-sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c",
+  "catalog-sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36",
   "command": [
     "./gradlew",
     "-p",
@@ -228,7 +228,7 @@
     },
     {
       "added-components": [
-        "software.amazon.awssdk:bom:2.51.0"
+        "software.amazon.awssdk:bom:2.51.1"
       ],
       "removed-components": [
         "software.amazon.awssdk:bom:2.50.3"
@@ -742,8 +742,8 @@
     },
     {
       "added-components": [
-        "aws.sdk.kotlin:aws-core-jvm:1.8.23",
-        "aws.sdk.kotlin:aws-core:1.8.23"
+        "aws.sdk.kotlin:aws-core-jvm:1.8.24",
+        "aws.sdk.kotlin:aws-core:1.8.24"
       ],
       "removed-components": [
         "aws.sdk.kotlin:aws-core-jvm:1.8.22",
@@ -2311,8 +2311,8 @@
       "spec_id": "fe9ec9076ea0ebf4b9dc1f89b63d25307a6a218dca981442dd1092a6e6d37816"
     }
   ],
-  "ledger-contract-sha256": "a11824d0bc0db4ef6d124134c13d97dafb6b57d1ae6b6274de3b65bb49b0f441",
-  "log-sha256": "4f86ac009a1cd477650f189857adac9580277882b094285b232d6b069339d683",
+  "ledger-contract-sha256": "72e678af346b12593f9923ec48cbe6a52775d31697b7a8ab7317890bf945d6ac",
+  "log-sha256": "2403f5b2ca00677c7e161bcbabfad14c137144cb33f8363caa34ae3d86b7fc4c",
   "observation-count": 286,
   "observations": [
     {
@@ -3012,12 +3012,12 @@
     {
       "components": [
         "root project 'latest-stable-resolved-graphs'",
-        "software.amazon.awssdk:bom:2.51.0"
+        "software.amazon.awssdk:bom:2.51.1"
       ],
-      "graph_sha256": "bc82b903d8001a0b83526bc5729749b131bbf3da118f46025c6da01bbffef52d",
+      "graph_sha256": "1dc0219798d34a552d49313879550428a099ad2dfcb80c8576a70e54d99846c7",
       "phase": "after",
-      "requested": "2.51.0",
-      "selected": "2.51.0",
+      "requested": "2.51.1",
+      "selected": "2.51.1",
       "spec_id": "1c0797cee28167fa85e48d259dad3369fe6f5d7a24ec272e5362a5df5d73faca"
     },
     {
@@ -4112,14 +4112,14 @@
     },
     {
       "components": [
-        "aws.sdk.kotlin:aws-core-jvm:1.8.23",
-        "aws.sdk.kotlin:aws-core:1.8.23",
+        "aws.sdk.kotlin:aws-core-jvm:1.8.24",
+        "aws.sdk.kotlin:aws-core:1.8.24",
         "root project 'latest-stable-resolved-graphs'"
       ],
-      "graph_sha256": "c66cabe85dfa598653466cbfb03acd819ded80f200619950ebc5a33e7aaed9ab",
+      "graph_sha256": "2c444a4cb7dd3f3138043c56c7469b3e4bb1c473aa89b6b959985d29b382ec3b",
       "phase": "after",
-      "requested": "1.8.23",
-      "selected": "1.8.23",
+      "requested": "1.8.24",
+      "selected": "1.8.24",
       "spec_id": "45280ca8cc37077426acf2675646bc793f60857f3f17a0f9483962726e9d87a6"
     },
     {

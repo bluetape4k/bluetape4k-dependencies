@@ -1,64 +1,64 @@
 {
   "catalog": {
-    "carrier-head": "5afc259a6d97870bcec2b9a1089e0f4bbb70f980",
-    "content-commit": "5afc259a6d97870bcec2b9a1089e0f4bbb70f980",
-    "sha256": "2359df7747269635324e61f6518e47a6b507c956959c8b791a29dbc4446d611c"
+    "carrier-head": "f065ad74439d4ae7b62b2f573d371d96876d02de",
+    "content-commit": "f065ad74439d4ae7b62b2f573d371d96876d02de",
+    "sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36"
   },
   "full-builds": {
     "failures": 0,
     "repositories": {
       "bluetape4k-aws": {
-        "head": "7584c2f39855034e4f4237e123544b25170d449f",
-        "log-sha256": "78d733dddc8507b89242e4ba49324100e8d9614e27cc29ddbb25984a63f0e796"
+        "head": "7952e678bc9018146d8c2297abe70fabacb4d831",
+        "log-sha256": "264686eb051d38d8d54938cb6110917e79955bcd77c25ca21a22dcfb425a1569"
       },
       "bluetape4k-experimental": {
-        "head": "533082b6dc819689f94e0a91e77a7760baf1a2c4",
-        "log-sha256": "e7ba1306eefb2bb30c7cb7e321f76d800e80b20ac55f3e0ecd7873e1b7af5b4b"
+        "head": "57b7f578578e2ea3261167e1f4e3b46b8899dd05",
+        "log-sha256": "a52782436f6530dcfe105ea6a31e4cb2e95fb916804fa9e9322c51775350da54"
       },
       "bluetape4k-exposed": {
-        "head": "16a8fed2253e729216d4499baf87e0ef0a7fad2a",
-        "log-sha256": "4389f9f1bdf57b4076ba2c6a0ec859521d20fe48303fdbc66135f6f0aa75adba"
+        "head": "4cc2cce07087241ec24a597d8464615434ea2b81",
+        "log-sha256": "83887ad58f442de89b442b82f193389983f0bc98f049ebff0880ebe4f2b0e9ff"
       },
       "bluetape4k-graph": {
-        "head": "95677bb7d691ff7f77a95ad14203c7fa4009a553",
-        "log-sha256": "3b104460785ca3ebe42b8951dba43e43615b2adc7b9089d0b340f380c52c2db6"
+        "head": "72c0256e2e1cf61101d29852210e3c827ca93bc0",
+        "log-sha256": "64220721d0092354a83751439826c56ccfaf52330856fa461fba7bff302b01f1"
       },
       "bluetape4k-image": {
-        "head": "295c7228d679c0cdc56f5d7fb4eaf4dfa14a9cbe",
-        "log-sha256": "bf46f033b15411a0ec3c3412b47939c81222098b26d97a0e69a8fa583071cc7a"
+        "head": "9961d45d039d14a425c16b0871ecbc5421e311cd",
+        "log-sha256": "d550b5688c9bb5f445fc26cc9b3ccf708b073fdc43ff6027be4df08ad844fa32"
       },
       "bluetape4k-javers": {
-        "head": "6ac3b824bfeb6d43977166bce8e1bbef4ce25108",
-        "log-sha256": "46b44ea804f3f3fe5994d835a00d3974ef0c320113e537038592ecf3977ef0c6"
+        "head": "fa7909fe1bc6187315e43fd34243cc069488cfd3",
+        "log-sha256": "5ef93c3c81a4f8559b04e1ff9f1f3056ce0a5c9c387eea5f853df2419dbb60c1"
       },
       "bluetape4k-leader": {
-        "head": "7f6bcc51db0bf3fcb8dc9794dd12aac17d22a65d",
-        "log-sha256": "63aaa748df59edd12b6ddd9d837209dfc999205eeecb6c11e9658b9cdc89d9c4"
+        "head": "912662b371b8439f3a73d02faf081a5567eb5b77",
+        "log-sha256": "1ba6851bb81ee82b61d1b6ac693f6a1c36761b512a288751e78c69d5465fdd2f"
       },
       "bluetape4k-projects": {
-        "head": "10c3781344597d2f97a24d466907bfbd1010310f",
-        "log-sha256": "4e9981821ea12f478ef9216c0607672d0a457c3c4422dc75b65ddf88dea3041b"
+        "head": "7cf0b73646af05c0f8872cc4f6a16983949c4e3e",
+        "log-sha256": "a70ac9f9fc9bfbd7d165e73fb395ab9f5c59131825c471330cab27b9b5f965a5"
       },
       "bluetape4k-text": {
-        "head": "dedfb886cb9d1df75e8f2922013e241ccfac4ae4",
-        "log-sha256": "453210d9274dce22393052cc0793e5afab6448450f2b60d7ea04409ffde5be47"
+        "head": "aead213d2d25307d7d3684226943a5f95c7411f2",
+        "log-sha256": "27dbe7638725ca6f19c54a0c39da0eeea25399251b02f776cae691752172a511"
       }
     },
     "status": "verified-local-candidate"
   },
   "publication-poms": {
-    "dependencies": 46023,
+    "dependencies": 45211,
     "failures": 0,
-    "files": 175,
-    "log-sha256": "5cb6b0d8a48a3b43de787dcaa243eea6d36da4d1e025aab490f319a4bca7be1d",
-    "maven-models": 175,
+    "files": 173,
+    "log-sha256": "aef2f0d219681bd25eda52aad4524f8aaa83bad2ca3ee344cf76c3cc4c74b4ad",
+    "maven-models": 173,
     "repositories": 9,
     "status": "verified-local-candidate"
   },
   "resolved-graphs": {
     "observation-count": 286,
     "receipt": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
-    "receipt-sha256": "8a5e2bf1188f010aa9b6e72a4f1283a473092a9076feaaf14eb8948182a62503",
+    "receipt-sha256": "4f8978f79a6726eb3e5b90c87ec20c4f131707d05897f609c4494a99d7cf54f2",
     "spec-count": 143,
     "status": "verified-resolved-graph"
   },

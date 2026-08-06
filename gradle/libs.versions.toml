@@ -14,19 +14,19 @@ bluetape4k-bom     = "1.12.1"  # https://mvnrepository.com/artifact/io.github.bl
 bluetape4k-aws-bom = "0.5.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.aws/bluetape4k-aws-bom
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "0.4.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
+bluetape4k-image-bom   = "0.4.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.image/bluetape4k-image-bom
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
+bluetape4k-text-bom    = "0.3.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.text/bluetape4k-text-bom
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "0.6.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
+bluetape4k-graph-bom   = "0.6.0"  # https://mvnrepository.com/artifact/io.github.bluetape4k.graph/bluetape4k-graph-bom
 
 # https://github.com/bluetape4k/bluetape4k-leader
 bluetape4k-leader-bom  = "0.5.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.leader/bluetape4k-leader-bom
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "1.12.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
+bluetape4k-exposed-bom = "1.12.1"  # https://mvnrepository.com/artifact/io.github.bluetape4k.exposed/bluetape4k-exposed-bom
 
 # https://github.com/bluetape4k/bluetape4k-javers
 bluetape4k-javers-bom  = "0.3.0-SNAPSHOT"  # https://mvnrepository.com/artifact/io.github.bluetape4k.javers/bluetape4k-javers-bom
@@ -63,9 +63,9 @@ fory              = "1.5.0"  # https://mvnrepository.com/artifact/org.apache.for
 fory-kotlin       = "1.5.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
-aws2              = "2.51.0"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
-aws2-crt          = "0.48.3"  # AWS SDK Java 2.51.0 parent-tested CRT compatibility version
-aws-kotlin        = "1.8.23"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
+aws2              = "2.51.1"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
+aws2-crt          = "0.48.3"  # AWS SDK Java 2.51.x parent-tested CRT compatibility version
+aws-kotlin        = "1.8.24"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.8.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
 ktor              = "3.5.2"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
 netty4            = "4.1.136.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
@@ -621,8 +621,10 @@ kafka4-storage-api                            = { module = "org.apache.kafka:kaf
 kafka4-streams                                = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka4" }
 kafka4-streams-test-utils                     = { module = "org.apache.kafka:kafka-streams-test-utils", version.ref = "kafka4" }
 ktor-bom                                      = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
+kotlinx-coroutines-bom                       = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "coroutines" }
 kotlinx-serialization-bom                     = { module = "org.jetbrains.kotlinx:kotlinx-serialization-bom", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json                    = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+lettuce-core                                  = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }
 logcaptor                                     = { module = "io.github.hakky54:logcaptor", version.ref = "logcaptor" }
 log4j-bom                                     = { module = "org.apache.logging.log4j:log4j-bom", version.ref = "log4j" }
 log4j-core                                    = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
@@ -1048,6 +1050,7 @@ spring-statemachine-core = { module = "org.springframework.statemachine:spring-s
 springmockk = { module = "com.ninja-squad:springmockk", version.ref = "managed-springmockk-h5eca79ba4c97" }
 starrocks-connector-j = { module = "com.starrocks:starrocks-connector-j", version.ref = "managed-starrocks-connector-j-h5d416dd6b46c" }
 tess4j = { module = "net.sourceforge.tess4j:tess4j", version.ref = "managed-tess4j-h8ef44ff63554" }
+testcontainers-bom = { module = "org.testcontainers:testcontainers-bom", version.ref = "testcontainers" }
 testcontainers-ministack = { module = "org.ministack:testcontainers-ministack", version.ref = "managed-testcontainers-ministack-h8672eda0c12d" }
 testcontainers-opensearch = { module = "org.opensearch:opensearch-testcontainers", version.ref = "managed-testcontainers-opensearch-h481cd99f489d" }
 tink = { module = "com.google.crypto.tink:tink", version.ref = "managed-tink-h958d8d1f4e22" }
