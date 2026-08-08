@@ -5,14 +5,14 @@
     <filter id="shadow" x="-8%" y="-8%" width="116%" height="116%">
       <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#203040" flood-opacity="0.10"/>
     </filter>
-    <marker id="arrow-blue" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="userSpaceOnUse">
-      <path d="M 1 1 L 12 7 L 1 13 Z" fill="#2F6DB5"/>
+    <marker id="arrow-blue" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="userSpaceOnUse" viewBox="0 0 14 14" data-role="primary" data-tip-direction="positive-x">
+      <path d="M 1 1 L 12 7 L 1 13 Z" fill="#2F6DB5" stroke-dasharray="none"/>
     </marker>
-    <marker id="arrow-green" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="userSpaceOnUse">
-      <path d="M 1 1 L 12 7 L 1 13 Z" fill="#2E8B57"/>
+    <marker id="arrow-green" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="userSpaceOnUse" viewBox="0 0 14 14" data-role="primary" data-tip-direction="positive-x">
+      <path d="M 1 1 L 12 7 L 1 13 Z" fill="#2E8B57" stroke-dasharray="none"/>
     </marker>
-    <marker id="arrow-slate" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
-      <path d="M 1 1 L 9 5 L 1 9 Z" fill="#65758A"/>
+    <marker id="arrow-slate" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse" viewBox="0 0 10 10" data-role="secondary" data-tip-direction="positive-x">
+      <path d="M 1 1 L 9 5 L 1 9 Z" fill="#65758A" stroke-dasharray="none"/>
     </marker>
     <style>
       .canvas{fill:#F6F9FC}
