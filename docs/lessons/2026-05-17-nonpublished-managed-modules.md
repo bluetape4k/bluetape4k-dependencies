@@ -1,26 +1,25 @@
-# Non-published managed modules
+# 발행하지 않는 관리 대상 모듈
 
-## Context
+## 배경
 
-`bluetape4k-dependencies` generates its catalog aliases and BOM constraints
-from sibling repositories. The generator must use the same publishable-module
-policy as the upstream BOMs.
+`bluetape4k-dependencies`는 인접 저장소에서 카탈로그 별칭과 BOM 제약 조건을
+생성한다. 생성기는 업스트림 BOM과 동일한 발행 가능 모듈 정책을 사용해야 한다.
 
-## Decision
+## 결정
 
-Exclude `examples/`, `*-examples`, `*-demo`, `benchmark/`, and `*-benchmark`
-modules in `scripts/sync-managed-catalog.py`, then regenerate the managed
-catalog and constraint blocks.
+`scripts/sync-managed-catalog.py`에서 `examples/`, `*-examples`, `*-demo`,
+`benchmark/`, `*-benchmark` 모듈을 제외한 다음 관리 카탈로그와 제약 조건 블록을
+다시 생성한다.
 
-## Outcome
+## 결과
 
-Benchmark aliases and constraints are removed from the generated graph module
-set, and future non-published modules stay out of the dependencies BOM.
+생성된 graph 모듈 집합에서 벤치마크 별칭과 제약 조건이 제거되었으며, 앞으로
+발행하지 않는 모듈은 dependencies BOM에 포함되지 않는다.
 
-## Verification
+## 검증
 
 - `python3 -m unittest tests/test_sync_managed_catalog.py`
 - `scripts/sync-managed-catalog.py --write --check --summary`
 - `./gradlew generatePomFileForBluetapeDependenciesPublication generatePomFileForBluetapeVersionCatalogPublication --no-daemon --no-configuration-cache --no-build-cache`
-- Generated dependencies metadata scan found no `examples`, `demo`, or
-  `benchmark` entries.
+- 생성된 dependencies 메타데이터를 검사한 결과 `examples`, `demo`,
+  `benchmark` 항목이 없었다.

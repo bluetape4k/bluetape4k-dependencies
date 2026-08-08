@@ -1,30 +1,29 @@
-# bluetape4k BOM Snapshot Alignment
+# bluetape4k BOM 스냅샷 정렬
 
-## Context
+## 배경
 
-The Fory 0.17 upgrade required `bluetape4k-projects` artifacts rebuilt against
-the new Fory API. Downstream repositories still resolved `bluetape4k-bom:1.8.0`
-from `bluetape4k-dependencies`, so they mixed Fory 0.17 with older
-`bluetape4k-io` binaries and failed with `NoSuchMethodError`.
+Fory 0.17 업그레이드로 인해 `bluetape4k-projects` 아티팩트를 새 Fory API에 맞춰
+다시 빌드해야 했다. 다운스트림 저장소는 여전히 `bluetape4k-dependencies`에서
+`bluetape4k-bom:1.8.0`을 해석했으므로 Fory 0.17과 이전 `bluetape4k-io`
+바이너리를 혼용했고 `NoSuchMethodError`로 실패했다.
 
-## Decision
+## 결정
 
-Move the central `bluetape4k-bom` catalog entry to `1.8.1-SNAPSHOT`, matching
-the published `bluetape4k-projects` snapshot line.
+중앙 `bluetape4k-bom` 카탈로그 항목을 발행된 `bluetape4k-projects` 스냅샷 라인에
+맞춰 `1.8.1-SNAPSHOT`으로 변경한다.
 
-## Outcome
+## 결과
 
-Downstream repositories should receive the rebuilt 1.8.1 artifacts through the
-central BOM instead of repo-local overrides.
+다운스트림 저장소는 저장소별 재정의 대신 중앙 BOM을 통해 다시 빌드된 1.8.1
+아티팩트를 받아야 한다.
 
-## Verification
+## 검증
 
-Checked Maven snapshot metadata for `bluetape4k-io:1.8.1-SNAPSHOT` and
-`bluetape4k-assertions:1.8.1-SNAPSHOT`; both exist after the projects snapshot
-publish.
+`bluetape4k-io:1.8.1-SNAPSHOT`과 `bluetape4k-assertions:1.8.1-SNAPSHOT`의 Maven
+스냅샷 메타데이터를 확인했다. projects 스냅샷 발행 후 두 아티팩트가 모두
+존재한다.
 
-## Future Guidance
+## 향후 지침
 
-When upgrading shared runtime libraries in `bluetape4k-dependencies`, align the
-core bluetape4k BOM version with the published snapshot line before syncing
-downstream repositories.
+`bluetape4k-dependencies`에서 공유 런타임 라이브러리를 업그레이드할 때는 다운스트림
+저장소를 동기화하기 전에 핵심 bluetape4k BOM 버전을 발행된 스냅샷 라인에 맞춘다.
