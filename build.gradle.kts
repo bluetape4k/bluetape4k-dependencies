@@ -114,6 +114,8 @@ dependencies {
         api(libs.r2dbc.h2)
         api(libs.redisson)
         api(libs.scrimage.core)
+        api(libs.scrimage.filters)
+        api(libs.scrimage.webp)
         api(libs.slf4j.api)
         api(libs.springdoc.openapi.starter.webmvc.ui)
         api(libs.tomcat.embed.core)
