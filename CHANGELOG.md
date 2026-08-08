@@ -1,171 +1,194 @@
-# Changelog
+# 변경 기록
 
-All notable changes to `bluetape4k-dependencies` are documented here.
+`bluetape4k-dependencies`의 모든 주요 변경 사항을 기록합니다.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-This project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+형식은 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)를 따릅니다.
+이 프로젝트는 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
 
 ## [1.4.0] - 2026-08-06
 
-### Added
+### 추가
 
-- Added centrally governed Kotlinx Serialization 1.11.0 BOM and JSON catalog
-  aliases, and imported the matching BOM into the dependency platform.
-- Added exhaustive before/after resolved-graph verification for every adopted
-  latest-compatible external dependency authority, with an immutable receipt
-  bound to the candidate catalog checksum.
+- 중앙에서 관리하는 Kotlinx Serialization 1.11.0 BOM과 JSON catalog alias를
+  추가하고, 일치하는 BOM을 dependency platform에 import했습니다.
+- 채택한 모든 최신 호환 외부 dependency authority에 대해 변경 전후
+  resolved graph를 빠짐없이 검증하고, 후보 catalog checksum에 바인딩된
+  immutable receipt를 추가했습니다.
 
-### Changed
+### 변경
 
-- Centralized shared external library and Gradle plugin versions consumed by
-  the managed bluetape4k library repositories, while retaining explicit
-  compatibility lines for intentionally divergent consumers.
-- Retired the final 50 downstream compatibility-line selectors after all nine
-  managed repositories eliminated explicit external library/plugin authority;
-  only the nine settings-time Foojay plugin declarations remain structural.
-- Updated 121 catalog version keys to their audited latest-compatible stable
-  releases and verified all 130 affected library/plugin authorities in isolated
-  Gradle resolution configurations.
+- 관리 대상 bluetape4k library repository가 사용하는 공통 external library와
+  Gradle plugin 버전을 중앙화하면서, 의도적으로 분리된 consumer의 명시적
+  compatibility line은 유지했습니다.
+- 9개 관리 repository가 명시적 external library/plugin authority를 모두
+  제거한 뒤 마지막 50개의 downstream compatibility-line selector를
+  제거했습니다. 이제 settings 시점의 9개 Foojay plugin declaration만
+  구조적 항목으로 남습니다.
+- 121개 catalog version key를 감사한 최신 호환 stable release로 갱신하고,
+  격리된 Gradle resolution configuration에서 영향받은 130개
+  library/plugin authority를 모두 검증했습니다.
 
 ## [1.3.1] - 2026-06-28
 
-### Fixed
+### 버그 수정
 
-- Corrected generated POM license metadata to MIT License, matching the
-  repository license and bluetape4k ecosystem policy.
-- Corrected release guidance that described the Gradle version catalog as a
-  Maven Central publication. The catalog remains a git-ref build contract for
-  ecosystem repositories; the Maven Central artifact is the
-  `bluetape4k-dependencies` BOM.
+- 생성된 POM의 license metadata를 repository license 및 bluetape4k 생태계
+  정책과 일치하는 MIT License로 수정했습니다.
+- Gradle version catalog를 Maven Central publication으로 설명하던 release
+  guidance를 수정했습니다. catalog는 생태계 repository를 위한 git-ref
+  build contract로 유지되며, Maven Central artifact는
+  `bluetape4k-dependencies` BOM입니다.
 
 ## [1.3.0] - 2026-06-27
 
-### Changed
+### 변경
 
-- Prepared the `1.3.0` minor train to consume the coordinated internal BOM
-  release set: projects `1.11.0`, exposed `1.11.0`, AWS `0.4.0`, image
-  `0.3.0`, text `0.2.1`, graph `0.5.1`, leader `0.4.0`, and javers `0.2.1`.
-- Documented the downstream snapshot dependency resolution strategy, added a
-  reusable retry wrapper, and hardened snapshot artifact availability checks for
-  transient Central snapshot `403` responses.
-- Synced generated managed catalog aliases and BOM constraints for
-  `bluetape4k-images-ocr`, while keeping unpublished Exposed database modules
-  gated until their first published line.
-- Delegated generated bluetape4k artifact version management to imported
-  sub-BOMs instead of repeating every artifact as an individual BOM constraint.
-- Cut the shared dependency catalog for projects-side Dependabot remediation
-  without treating `bluetape4k-dependencies 1.3.0` as the whole release train;
-  it remains the final BOM/catalog artifact after internal repo releases
-  ([#101](https://github.com/bluetape4k/bluetape4k-dependencies/issues/101)).
+- `1.3.0` minor train이 조정된 internal BOM release set을 사용하도록
+  준비했습니다: projects `1.11.0`, exposed `1.11.0`, AWS `0.4.0`, image
+  `0.3.0`, text `0.2.1`, graph `0.5.1`, leader `0.4.0`, javers `0.2.1`.
+- downstream snapshot dependency resolution 전략을 문서화하고 재사용 가능한
+  retry wrapper를 추가했으며, 일시적인 Central snapshot `403` 응답에 대한
+  snapshot artifact availability check를 강화했습니다.
+- 생성된 managed catalog alias와 BOM constraint를
+  `bluetape4k-images-ocr`에 맞춰 동기화하고, 최초 published line이 나올
+  때까지 unpublished Exposed database module을 gate 안에 유지했습니다.
+- 생성된 bluetape4k artifact version 관리를 개별 BOM constraint로 모든
+  artifact를 반복하는 대신 imported sub-BOM에 위임했습니다.
+- projects 측 Dependabot remediation을 위한 shared dependency catalog를
+  cut했습니다. `bluetape4k-dependencies 1.3.0`을 전체 release train으로
+  간주하지 않고, internal repository release 후 최종 BOM/catalog artifact로
+  유지합니다 ([#101](https://github.com/bluetape4k/bluetape4k-dependencies/issues/101)).
 
 ## [1.2.0] - 2026-06-01
 
-### Added
+### 추가
 
-- Added centrally governed Netty 4.1/4.2, Protobuf, Fabric8, and Vert.x
-  catalog lines plus BOM constraints where a single compatible line is safe.
+- 단일 호환 line으로 안전하게 관리할 수 있는 Netty 4.1/4.2, Protobuf,
+  Fabric8, Vert.x catalog line과 BOM constraint를 중앙 관리 대상으로
+  추가했습니다.
 
-### Changed
+### 변경
 
-- Promoted the managed `bluetape4k-projects` BOM to the published `1.10.0`
-  release for the 1.2.0 minor train.
-- Promoted the managed `bluetape4k-aws` BOM to the published `0.3.1` release.
-- Promoted the managed `bluetape4k-image` BOM to the published `0.2.0`
-  release, including generated catalog and BOM coverage for `bluetape4k-images-ktor`.
-- Promoted the managed `bluetape4k-text` BOM to the published `0.2.0` release.
-- Promoted the managed `bluetape4k-graph` BOM to the published `0.5.0`
-  release.
-- Promoted the managed `bluetape4k-leader` BOM to the published `0.3.1`
-  release.
-- Promoted the managed `bluetape4k-exposed` BOM to the published `1.10.0`
-  release for the 1.2.0 minor train.
-- Promoted the managed `bluetape4k-javers` BOM to the published `0.2.0`
-  release, including generated catalog and BOM coverage for `javers-ddd` and
-  `javers-exposed`.
+- 1.2.0 minor train을 위해 managed `bluetape4k-projects` BOM을 published
+  `1.10.0` release로 승격했습니다.
+- managed `bluetape4k-aws` BOM을 published `0.3.1` release로 승격했습니다.
+- 생성된 catalog 및 `bluetape4k-images-ktor` BOM coverage를 포함해 managed
+  `bluetape4k-image` BOM을 published `0.2.0` release로 승격했습니다.
+- managed `bluetape4k-text` BOM을 published `0.2.0` release로 승격했습니다.
+- managed `bluetape4k-graph` BOM을 published `0.5.0` release로 승격했습니다.
+- managed `bluetape4k-leader` BOM을 published `0.3.1` release로 승격했습니다.
+- 1.2.0 minor train을 위해 managed `bluetape4k-exposed` BOM을 published
+  `1.10.0` release로 승격했습니다.
+- 생성된 catalog와 BOM coverage에 `javers-ddd`, `javers-exposed`를 포함해
+  managed `bluetape4k-javers` BOM을 published `0.2.0` release로 승격했습니다.
 
 ## [1.1.4] - 2026-06-01
 
-### Changed
+### 변경
 
-- Kept `bluetape4k-aws`, `bluetape4k-image`, `bluetape4k-text`,
-  `bluetape4k-graph`, and `bluetape4k-javers` on the published
-  `bluetape4k-dependencies:1.1.3` baseline for the 1.1.4 patch train.
-- Excluded `bluetape4k-ktor-*`, `javers-ddd`, and `javers-exposed` aliases and
-  constraints from 1.1.4 because they require the next repository BOM lines.
-- Excluded the unreleased `bluetape4k-images-ktor` catalog alias and BOM
-  constraint from the 1.1.4 stable matrix until a stable image release
-  publishes it.
-- Promoted the managed `bluetape4k-projects` BOM from `1.9.2-SNAPSHOT` to the
-  published `1.9.2` release while leaving `1.10.0` for the next minor
-  dependencies train.
-- Promoted the managed `bluetape4k-exposed` BOM from `1.9.2-SNAPSHOT` to the
-  published `1.9.2` release.
-- Promoted the managed `bluetape4k-leader` BOM from `0.2.2-SNAPSHOT` to the
-  published `0.2.2` release.
-- Synced generated Javers aliases and BOM constraints for `javers-ddd` and
-  `javers-exposed`.
+- 1.1.4 patch train에서 `bluetape4k-aws`, `bluetape4k-image`,
+  `bluetape4k-text`, `bluetape4k-graph`, `bluetape4k-javers`를 published
+  `bluetape4k-dependencies:1.1.3` baseline에 유지했습니다.
+- 다음 repository BOM line이 필요하므로 1.1.4에서 `bluetape4k-ktor-*`,
+  `javers-ddd`, `javers-exposed` alias와 constraint를 제외했습니다.
+- stable image release에서 publish될 때까지 unreleased
+  `bluetape4k-images-ktor` catalog alias와 BOM constraint를 1.1.4 stable
+  matrix에서 제외했습니다.
+- managed `bluetape4k-projects` BOM을 `1.9.2-SNAPSHOT`에서 published
+  `1.9.2` release로 승격하고, `1.10.0`은 다음 minor dependencies train으로
+  남겼습니다.
+- managed `bluetape4k-exposed` BOM을 `1.9.2-SNAPSHOT`에서 published
+  `1.9.2` release로 승격했습니다.
+- managed `bluetape4k-leader` BOM을 `0.2.2-SNAPSHOT`에서 published
+  `0.2.2` release로 승격했습니다.
+- `javers-ddd`, `javers-exposed`의 생성된 Javers alias와 BOM constraint를
+  동기화했습니다.
 
 ## [1.1.2] - 2026-05-23
 
-### Changed
+### 변경
 
-- Promoted the managed `bluetape4k-projects` BOM from `1.9.0` to the published
-  `1.9.1` release.
+- managed `bluetape4k-projects` BOM을 `1.9.0`에서 published `1.9.1`
+  release로 승격했습니다.
 
 ## [1.1.1] - 2026-05-23
 
-### Fixed
+### 버그 수정
 
-- Removed non-published `bluetape4k-mock-web-server` and
-  `bluetape4k-mock-webflux-server` application modules from the managed catalog
-  and BOM constraints.
-- Added a Maven Central artifact availability audit for release preparation.
+- managed catalog와 BOM constraint에서 publish되지 않는
+  `bluetape4k-mock-web-server`, `bluetape4k-mock-webflux-server` application
+  module을 제거했습니다.
+- release 준비를 위한 Maven Central artifact availability audit를
+  추가했습니다.
 
 ## [1.1.0] - 2026-05-23
 
-### Added
+### 추가
 
-- `bluetape4k-leader-dynamodb` generated catalog alias and BOM constraint.
+- `bluetape4k-leader-dynamodb` 생성 catalog alias와 BOM constraint를
+  추가했습니다.
 
-### Changed
+### 변경
 
-- Promoted the managed `bluetape4k-leader` BOM from `0.1.0` to the published
-  `0.2.0` release.
+- managed `bluetape4k-leader` BOM을 `0.1.0`에서 published `0.2.0` release로
+  승격했습니다.
 
 ## [1.0.1] - 2026-05-22
 
-### Added
+### 추가
 
-- Dependabot configuration for repository maintenance ([PR #1](https://github.com/bluetape4k/bluetape4k-dependencies/pull/1)).
-- Release workflow for Maven Central Portal publishing and GitHub Release creation.
-- SNAPSHOT publishing workflow on `develop` pushes ([PR #3](https://github.com/bluetape4k/bluetape4k-dependencies/pull/3)).
-- `bluetape4k-exposed` modules in the central BOM ([PR #2](https://github.com/bluetape4k/bluetape4k-dependencies/pull/2)).
-- AWS, image, text, exposed, and javers BOM platform imports ([PR #6](https://github.com/bluetape4k/bluetape4k-dependencies/pull/6)).
-- `leader-zookeeper` BOM entry ([PR #7](https://github.com/bluetape4k/bluetape4k-dependencies/pull/7)).
-- `bluetape4k-graph-ktor` generated catalog alias and BOM constraint.
+- repository maintenance를 위한 Dependabot configuration을 추가했습니다
+  ([PR #1](https://github.com/bluetape4k/bluetape4k-dependencies/pull/1)).
+- Maven Central Portal publication과 GitHub Release 생성을 위한 release
+  workflow를 추가했습니다.
+- `develop` push에 따른 SNAPSHOT publication workflow를 추가했습니다
+  ([PR #3](https://github.com/bluetape4k/bluetape4k-dependencies/pull/3)).
+- central BOM에 `bluetape4k-exposed` module을 추가했습니다
+  ([PR #2](https://github.com/bluetape4k/bluetape4k-dependencies/pull/2)).
+- AWS, image, text, exposed, javers BOM platform import를 추가했습니다
+  ([PR #6](https://github.com/bluetape4k/bluetape4k-dependencies/pull/6)).
+- `leader-zookeeper` BOM entry를 추가했습니다
+  ([PR #7](https://github.com/bluetape4k/bluetape4k-dependencies/pull/7)).
+- `bluetape4k-graph-ktor` 생성 catalog alias와 BOM constraint를
+  추가했습니다.
 
-### Changed
+### 변경
 
-- Opened the next snapshot train as `1.0.1-SNAPSHOT` and aligned the managed
-  `bluetape4k-exposed` BOM to `1.8.1-SNAPSHOT`.
-- Standardized the first official Spring Boot integration surface on Spring Boot 4-only, versionless `spring-boot` artifact names before the BOM is publicly released ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
-- Replaced transitional `leader-spring-boot3` / `leader-spring-boot4` aliases with the single `leader-spring-boot` alias ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
-- Replaced transitional Exposed `bluetape4k-spring-boot3-*` and `bluetape4k-spring-boot4-*` aliases with versionless `bluetape4k-spring-boot-*` aliases ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
-- Added versionless Spring Boot module aliases for the core `bluetape4k-projects` Spring Boot integration modules ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
-- Replaced the generated `bluetape4k-graph-spring-boot4-starter` alias with the versionless `bluetape4k-graph-spring-boot` alias.
-- README license references now point to MIT License.
-- Promoted the ecosystem BOM set to the current published release train:
+- 다음 snapshot train을 `1.0.1-SNAPSHOT`으로 열고 managed
+  `bluetape4k-exposed` BOM을 `1.8.1-SNAPSHOT`에 맞췄습니다.
+- 공식 첫 Spring Boot integration surface를 공개 BOM release 전에 Spring
+  Boot 4 전용 versionless `spring-boot` artifact name으로 표준화했습니다
+  ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- 과도기 `leader-spring-boot3` / `leader-spring-boot4` alias를 단일
+  `leader-spring-boot` alias로 교체했습니다
+  ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- 과도기 Exposed `bluetape4k-spring-boot3-*`,
+  `bluetape4k-spring-boot4-*` alias를 versionless
+  `bluetape4k-spring-boot-*` alias로 교체했습니다
+  ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- core `bluetape4k-projects` Spring Boot integration module에 versionless
+  module alias를 추가했습니다
+  ([PR #9](https://github.com/bluetape4k/bluetape4k-dependencies/pull/9)).
+- 생성된 `bluetape4k-graph-spring-boot4-starter` alias를 versionless
+  `bluetape4k-graph-spring-boot` alias로 교체했습니다.
+- README license reference가 MIT License를 가리키도록 변경했습니다.
+- ecosystem BOM set을 현재 published release train으로 승격했습니다:
   `bluetape4k-bom:1.9.0`, `bluetape4k-aws-bom:0.2.0`,
   `bluetape4k-exposed-bom:1.9.0`, `bluetape4k-graph-bom:0.4.0`,
-  `bluetape4k-image-bom:0.1.1`, `bluetape4k-javers-bom:0.1.1`, and
+  `bluetape4k-image-bom:0.1.1`, `bluetape4k-javers-bom:0.1.1`,
   `bluetape4k-text-bom:0.1.1`.
 
-### Fixed
+### 버그 수정
 
-- Converted `bluetape4k-bom`, graph BOM, and leader BOM references to platform imports so dependency constraints compose correctly ([PR #4](https://github.com/bluetape4k/bluetape4k-dependencies/pull/4), [PR #5](https://github.com/bluetape4k/bluetape4k-dependencies/pull/5)).
+- dependency constraint가 올바르게 조합되도록 `bluetape4k-bom`, graph BOM,
+  leader BOM reference를 platform import로 변환했습니다
+  ([PR #4](https://github.com/bluetape4k/bluetape4k-dependencies/pull/4),
+  [PR #5](https://github.com/bluetape4k/bluetape4k-dependencies/pull/5)).
 
-### Notes
+### 비고
 
-- Spring Boot 3 artifacts remain available from the older 1.7.x line, but they are intentionally not part of the first official `bluetape4k-dependencies` public contract.
+- Spring Boot 3 artifact는 이전 1.7.x line에서 계속 사용할 수 있지만,
+  첫 공식 `bluetape4k-dependencies` public contract에는 의도적으로
+  포함하지 않았습니다.
