@@ -22,5 +22,5 @@ regexes = [
     '''YOUR_.*_HERE''',
     '''example[-_]key''',
     '''test[-_]api[-_]key''',
-    '''^(?:maxmind-geoip2|jakarta-persistence-v3[12])$''',
+    '''^(?:maxmind-geoip2|jakarta-persistence-v3[12]|bouncycastle-bcprov-lts8on)$''',
 ]
