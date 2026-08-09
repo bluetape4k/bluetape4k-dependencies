@@ -47,6 +47,7 @@ downstream 소스 수정을 섞지 않고, 모듈 단위 Detekt 성공으로 레
 
 ## 남은 게이트
 
-- [ ] commit, push, PR 생성 및 live metadata/CI 확인
+- [x] commit, push, PR 생성 및 live metadata 확인
+- [ ] exact-head CI/review 확인
 - [ ] 사용자 별도 승인 후 exact-head merge
 - [ ] merge 후에만 branch/worktree cleanup 검토
