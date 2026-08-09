@@ -1,0 +1,1457 @@
+{
+  "catalog-sha256": "bb58842909842524905993de086fcd7c68a104fea957f0509934729693078004",
+  "command": [
+    "./gradlew",
+    "-p",
+    "<temporary-project>",
+    "resolveLatestStableGraphs",
+    "--no-daemon",
+    "--no-configuration-cache",
+    "--no-build-cache",
+    "--console=plain"
+  ],
+  "graph-deltas": [
+    {
+      "added-components": [
+        "org.apache.fory:fory-core:1.6.0",
+        "org.apache.fory:fory-kotlin:1.6.0"
+      ],
+      "removed-components": [
+        "org.apache.fory:fory-core:1.5.0",
+        "org.apache.fory:fory-kotlin:1.5.0"
+      ],
+      "spec_id": "0a1df9e7b7064c12086cf2dabf805239b0b5c60f5d8238f95a2e50c3e0e15f64"
+    },
+    {
+      "added-components": [
+        "io.netty:netty-buffer:4.1.137.Final",
+        "io.netty:netty-codec-dns:4.1.137.Final",
+        "io.netty:netty-codec-http2:4.1.137.Final",
+        "io.netty:netty-codec-http:4.1.137.Final",
+        "io.netty:netty-codec-socks:4.1.137.Final",
+        "io.netty:netty-codec:4.1.137.Final",
+        "io.netty:netty-common:4.1.137.Final",
+        "io.netty:netty-handler-proxy:4.1.137.Final",
+        "io.netty:netty-handler:4.1.137.Final",
+        "io.netty:netty-resolver-dns:4.1.137.Final",
+        "io.netty:netty-resolver:4.1.137.Final",
+        "io.netty:netty-tcnative-classes:2.0.81.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.137.Final",
+        "io.netty:netty-transport:4.1.137.Final",
+        "io.vertx:vertx-auth-common:4.5.32",
+        "io.vertx:vertx-core:4.5.32",
+        "io.vertx:vertx-uri-template:4.5.32",
+        "io.vertx:vertx-web-client:4.5.32",
+        "io.vertx:vertx-web-common:4.5.32"
+      ],
+      "removed-components": [
+        "io.netty:netty-buffer:4.1.136.Final",
+        "io.netty:netty-codec-dns:4.1.136.Final",
+        "io.netty:netty-codec-http2:4.1.136.Final",
+        "io.netty:netty-codec-http:4.1.136.Final",
+        "io.netty:netty-codec-socks:4.1.136.Final",
+        "io.netty:netty-codec:4.1.136.Final",
+        "io.netty:netty-common:4.1.136.Final",
+        "io.netty:netty-handler-proxy:4.1.136.Final",
+        "io.netty:netty-handler:4.1.136.Final",
+        "io.netty:netty-resolver-dns:4.1.136.Final",
+        "io.netty:netty-resolver:4.1.136.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.136.Final",
+        "io.netty:netty-transport:4.1.136.Final",
+        "io.vertx:vertx-auth-common:4.5.31",
+        "io.vertx:vertx-core:4.5.31",
+        "io.vertx:vertx-uri-template:4.5.31",
+        "io.vertx:vertx-web-client:4.5.31",
+        "io.vertx:vertx-web-common:4.5.31"
+      ],
+      "spec_id": "0ea2ab5418b0fdc9cc31fbee5a395380d074aa55f4ab842d0a77dadf5557f815"
+    },
+    {
+      "added-components": [
+        "software.amazon.awssdk:bom:2.51.3"
+      ],
+      "removed-components": [
+        "software.amazon.awssdk:bom:2.51.1"
+      ],
+      "spec_id": "1c0797cee28167fa85e48d259dad3369fe6f5d7a24ec272e5362a5df5d73faca"
+    },
+    {
+      "added-components": [
+        "org.bouncycastle:bcprov-jdk18on:1.85.2"
+      ],
+      "removed-components": [
+        "org.bouncycastle:bcprov-jdk18on:1.85"
+      ],
+      "spec_id": "251ecd39847ff093adc82bbf37e8710e2a166469b38ff55b11ecab7efb5a9df2"
+    },
+    {
+      "added-components": [
+        "io.netty:netty-buffer:4.1.137.Final",
+        "io.netty:netty-codec-dns:4.1.137.Final",
+        "io.netty:netty-codec-http2:4.1.137.Final",
+        "io.netty:netty-codec-http:4.1.137.Final",
+        "io.netty:netty-codec-socks:4.1.137.Final",
+        "io.netty:netty-codec:4.1.137.Final",
+        "io.netty:netty-common:4.1.137.Final",
+        "io.netty:netty-handler-proxy:4.1.137.Final",
+        "io.netty:netty-handler:4.1.137.Final",
+        "io.netty:netty-resolver-dns:4.1.137.Final",
+        "io.netty:netty-resolver:4.1.137.Final",
+        "io.netty:netty-tcnative-classes:2.0.81.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.137.Final",
+        "io.netty:netty-transport:4.1.137.Final",
+        "io.vertx:vertx-core:4.5.32"
+      ],
+      "removed-components": [
+        "io.netty:netty-buffer:4.1.136.Final",
+        "io.netty:netty-codec-dns:4.1.136.Final",
+        "io.netty:netty-codec-http2:4.1.136.Final",
+        "io.netty:netty-codec-http:4.1.136.Final",
+        "io.netty:netty-codec-socks:4.1.136.Final",
+        "io.netty:netty-codec:4.1.136.Final",
+        "io.netty:netty-common:4.1.136.Final",
+        "io.netty:netty-handler-proxy:4.1.136.Final",
+        "io.netty:netty-handler:4.1.136.Final",
+        "io.netty:netty-resolver-dns:4.1.136.Final",
+        "io.netty:netty-resolver:4.1.136.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.136.Final",
+        "io.netty:netty-transport:4.1.136.Final",
+        "io.vertx:vertx-core:4.5.31"
+      ],
+      "spec_id": "2c3f843d9e7a8774796c7750c023125d050ab9cb3385b8a6fef620f4df36cc96"
+    },
+    {
+      "added-components": [
+        "io.opentelemetry:opentelemetry-api:1.65.0",
+        "io.opentelemetry:opentelemetry-common:1.65.0",
+        "io.opentelemetry:opentelemetry-context:1.65.0"
+      ],
+      "removed-components": [
+        "io.opentelemetry:opentelemetry-api:1.64.0",
+        "io.opentelemetry:opentelemetry-common:1.64.0",
+        "io.opentelemetry:opentelemetry-context:1.64.0"
+      ],
+      "spec_id": "2fb6fb314b8edf09b08976d0b534a8c2911c75bd5418db22475cc6feb92a11ca"
+    },
+    {
+      "added-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-params:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-params:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "34ebdbc164f00057e28e58ad9afff418d14daa4a5876be65a6368c7af05c6aab"
+    },
+    {
+      "added-components": [
+        "aws.sdk.kotlin:aws-core-jvm:1.8.26",
+        "aws.sdk.kotlin:aws-core:1.8.26"
+      ],
+      "removed-components": [
+        "aws.sdk.kotlin:aws-core-jvm:1.8.24",
+        "aws.sdk.kotlin:aws-core:1.8.24"
+      ],
+      "spec_id": "45280ca8cc37077426acf2675646bc793f60857f3f17a0f9483962726e9d87a6"
+    },
+    {
+      "added-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "4a43e04dfda7d64d8812803360d20e7d841210e46b390956bddb42ff3af429f2"
+    },
+    {
+      "added-components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit.vintage:junit-vintage-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit.vintage:junit-vintage-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "4f2d0e0a920626106d73d9b152b0eedffc4ab8d2b4627f47393809c71c59162b"
+    },
+    {
+      "added-components": [
+        "io.opentelemetry:opentelemetry-bom:1.65.0"
+      ],
+      "removed-components": [
+        "io.opentelemetry:opentelemetry-bom:1.64.0"
+      ],
+      "spec_id": "5b72bf75e9e62c08a48cd80f5127973006dd03555dc6760ab3d12354bb1c8af1"
+    },
+    {
+      "added-components": [
+        "io.github.classgraph:classgraph:4.8.189"
+      ],
+      "removed-components": [
+        "io.github.classgraph:classgraph:4.8.186"
+      ],
+      "spec_id": "65f51c9ce80a59557dad8115d5688b85c64f8823e1214f433946217c1ee59580"
+    },
+    {
+      "added-components": [
+        "org.apache.fory:fory-core:1.6.0"
+      ],
+      "removed-components": [
+        "org.apache.fory:fory-core:1.5.0"
+      ],
+      "spec_id": "69c6b3d10057060a13f4b9924d15d39c0ab54a4b5a0ffb46d09d049ab25aa8e0"
+    },
+    {
+      "added-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-migrationsupport:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-migrationsupport:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "7078644f6df7dbec0f720827105a99c4c7ffd07392a3aa8d3431e149cfdbd165"
+    },
+    {
+      "added-components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-suite-api:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-suite-api:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "75c6d9c8e2ba5ad6766d6db97bbcc61a1e27714e6a603706681f642d5aba7a82"
+    },
+    {
+      "added-components": [
+        "io.netty:netty-buffer:4.1.137.Final",
+        "io.netty:netty-codec-dns:4.1.137.Final",
+        "io.netty:netty-codec-http2:4.1.137.Final",
+        "io.netty:netty-codec-http:4.1.137.Final",
+        "io.netty:netty-codec-socks:4.1.137.Final",
+        "io.netty:netty-codec:4.1.137.Final",
+        "io.netty:netty-common:4.1.137.Final",
+        "io.netty:netty-handler-proxy:4.1.137.Final",
+        "io.netty:netty-handler:4.1.137.Final",
+        "io.netty:netty-resolver-dns:4.1.137.Final",
+        "io.netty:netty-resolver:4.1.137.Final",
+        "io.netty:netty-tcnative-classes:2.0.81.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.137.Final",
+        "io.netty:netty-transport:4.1.137.Final",
+        "io.vertx:vertx-core:4.5.32",
+        "io.vertx:vertx-web-common:4.5.32"
+      ],
+      "removed-components": [
+        "io.netty:netty-buffer:4.1.136.Final",
+        "io.netty:netty-codec-dns:4.1.136.Final",
+        "io.netty:netty-codec-http2:4.1.136.Final",
+        "io.netty:netty-codec-http:4.1.136.Final",
+        "io.netty:netty-codec-socks:4.1.136.Final",
+        "io.netty:netty-codec:4.1.136.Final",
+        "io.netty:netty-common:4.1.136.Final",
+        "io.netty:netty-handler-proxy:4.1.136.Final",
+        "io.netty:netty-handler:4.1.136.Final",
+        "io.netty:netty-resolver-dns:4.1.136.Final",
+        "io.netty:netty-resolver:4.1.136.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.136.Final",
+        "io.netty:netty-transport:4.1.136.Final",
+        "io.vertx:vertx-core:4.5.31",
+        "io.vertx:vertx-web-common:4.5.31"
+      ],
+      "spec_id": "7d913fba1b16b5495f82162438667553d6a3c7d60d18251275bae00593ad8dab"
+    },
+    {
+      "added-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "7e2dd632db5b97c1e08848a73cba9416eb46c706c60a41a516d717b7524a4ab6"
+    },
+    {
+      "added-components": [
+        "at.yawk.lz4:lz4-java:1.11.2"
+      ],
+      "removed-components": [
+        "at.yawk.lz4:lz4-java:1.11.1"
+      ],
+      "spec_id": "96dfbb0f88e4bd5c21751b7c9ab9752699b0b10ae16eff5b3d038db1f5d68ba4"
+    },
+    {
+      "added-components": [
+        "org.apache.httpcomponents.client5:httpclient5:5.6.4"
+      ],
+      "removed-components": [
+        "org.apache.httpcomponents.client5:httpclient5:5.6.3"
+      ],
+      "spec_id": "978a2ed55ecf3b1c249d97d1708e025dc7fd7883a5a615be32f7d2925e3237fb"
+    },
+    {
+      "added-components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "b0353f98e4bf2cc5d427e43c54e404e56de2f0319050428b5e66aee0426b24c6"
+    },
+    {
+      "added-components": [
+        "io.vertx:vertx-dependencies:4.5.32"
+      ],
+      "removed-components": [
+        "io.vertx:vertx-dependencies:4.5.31"
+      ],
+      "spec_id": "b0c373f3a60ad4522d6a6c3d88911927a719ea962d98dc5aae84fbb8bba71bfc"
+    },
+    {
+      "added-components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit.platform:junit-platform-launcher:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit.platform:junit-platform-launcher:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "c434921b14f54a98f2aea56a59c5c0b0f68366c2922a95eb8aa03e6372197d06"
+    },
+    {
+      "added-components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "d020cc1257c180846979f48887c1e6ad0a46c7147a58a428097c4d26e5f483bf"
+    },
+    {
+      "added-components": [
+        "io.opentelemetry:opentelemetry-api:1.65.0",
+        "io.opentelemetry:opentelemetry-common:1.65.0",
+        "io.opentelemetry:opentelemetry-context:1.65.0",
+        "io.opentelemetry:opentelemetry-extension-trace-propagators:1.65.0"
+      ],
+      "removed-components": [
+        "io.opentelemetry:opentelemetry-api:1.64.0",
+        "io.opentelemetry:opentelemetry-common:1.64.0",
+        "io.opentelemetry:opentelemetry-context:1.64.0",
+        "io.opentelemetry:opentelemetry-extension-trace-propagators:1.64.0"
+      ],
+      "spec_id": "d5294dfce9a1bc1b277d1b739335bca2496461ad2bce8673b293a36dcb6ae18d"
+    },
+    {
+      "added-components": [
+        "com.github.luben:zstd-jni:1.5.7-13"
+      ],
+      "removed-components": [
+        "com.github.luben:zstd-jni:1.5.7-12"
+      ],
+      "spec_id": "db1f41fa93fe9db92598f4135f91d9f6b429c550ae6533c60436a6d2e55cf93e"
+    },
+    {
+      "added-components": [
+        "org.hibernate.reactive:hibernate-reactive-core:4.5.3.Final"
+      ],
+      "removed-components": [
+        "org.hibernate.reactive:hibernate-reactive-core:4.5.2.Final"
+      ],
+      "spec_id": "e01eef31bdba5bc0b9dc4a3af1e1bcc61533d89bdd2351a89f68e8615dd521a3"
+    },
+    {
+      "added-components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit.platform:junit-platform-launcher:6.1.3",
+        "org.junit.platform:junit-platform-suite-api:6.1.3",
+        "org.junit.platform:junit-platform-suite-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit.platform:junit-platform-launcher:6.1.2",
+        "org.junit.platform:junit-platform-suite-api:6.1.2",
+        "org.junit.platform:junit-platform-suite-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "e49b81ce1ba9e3e619a01c98ca965b87b21d9b61510e9b6dfe589b65d569edcb"
+    },
+    {
+      "added-components": [
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "e4e629b03a81fac1c108bb1a439ee2db8bab026594e8dc8ceb32eb3cb027a9cf"
+    },
+    {
+      "added-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.3",
+        "org.junit.jupiter:junit-jupiter-params:6.1.3",
+        "org.junit.jupiter:junit-jupiter:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3"
+      ],
+      "removed-components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.2",
+        "org.junit.jupiter:junit-jupiter-params:6.1.2",
+        "org.junit.jupiter:junit-jupiter:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2"
+      ],
+      "spec_id": "e99649dd3ed15686ab218ec00aba4bfac60ed6e0de9b3ddf64933ebd24b5caab"
+    },
+    {
+      "added-components": [
+        "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:1.1.8",
+        "org.graalvm.buildtools:graalvm-reachability-metadata:1.1.8",
+        "org.graalvm.buildtools:native-gradle-plugin:1.1.8",
+        "org.graalvm.buildtools:utils:1.1.8"
+      ],
+      "removed-components": [
+        "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:1.1.7",
+        "org.graalvm.buildtools:graalvm-reachability-metadata:1.1.7",
+        "org.graalvm.buildtools:native-gradle-plugin:1.1.7",
+        "org.graalvm.buildtools:utils:1.1.7"
+      ],
+      "spec_id": "f3615ebd7b283a3345f7a38eda7196c47ad04e9396f1f206d2fe94cf9f51ebc2"
+    }
+  ],
+  "ledger-contract-sha256": "b23473ffd923485eb3474ba5dc5aaf6d5179a1a05306c39ed6ae5d84e6a2fc19",
+  "log-sha256": "ed070fe129759de6992a9ee8f317edd9dc83f82387dc10e473a13b3ccad68346",
+  "observation-count": 60,
+  "observations": [
+    {
+      "components": [
+        "org.apache.fory:fory-core:1.6.0",
+        "org.apache.fory:fory-kotlin:1.6.0",
+        "org.codehaus.janino:commons-compiler:3.1.12",
+        "org.codehaus.janino:janino:3.1.12",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "11ae9a010a33deb2f3b851fff1f212f5ea074a396ceaf1daa0bc494c5bcacb72",
+      "phase": "after",
+      "requested": "1.6.0",
+      "selected": "1.6.0",
+      "spec_id": "0a1df9e7b7064c12086cf2dabf805239b0b5c60f5d8238f95a2e50c3e0e15f64"
+    },
+    {
+      "components": [
+        "org.apache.fory:fory-core:1.5.0",
+        "org.apache.fory:fory-kotlin:1.5.0",
+        "org.codehaus.janino:commons-compiler:3.1.12",
+        "org.codehaus.janino:janino:3.1.12",
+        "org.jetbrains.kotlin:kotlin-reflect:2.3.20",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.3.20",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "707a2f3ca53bc43efa0c8368943c99b33c965c767e44b34d8cb5f509168f67dd",
+      "phase": "before",
+      "requested": "1.5.0",
+      "selected": "1.5.0",
+      "spec_id": "0a1df9e7b7064c12086cf2dabf805239b0b5c60f5d8238f95a2e50c3e0e15f64"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "io.netty:netty-buffer:4.1.137.Final",
+        "io.netty:netty-codec-dns:4.1.137.Final",
+        "io.netty:netty-codec-http2:4.1.137.Final",
+        "io.netty:netty-codec-http:4.1.137.Final",
+        "io.netty:netty-codec-socks:4.1.137.Final",
+        "io.netty:netty-codec:4.1.137.Final",
+        "io.netty:netty-common:4.1.137.Final",
+        "io.netty:netty-handler-proxy:4.1.137.Final",
+        "io.netty:netty-handler:4.1.137.Final",
+        "io.netty:netty-resolver-dns:4.1.137.Final",
+        "io.netty:netty-resolver:4.1.137.Final",
+        "io.netty:netty-tcnative-classes:2.0.81.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.137.Final",
+        "io.netty:netty-transport:4.1.137.Final",
+        "io.vertx:vertx-auth-common:4.5.32",
+        "io.vertx:vertx-core:4.5.32",
+        "io.vertx:vertx-uri-template:4.5.32",
+        "io.vertx:vertx-web-client:4.5.32",
+        "io.vertx:vertx-web-common:4.5.32",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "093f1dd239bd68cc14f77ff22c9476e0616724bb4d756ebf9e03f6b68fa18088",
+      "phase": "after",
+      "requested": "4.5.32",
+      "selected": "4.5.32",
+      "spec_id": "0ea2ab5418b0fdc9cc31fbee5a395380d074aa55f4ab842d0a77dadf5557f815"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "io.netty:netty-buffer:4.1.136.Final",
+        "io.netty:netty-codec-dns:4.1.136.Final",
+        "io.netty:netty-codec-http2:4.1.136.Final",
+        "io.netty:netty-codec-http:4.1.136.Final",
+        "io.netty:netty-codec-socks:4.1.136.Final",
+        "io.netty:netty-codec:4.1.136.Final",
+        "io.netty:netty-common:4.1.136.Final",
+        "io.netty:netty-handler-proxy:4.1.136.Final",
+        "io.netty:netty-handler:4.1.136.Final",
+        "io.netty:netty-resolver-dns:4.1.136.Final",
+        "io.netty:netty-resolver:4.1.136.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.136.Final",
+        "io.netty:netty-transport:4.1.136.Final",
+        "io.vertx:vertx-auth-common:4.5.31",
+        "io.vertx:vertx-core:4.5.31",
+        "io.vertx:vertx-uri-template:4.5.31",
+        "io.vertx:vertx-web-client:4.5.31",
+        "io.vertx:vertx-web-common:4.5.31",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "4f61854232cdddab68af365e6a8b2552125dd6587c09f497b32f5bc64ed6fad8",
+      "phase": "before",
+      "requested": "4.5.31",
+      "selected": "4.5.31",
+      "spec_id": "0ea2ab5418b0fdc9cc31fbee5a395380d074aa55f4ab842d0a77dadf5557f815"
+    },
+    {
+      "components": [
+        "root project 'latest-stable-resolved-graphs'",
+        "software.amazon.awssdk:bom:2.51.3"
+      ],
+      "graph_sha256": "dcfff5ddbf8a33727cd5635148b7e47ef0866ee5c1dbef9bc6ab312b9cc0dacf",
+      "phase": "after",
+      "requested": "2.51.3",
+      "selected": "2.51.3",
+      "spec_id": "1c0797cee28167fa85e48d259dad3369fe6f5d7a24ec272e5362a5df5d73faca"
+    },
+    {
+      "components": [
+        "root project 'latest-stable-resolved-graphs'",
+        "software.amazon.awssdk:bom:2.51.1"
+      ],
+      "graph_sha256": "1dc0219798d34a552d49313879550428a099ad2dfcb80c8576a70e54d99846c7",
+      "phase": "before",
+      "requested": "2.51.1",
+      "selected": "2.51.1",
+      "spec_id": "1c0797cee28167fa85e48d259dad3369fe6f5d7a24ec272e5362a5df5d73faca"
+    },
+    {
+      "components": [
+        "org.bouncycastle:bcprov-jdk18on:1.85.2",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "01de684c2b314d529ed803728d31fdaf1a00c4b69ae81ec0fe05d724357a24df",
+      "phase": "after",
+      "requested": "1.85.2",
+      "selected": "1.85.2",
+      "spec_id": "251ecd39847ff093adc82bbf37e8710e2a166469b38ff55b11ecab7efb5a9df2"
+    },
+    {
+      "components": [
+        "org.bouncycastle:bcprov-jdk18on:1.85",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "8177b41a01896250d5e328af745dea38e0d91322266b36333469fb9a84f3011b",
+      "phase": "before",
+      "requested": "1.85",
+      "selected": "1.85",
+      "spec_id": "251ecd39847ff093adc82bbf37e8710e2a166469b38ff55b11ecab7efb5a9df2"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "io.netty:netty-buffer:4.1.137.Final",
+        "io.netty:netty-codec-dns:4.1.137.Final",
+        "io.netty:netty-codec-http2:4.1.137.Final",
+        "io.netty:netty-codec-http:4.1.137.Final",
+        "io.netty:netty-codec-socks:4.1.137.Final",
+        "io.netty:netty-codec:4.1.137.Final",
+        "io.netty:netty-common:4.1.137.Final",
+        "io.netty:netty-handler-proxy:4.1.137.Final",
+        "io.netty:netty-handler:4.1.137.Final",
+        "io.netty:netty-resolver-dns:4.1.137.Final",
+        "io.netty:netty-resolver:4.1.137.Final",
+        "io.netty:netty-tcnative-classes:2.0.81.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.137.Final",
+        "io.netty:netty-transport:4.1.137.Final",
+        "io.vertx:vertx-core:4.5.32",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "e3c142ade07b2cfc3244e09b149e80b7eb54100fe43b33a1d128e0d489ef089b",
+      "phase": "after",
+      "requested": "4.5.32",
+      "selected": "4.5.32",
+      "spec_id": "2c3f843d9e7a8774796c7750c023125d050ab9cb3385b8a6fef620f4df36cc96"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "io.netty:netty-buffer:4.1.136.Final",
+        "io.netty:netty-codec-dns:4.1.136.Final",
+        "io.netty:netty-codec-http2:4.1.136.Final",
+        "io.netty:netty-codec-http:4.1.136.Final",
+        "io.netty:netty-codec-socks:4.1.136.Final",
+        "io.netty:netty-codec:4.1.136.Final",
+        "io.netty:netty-common:4.1.136.Final",
+        "io.netty:netty-handler-proxy:4.1.136.Final",
+        "io.netty:netty-handler:4.1.136.Final",
+        "io.netty:netty-resolver-dns:4.1.136.Final",
+        "io.netty:netty-resolver:4.1.136.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.136.Final",
+        "io.netty:netty-transport:4.1.136.Final",
+        "io.vertx:vertx-core:4.5.31",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "bb950f22769c3226ccb5e9f57a8880cef63bbeacc1d5b9f1934bef9f99bc9fa0",
+      "phase": "before",
+      "requested": "4.5.31",
+      "selected": "4.5.31",
+      "spec_id": "2c3f843d9e7a8774796c7750c023125d050ab9cb3385b8a6fef620f4df36cc96"
+    },
+    {
+      "components": [
+        "io.opentelemetry:opentelemetry-api:1.65.0",
+        "io.opentelemetry:opentelemetry-common:1.65.0",
+        "io.opentelemetry:opentelemetry-context:1.65.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "237ff42b402df77d5c8229927ddeac12ee54c6cdeca714be93a9b841ee668cf2",
+      "phase": "after",
+      "requested": "1.65.0",
+      "selected": "1.65.0",
+      "spec_id": "2fb6fb314b8edf09b08976d0b534a8c2911c75bd5418db22475cc6feb92a11ca"
+    },
+    {
+      "components": [
+        "io.opentelemetry:opentelemetry-api:1.64.0",
+        "io.opentelemetry:opentelemetry-common:1.64.0",
+        "io.opentelemetry:opentelemetry-context:1.64.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "5ec8e92108f647e808ddc9dbcece62294c5371b9d880310c61c148775afd8926",
+      "phase": "before",
+      "requested": "1.64.0",
+      "selected": "1.64.0",
+      "spec_id": "2fb6fb314b8edf09b08976d0b534a8c2911c75bd5418db22475cc6feb92a11ca"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-params:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "04c9eea86201d95a1e0f2b6612af026857cc316ada0e6524b1de98de69ebcf2d",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "34ebdbc164f00057e28e58ad9afff418d14daa4a5876be65a6368c7af05c6aab"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-params:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "b3eb095ae95fbeb64b7132fa6204eb29b48622620bcc37ac381ef551de41280d",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "34ebdbc164f00057e28e58ad9afff418d14daa4a5876be65a6368c7af05c6aab"
+    },
+    {
+      "components": [
+        "aws.sdk.kotlin:aws-core-jvm:1.8.26",
+        "aws.sdk.kotlin:aws-core:1.8.26",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "eae62f42300fc4f28c109841aebfdf899708e1e45bea96514008e6c8d45e06e3",
+      "phase": "after",
+      "requested": "1.8.26",
+      "selected": "1.8.26",
+      "spec_id": "45280ca8cc37077426acf2675646bc793f60857f3f17a0f9483962726e9d87a6"
+    },
+    {
+      "components": [
+        "aws.sdk.kotlin:aws-core-jvm:1.8.24",
+        "aws.sdk.kotlin:aws-core:1.8.24",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "2c444a4cb7dd3f3138043c56c7469b3e4bb1c473aa89b6b959985d29b382ec3b",
+      "phase": "before",
+      "requested": "1.8.24",
+      "selected": "1.8.24",
+      "spec_id": "45280ca8cc37077426acf2675646bc793f60857f3f17a0f9483962726e9d87a6"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "ba4d8c6f8c5fe18a1c023839becc51dd204ccf7afaf2ce97f354896e42676918",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "4a43e04dfda7d64d8812803360d20e7d841210e46b390956bddb42ff3af429f2"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "425a28bab60f6112a4464937e432eef18a0e355e5b2b6c7f35397cc6c7485288",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "4a43e04dfda7d64d8812803360d20e7d841210e46b390956bddb42ff3af429f2"
+    },
+    {
+      "components": [
+        "junit:junit:4.13.2",
+        "org.hamcrest:hamcrest-core:1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit.vintage:junit-vintage-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "c9302b7878a68da7a9f84291cf3a985a16e4741848e4b044f1fadf92aa2516f1",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "4f2d0e0a920626106d73d9b152b0eedffc4ab8d2b4627f47393809c71c59162b"
+    },
+    {
+      "components": [
+        "junit:junit:4.13.2",
+        "org.hamcrest:hamcrest-core:1.3",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit.vintage:junit-vintage-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "b7906839ee8762c97c9d46f244bedb5bfbd35e05cd3fd11fdf6a66fd56c1366a",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "4f2d0e0a920626106d73d9b152b0eedffc4ab8d2b4627f47393809c71c59162b"
+    },
+    {
+      "components": [
+        "io.opentelemetry:opentelemetry-bom:1.65.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "40f47835f18158141d92ea1ed05dcdd0151321b532d9cd593148ecf85a317bed",
+      "phase": "after",
+      "requested": "1.65.0",
+      "selected": "1.65.0",
+      "spec_id": "5b72bf75e9e62c08a48cd80f5127973006dd03555dc6760ab3d12354bb1c8af1"
+    },
+    {
+      "components": [
+        "io.opentelemetry:opentelemetry-bom:1.64.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "0ac84ee00ee77b1646ba193ad6779530b5259479d75cdcc1f3cf638080c89fab",
+      "phase": "before",
+      "requested": "1.64.0",
+      "selected": "1.64.0",
+      "spec_id": "5b72bf75e9e62c08a48cd80f5127973006dd03555dc6760ab3d12354bb1c8af1"
+    },
+    {
+      "components": [
+        "io.github.classgraph:classgraph:4.8.189",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "c1a2b38c73f6287ca36e6c1e12c53de58d91dacb6a99bd289ab6e1594ade8148",
+      "phase": "after",
+      "requested": "4.8.189",
+      "selected": "4.8.189",
+      "spec_id": "65f51c9ce80a59557dad8115d5688b85c64f8823e1214f433946217c1ee59580"
+    },
+    {
+      "components": [
+        "io.github.classgraph:classgraph:4.8.186",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "068487ba44af2714d1ddda6eee9f469af086b359d2135cfe74226e978d27112e",
+      "phase": "before",
+      "requested": "4.8.186",
+      "selected": "4.8.186",
+      "spec_id": "65f51c9ce80a59557dad8115d5688b85c64f8823e1214f433946217c1ee59580"
+    },
+    {
+      "components": [
+        "org.apache.fory:fory-core:1.6.0",
+        "org.codehaus.janino:commons-compiler:3.1.12",
+        "org.codehaus.janino:janino:3.1.12",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "1c424687706d93ef7e93fb7f5094b8d57a0a1697001ca73b46c6629e0d435970",
+      "phase": "after",
+      "requested": "1.6.0",
+      "selected": "1.6.0",
+      "spec_id": "69c6b3d10057060a13f4b9924d15d39c0ab54a4b5a0ffb46d09d049ab25aa8e0"
+    },
+    {
+      "components": [
+        "org.apache.fory:fory-core:1.5.0",
+        "org.codehaus.janino:commons-compiler:3.1.12",
+        "org.codehaus.janino:janino:3.1.12",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "48f94f9a4f177e12f1327ff5a52503a25c2e47de1bd02973db7844a656561319",
+      "phase": "before",
+      "requested": "1.5.0",
+      "selected": "1.5.0",
+      "spec_id": "69c6b3d10057060a13f4b9924d15d39c0ab54a4b5a0ffb46d09d049ab25aa8e0"
+    },
+    {
+      "components": [
+        "junit:junit:4.13.2",
+        "org.hamcrest:hamcrest-core:1.3",
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-migrationsupport:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "668e071a108c072c379f13a24aa80615c63632c80f267138bc4d8c1fad3d2bd1",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "7078644f6df7dbec0f720827105a99c4c7ffd07392a3aa8d3431e149cfdbd165"
+    },
+    {
+      "components": [
+        "junit:junit:4.13.2",
+        "org.hamcrest:hamcrest-core:1.3",
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-migrationsupport:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "7b1b8547726cb57085cb38dbd4b2122ce6c6146ca43e9579335ed5bca8975ec6",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "7078644f6df7dbec0f720827105a99c4c7ffd07392a3aa8d3431e149cfdbd165"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-suite-api:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "a969806197e1a335db07e56087eabb1ee639d9126590b775d8c95d67bcfbd200",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "75c6d9c8e2ba5ad6766d6db97bbcc61a1e27714e6a603706681f642d5aba7a82"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-suite-api:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "3283c62b6517a1b1195346baa1f1b645eeb2c80864af1c5fe70b1b54c44451dd",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "75c6d9c8e2ba5ad6766d6db97bbcc61a1e27714e6a603706681f642d5aba7a82"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "io.netty:netty-buffer:4.1.137.Final",
+        "io.netty:netty-codec-dns:4.1.137.Final",
+        "io.netty:netty-codec-http2:4.1.137.Final",
+        "io.netty:netty-codec-http:4.1.137.Final",
+        "io.netty:netty-codec-socks:4.1.137.Final",
+        "io.netty:netty-codec:4.1.137.Final",
+        "io.netty:netty-common:4.1.137.Final",
+        "io.netty:netty-handler-proxy:4.1.137.Final",
+        "io.netty:netty-handler:4.1.137.Final",
+        "io.netty:netty-resolver-dns:4.1.137.Final",
+        "io.netty:netty-resolver:4.1.137.Final",
+        "io.netty:netty-tcnative-classes:2.0.81.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.137.Final",
+        "io.netty:netty-transport:4.1.137.Final",
+        "io.vertx:vertx-core:4.5.32",
+        "io.vertx:vertx-web-common:4.5.32",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "4cf99de149802e4f33a5678e153b4f1c5ab9ce00473711d00b2fc49eede7bdd8",
+      "phase": "after",
+      "requested": "4.5.32",
+      "selected": "4.5.32",
+      "spec_id": "7d913fba1b16b5495f82162438667553d6a3c7d60d18251275bae00593ad8dab"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "io.netty:netty-buffer:4.1.136.Final",
+        "io.netty:netty-codec-dns:4.1.136.Final",
+        "io.netty:netty-codec-http2:4.1.136.Final",
+        "io.netty:netty-codec-http:4.1.136.Final",
+        "io.netty:netty-codec-socks:4.1.136.Final",
+        "io.netty:netty-codec:4.1.136.Final",
+        "io.netty:netty-common:4.1.136.Final",
+        "io.netty:netty-handler-proxy:4.1.136.Final",
+        "io.netty:netty-handler:4.1.136.Final",
+        "io.netty:netty-resolver-dns:4.1.136.Final",
+        "io.netty:netty-resolver:4.1.136.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.1.136.Final",
+        "io.netty:netty-transport:4.1.136.Final",
+        "io.vertx:vertx-core:4.5.31",
+        "io.vertx:vertx-web-common:4.5.31",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "5e670db11ed8e14887d6417243855b8dbfdfb81075211d2a4b08945654d91b86",
+      "phase": "before",
+      "requested": "4.5.31",
+      "selected": "4.5.31",
+      "spec_id": "7d913fba1b16b5495f82162438667553d6a3c7d60d18251275bae00593ad8dab"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "f33b57b896f7a7010a12dc5b4386661f2b2d0a0a4d357e52f5a6dc3bc70a19b3",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "7e2dd632db5b97c1e08848a73cba9416eb46c706c60a41a516d717b7524a4ab6"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "fec89788fe259bed35738ec1e47dd00f3bffcea6062b2ed3d60998e770b58c92",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "7e2dd632db5b97c1e08848a73cba9416eb46c706c60a41a516d717b7524a4ab6"
+    },
+    {
+      "components": [
+        "at.yawk.lz4:lz4-java:1.11.2",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "ab7f7f6e7b7b0a769462f91cb473c4637e0e8ec62ac833d9a6b74d34da0ea75c",
+      "phase": "after",
+      "requested": "1.11.2",
+      "selected": "1.11.2",
+      "spec_id": "96dfbb0f88e4bd5c21751b7c9ab9752699b0b10ae16eff5b3d038db1f5d68ba4"
+    },
+    {
+      "components": [
+        "at.yawk.lz4:lz4-java:1.11.1",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "eaa25279c6661d9904b83682d5029f32a8fecb977185b5e4ec6b92b62ed1aafd",
+      "phase": "before",
+      "requested": "1.11.1",
+      "selected": "1.11.1",
+      "spec_id": "96dfbb0f88e4bd5c21751b7c9ab9752699b0b10ae16eff5b3d038db1f5d68ba4"
+    },
+    {
+      "components": [
+        "org.apache.httpcomponents.client5:httpclient5:5.6.4",
+        "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3",
+        "org.apache.httpcomponents.core5:httpcore5:5.4.3",
+        "org.slf4j:slf4j-api:1.7.36",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "72bbee857af106919002daec6e03b27bdf43e1e2f32b52f266b16c1c570800ab",
+      "phase": "after",
+      "requested": "5.6.4",
+      "selected": "5.6.4",
+      "spec_id": "978a2ed55ecf3b1c249d97d1708e025dc7fd7883a5a615be32f7d2925e3237fb"
+    },
+    {
+      "components": [
+        "org.apache.httpcomponents.client5:httpclient5:5.6.3",
+        "org.apache.httpcomponents.core5:httpcore5-h2:5.4.3",
+        "org.apache.httpcomponents.core5:httpcore5:5.4.3",
+        "org.slf4j:slf4j-api:1.7.36",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "8829106f784136b942e9990607e3777be4c4ccc22494c9d01ce0068349a12de5",
+      "phase": "before",
+      "requested": "5.6.3",
+      "selected": "5.6.3",
+      "spec_id": "978a2ed55ecf3b1c249d97d1708e025dc7fd7883a5a615be32f7d2925e3237fb"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "c851ede9acd4fa3e3404ed6a5624fe5a6a6daaac66ba44be926c4e67cf344e3c",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "b0353f98e4bf2cc5d427e43c54e404e56de2f0319050428b5e66aee0426b24c6"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "5fcbb5914d01661d160f4482f9e2fc9b79f6b2842af556c5192004b5440a670f",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "b0353f98e4bf2cc5d427e43c54e404e56de2f0319050428b5e66aee0426b24c6"
+    },
+    {
+      "components": [
+        "io.vertx:vertx-dependencies:4.5.32",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "bed77a459f2478252c6d919327aa25166718df6379f5a7032caef9088de853f5",
+      "phase": "after",
+      "requested": "4.5.32",
+      "selected": "4.5.32",
+      "spec_id": "b0c373f3a60ad4522d6a6c3d88911927a719ea962d98dc5aae84fbb8bba71bfc"
+    },
+    {
+      "components": [
+        "io.vertx:vertx-dependencies:4.5.31",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "cfe5eeb6686ab7686c419f4a589ab0aa7e3b91c6d45cc7f4f24afc261f3dc4e6",
+      "phase": "before",
+      "requested": "4.5.31",
+      "selected": "4.5.31",
+      "spec_id": "b0c373f3a60ad4522d6a6c3d88911927a719ea962d98dc5aae84fbb8bba71bfc"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit.platform:junit-platform-launcher:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "78a329cf719f3918baf84c52d9e13d41487f0f19fc3d1a3cf237bf0f2b5f6323",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "c434921b14f54a98f2aea56a59c5c0b0f68366c2922a95eb8aa03e6372197d06"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit.platform:junit-platform-launcher:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "3bba1b908b05e25b875e149efeca746ec7d20a246a67871c55ad1c3b5935e743",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "c434921b14f54a98f2aea56a59c5c0b0f68366c2922a95eb8aa03e6372197d06"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "e2d32fa25e861fd35f8ed9b7efdb336644b090036e2ff0aaf25566436e9e96c7",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "d020cc1257c180846979f48887c1e6ad0a46c7147a58a428097c4d26e5f483bf"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "109a063c3570494660ca21bcd33d15b8b7cb3f90db4c2130c47e58c80552a462",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "d020cc1257c180846979f48887c1e6ad0a46c7147a58a428097c4d26e5f483bf"
+    },
+    {
+      "components": [
+        "io.opentelemetry:opentelemetry-api:1.65.0",
+        "io.opentelemetry:opentelemetry-common:1.65.0",
+        "io.opentelemetry:opentelemetry-context:1.65.0",
+        "io.opentelemetry:opentelemetry-extension-trace-propagators:1.65.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "fb441b61915867041b22a0edd060316aa2e528d32247619dd0dda83cdf4514ef",
+      "phase": "after",
+      "requested": "1.65.0",
+      "selected": "1.65.0",
+      "spec_id": "d5294dfce9a1bc1b277d1b739335bca2496461ad2bce8673b293a36dcb6ae18d"
+    },
+    {
+      "components": [
+        "io.opentelemetry:opentelemetry-api:1.64.0",
+        "io.opentelemetry:opentelemetry-common:1.64.0",
+        "io.opentelemetry:opentelemetry-context:1.64.0",
+        "io.opentelemetry:opentelemetry-extension-trace-propagators:1.64.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "332db12aca607e6ff2c6cfb9b707ab6e85d955d10ad41005336d549c270719e9",
+      "phase": "before",
+      "requested": "1.64.0",
+      "selected": "1.64.0",
+      "spec_id": "d5294dfce9a1bc1b277d1b739335bca2496461ad2bce8673b293a36dcb6ae18d"
+    },
+    {
+      "components": [
+        "com.github.luben:zstd-jni:1.5.7-13",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "e62da5df973a2f70f586eda61896aac17067b7d0d97d717ab391124117238e3c",
+      "phase": "after",
+      "requested": "1.5.7-13",
+      "selected": "1.5.7-13",
+      "spec_id": "db1f41fa93fe9db92598f4135f91d9f6b429c550ae6533c60436a6d2e55cf93e"
+    },
+    {
+      "components": [
+        "com.github.luben:zstd-jni:1.5.7-12",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "2e52fe989f48d8b0f78f775d28de1f03e912712a18f9a53525d27a10c68b5c81",
+      "phase": "before",
+      "requested": "1.5.7-12",
+      "selected": "1.5.7-12",
+      "spec_id": "db1f41fa93fe9db92598f4135f91d9f6b429c550ae6533c60436a6d2e55cf93e"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "com.sun.istack:istack-commons-runtime:4.1.2",
+        "io.netty:netty-buffer:4.2.16.Final",
+        "io.netty:netty-codec-base:4.2.16.Final",
+        "io.netty:netty-codec-classes-quic:4.2.16.Final",
+        "io.netty:netty-codec-compression:4.2.16.Final",
+        "io.netty:netty-codec-dns:4.2.16.Final",
+        "io.netty:netty-codec-http2:4.2.16.Final",
+        "io.netty:netty-codec-http3:4.2.16.Final",
+        "io.netty:netty-codec-http:4.2.16.Final",
+        "io.netty:netty-codec-socks:4.2.16.Final",
+        "io.netty:netty-common:4.2.16.Final",
+        "io.netty:netty-handler-proxy:4.2.16.Final",
+        "io.netty:netty-handler:4.2.16.Final",
+        "io.netty:netty-resolver-dns:4.2.16.Final",
+        "io.netty:netty-resolver:4.2.16.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.2.16.Final",
+        "io.netty:netty-transport:4.2.16.Final",
+        "io.smallrye.common:smallrye-common-annotation:2.19.0",
+        "io.smallrye.reactive:mutiny:3.3.0",
+        "io.vertx:vertx-core-logging:5.1.5",
+        "io.vertx:vertx-core:5.1.5",
+        "io.vertx:vertx-sql-client:5.1.5",
+        "jakarta.activation:jakarta.activation-api:2.1.4",
+        "jakarta.inject:jakarta.inject-api:2.0.1",
+        "jakarta.persistence:jakarta.persistence-api:3.2.0",
+        "jakarta.transaction:jakarta.transaction-api:2.0.1",
+        "jakarta.xml.bind:jakarta.xml.bind-api:4.0.5",
+        "net.bytebuddy:byte-buddy:1.18.8",
+        "org.antlr:antlr4-runtime:4.13.2",
+        "org.eclipse.angus:angus-activation:2.0.3",
+        "org.glassfish.jaxb:jaxb-core:4.0.7",
+        "org.glassfish.jaxb:jaxb-runtime:4.0.7",
+        "org.glassfish.jaxb:txw2:4.0.7",
+        "org.hibernate.models:hibernate-models:1.1.1",
+        "org.hibernate.orm:hibernate-core:7.4.5.Final",
+        "org.hibernate.orm:hibernate-platform:7.4.5.Final",
+        "org.hibernate.reactive:hibernate-reactive-core:4.5.3.Final",
+        "org.jboss.logging:jboss-logging:3.6.3.Final",
+        "org.jctools:jctools-core:4.0.6",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "f2440eba959c5911f285d73583e429786c31a8bf2e6e184ebe605b7e1359e6d8",
+      "phase": "after",
+      "requested": "4.5.3.Final",
+      "selected": "4.5.3.Final",
+      "spec_id": "e01eef31bdba5bc0b9dc4a3af1e1bcc61533d89bdd2351a89f68e8615dd521a3"
+    },
+    {
+      "components": [
+        "com.fasterxml.jackson.core:jackson-core:2.21.5",
+        "com.fasterxml.jackson:jackson-bom:2.21.5",
+        "com.sun.istack:istack-commons-runtime:4.1.2",
+        "io.netty:netty-buffer:4.2.16.Final",
+        "io.netty:netty-codec-base:4.2.16.Final",
+        "io.netty:netty-codec-classes-quic:4.2.16.Final",
+        "io.netty:netty-codec-compression:4.2.16.Final",
+        "io.netty:netty-codec-dns:4.2.16.Final",
+        "io.netty:netty-codec-http2:4.2.16.Final",
+        "io.netty:netty-codec-http3:4.2.16.Final",
+        "io.netty:netty-codec-http:4.2.16.Final",
+        "io.netty:netty-codec-socks:4.2.16.Final",
+        "io.netty:netty-common:4.2.16.Final",
+        "io.netty:netty-handler-proxy:4.2.16.Final",
+        "io.netty:netty-handler:4.2.16.Final",
+        "io.netty:netty-resolver-dns:4.2.16.Final",
+        "io.netty:netty-resolver:4.2.16.Final",
+        "io.netty:netty-tcnative-classes:2.0.78.Final",
+        "io.netty:netty-transport-native-unix-common:4.2.16.Final",
+        "io.netty:netty-transport:4.2.16.Final",
+        "io.smallrye.common:smallrye-common-annotation:2.19.0",
+        "io.smallrye.reactive:mutiny:3.3.0",
+        "io.vertx:vertx-core-logging:5.1.5",
+        "io.vertx:vertx-core:5.1.5",
+        "io.vertx:vertx-sql-client:5.1.5",
+        "jakarta.activation:jakarta.activation-api:2.1.4",
+        "jakarta.inject:jakarta.inject-api:2.0.1",
+        "jakarta.persistence:jakarta.persistence-api:3.2.0",
+        "jakarta.transaction:jakarta.transaction-api:2.0.1",
+        "jakarta.xml.bind:jakarta.xml.bind-api:4.0.5",
+        "net.bytebuddy:byte-buddy:1.18.8",
+        "org.antlr:antlr4-runtime:4.13.2",
+        "org.eclipse.angus:angus-activation:2.0.3",
+        "org.glassfish.jaxb:jaxb-core:4.0.7",
+        "org.glassfish.jaxb:jaxb-runtime:4.0.7",
+        "org.glassfish.jaxb:txw2:4.0.7",
+        "org.hibernate.models:hibernate-models:1.1.1",
+        "org.hibernate.orm:hibernate-core:7.4.5.Final",
+        "org.hibernate.orm:hibernate-platform:7.4.5.Final",
+        "org.hibernate.reactive:hibernate-reactive-core:4.5.2.Final",
+        "org.jboss.logging:jboss-logging:3.6.3.Final",
+        "org.jctools:jctools-core:4.0.6",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "f2444518a7ffbc6c33a06aa87649479f73ea2cc8d57592dbbb3a25ed912891df",
+      "phase": "before",
+      "requested": "4.5.2.Final",
+      "selected": "4.5.2.Final",
+      "spec_id": "e01eef31bdba5bc0b9dc4a3af1e1bcc61533d89bdd2351a89f68e8615dd521a3"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit.platform:junit-platform-launcher:6.1.3",
+        "org.junit.platform:junit-platform-suite-api:6.1.3",
+        "org.junit.platform:junit-platform-suite-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "544f69b59e29b3cf63262dc22f1b51cf56a1c7f36238e7403bee5dcd72ddbd48",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "e49b81ce1ba9e3e619a01c98ca965b87b21d9b61510e9b6dfe589b65d569edcb"
+    },
+    {
+      "components": [
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit.platform:junit-platform-launcher:6.1.2",
+        "org.junit.platform:junit-platform-suite-api:6.1.2",
+        "org.junit.platform:junit-platform-suite-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "103149eda02b12e0f8515af240737d571fcfc1e69d40fa120f08ee5f20ba60b7",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "e49b81ce1ba9e3e619a01c98ca965b87b21d9b61510e9b6dfe589b65d569edcb"
+    },
+    {
+      "components": [
+        "org.junit:junit-bom:6.1.3",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "2f51dd37a53ca0093dd04a2bda4632947911a1e086db0145c0534f7cec45063a",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "e4e629b03a81fac1c108bb1a439ee2db8bab026594e8dc8ceb32eb3cb027a9cf"
+    },
+    {
+      "components": [
+        "org.junit:junit-bom:6.1.2",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "30ca04afb0e7e4806356966ebd0ca658ec38afa8f14850071f6bfca1ee6221f9",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "e4e629b03a81fac1c108bb1a439ee2db8bab026594e8dc8ceb32eb3cb027a9cf"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.3",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.3",
+        "org.junit.jupiter:junit-jupiter-params:6.1.3",
+        "org.junit.jupiter:junit-jupiter:6.1.3",
+        "org.junit.platform:junit-platform-commons:6.1.3",
+        "org.junit.platform:junit-platform-engine:6.1.3",
+        "org.junit:junit-bom:6.1.3",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "cdd0c94a4e1a7fc5fb7398877924ff1137f4e35c96d23f6b4502e67482e76385",
+      "phase": "after",
+      "requested": "6.1.3",
+      "selected": "6.1.3",
+      "spec_id": "e99649dd3ed15686ab218ec00aba4bfac60ed6e0de9b3ddf64933ebd24b5caab"
+    },
+    {
+      "components": [
+        "org.junit.jupiter:junit-jupiter-api:6.1.2",
+        "org.junit.jupiter:junit-jupiter-engine:6.1.2",
+        "org.junit.jupiter:junit-jupiter-params:6.1.2",
+        "org.junit.jupiter:junit-jupiter:6.1.2",
+        "org.junit.platform:junit-platform-commons:6.1.2",
+        "org.junit.platform:junit-platform-engine:6.1.2",
+        "org.junit:junit-bom:6.1.2",
+        "org.opentest4j:opentest4j:1.3.0",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "6ae0e10eb3391892564a940c64e68d829aa42ed3facb71d6d669cd963c9f937c",
+      "phase": "before",
+      "requested": "6.1.2",
+      "selected": "6.1.2",
+      "spec_id": "e99649dd3ed15686ab218ec00aba4bfac60ed6e0de9b3ddf64933ebd24b5caab"
+    },
+    {
+      "components": [
+        "com.github.openjson:openjson:1.0.13",
+        "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:1.1.8",
+        "org.graalvm.buildtools:graalvm-reachability-metadata:1.1.8",
+        "org.graalvm.buildtools:native-gradle-plugin:1.1.8",
+        "org.graalvm.buildtools:utils:1.1.8",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "b67efbb5a04aeea308de471d9749f4a9b2349f7f35fc5bc9aa8b489e6929d00c",
+      "phase": "after",
+      "requested": "1.1.8",
+      "selected": "1.1.8",
+      "spec_id": "f3615ebd7b283a3345f7a38eda7196c47ad04e9396f1f206d2fe94cf9f51ebc2"
+    },
+    {
+      "components": [
+        "com.github.openjson:openjson:1.0.13",
+        "org.graalvm.buildtools.native:org.graalvm.buildtools.native.gradle.plugin:1.1.7",
+        "org.graalvm.buildtools:graalvm-reachability-metadata:1.1.7",
+        "org.graalvm.buildtools:native-gradle-plugin:1.1.7",
+        "org.graalvm.buildtools:utils:1.1.7",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "99ff371cb402163369548cd45711251db862e664f358e06ae643ede5c629044a",
+      "phase": "before",
+      "requested": "1.1.7",
+      "selected": "1.1.7",
+      "spec_id": "f3615ebd7b283a3345f7a38eda7196c47ad04e9396f1f206d2fe94cf9f51ebc2"
+    }
+  ],
+  "schema-version": 2,
+  "spec-count": 30,
+  "status": "verified-resolved-graph"
+}

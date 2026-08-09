@@ -214,7 +214,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             document["rollout"],
             central_document["subsequent-rollouts"][-1]["rollout"],
         )
-        self.assertEqual(document["audit-cutoff"], "2026-08-06")
+        self.assertEqual(document["audit-cutoff"], "2026-08-09")
         self.assertEqual(document["status"], "verified-resolved-graph")
         required_keys = {
                 "schema-version",
@@ -231,7 +231,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertTrue(
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
-        self.assertEqual(len(document["delta"]), 123)
+        self.assertEqual(len(document["delta"]), 25)
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),
@@ -319,10 +319,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
-        self.assertEqual(audit["summary"]["authority-count"], 514)
-        self.assertEqual(audit["summary"]["line-count"], 548)
-        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 437)
-        self.assertEqual(audit["summary"]["metadata-verified"], 509)
+        self.assertEqual(audit["summary"]["authority-count"], 518)
+        self.assertEqual(audit["summary"]["line-count"], 552)
+        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
+        self.assertEqual(audit["summary"]["metadata-verified"], 513)
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:
         audit = json.loads(AUDIT.read_text(encoding="utf-8"))
