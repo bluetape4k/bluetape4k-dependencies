@@ -78,13 +78,13 @@
   - **Action:** 기존 중앙 catalog/보안 라우팅 규칙으로 충분한지 현재 diff를 기준으로 평가한다.
   - **Evidence:** `docs/lessons/2026-08-10-issue-164-library-only-catalog-validation.md`에 명시적 workspace/repository scope 교훈을 기록했다.
   - **Failure:** 재사용 가능한 새 교훈을 기록하지 못하면 PR을 막는다.
-- [ ] **CG-10 — 최종 pre-PR 증거와 commit을 수렴한다.**
+- [x] **CG-10 — 최종 pre-PR 증거와 commit을 수렴한다.**
   - **Action:** diff review, P0/P1=0, fresh checks 후 Lore 형식으로 commit한다.
-  - **Evidence:** exact local commit SHA와 검증 요약.
+  - **Evidence:** source convergence commit `acc55f5f6c614321cd93c0385618162dfadee801`, P0=0/P1=0, checksum과 `git diff --check` PASS.
   - **Failure:** 미해결 P0/P1 또는 실패한 check가 있으면 commit/PR을 막는다.
-- [ ] **CG-11 — PR 전달 권한을 확인한다.**
+- [x] **CG-11 — PR 전달 권한을 확인한다.**
   - **Action:** 승인된 repo/base/head와 선행 gate PASS를 재확인한다.
-  - **Evidence:** 2026-08-10 사용자 승인과 고정 범위.
+  - **Evidence:** 2026-08-10 사용자 승인, repo `bluetape4k-dependencies`, base `develop`, head `security/issue-164-catalog-security-refresh`.
   - **Failure:** 권한 불일치 시 PR 생성을 중단한다.
 - [ ] **CG-12 — exact head를 push하고 원격 SHA를 확인한다.**
   - **Action:** force 없이 승인된 head를 push한다.
