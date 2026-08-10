@@ -29,8 +29,8 @@
       "reason": "Maven Central publishes junit-platform-runner only on the 1.x line; the declared 6.x artifact version is unavailable."
     },
     "kotlin": {
-      "disposition": "hold-compatibility",
-      "reason": "Kotlin 2.4.10 remains blocked by the managed Detekt 2.0.0-alpha.5 task compatibility failure."
+      "disposition": "current",
+      "reason": "Keep all Kotlin compiler and Gradle plugin aliases on the approved 2.4.10 line."
     },
     "kotlin20": {
       "disposition": "hold-compatibility",

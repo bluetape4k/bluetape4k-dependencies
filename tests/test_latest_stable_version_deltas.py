@@ -321,7 +321,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
         self.assertEqual(audit["summary"]["authority-count"], 518)
         self.assertEqual(audit["summary"]["line-count"], 552)
-        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
+        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 448)
         self.assertEqual(audit["summary"]["metadata-verified"], 513)
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:
@@ -356,7 +356,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         )
         self.assertEqual(
             lines[("org.jetbrains.kotlin.jvm", "kotlin")]["disposition"],
-            "hold-compatibility",
+            "current",
         )
 
     def test_catalog_self_version_matches_the_release_version(self) -> None:
