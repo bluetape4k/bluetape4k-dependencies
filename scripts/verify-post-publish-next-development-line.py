@@ -1,0 +1,304 @@
+#!/usr/bin/env python3
+"""Fail closed when the post-publish development line is incomplete.
+
+The stable release workflow cannot mutate ``develop`` safely.  This guard makes
+the follow-up explicit instead: the next ``baseVersion`` stays in source,
+``snapshotVersion`` stays empty, and every published child BOM is referenced
+with the runtime ``-SNAPSHOT`` suffix only after its snapshot metadata exists.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+import time
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_MANIFEST = REPO_ROOT / "config" / "post-publish-next-development-line.json"
+SNAPSHOT_REPOSITORY = "https://central.sonatype.com/repository/maven-snapshots"
+VERSION_LINE = re.compile(r"^([A-Za-z0-9_.-]+)\s*=\s*\"([^\"]+)\"")
+PROPERTY_LINE = re.compile(r"^([A-Za-z0-9_.-]+)\s*=\s*(.*)$")
+REPOSITORY_NAME = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
+SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"cannot read manifest {path}: {error}") from error
+    if not isinstance(value, dict):
+        raise RuntimeError("next-development manifest must be a JSON object")
+    return value
+
+
+def validate_manifest(document: dict[str, Any]) -> None:
+    if document.get("schema-version") != 1:
+        raise RuntimeError("unsupported next-development manifest schema")
+    if document.get("status") != "active":
+        raise RuntimeError("next-development manifest must be active")
+    stable = document.get("stable-version")
+    development = document.get("development-version")
+    suffix = document.get("snapshot-suffix")
+    source_contract = document.get("source-contract")
+    publishers = document.get("publishable-repositories")
+    excluded = document.get("excluded-repositories")
+    if not isinstance(stable, str) or not SEMVER.fullmatch(stable):
+        raise RuntimeError("stable-version must be a stable semantic version")
+    if not isinstance(development, str) or not SEMVER.fullmatch(development):
+        raise RuntimeError("development-version must be a stable semantic version")
+    if not isinstance(suffix, str) or suffix != "-SNAPSHOT":
+        raise RuntimeError("snapshot-suffix must be -SNAPSHOT")
+    if not isinstance(source_contract, dict):
+        raise RuntimeError("source-contract is required")
+    if source_contract.get("snapshotVersion") != "":
+        raise RuntimeError("source snapshotVersion contract must be empty")
+    if source_contract.get("runtime-property") != "-PsnapshotVersion=-SNAPSHOT":
+        raise RuntimeError("runtime snapshot property contract is invalid")
+    if not isinstance(publishers, list) or not publishers:
+        raise RuntimeError("publishable-repositories must be a non-empty list")
+    if not isinstance(excluded, list) or not all(isinstance(item, str) for item in excluded):
+        raise RuntimeError("excluded-repositories must be a string list")
+
+    repositories: set[str] = set()
+    aliases: set[str] = set()
+    for item in publishers:
+        if not isinstance(item, dict):
+            raise RuntimeError("publisher entries must be objects")
+        required = {"repository", "catalog-alias", "group", "artifact", "base-version"}
+        if set(item) != required:
+            raise RuntimeError(f"publisher entry fields must be {sorted(required)}")
+        repository = item["repository"]
+        alias = item["catalog-alias"]
+        base_version = item["base-version"]
+        if not isinstance(repository, str) or not REPOSITORY_NAME.fullmatch(repository):
+            raise RuntimeError(f"invalid publisher repository: {repository!r}")
+        if not isinstance(alias, str) or not alias:
+            raise RuntimeError("publisher catalog-alias must be non-empty")
+        if not isinstance(base_version, str) or not SEMVER.fullmatch(base_version):
+            raise RuntimeError(f"invalid publisher base-version: {base_version!r}")
+        if repository in repositories:
+            raise RuntimeError(f"duplicate publisher repository: {repository}")
+        if alias in aliases:
+            raise RuntimeError(f"duplicate publisher catalog alias: {alias}")
+        repositories.add(repository)
+        aliases.add(alias)
+    if repositories.intersection(excluded):
+        raise RuntimeError("a repository cannot be both publishable and excluded")
+
+
+def read_properties(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        match = PROPERTY_LINE.fullmatch(line)
+        if match:
+            values[match.group(1)] = match.group(2)
+    return values
+
+
+def read_versions(path: Path) -> dict[str, str]:
+    versions: dict[str, str] = {}
+    in_versions = False
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if line.startswith("[") and line.endswith("]"):
+            in_versions = line == "[versions]"
+            continue
+        if not in_versions or not line or line.startswith("#"):
+            continue
+        match = VERSION_LINE.match(line)
+        if match:
+            versions[match.group(1)] = match.group(2)
+    return versions
+
+
+def metadata_url(group: str, artifact: str, version: str) -> str:
+    return (
+        f"{SNAPSHOT_REPOSITORY}/{group.replace('.', '/')}/{artifact}/{version}/"
+        "maven-metadata.xml"
+    )
+
+
+def metadata_exists(
+    group: str,
+    artifact: str,
+    version: str,
+    *,
+    attempts: int = 2,
+    delay_seconds: float = 0.2,
+) -> tuple[bool, str]:
+    url = metadata_url(group, artifact, version)
+    status = "unknown"
+    for attempt in range(max(1, attempts)):
+        request = urllib.request.Request(url, method="HEAD")
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                return 200 <= response.status < 400, str(response.status)
+        except urllib.error.HTTPError as error:
+            status = str(error.code)
+            if error.code == 405:
+                try:
+                    with urllib.request.urlopen(urllib.request.Request(url), timeout=15) as response:
+                        return 200 <= response.status < 400, str(response.status)
+                except urllib.error.HTTPError as fallback:
+                    status = str(fallback.code)
+            if status != "403" or attempt + 1 >= max(1, attempts):
+                return False, status
+        except (urllib.error.URLError, TimeoutError) as error:
+            return False, type(error).__name__
+        time.sleep(max(0.0, delay_seconds))
+    return False, status
+
+
+def verify_development(
+    central_root: Path,
+    workspace: Path,
+    manifest: dict[str, Any],
+    require_artifacts: bool,
+) -> list[str]:
+    errors: list[str] = []
+    stable_version = manifest["stable-version"]
+    development_version = manifest["development-version"]
+    suffix = manifest["snapshot-suffix"]
+    source_contract = manifest["source-contract"]
+    properties_path = central_root / "gradle.properties"
+    catalog_path = central_root / "gradle" / "libs.versions.toml"
+    try:
+        properties = read_properties(properties_path)
+        versions = read_versions(catalog_path)
+    except OSError as error:
+        return [f"central source is unreadable: {error}"]
+
+    if properties.get("baseVersion") != development_version:
+        errors.append(
+            f"central baseVersion must be {development_version}, got {properties.get('baseVersion')!r}"
+        )
+    if properties.get("snapshotVersion") != source_contract["snapshotVersion"]:
+        errors.append("central snapshotVersion must remain empty in source")
+    if versions.get("bluetape4k-dependencies") != development_version:
+        errors.append("catalog self version must equal the development baseVersion")
+    if stable_version == development_version:
+        errors.append("stable-version and development-version must differ")
+
+    expected_development_version = f"{development_version}{suffix}"
+    for item in manifest["publishable-repositories"]:
+        repository = item["repository"]
+        alias = item["catalog-alias"]
+        base_version = item["base-version"]
+        expected_snapshot = f"{base_version}{suffix}"
+        if versions.get(alias) != expected_snapshot:
+            errors.append(
+                f"catalog {alias} must reference {expected_snapshot}, got {versions.get(alias)!r}"
+            )
+        repo_root = workspace / repository
+        repo_properties = repo_root / "gradle.properties"
+        workflow = repo_root / ".github" / "workflows" / "publish-snapshot.yml"
+        release_workflow = repo_root / ".github" / "workflows" / "release.yml"
+        if not repo_properties.is_file():
+            errors.append(f"missing publisher properties: {repo_properties}")
+            continue
+        try:
+            child_properties = read_properties(repo_properties)
+        except OSError as error:
+            errors.append(f"cannot read {repo_properties}: {error}")
+            continue
+        if child_properties.get("baseVersion") != base_version:
+            errors.append(
+                f"{repository} baseVersion must be {base_version}, got {child_properties.get('baseVersion')!r}"
+            )
+        if child_properties.get("snapshotVersion") != source_contract["snapshotVersion"]:
+            errors.append(f"{repository} snapshotVersion must remain empty in source")
+        if not workflow.is_file():
+            errors.append(f"missing snapshot workflow: {workflow}")
+        else:
+            text = workflow.read_text(encoding="utf-8")
+            if source_contract["runtime-property"] not in text:
+                errors.append(f"{repository} snapshot workflow does not inject -SNAPSHOT at runtime")
+            if not re.search(r"JAVA_VERSION:\s*['\"]25['\"]", text):
+                errors.append(f"{repository} snapshot workflow must use JDK 25")
+        if not release_workflow.is_file():
+            errors.append(f"missing release workflow: {release_workflow}")
+        else:
+            text = release_workflow.read_text(encoding="utf-8")
+            if "snapshotVersion must be empty for release" not in text:
+                errors.append(f"{repository} release workflow lacks the stable snapshot guard")
+        if require_artifacts:
+            exists, status = metadata_exists(item["group"], item["artifact"], expected_snapshot)
+            if not exists:
+                errors.append(
+                    f"missing snapshot metadata ({status}): {item['group']}:{item['artifact']}:{expected_snapshot}"
+                )
+
+    if require_artifacts:
+        exists, status = metadata_exists(
+            "io.github.bluetape4k", "bluetape4k-dependencies", expected_development_version
+        )
+        if not exists:
+            errors.append(f"missing central snapshot metadata ({status}): {expected_development_version}")
+    return errors
+
+
+def verify_stable(central_root: Path, manifest: dict[str, Any], version: str) -> list[str]:
+    errors: list[str] = []
+    properties = read_properties(central_root / "gradle.properties")
+    versions = read_versions(central_root / "gradle" / "libs.versions.toml")
+    if properties.get("baseVersion") != version:
+        errors.append(f"central baseVersion must match stable tag {version}")
+    if properties.get("snapshotVersion") != "":
+        errors.append("snapshotVersion must be empty for stable publication")
+    if versions.get("bluetape4k-dependencies") != version:
+        errors.append("catalog self version must match the stable tag")
+    for item in manifest["publishable-repositories"]:
+        value = versions.get(item["catalog-alias"])
+        if value is None:
+            errors.append(f"catalog alias is missing: {item['catalog-alias']}")
+        elif value.endswith(manifest["snapshot-suffix"]):
+            errors.append(f"stable catalog cannot reference a snapshot: {item['catalog-alias']}={value}")
+    return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--workspace", type=Path, default=REPO_ROOT.parent)
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--require-artifacts", action="store_true")
+    parser.add_argument("--stable-release", metavar="VERSION")
+    parser.add_argument("--summary", action="store_true")
+    args = parser.parse_args()
+
+    try:
+        manifest = load_json(args.manifest)
+        validate_manifest(manifest)
+        if args.stable_release:
+            errors = verify_stable(REPO_ROOT, manifest, args.stable_release)
+            mode = f"stable release {args.stable_release}"
+        else:
+            errors = verify_development(REPO_ROOT, args.workspace.resolve(), manifest, args.require_artifacts)
+            mode = "post-publish development line"
+    except (OSError, RuntimeError, KeyError, TypeError) as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+    if args.summary:
+        print(f"Verified {mode}: {len(manifest['publishable-repositories'])} publishers")
+        if args.require_artifacts and not args.stable_release:
+            print("Verified snapshot metadata for the central BOM and all child BOMs")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

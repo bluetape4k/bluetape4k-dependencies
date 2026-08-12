@@ -1,7 +1,35 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-08-06 KST
+Snapshot: 2026-08-12 KST
 Scope: dependencies 1.5.0 개발선.
+
+## 2026-08-12 게시 후속 보강
+
+안정 게시 후 다음 개발선이 `baseVersion` 변경만으로 끝나지 않도록 중앙
+catalog의 8개 내부 BOM ref를 각 `baseVersion + -SNAPSHOT`으로 정렬하고,
+`config/post-publish-next-development-line.json` 및
+`scripts/verify-post-publish-next-development-line.py`로 fail-closed 검증을
+추가했다. 소스의 `snapshotVersion=`은 계속 비워 두며 snapshot workflow가
+`-PsnapshotVersion=-SNAPSHOT`을 runtime에 주입한다.
+
+기준선 점검에서 발견한 이미 커밋된 `bluetape4k-graph-io-micrometer` 모듈의
+생성 catalog 누락도 같은 격리 작업트리에서 복구했다. 생성기 검증 결과는
+`aliases=169`, `sub-boms=8`이다.
+
+snapshot publication 검증은 preflight와 post-publication metadata 확인을
+분리했다. 첫 snapshot이 아직 없을 때도 publication을 시작할 수 있고, publish
+직후에만 `--require-artifacts`를 요구한다. stable `main` CI는 개발선 검증을
+건너뛰고 release workflow의 stable boundary guard를 사용한다.
+
+이번 일회성 JDK 25 전환을 위해 `exposed-r2dbc-workshop`,
+`exposed-workshop`, `timefold-workshop`의 JDK25 worktree workflow를 25로
+정렬하고, `bluetape4k-workshop`에는 별도 `chore/jdk25-workflows`
+worktree를 만들었다. 원격 반영과 PR/merge는 별도 전달 gate다.
+
+현재 변경은 격리된 `chore/publish-next-line-jdk25` worktree에만 있다. 새
+immutable catalog train ref와 downstream settings ref 갱신, push/PR/merge,
+publication은 별도 전달 gate다. `.java-version` 21 -> 25 변경은 모든 1차
+repository root의 다른 검증이 끝난 뒤 마지막 mutation으로 수행한다.
 
 ## 현재 상태
 

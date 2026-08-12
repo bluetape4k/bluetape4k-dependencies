@@ -83,7 +83,7 @@ jobs:
           done
       - name: Verify catalog scripts
         run: |
-          python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-publication-poms.py tests/*.py
+          python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py tests/*.py
           python3 -m unittest discover -s tests -p 'test_*.py'
           scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary
           scripts/sync-managed-catalog.py --check --summary
@@ -91,6 +91,9 @@ jobs:
             scripts/verify-managed-artifacts.py --summary
           else
             scripts/verify-managed-artifacts.py --summary --allow-snapshots
+          fi
+          if [[ "${GITHUB_REF}" == "refs/heads/develop" || "${GITHUB_BASE_REF:-}" == "develop" ]]; then
+            python3 scripts/verify-post-publish-next-development-line.py --summary
           fi
 
       - name: Verify PR-safe catalog adoption guard

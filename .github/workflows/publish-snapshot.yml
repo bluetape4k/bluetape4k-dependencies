@@ -39,6 +39,9 @@ jobs:
           gradle-version: wrapper
           cache-read-only: true
 
+      - name: Verify next development line preflight
+        run: python3 scripts/verify-post-publish-next-development-line.py --summary
+
       - name: Publish SNAPSHOT
         run: ./gradlew publishAllPublicationsToCentralSnapshots -PsnapshotVersion=-SNAPSHOT --no-daemon --no-configuration-cache --no-build-cache
         env:
@@ -48,3 +51,6 @@ jobs:
           SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Verify published snapshot metadata
+        run: python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts

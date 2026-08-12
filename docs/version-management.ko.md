@@ -184,7 +184,11 @@ catalog에서 버전을 올리고 downstream의 `bt4k` 참조를 검증한 뒤
 
 ## Snapshot 배포와 공식 릴리즈
 
-`bluetape4k-dependencies`의 catalog version은 `gradle.properties`의 `baseVersion + snapshotVersion`과 맞아야 합니다. `scripts/sync-shared-versions.py`는 source-of-truth block의 `bluetape4k-dependencies` 버전과 `gradle.properties`가 다르면 실패합니다.
+`bluetape4k-dependencies`의 catalog source alias는 `gradle.properties`의
+`baseVersion`과 맞아야 합니다. 실제 snapshot publication version은 workflow가
+주입하는 `snapshotVersion=-SNAPSHOT`으로 결정됩니다. `scripts/sync-shared-versions.py`는
+source-of-truth block의 `bluetape4k-dependencies` 버전과 `baseVersion`이 다르면
+실패합니다.
 
 ### Snapshot 배포
 
@@ -194,12 +198,35 @@ Snapshot 배포 시에는 다음 값을 유지합니다.
 
 | 위치 | 예시 |
 |---|---|
-| upstream repo `gradle.properties` | `baseVersion=0.1.0`, `snapshotVersion=-SNAPSHOT` |
-| `bluetape4k-dependencies/gradle/libs.versions.toml` upstream ref | `bluetape4k-leader = "0.1.0-SNAPSHOT"` |
-| `bluetape4k-dependencies/gradle.properties` | `baseVersion=1.0.0`, `snapshotVersion=-SNAPSHOT` |
-| source-of-truth block | `bluetape4k-dependencies = "1.0.0-SNAPSHOT"` |
+| upstream repo `gradle.properties` | `baseVersion=0.1.0`, `snapshotVersion=` |
+| `bluetape4k-dependencies/gradle/libs.versions.toml` upstream ref | `bluetape4k-leader-bom = "0.1.0-SNAPSHOT"` |
+| `bluetape4k-dependencies/gradle.properties` | `baseVersion=1.0.0`, `snapshotVersion=` |
+| source-of-truth block | `bluetape4k-dependencies = "1.0.0"` |
 
 Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot repository를 가리켜도 됩니다.
+
+### 안정 배포 후 다음 개발선 열기
+
+안정 BOM을 배포한 뒤에는 다음 개발선으로 넘어가는 별도 후속 단계를 반드시
+수행합니다. 이 단계는 publish workflow가 자동으로 `develop`을 변경하지 않도록
+명시적인 검증과 변경 순서를 남기는 절차입니다.
+
+1. 각 publish 대상 repo의 `baseVersion`을 다음 개발 버전으로 올리고
+   `snapshotVersion=`은 비워 둡니다.
+2. 중앙 `gradle/libs.versions.toml`의 해당 내부 BOM ref를
+   `baseVersion + "-SNAPSHOT"`으로 갱신합니다. 중앙 catalog 자체 alias는
+   `baseVersion`만 기록합니다.
+3. `scripts/verify-post-publish-next-development-line.py --summary`와
+   publication-POM gate를 preflight로 통과시킨 뒤 snapshot publish를
+   수행합니다.
+4. publish 직후 `scripts/verify-post-publish-next-development-line.py --summary
+   --require-artifacts`로 중앙 snapshot metadata가 실제로 생성됐는지
+   확인합니다.
+
+소스에 `snapshotVersion=-SNAPSHOT`을 기록하거나, 다음 개발선이 아직 공개되지
+않았는데 중앙 ref를 먼저 바꾸면 안 됩니다. 안정 tag/release에서는
+`--stable-release` 검사가 내부 BOM ref에 `-SNAPSHOT`이 남아 있지 않은지
+fail-closed로 확인합니다.
 
 ### Downstream snapshot resolution 403 대응
 
@@ -488,16 +515,20 @@ snapshotVersion=
 
 ### 릴리즈 후 다음 개발 사이클
 
-공식 릴리즈가 끝나면 다음 개발 cycle을 시작하기 위해 version을 다시 snapshot으로 올립니다.
+공식 릴리즈가 끝나면 다음 개발 cycle을 시작하기 위해 base version과 내부
+catalog ref를 함께 전환합니다. `-SNAPSHOT`은 publish 명령의 runtime property로
+주입하며 소스에는 기록하지 않습니다.
 
 1. upstream repo들의 다음 개발 버전을 설정합니다.
-   - 예: `baseVersion=0.1.1`, `snapshotVersion=-SNAPSHOT`
+   - 예: `baseVersion=0.1.1`, `snapshotVersion=`
 2. `bluetape4k-dependencies/gradle/libs.versions.toml`의 upstream refs를 다음 snapshot으로 갱신합니다.
    - 예: `bluetape4k-leader = "0.1.1-SNAPSHOT"`
 3. `bluetape4k-dependencies` 자체도 다음 snapshot으로 갱신합니다.
-   - 예: `baseVersion=1.0.1`, `snapshotVersion=-SNAPSHOT`
-   - source-of-truth block: `bluetape4k-dependencies = "1.0.1-SNAPSHOT"`
-4. drift check와 CI를 통과시킨 뒤 snapshot publish를 확인합니다.
+   - 예: `baseVersion=1.0.1`, `snapshotVersion=`
+   - source-of-truth block: `bluetape4k-dependencies = "1.0.1"`
+4. 모든 내부 snapshot metadata를 확인한 뒤 `./gradlew
+   publishAllPublicationsToCentralSnapshots -PsnapshotVersion=-SNAPSHOT`을
+   실행하고, drift check와 CI를 통과시킵니다.
 
 ## 장애 대응
 
