@@ -91,6 +91,11 @@ jobs:
             exit 1
           fi
 
+      - name: Verify stable catalog boundary
+        env:
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: python3 scripts/verify-post-publish-next-development-line.py --stable-release "$VERSION" --summary
+
       - uses: actions/setup-java@v5.7.0
         with:
           java-version: ${{ env.JAVA_VERSION }}

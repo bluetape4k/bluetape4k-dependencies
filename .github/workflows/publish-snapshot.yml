@@ -29,6 +29,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Clone snapshot libraries and official-release examples
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_LFS_SKIP_SMUDGE: "1"
+        run: |
+          set -euo pipefail
+          mapfile -t repos < <(python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories)
+          for repo in "${repos[@]}"; do
+            gh repo clone "bluetape4k/${repo}" "../${repo}" -- --depth 1
+          done
+
       - uses: actions/setup-java@v5.7.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -39,6 +51,9 @@ jobs:
           gradle-version: wrapper
           cache-read-only: true
 
+      - name: Verify next development line preflight
+        run: python3 scripts/verify-post-publish-next-development-line.py --summary
+
       - name: Publish SNAPSHOT
         run: ./gradlew publishAllPublicationsToCentralSnapshots -PsnapshotVersion=-SNAPSHOT --no-daemon --no-configuration-cache --no-build-cache
         env:
@@ -48,3 +63,6 @@ jobs:
           SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Verify published snapshot metadata
+        run: python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts

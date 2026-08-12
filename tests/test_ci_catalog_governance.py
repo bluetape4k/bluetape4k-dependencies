@@ -21,9 +21,50 @@ class CatalogGovernanceCiTest(unittest.TestCase):
 
         self.assertIn("scripts/audit-latest-stable.py", script_step)
         self.assertIn("scripts/verify-latest-stable-resolved-graphs.py", script_step)
+        self.assertIn("scripts/verify-post-publish-next-development-line.py", script_step)
         self.assertIn(
             "scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary",
             script_step,
+        )
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py --summary",
+            script_step,
+        )
+        self.assertIn(
+            'if [[ "${GITHUB_REF}" == "refs/heads/develop" || "${GITHUB_BASE_REF:-}" == "develop" ]]; then',
+            script_step,
+        )
+
+    def test_publish_workflows_guard_the_development_line_and_stable_boundary(self) -> None:
+        snapshot_workflow = (REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml").read_text(
+            encoding="utf-8"
+        )
+        release_workflow = (REPO_ROOT / ".github" / "workflows" / "release.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py --summary\n",
+            snapshot_workflow,
+        )
+        clone_command = (
+            "python3 scripts/verify-post-publish-next-development-line.py "
+            "--print-required-repositories"
+        )
+        self.assertIn(clone_command, snapshot_workflow)
+        self.assertLess(
+            snapshot_workflow.index(clone_command),
+            snapshot_workflow.index(
+                "python3 scripts/verify-post-publish-next-development-line.py --summary\n"
+            ),
+        )
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts",
+            snapshot_workflow,
+        )
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py --stable-release",
+            release_workflow,
         )
 
     def test_pull_requests_use_repo_local_fixture_for_the_adoption_guard(self) -> None:
@@ -34,7 +75,17 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             1,
         )[1].split("      - name:", 1)[0]
         self.assertNotIn("if: ${{ github.event_name != 'pull_request' }}", clone_step)
-        self.assertIn("scripts/sync-shared-versions.py --print-default-repositories", clone_step)
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories",
+            clone_step,
+        )
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py "
+            "--print-snapshot-candidate-branch",
+            clone_step,
+        )
+        self.assertIn('if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]', clone_step)
+        self.assertIn('--branch "$candidate_branch" --single-branch', clone_step)
 
         fixture_step = workflow.split(
             "      - name: Verify PR-safe catalog adoption guard\n",
