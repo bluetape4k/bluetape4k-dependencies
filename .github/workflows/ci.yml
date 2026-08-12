@@ -78,8 +78,17 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t repos < <(python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories)
+          candidate_branch=""
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            candidate_branch=$(python3 scripts/verify-post-publish-next-development-line.py --print-snapshot-candidate-branch)
+          fi
           for repo in "${repos[@]}"; do
-            gh repo clone "bluetape4k/${repo}" "../${repo}" -- --depth 1
+            clone_args=(--depth 1)
+            if [[ -n "$candidate_branch" ]] &&
+               gh api "repos/bluetape4k/${repo}/branches/${candidate_branch}" >/dev/null 2>&1; then
+              clone_args+=(--branch "$candidate_branch" --single-branch)
+            fi
+            gh repo clone "bluetape4k/${repo}" "../${repo}" -- "${clone_args[@]}"
           done
       - name: Verify catalog scripts
         run: |

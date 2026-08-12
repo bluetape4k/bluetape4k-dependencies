@@ -64,6 +64,15 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             },
         )
 
+    def test_snapshot_candidate_branch_is_derived_from_the_immutable_ref(self) -> None:
+        module = load_script()
+        document = json.loads(MANIFEST.read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            module.snapshot_candidate_branch(document),
+            "chore/snapshot-catalog-45235aa",
+        )
+
     def test_manifest_rejects_source_snapshot_suffix(self) -> None:
         module = load_script()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))

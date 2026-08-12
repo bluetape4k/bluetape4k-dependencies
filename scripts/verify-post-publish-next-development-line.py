@@ -188,6 +188,11 @@ def required_workspace_repositories(manifest: dict[str, Any]) -> list[str]:
     return repositories
 
 
+def snapshot_candidate_branch(manifest: dict[str, Any]) -> str:
+    snapshot_ref = manifest["consumer-policy"]["snapshot-catalog-ref"]
+    return f"chore/snapshot-catalog-{snapshot_ref[:7]}"
+
+
 def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     policy = manifest["consumer-policy"]
@@ -398,6 +403,7 @@ def main() -> int:
     parser.add_argument("--require-artifacts", action="store_true")
     parser.add_argument("--stable-release", metavar="VERSION")
     parser.add_argument("--print-required-repositories", action="store_true")
+    parser.add_argument("--print-snapshot-candidate-branch", action="store_true")
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args()
 
@@ -407,6 +413,9 @@ def main() -> int:
         if args.print_required_repositories:
             for repository in required_workspace_repositories(manifest):
                 print(repository)
+            return 0
+        if args.print_snapshot_candidate_branch:
+            print(snapshot_candidate_branch(manifest))
             return 0
         if args.stable_release:
             errors = verify_stable(REPO_ROOT, manifest, args.stable_release)

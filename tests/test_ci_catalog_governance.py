@@ -79,6 +79,13 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             "python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories",
             clone_step,
         )
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py "
+            "--print-snapshot-candidate-branch",
+            clone_step,
+        )
+        self.assertIn('if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]', clone_step)
+        self.assertIn('--branch "$candidate_branch" --single-branch', clone_step)
 
         fixture_step = workflow.split(
             "      - name: Verify PR-safe catalog adoption guard\n",
