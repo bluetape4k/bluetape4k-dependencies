@@ -70,6 +70,12 @@
 
 ## 후속 전달 gate
 
-중앙 변경을 원격 `develop`에 반영하기 전에 새 catalog train commit/ref를
-만들고, snapshot을 소비할 downstream의 immutable catalog ref를 같은 train으로
-갱신해야 한다. 그 다음 별도 승인으로 push, PR, merge, publication을 진행한다.
+중앙 변경은 로컬 `chore/publish-next-line-jdk25`의
+`45235aa22184b6a2280f530fb90c82a94e31c59d`에 커밋했다. 이 SHA는 아직 원격에
+없으며, 8개 publishable downstream의 기본 checkout은 모두 기존
+`3d2fb6e0087a6bbef5418aee8024bba9dd527e26`을 immutable ref로 사용한다. 따라서
+새 SHA를 원격에 공개하기 전에는 downstream settings ref를 바꾸지 않는다.
+
+다음 순서는 중앙 exact head를 원격에 push하고, 같은 SHA를 8개 downstream
+settings에 반영한 branch/PR을 만든 뒤, snapshot 소비 검증과 별도 승인으로
+push, PR, merge, publication을 진행하는 것이다.

@@ -26,10 +26,12 @@ snapshot publication 검증은 preflight와 post-publication metadata 확인을
 정렬하고, `bluetape4k-workshop`에는 별도 `chore/jdk25-workflows`
 worktree를 만들었다. 원격 반영과 PR/merge는 별도 전달 gate다.
 
-현재 변경은 격리된 `chore/publish-next-line-jdk25` worktree에만 있다. 새
-immutable catalog train ref와 downstream settings ref 갱신, push/PR/merge,
-publication은 별도 전달 gate다. `.java-version` 21 -> 25 변경은 모든 1차
-repository root의 다른 검증이 끝난 뒤 마지막 mutation으로 수행한다.
+현재 중앙 변경은 격리된 `chore/publish-next-line-jdk25`의
+`45235aa22184b6a2280f530fb90c82a94e31c59d`에 커밋되어 있다. 새 immutable
+catalog train ref를 원격에 공개하고 downstream settings ref를 갱신하는 일,
+push/PR/merge/publication은 별도 전달 gate다. `.java-version` 21 -> 25 변경은
+모든 1차 repository root의 다른 검증이 끝난 뒤 마지막 mutation으로 수행했고,
+각 JDK25 격리 branch에도 로컬 커밋했다.
 
 ## 현재 상태
 
