@@ -15,7 +15,10 @@ paths = [
     '''docs/''',
     '''README\.md''',
     '''README\.ko\.md''',
+    '''\.bluetape/''',
     '''.worktrees/''',
+    '''config/post-publish-next-development-line\.json''',
+    '''tests/test_post_publish_next_development_line\.py''',
 ]
 
 regexes = [

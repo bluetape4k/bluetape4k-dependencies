@@ -48,7 +48,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             snapshot_workflow,
         )
         clone_command = (
-            "scripts/verify-post-publish-next-development-line.py "
+            "python3 scripts/verify-post-publish-next-development-line.py "
             "--print-required-repositories"
         )
         self.assertIn(clone_command, snapshot_workflow)
@@ -76,7 +76,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         )[1].split("      - name:", 1)[0]
         self.assertNotIn("if: ${{ github.event_name != 'pull_request' }}", clone_step)
         self.assertIn(
-            "scripts/verify-post-publish-next-development-line.py --print-required-repositories",
+            "python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories",
             clone_step,
         )
 

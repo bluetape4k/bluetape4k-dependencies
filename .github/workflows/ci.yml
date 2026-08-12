@@ -77,7 +77,7 @@ jobs:
           GIT_LFS_SKIP_SMUDGE: "1"
         run: |
           set -euo pipefail
-          mapfile -t repos < <(scripts/verify-post-publish-next-development-line.py --print-required-repositories)
+          mapfile -t repos < <(python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories)
           for repo in "${repos[@]}"; do
             gh repo clone "bluetape4k/${repo}" "../${repo}" -- --depth 1
           done
