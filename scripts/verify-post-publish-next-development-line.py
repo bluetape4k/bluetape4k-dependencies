@@ -29,6 +29,10 @@ REPOSITORY_NAME = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 CATALOG_REF = re.compile(r'\.orElse\("([0-9a-f]{40})"\)')
+CI_CATALOG_REF = re.compile(
+    r"^\s*BLUETAPE4K_DEPENDENCIES_CATALOG_REF:\s*['\"]?([0-9a-f]{40})['\"]?\s*$",
+    re.MULTILINE,
+)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -172,6 +176,11 @@ def read_catalog_ref(path: Path) -> str | None:
     return match.group(1) if match else None
 
 
+def read_ci_catalog_ref(path: Path) -> str | None:
+    match = CI_CATALOG_REF.search(path.read_text(encoding="utf-8"))
+    return match.group(1) if match else None
+
+
 def required_workspace_repositories(manifest: dict[str, Any]) -> list[str]:
     policy = manifest["consumer-policy"]
     repositories = list(policy["snapshot-catalog-repositories"])
@@ -187,6 +196,7 @@ def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[st
 
     for repository in policy["snapshot-catalog-repositories"]:
         settings = workspace / repository / "settings.gradle.kts"
+        ci_workflow = workspace / repository / ".github" / "workflows" / "ci.yml"
         if not settings.is_file():
             errors.append(f"missing snapshot consumer settings: {settings}")
             continue
@@ -199,6 +209,19 @@ def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[st
             errors.append(
                 f"{repository} must use snapshot catalog ref {expected_snapshot_ref}, "
                 f"got {catalog_ref!r}"
+            )
+        if not ci_workflow.is_file():
+            errors.append(f"missing snapshot consumer CI workflow: {ci_workflow}")
+            continue
+        try:
+            ci_catalog_ref = read_ci_catalog_ref(ci_workflow)
+        except OSError as error:
+            errors.append(f"cannot read {ci_workflow}: {error}")
+            continue
+        if ci_catalog_ref != expected_snapshot_ref:
+            errors.append(
+                f"{repository} CI must use snapshot catalog ref {expected_snapshot_ref}, "
+                f"got {ci_catalog_ref!r}"
             )
 
     for item in policy["official-release-repositories"]:

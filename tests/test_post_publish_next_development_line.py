@@ -201,6 +201,51 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             errors,
         )
 
+    def test_consumer_policy_rejects_settings_and_ci_catalog_ref_mismatch(self) -> None:
+        module = load_script()
+        expected_ref = "a" * 40
+        document = {
+            "stable-version": "1.4.0",
+            "consumer-policy": {
+                "snapshot-catalog-ref": expected_ref,
+                "snapshot-catalog-repositories": ["internal-library"],
+                "official-release-repositories": [
+                    {
+                        "repository": "example-app",
+                        "catalog-version-key": "bluetape4k-dependencies",
+                    }
+                ],
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            internal = workspace / "internal-library"
+            (internal / ".github" / "workflows").mkdir(parents=True)
+            (internal / "settings.gradle.kts").write_text(
+                f'catalogRef.orElse("{expected_ref}")\n', encoding="utf-8"
+            )
+            (internal / ".github" / "workflows" / "ci.yml").write_text(
+                "env:\n"
+                "  BLUETAPE4K_DEPENDENCIES_CATALOG_REF: "
+                f"'{('b' * 40)}'\n",
+                encoding="utf-8",
+            )
+            example_catalog = workspace / "example-app" / "gradle" / "libs.versions.toml"
+            example_catalog.parent.mkdir(parents=True)
+            example_catalog.write_text(
+                '[versions]\nbluetape4k-dependencies = "1.4.0"\n',
+                encoding="utf-8",
+            )
+
+            errors = module.verify_consumer_policy(workspace, document)
+
+        self.assertIn(
+            "internal-library CI must use snapshot catalog ref "
+            f"{expected_ref}, got '{('b' * 40)}'",
+            errors,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
