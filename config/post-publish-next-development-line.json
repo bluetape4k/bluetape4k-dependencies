@@ -1,5 +1,5 @@
 {
-  "schema-version": 1,
+  "schema-version": 2,
   "status": "active",
   "stable-version": "1.4.0",
   "development-version": "1.5.0",
@@ -66,12 +66,40 @@
       "base-version": "0.4.0"
     }
   ],
-  "excluded-repositories": [
-    "bluetape4k-experimental",
-    "bluetape4k-workshop",
-    "clinic-appointment",
-    "exposed-r2dbc-workshop",
-    "exposed-workshop",
-    "timefold-workshop"
-  ]
+  "consumer-policy": {
+    "snapshot-catalog-ref": "45235aa22184b6a2280f530fb90c82a94e31c59d",
+    "snapshot-catalog-repositories": [
+      "bluetape4k-projects",
+      "bluetape4k-aws",
+      "bluetape4k-experimental",
+      "bluetape4k-exposed",
+      "bluetape4k-graph",
+      "bluetape4k-image",
+      "bluetape4k-javers",
+      "bluetape4k-leader",
+      "bluetape4k-text"
+    ],
+    "official-release-repositories": [
+      {
+        "repository": "bluetape4k-workshop",
+        "catalog-version-key": "bluetape4k-dependencies-version"
+      },
+      {
+        "repository": "clinic-appointment",
+        "catalog-version-key": "bluetape4k-dependencies"
+      },
+      {
+        "repository": "exposed-r2dbc-workshop",
+        "catalog-version-key": "bluetape4k-dependencies"
+      },
+      {
+        "repository": "exposed-workshop",
+        "catalog-version-key": "bluetape4k-dependencies"
+      },
+      {
+        "repository": "timefold-workshop",
+        "catalog-version-key": "bluetape4k-dependencies"
+      }
+    ]
+  }
 }

@@ -223,6 +223,22 @@ Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot rep
    --require-artifacts`로 중앙 snapshot metadata가 실제로 생성됐는지
    확인합니다.
 
+이때 소비자 범위를 섞으면 안 됩니다.
+
+- `bluetape4k-projects`, `bluetape4k-aws`, `bluetape4k-experimental`,
+  `bluetape4k-exposed`, `bluetape4k-graph`, `bluetape4k-image`,
+  `bluetape4k-javers`, `bluetape4k-leader`, `bluetape4k-text` 같은 내부
+  라이브러리 저장소만 다음 개발선의 immutable snapshot catalog commit을
+  사용합니다.
+- `bluetape4k-workshop`, `clinic-appointment`, `exposed-r2dbc-workshop`,
+  `exposed-workshop`, `timefold-workshop` 같은 workshop/example/application은
+  각 저장소의 로컬 version catalog에서 공식 배포된
+  `bluetape4k-dependencies` BOM 버전을 유지합니다. 이 저장소들을 snapshot
+  catalog나 `-SNAPSHOT` BOM으로 전환하지 않습니다.
+- `.java-version`과 GitHub Actions의 JDK 선택은 위 dependency 소비 정책과
+  독립적입니다. 예제 저장소를 JDK 25로 올려도 BOM은 공식 배포 버전을
+  계속 사용합니다.
+
 소스에 `snapshotVersion=-SNAPSHOT`을 기록하거나, 다음 개발선이 아직 공개되지
 않았는데 중앙 ref를 먼저 바꾸면 안 됩니다. 안정 tag/release에서는
 `--stable-release` 검사가 내부 BOM ref에 `-SNAPSHOT`이 남아 있지 않은지
@@ -529,6 +545,9 @@ catalog ref를 함께 전환합니다. `-SNAPSHOT`은 publish 명령의 runtime 
 4. 모든 내부 snapshot metadata를 확인한 뒤 `./gradlew
    publishAllPublicationsToCentralSnapshots -PsnapshotVersion=-SNAPSHOT`을
    실행하고, drift check와 CI를 통과시킵니다.
+5. 새 immutable catalog commit은 내부 라이브러리 저장소에만 반영합니다.
+   workshop/example/application은 공식 배포 BOM을 유지하고 snapshot 소비
+   대상에서 제외합니다.
 
 ## 장애 대응
 

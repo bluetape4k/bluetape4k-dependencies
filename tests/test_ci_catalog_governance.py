@@ -47,6 +47,17 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             "python3 scripts/verify-post-publish-next-development-line.py --summary\n",
             snapshot_workflow,
         )
+        clone_command = (
+            "scripts/verify-post-publish-next-development-line.py "
+            "--print-required-repositories"
+        )
+        self.assertIn(clone_command, snapshot_workflow)
+        self.assertLess(
+            snapshot_workflow.index(clone_command),
+            snapshot_workflow.index(
+                "python3 scripts/verify-post-publish-next-development-line.py --summary\n"
+            ),
+        )
         self.assertIn(
             "python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts",
             snapshot_workflow,
@@ -64,7 +75,10 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             1,
         )[1].split("      - name:", 1)[0]
         self.assertNotIn("if: ${{ github.event_name != 'pull_request' }}", clone_step)
-        self.assertIn("scripts/sync-shared-versions.py --print-default-repositories", clone_step)
+        self.assertIn(
+            "scripts/verify-post-publish-next-development-line.py --print-required-repositories",
+            clone_step,
+        )
 
         fixture_step = workflow.split(
             "      - name: Verify PR-safe catalog adoption guard\n",

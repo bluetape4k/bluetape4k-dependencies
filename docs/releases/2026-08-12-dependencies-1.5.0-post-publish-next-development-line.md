@@ -11,6 +11,9 @@
 - snapshot suffix는 소스가 아니라 workflow의
   `-PsnapshotVersion=-SNAPSHOT` runtime property로 주입한다.
 - 중앙 catalog의 child BOM ref만 `baseVersion + -SNAPSHOT`으로 전환한다.
+- 새 immutable snapshot catalog commit은 내부 라이브러리 9개에만 전달한다.
+- workshop/example/application 5개는 로컬 version catalog에서 공식 배포
+  `bluetape4k-dependencies:1.4.0`을 유지한다.
 - 안정 release workflow는 중앙 catalog에 `-SNAPSHOT` ref가 남아 있으면
   fail-closed로 중단한다.
 - 안정 tag, Maven Central publication, GitHub Release, workflow dispatch,
@@ -29,13 +32,20 @@
 | `bluetape4k-leader` | `0.6.0` | `0.6.0-SNAPSHOT` |
 | `bluetape4k-text` | `0.4.0` | `0.4.0-SNAPSHOT` |
 
-`bluetape4k-experimental`은 catalog-only이고 workshop/example/application
-저장소는 이 snapshot publisher 범위에서 제외한다.
+`bluetape4k-experimental`은 게시자는 아니지만 내부 snapshot catalog
+consumer다. workshop/example/application 저장소는 snapshot publisher와
+snapshot catalog consumer 범위에서 모두 제외한다.
+
+| 소비 정책 | Repository | 참조 |
+|---|---|---|
+| 내부 snapshot catalog | `bluetape4k-projects`, `bluetape4k-aws`, `bluetape4k-experimental`, `bluetape4k-exposed`, `bluetape4k-graph`, `bluetape4k-image`, `bluetape4k-javers`, `bluetape4k-leader`, `bluetape4k-text` | `45235aa22184b6a2280f530fb90c82a94e31c59d` |
+| 공식 배포 BOM | `bluetape4k-workshop`, `clinic-appointment`, `exposed-r2dbc-workshop`, `exposed-workshop`, `timefold-workshop` | `bluetape4k-dependencies:1.4.0` |
 
 ## 검증 gate
 
-- [x] `config/post-publish-next-development-line.json`에 대상·제외·runtime
-      suffix 계약을 고정했다.
+- [x] `config/post-publish-next-development-line.json`에 publish 대상, 내부
+      snapshot catalog consumer, 공식 배포 BOM consumer, runtime suffix
+      계약을 서로 분리해 고정했다.
 - [x] `scripts/verify-post-publish-next-development-line.py`를 개발선 CI와
       snapshot publish workflow에 연결했다. CI/snapshot preflight는
       metadata 존재를 요구하지 않고, publication 직후 step만
@@ -70,12 +80,13 @@
 
 ## 후속 전달 gate
 
-중앙 변경은 로컬 `chore/publish-next-line-jdk25`의
-`45235aa22184b6a2280f530fb90c82a94e31c59d`에 커밋했다. 이 SHA는 아직 원격에
-없으며, 8개 publishable downstream의 기본 checkout은 모두 기존
-`3d2fb6e0087a6bbef5418aee8024bba9dd527e26`을 immutable ref로 사용한다. 따라서
-새 SHA를 원격에 공개하기 전에는 downstream settings ref를 바꾸지 않는다.
+중앙 snapshot catalog content commit은
+`45235aa22184b6a2280f530fb90c82a94e31c59d`이고 아직 원격에 없다. 내부
+라이브러리 9개에는 이 SHA를 사용하는 로컬 격리 branch를 준비했다. 원격
+catalog를 먼저 공개하지 않았으므로 실제 Gradle remote resolution은 아직
+수행하지 않는다.
 
-다음 순서는 중앙 exact head를 원격에 push하고, 같은 SHA를 8개 downstream
-settings에 반영한 branch/PR을 만든 뒤, snapshot 소비 검증과 별도 승인으로
-push, PR, merge, publication을 진행하는 것이다.
+다음 순서는 중앙 exact head를 원격에 push해 catalog SHA를 공개하고, 내부
+라이브러리 9개 branch/PR에서 remote resolution을 검증한 뒤 별도 승인으로
+push, PR, merge, publication을 진행하는 것이다. 예제 5개는 이 전달 단계에
+포함하지 않으며 공식 배포 BOM `1.4.0`을 계속 사용한다.

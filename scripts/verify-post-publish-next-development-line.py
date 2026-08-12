@@ -27,6 +27,8 @@ VERSION_LINE = re.compile(r"^([A-Za-z0-9_.-]+)\s*=\s*\"([^\"]+)\"")
 PROPERTY_LINE = re.compile(r"^([A-Za-z0-9_.-]+)\s*=\s*(.*)$")
 REPOSITORY_NAME = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
+CATALOG_REF = re.compile(r'\.orElse\("([0-9a-f]{40})"\)')
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -40,7 +42,7 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def validate_manifest(document: dict[str, Any]) -> None:
-    if document.get("schema-version") != 1:
+    if document.get("schema-version") != 2:
         raise RuntimeError("unsupported next-development manifest schema")
     if document.get("status") != "active":
         raise RuntimeError("next-development manifest must be active")
@@ -49,7 +51,7 @@ def validate_manifest(document: dict[str, Any]) -> None:
     suffix = document.get("snapshot-suffix")
     source_contract = document.get("source-contract")
     publishers = document.get("publishable-repositories")
-    excluded = document.get("excluded-repositories")
+    consumer_policy = document.get("consumer-policy")
     if not isinstance(stable, str) or not SEMVER.fullmatch(stable):
         raise RuntimeError("stable-version must be a stable semantic version")
     if not isinstance(development, str) or not SEMVER.fullmatch(development):
@@ -64,8 +66,8 @@ def validate_manifest(document: dict[str, Any]) -> None:
         raise RuntimeError("runtime snapshot property contract is invalid")
     if not isinstance(publishers, list) or not publishers:
         raise RuntimeError("publishable-repositories must be a non-empty list")
-    if not isinstance(excluded, list) or not all(isinstance(item, str) for item in excluded):
-        raise RuntimeError("excluded-repositories must be a string list")
+    if not isinstance(consumer_policy, dict):
+        raise RuntimeError("consumer-policy is required")
 
     repositories: set[str] = set()
     aliases: set[str] = set()
@@ -90,8 +92,51 @@ def validate_manifest(document: dict[str, Any]) -> None:
             raise RuntimeError(f"duplicate publisher catalog alias: {alias}")
         repositories.add(repository)
         aliases.add(alias)
-    if repositories.intersection(excluded):
-        raise RuntimeError("a repository cannot be both publishable and excluded")
+
+    required_policy_fields = {
+        "snapshot-catalog-ref",
+        "snapshot-catalog-repositories",
+        "official-release-repositories",
+    }
+    if set(consumer_policy) != required_policy_fields:
+        raise RuntimeError(f"consumer-policy fields must be {sorted(required_policy_fields)}")
+    snapshot_ref = consumer_policy["snapshot-catalog-ref"]
+    snapshot_repositories = consumer_policy["snapshot-catalog-repositories"]
+    official_repositories = consumer_policy["official-release-repositories"]
+    if not isinstance(snapshot_ref, str) or not GIT_SHA.fullmatch(snapshot_ref):
+        raise RuntimeError("snapshot-catalog-ref must be an immutable Git commit SHA")
+    if not isinstance(snapshot_repositories, list) or not snapshot_repositories:
+        raise RuntimeError("snapshot-catalog-repositories must be a non-empty list")
+    if not all(
+        isinstance(repository, str) and REPOSITORY_NAME.fullmatch(repository)
+        for repository in snapshot_repositories
+    ):
+        raise RuntimeError("snapshot-catalog-repositories contains an invalid repository")
+    if len(snapshot_repositories) != len(set(snapshot_repositories)):
+        raise RuntimeError("snapshot-catalog-repositories contains duplicates")
+    if not repositories.issubset(snapshot_repositories):
+        raise RuntimeError("every publishable repository must be a snapshot catalog consumer")
+    if not isinstance(official_repositories, list) or not official_repositories:
+        raise RuntimeError("official-release-repositories must be a non-empty list")
+
+    official_names: set[str] = set()
+    for item in official_repositories:
+        if not isinstance(item, dict):
+            raise RuntimeError("official release consumer entries must be objects")
+        required = {"repository", "catalog-version-key"}
+        if set(item) != required:
+            raise RuntimeError(f"official release consumer fields must be {sorted(required)}")
+        repository = item["repository"]
+        version_key = item["catalog-version-key"]
+        if not isinstance(repository, str) or not REPOSITORY_NAME.fullmatch(repository):
+            raise RuntimeError(f"invalid official release consumer: {repository!r}")
+        if not isinstance(version_key, str) or not version_key:
+            raise RuntimeError("official release catalog-version-key must be non-empty")
+        if repository in official_names:
+            raise RuntimeError(f"duplicate official release consumer: {repository}")
+        official_names.add(repository)
+    if set(snapshot_repositories).intersection(official_names):
+        raise RuntimeError("a repository cannot consume both snapshot and official release catalogs")
 
 
 def read_properties(path: Path) -> dict[str, str]:
@@ -120,6 +165,61 @@ def read_versions(path: Path) -> dict[str, str]:
         if match:
             versions[match.group(1)] = match.group(2)
     return versions
+
+
+def read_catalog_ref(path: Path) -> str | None:
+    match = CATALOG_REF.search(path.read_text(encoding="utf-8"))
+    return match.group(1) if match else None
+
+
+def required_workspace_repositories(manifest: dict[str, Any]) -> list[str]:
+    policy = manifest["consumer-policy"]
+    repositories = list(policy["snapshot-catalog-repositories"])
+    repositories.extend(item["repository"] for item in policy["official-release-repositories"])
+    return repositories
+
+
+def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    policy = manifest["consumer-policy"]
+    expected_snapshot_ref = policy["snapshot-catalog-ref"]
+    stable_version = manifest["stable-version"]
+
+    for repository in policy["snapshot-catalog-repositories"]:
+        settings = workspace / repository / "settings.gradle.kts"
+        if not settings.is_file():
+            errors.append(f"missing snapshot consumer settings: {settings}")
+            continue
+        try:
+            catalog_ref = read_catalog_ref(settings)
+        except OSError as error:
+            errors.append(f"cannot read {settings}: {error}")
+            continue
+        if catalog_ref != expected_snapshot_ref:
+            errors.append(
+                f"{repository} must use snapshot catalog ref {expected_snapshot_ref}, "
+                f"got {catalog_ref!r}"
+            )
+
+    for item in policy["official-release-repositories"]:
+        repository = item["repository"]
+        version_key = item["catalog-version-key"]
+        catalog = workspace / repository / "gradle" / "libs.versions.toml"
+        if not catalog.is_file():
+            errors.append(f"missing official release consumer catalog: {catalog}")
+            continue
+        try:
+            versions = read_versions(catalog)
+        except OSError as error:
+            errors.append(f"cannot read {catalog}: {error}")
+            continue
+        actual = versions.get(version_key)
+        if actual != stable_version:
+            errors.append(
+                f"{repository} must use official bluetape4k-dependencies "
+                f"{stable_version}, got {actual!r}"
+            )
+    return errors
 
 
 def metadata_url(group: str, artifact: str, version: str) -> str:
@@ -189,6 +289,7 @@ def verify_development(
         errors.append("catalog self version must equal the development baseVersion")
     if stable_version == development_version:
         errors.append("stable-version and development-version must differ")
+    errors.extend(verify_consumer_policy(workspace, manifest))
 
     expected_development_version = f"{development_version}{suffix}"
     for item in manifest["publishable-repositories"]:
@@ -273,12 +374,17 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--require-artifacts", action="store_true")
     parser.add_argument("--stable-release", metavar="VERSION")
+    parser.add_argument("--print-required-repositories", action="store_true")
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args()
 
     try:
         manifest = load_json(args.manifest)
         validate_manifest(manifest)
+        if args.print_required_repositories:
+            for repository in required_workspace_repositories(manifest):
+                print(repository)
+            return 0
         if args.stable_release:
             errors = verify_stable(REPO_ROOT, manifest, args.stable_release)
             mode = f"stable release {args.stable_release}"
@@ -295,6 +401,13 @@ def main() -> int:
         return 1
     if args.summary:
         print(f"Verified {mode}: {len(manifest['publishable-repositories'])} publishers")
+        if not args.stable_release:
+            policy = manifest["consumer-policy"]
+            print(
+                "Verified consumer boundary: "
+                f"{len(policy['snapshot-catalog-repositories'])} snapshot libraries, "
+                f"{len(policy['official-release-repositories'])} official-release examples"
+            )
         if args.require_artifacts and not args.stable_release:
             print("Verified snapshot metadata for the central BOM and all child BOMs")
     return 0

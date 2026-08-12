@@ -21,17 +21,25 @@ snapshot publication 검증은 preflight와 post-publication metadata 확인을
 직후에만 `--require-artifacts`를 요구한다. stable `main` CI는 개발선 검증을
 건너뛰고 release workflow의 stable boundary guard를 사용한다.
 
+publish 소비자 경계는 두 종류로 분리했다. 내부 라이브러리 9개만 immutable
+snapshot catalog commit `45235aa22184b6a2280f530fb90c82a94e31c59d`을
+사용한다. `bluetape4k-workshop`, `clinic-appointment`,
+`exposed-r2dbc-workshop`, `exposed-workshop`, `timefold-workshop`은 각 로컬
+version catalog에서 공식 배포 BOM `1.4.0`을 유지한다. JDK 25 전환은 이
+dependency 정책과 독립적이며 예제 BOM을 snapshot으로 바꾸지 않는다.
+
 이번 일회성 JDK 25 전환을 위해 `exposed-r2dbc-workshop`,
 `exposed-workshop`, `timefold-workshop`의 JDK25 worktree workflow를 25로
 정렬하고, `bluetape4k-workshop`에는 별도 `chore/jdk25-workflows`
 worktree를 만들었다. 원격 반영과 PR/merge는 별도 전달 gate다.
 
-현재 중앙 변경은 격리된 `chore/publish-next-line-jdk25`의
-`45235aa22184b6a2280f530fb90c82a94e31c59d`에 커밋되어 있다. 새 immutable
-catalog train ref를 원격에 공개하고 downstream settings ref를 갱신하는 일,
-push/PR/merge/publication은 별도 전달 gate다. `.java-version` 21 -> 25 변경은
-모든 1차 repository root의 다른 검증이 끝난 뒤 마지막 mutation으로 수행했고,
-각 JDK25 격리 branch에도 로컬 커밋했다.
+현재 snapshot catalog content는 격리된 `chore/publish-next-line-jdk25`의
+`45235aa22184b6a2280f530fb90c82a94e31c59d`에 있다. 내부 라이브러리 9개의
+격리 branch는 이 SHA를 사용하도록 준비했고, 예제 5개는 공식 BOM `1.4.0`을
+유지한다. 새 immutable catalog ref 공개와 push/PR/merge/publication은 별도
+전달 gate다. `.java-version` 21 -> 25 변경은 모든 1차 repository root의 다른
+검증이 끝난 뒤 마지막 mutation으로 수행했고, 각 JDK25 격리 branch에도 로컬
+커밋했다.
 
 ## 현재 상태
 
@@ -61,10 +69,11 @@ train이 승인되기 전에는 새로운 stable tag나 publication을 만들지
 
 1. 외부 dependency/plugin 변경은 중앙 catalog authority와 delta receipt를 먼저
    갱신한다.
-2. 관리 저장소는 immutable catalog ref를 사용하고, 예외가 필요한 경우에만
-   명시적 authority record를 추가한다.
+2. 내부 라이브러리 저장소는 immutable snapshot catalog ref를 사용하고,
+   workshop/example/application은 공식 배포 BOM을 사용한다.
 3. 다음 stable train은 새 release checklist와 explicit publication authority를
    확보한 뒤 시작한다.
 
-`bluetape4k-workshop`과 예제/application 저장소는 stable publication scope에서
-계속 제외한다. `bluetape4k-experimental`은 catalog-only consumer로 유지한다.
+`bluetape4k-workshop`과 예제/application 저장소는 stable publication 및
+snapshot catalog scope에서 계속 제외하고 공식 배포 BOM을 사용한다.
+`bluetape4k-experimental`은 catalog-only snapshot consumer로 유지한다.
