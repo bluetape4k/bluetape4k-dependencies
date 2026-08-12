@@ -1,8 +1,14 @@
 # bluetape4k-dependencies 1.5.0 게시 후 다음 개발선 체크리스트
 
-상태: **로컬 보강 완료 / 외부 전달 보류**
+상태: **외부 전달 진행 중 / JDK 25 단일선 closeout 보강**
 대상: `bluetape4k-dependencies` 1.5.0 게시 이후 개발선
-실행 범위: publish 후속 계약과 검증 보강, 중앙 catalog snapshot 참조 정렬
+실행 범위: publish 후속 계약과 검증 보강, 중앙 catalog snapshot 참조 정렬,
+library/example JDK 25 전환과 exact-head CI 복구
+
+실행 권한: 사용자의 2026-08-12 지시 “AWS/Image 모두 JDK 25로 올려,
+나머지도 모두 해결”에 따라 기존 전달 branch의 수정, commit, push, PR 갱신과
+CI 재검증까지 수행한다. merge, tag, snapshot/stable publication, GitHub Release,
+worktree/branch cleanup은 별도 승인 전까지 수행하지 않는다.
 
 ## 결정된 계약
 
@@ -17,7 +23,7 @@
 - 안정 release workflow는 중앙 catalog에 `-SNAPSHOT` ref가 남아 있으면
   fail-closed로 중단한다.
 - 안정 tag, Maven Central publication, GitHub Release, workflow dispatch,
-  push/merge는 이 작업 범위에 포함하지 않는다.
+  merge와 cleanup은 이 작업 범위에 포함하지 않는다.
 
 ## 대상
 
@@ -68,25 +74,51 @@ snapshot catalog consumer 범위에서 모두 제외한다.
 
 ## JDK 25 일회성 전환
 
-- [x] 주요 `bluetape4k-*` library workflow의 Java 실행 버전을 25로 재점검했다.
+- [x] 중앙 저장소와 downstream 14개 저장소의 GitHub Actions Java 실행
+      버전을 25로 재점검했다. `JAVA_VERSION`, `java-version`, `jdk-version`의
+      활성 21 참조는 0건이다.
+- [x] downstream 14개 저장소의 기존 `.java-version`은 모두 `25`다.
 - [x] `clinic-appointment`의 `.java-version`도 JDK25 격리 worktree에서
-      25로 전환했다(워크플로는 이미 25).
+      25로 전환했고, Gradle Java/Kotlin/Gatling target도 25로 정렬했다.
 - [x] `exposed-r2dbc-workshop`, `exposed-workshop`, `timefold-workshop`의
-      21 workflow를 각 JDK25 격리 worktree에서 25로 정렬했다.
+      workflow, Java/Kotlin toolchain, atomicfu target을 각 JDK25 격리
+      worktree에서 25로 정렬했다.
 - [x] `bluetape4k-workshop`의 21/25 matrix와 `JAVA_HOME_21_X64`를 별도
       `chore/jdk25-workflows` worktree에서 25 전용으로 정렬했다.
-- [x] 변경된 네 worktree의 GitHub Actions YAML은 `actionlint`를 통과했다.
-- [ ] 위 worktree 변경의 downstream PR/push/merge는 별도 전달 gate다.
+- [x] `exposed-workshop`의 `StructuredTaskScope` 테스트 소비자 4곳은 공식
+      배포된 `bluetape4k-virtualthread-jdk25` runtime provider를 사용한다.
+      직접 JDK API 우회는 사용하지 않았다.
+- [x] 활성 Gradle build target의 JDK 21 참조는 0건이다. 역사 문서와 legacy
+      artifact/backend selector 이름은 실행 계약이 아니므로 보존했다.
+- [x] 변경된 worktree의 GitHub Actions YAML은 `actionlint`를 통과했다.
+- [x] JDK 25 전체 빌드: AWS 87 tasks, Image 236 tasks, Leader 262 tasks,
+      Workshop 1274 tasks, Clinic 96 tasks, Exposed R2DBC 477 tasks,
+      Exposed 900 tasks, Timefold 33 tasks 성공.
+- [x] 15개 downstream branch를 push하고 PR을 생성했다. 현재 exact-head
+      집계는 갱신 전 기준이며, local repair 반영 후 exact-head CI를 다시
+      확인한다.
 
 ## 후속 전달 gate
 
-중앙 snapshot catalog content commit은
-`45235aa22184b6a2280f530fb90c82a94e31c59d`이고 아직 원격에 없다. 내부
-라이브러리 9개에는 이 SHA를 사용하는 로컬 격리 branch를 준비했다. 원격
-catalog를 먼저 공개하지 않았으므로 실제 Gradle remote resolution은 아직
-수행하지 않는다.
+중앙 snapshot catalog content commit
+`45235aa22184b6a2280f530fb90c82a94e31c59d`는 원격에 공개됐고,
+`bluetape4k-dependencies` PR #192의 exact head는
+`9b740e415b4ad27ce7d5fc62fadde17a9df6ce19`이다. 내부 라이브러리 9개
+branch/PR은 이 immutable ref를 settings와 CI에서 동일하게 사용한다.
 
-다음 순서는 중앙 exact head를 원격에 push해 catalog SHA를 공개하고, 내부
-라이브러리 9개 branch/PR에서 remote resolution을 검증한 뒤 별도 승인으로
-push, PR, merge, publication을 진행하는 것이다. 예제 5개는 이 전달 단계에
-포함하지 않으며 공식 배포 BOM `1.4.0`을 계속 사용한다.
+2026-08-12T08:24Z에 격리 worktree를 정확한 repository 이름으로 매핑한
+candidate workspace에서 다음 preflight를 다시 실행했다.
+
+```text
+Verified post-publish development line: 8 publishers
+Verified consumer boundary: 9 snapshot libraries, 5 official-release examples
+Verified snapshot metadata for the central BOM and all child BOMs
+```
+
+최신 외부 버전 기준은 안정 BOM `bluetape4k-dependencies:1.4.0`과 중앙 BOM
+`1.5.0-SNAPSHOT`, child BOM 8개의 다음 개발선 snapshot metadata다. 예제 5개는
+공식 안정 BOM `1.4.0`을 유지하며 내부 `-SNAPSHOT`을 참조하지 않는다.
+
+현재 dispatch hold는 명시적으로 닫혀 있다. 이번 closeout은 build/CI repair와
+기존 PR 갱신까지만 허용하며 merge, snapshot/stable workflow dispatch, tag,
+publication, Release, cleanup은 새로운 live-state 확인과 별도 승인이 필요하다.
