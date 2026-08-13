@@ -32,7 +32,7 @@ bluetape4k-exposed-bom = "1.13.0-SNAPSHOT"  # Active post-publish development li
 bluetape4k-javers-bom  = "0.4.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
 
 # ── Build tooling ──────────────────────────────────────────────────────────
-kotlin             = "2.4.10"  # https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-bom
+kotlin             = "2.4.20-Beta1"  # GHSA-r937-wjx7-w2jp first patched Kotlin Gradle plugin line
 byte-buddy         = "1.18.11"  # https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-gradle-plugin
 nmcp               = "1.6.1"  # https://mvnrepository.com/artifact/com.gradleup.nmcp/nmcp
 dokka              = "2.2.0"  # https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin
