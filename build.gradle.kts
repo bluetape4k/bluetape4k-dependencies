@@ -60,6 +60,29 @@ javaPlatform {
 }
 
 dependencies {
+    components {
+        // Dokka 2.2.0 publishes Jackson 2.15.3 runtime dependencies. Rewrite
+        // those metadata edges so dependency submission sees the catalog line.
+        listOf("dokka-core", "dokka-base").forEach { dokkaModule ->
+            withModule("org.jetbrains.dokka:$dokkaModule") {
+                allVariants {
+                    withDependencies {
+                        removeAll { dependency ->
+                            dependency.group?.startsWith("com.fasterxml.jackson") == true
+                        }
+                        add("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
+                        add("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
+                    }
+                    withDependencyConstraints {
+                        removeAll { dependency ->
+                            dependency.group?.startsWith("com.fasterxml.jackson") == true
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // Sub-BOMs imported as platform: all modules in each repo are version-managed for
     // consumers without requiring individual constraint entries here.
     api(platform(libs.bluetape4k.bom))
