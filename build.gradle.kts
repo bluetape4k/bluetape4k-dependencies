@@ -1,6 +1,52 @@
 import nmcp.NmcpExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
 
+buildscript {
+    // The plugins DSL resolves its classpath before project configurations are
+    // created, so apply the same Dokka metadata repair at this earlier boundary.
+    val versionCatalog = project
+        .extensions
+        .getByType<VersionCatalogsExtension>()
+        .named("libs")
+    val jacksonVersion = versionCatalog.findVersion("jackson").get().requiredVersion
+    val jacksonAnnotationsVersion = versionCatalog.findVersion("jackson-annotations").get().requiredVersion
+
+    dependencies {
+        components {
+            withModule("org.jetbrains.dokka:dokka-core") {
+                allVariants {
+                    withDependencies {
+                        removeAll { dependency ->
+                            dependency.group?.startsWith("com.fasterxml.jackson") == true
+                        }
+                        add("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
+                        add("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
+                    }
+                    withDependencyConstraints {
+                        removeAll { dependency ->
+                            dependency.group?.startsWith("com.fasterxml.jackson") == true
+                        }
+                    }
+                }
+            }
+        }
+    }
+    configurations.classpath {
+        resolutionStrategy.eachDependency {
+            if (requested.group?.startsWith("com.fasterxml.jackson") == true) {
+                useVersion(
+                    if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-annotations") {
+                        jacksonAnnotationsVersion
+                    } else {
+                        jacksonVersion
+                    },
+                )
+                because("Dependabot alerts #2-#8: plugin classpath must use the catalog Jackson version")
+            }
+        }
+    }
+}
+
 plugins {
     `java-platform`
     `maven-publish`
@@ -40,6 +86,12 @@ val jacksonVersion = extensions
     .findVersion("jackson")
     .get()
     .requiredVersion
+val jacksonAnnotationsVersion = extensions
+    .getByType<VersionCatalogsExtension>()
+    .named("libs")
+    .findVersion("jackson-annotations")
+    .get()
+    .requiredVersion
 
 configurations.matching { it.name.startsWith("dokka") }.configureEach {
     resolutionStrategy.eachDependency {
@@ -48,7 +100,13 @@ configurations.matching { it.name.startsWith("dokka") }.configureEach {
             because("CVE-2026-71497: Dokka tooling must use the first patched jsoup release")
         }
         if (requested.group?.startsWith("com.fasterxml.jackson") == true) {
-            useVersion(jacksonVersion)
+            useVersion(
+                if (requested.group == "com.fasterxml.jackson.core" && requested.name == "jackson-annotations") {
+                    jacksonAnnotationsVersion
+                } else {
+                    jacksonVersion
+                },
+            )
             because("Dependabot alerts #2-#8: Dokka tooling must use the catalog Jackson version")
         }
     }
@@ -60,6 +118,8 @@ javaPlatform {
 }
 
 dependencies {
+    // Project Dokka configurations need the repair independently of the plugin
+    // classpath because dependency submission reports both graphs.
     components {
         // Dokka 2.2.0 publishes Jackson 2.15.3 runtime dependencies. Rewrite
         // those metadata edges so dependency submission sees the catalog line.
