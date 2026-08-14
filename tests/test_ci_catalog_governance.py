@@ -12,6 +12,20 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
+    def test_ci_validates_supply_chain_reports_without_promoting_findings(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+
+        report_job = workflow.split("  supply-chain-report-only:\n", 1)[1].split(
+            "  ci-status:\n", 1
+        )[0]
+        status_job = workflow.split("  ci-status:\n", 1)[1]
+
+        self.assertIn("name: Supply-chain Report (report-only)", report_job)
+        self.assertIn(
+            "python3 scripts/verify-supply-chain-reports.py --summary", report_job
+        )
+        self.assertIn("- supply-chain-report-only", status_job)
+
     def test_ci_checks_the_latest_stable_inventory(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         script_step = workflow.split(

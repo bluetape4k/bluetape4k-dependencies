@@ -1,0 +1,156 @@
+{
+  "schema-version": 1,
+  "report-only": true,
+  "train": "2026-08-14-issue-163-baseline",
+  "repository": "bluetape4k-dependencies",
+  "generated-at": "2026-08-14T00:00:00+09:00",
+  "records": [
+    {
+      "id": "gradle-catalog-authority",
+      "ecosystem": "kotlin-gradle",
+      "status": "pass",
+      "severity": "none",
+      "affected": {
+        "artifact": "gradle/libs.versions.toml",
+        "module": "central catalog"
+      },
+      "reachable": "not-applicable",
+      "exception-id": null,
+      "exception-expiry": null,
+      "evidence-url": "https://github.com/bluetape4k/bluetape4k-dependencies/blob/develop/config/latest-stable-version-audit.json",
+      "owner": "dependency-governance",
+      "source": {
+        "tool": "audit-latest-stable.py",
+        "command": "scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary",
+        "path": "scripts/audit-latest-stable.py"
+      },
+      "summary": "중앙 catalog authority와 안정 버전 감사 결과를 report-only로 확인한다."
+    },
+    {
+      "id": "gradle-dependency-verification",
+      "ecosystem": "kotlin-gradle",
+      "status": "review",
+      "severity": "low",
+      "affected": {
+        "artifact": "Gradle dependency verification metadata",
+        "module": "central catalog bootstrap and artifact trust"
+      },
+      "reachable": "unknown",
+      "exception-id": null,
+      "exception-expiry": null,
+      "evidence-url": "https://docs.gradle.org/current/userguide/dependency_verification.html",
+      "owner": "dependency-governance",
+      "source": {
+        "tool": "inventory",
+        "command": "find gradle -name verification-metadata.xml",
+        "path": "gradle/verification-metadata.xml"
+      },
+      "summary": "현재 central repository에는 verification metadata가 없어 bootstrap trust와 artifact checksum 증거를 별도 도입 후보로 남긴다."
+    },
+    {
+      "id": "go-vulnerability-reachability",
+      "ecosystem": "go",
+      "status": "not-applicable",
+      "severity": "none",
+      "affected": {
+        "artifact": "bluetape-go",
+        "module": "Go modules and call sites"
+      },
+      "reachable": "unknown",
+      "exception-id": null,
+      "exception-expiry": null,
+      "evidence-url": "https://github.com/bluetape4k/bluetape-go/tree/develop",
+      "owner": "bluetape-go-maintainers",
+      "source": {
+        "tool": "govulncheck",
+        "command": "govulncheck ./...",
+        "path": "../bluetape-go"
+      },
+      "summary": "central catalog 저장소의 범위 밖이다. Go module 저장소가 govulncheck와 reachable call path를 소유한다."
+    },
+    {
+      "id": "python-package-audit",
+      "ecosystem": "python",
+      "status": "not-applicable",
+      "severity": "none",
+      "affected": {
+        "artifact": "bluetape-py",
+        "module": "Python package dependency set"
+      },
+      "reachable": "unknown",
+      "exception-id": null,
+      "exception-expiry": null,
+      "evidence-url": "https://github.com/bluetape4k/bluetape-py/tree/develop",
+      "owner": "bluetape-py-maintainers",
+      "source": {
+        "tool": "pip-audit",
+        "command": "pip-audit",
+        "path": "../bluetape-py"
+      },
+      "summary": "central catalog 저장소의 범위 밖이다. Python package 저장소가 audit 결과와 예외를 소유한다."
+    },
+    {
+      "id": "rust-package-audit",
+      "ecosystem": "rust",
+      "status": "not-applicable",
+      "severity": "none",
+      "affected": {
+        "artifact": "bluetape-rs",
+        "module": "Cargo dependency graph"
+      },
+      "reachable": "unknown",
+      "exception-id": null,
+      "exception-expiry": null,
+      "evidence-url": "https://github.com/bluetape4k/bluetape-rs/tree/develop",
+      "owner": "bluetape-rs-maintainers",
+      "source": {
+        "tool": "cargo-audit",
+        "command": "cargo audit",
+        "path": "../bluetape-rs"
+      },
+      "summary": "central catalog 저장소의 범위 밖이다. Rust workspace가 advisory와 예외를 소유한다."
+    },
+    {
+      "id": "publication-pom-contract",
+      "ecosystem": "publication",
+      "status": "pass",
+      "severity": "none",
+      "affected": {
+        "artifact": "bluetape4k-dependencies",
+        "module": "Maven publication POM and effective model"
+      },
+      "reachable": "not-applicable",
+      "exception-id": null,
+      "exception-expiry": null,
+      "evidence-url": "https://github.com/bluetape4k/bluetape4k-dependencies/blob/develop/scripts/verify-publication-poms.py",
+      "owner": "dependency-governance",
+      "source": {
+        "tool": "verify-publication-poms.py",
+        "command": "scripts/verify-publication-poms.py --workspace .. --summary",
+        "path": "scripts/verify-publication-poms.py"
+      },
+      "summary": "library publisher POM 생성과 Maven effective-model 검증을 별도 publication 증거로 보존한다."
+    },
+    {
+      "id": "sbom-provenance-attestation",
+      "ecosystem": "sbom-provenance",
+      "status": "review",
+      "severity": "low",
+      "affected": {
+        "artifact": "published Bluetape artifacts",
+        "module": "release pipeline SBOM and attestation"
+      },
+      "reachable": "not-applicable",
+      "exception-id": null,
+      "exception-expiry": null,
+      "evidence-url": "https://github.com/bluetape4k/bluetape4k-wiki/blob/develop/research/2026-07-18-bluetape-supply-chain-security-boundary.md",
+      "owner": "release-pipeline",
+      "source": {
+        "tool": "inventory",
+        "command": "release evidence inventory",
+        "path": "docs/releases"
+      },
+      "summary": "SBOM·digest·서명·attestation의 언어별 실제 증거는 두 release train 동안 수집할 pending 항목이다."
+    }
+  ]
+}
