@@ -1,4 +1,5 @@
 import nmcp.NmcpExtension
+import org.gradle.api.artifacts.VersionCatalogsExtension
 
 plugins {
     `java-platform`
@@ -33,11 +34,22 @@ repositories {
     }
 }
 
+val jacksonVersion = extensions
+    .getByType<VersionCatalogsExtension>()
+    .named("libs")
+    .findVersion("jackson")
+    .get()
+    .requiredVersion
+
 configurations.matching { it.name.startsWith("dokka") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jsoup" && requested.name == "jsoup") {
             useVersion("1.23.1")
             because("CVE-2026-71497: Dokka tooling must use the first patched jsoup release")
+        }
+        if (requested.group?.startsWith("com.fasterxml.jackson") == true) {
+            useVersion(jacksonVersion)
+            because("Dependabot alerts #2-#8: Dokka tooling must use the catalog Jackson version")
         }
     }
 }
