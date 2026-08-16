@@ -128,6 +128,7 @@ commons-pool2     = "2.13.1"  # https://mvnrepository.com/artifact/org.apache.co
 assertj-core      = "3.27.7"  # https://mvnrepository.com/artifact/org.assertj/assertj-core
 awaitility        = "4.3.0"  # https://mvnrepository.com/artifact/org.awaitility/awaitility-kotlin
 random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.benas/random-beans
+sudachi           = "0.8.0"
 # <generated-central-authority-versions by scripts/promote-catalog-authority.py>
 aspectj-post-compile-weaving = "9.5.0"
 at-yawk-lz4 = "1.11.2"
@@ -679,6 +680,7 @@ vertx-core                                    = { module = "io.vertx:vertx-core"
 vertx-dependencies                            = { module = "io.vertx:vertx-dependencies", version.ref = "vertx" }
 zookeeper                                     = { module = "org.apache.zookeeper:zookeeper", version.ref = "zookeeper" }
 zstd-jni                                      = { module = "com.github.luben:zstd-jni", version.ref = "zstd-jni" }
+sudachi                                        = { module = "com.worksap.nlp:sudachi", version.ref = "sudachi" }
 # <generated-central-authority-libraries by scripts/promote-catalog-authority.py>
 amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "managed-amqp-client-h639dbc3b57d0" }
 antlr4-runtime = { module = "org.antlr:antlr4-runtime", version.ref = "managed-antlr4-runtime-h501fac563496" }

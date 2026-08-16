@@ -74,6 +74,7 @@ CENTRAL_DEPENDENCY_IGNORES = (
     "jakarta.xml.bind:jakarta.xml.bind-api",
     "com.hazelcast:hazelcast",
     "com.sksamuel.scrimage:*",
+    "com.worksap.nlp:sudachi",
     "ai.timefold.solver:*",
     "org.flywaydb:*",
     "com.gradleup.shadow",

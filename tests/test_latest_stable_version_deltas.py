@@ -319,10 +319,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
-        self.assertEqual(audit["summary"]["authority-count"], 518)
-        self.assertEqual(audit["summary"]["line-count"], 552)
-        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 450)
-        self.assertEqual(audit["summary"]["metadata-verified"], 513)
+        self.assertEqual(audit["summary"]["authority-count"], 519)
+        self.assertEqual(audit["summary"]["line-count"], 553)
+        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 451)
+        self.assertEqual(audit["summary"]["metadata-verified"], 514)
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:
         audit = json.loads(AUDIT.read_text(encoding="utf-8"))

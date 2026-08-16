@@ -879,12 +879,12 @@ def build_inventory(catalog_path: Path, policy_path: Path) -> dict[str, Any]:
 
     if (
         len(managed_records) != 325
-        or len(policy_records) != 70
+        or len(policy_records) != 71
         or len(catalog_records) != 123
-        or len(records) != 518
+        or len(records) != 519
     ):
         raise RuntimeError(
-            "authority universe changed; expected 325 managed + 70 policy + 123 catalog = 518, "
+            "authority universe changed; expected 325 managed + 71 policy + 123 catalog = 519, "
             f"found {len(managed_records)} + {len(policy_records)} + "
             f"{len(catalog_records)} = {len(records)}"
         )
