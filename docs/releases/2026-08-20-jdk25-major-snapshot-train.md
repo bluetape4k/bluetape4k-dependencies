@@ -35,8 +35,24 @@
 | `bluetape4k-text` | `89bf8fdebbb8567ac4b5f3620b3719466ef141b0` | `0.4.0` | `1.0.0` | `io.github.bluetape4k.text:bluetape4k-text-bom:1.0.0-SNAPSHOT` |
 | `bluetape4k-dependencies` | `298dc7cab27c767b0f78aab2b701f6604fd2c559` | `1.5.0` | `2.0.0` | `io.github.bluetape4k:bluetape4k-dependencies:2.0.0-SNAPSHOT` |
 
-최종 candidate SHA는 각 변경 commit과 merge 뒤에 이 표의 기준 SHA와 별도로
-기록한다. 버전은 catalog train tag에서 추론하지 않는다.
+버전은 catalog train tag에서 추론하지 않는다.
+
+## 검증한 후보 SHA
+
+| Repository | Candidate SHA | 비고 |
+| --- | --- | --- |
+| `bluetape4k-projects` | `846a804b9287c61bbf802d0573909005e1a66f8f` | `develop`이 이미 `2.0.0`이므로 source 변경 없음 |
+| `bluetape4k-exposed` | `6de6a0eb3363b61ceb3dddee469d7d9b7aeafff5` | `baseVersion=2.0.0` |
+| `bluetape4k-aws` | `11bc7752ee0d5a08c0d427a2e4c8c4ce5e1a82af` | `baseVersion=1.0.0` |
+| `bluetape4k-graph` | `67e56b95bf8fa282cd6c2afc46c4f42de83e9583` | `baseVersion=1.0.0` |
+| `bluetape4k-image` | `c2c36659bf73efd0521a3c8309a5c9d16842ef45` | `baseVersion=1.0.0` |
+| `bluetape4k-javers` | `2da8004fef773b6266eed706583103f50cdfe04c` | `baseVersion=1.0.0` |
+| `bluetape4k-leader` | `356c8c322c2144f64ea1a219096d0da67d87ea76` | `baseVersion=1.0.0` |
+| `bluetape4k-text` | `7f356c60df857f3f848e9c392bc0886ca6d84584` | `baseVersion=1.0.0` |
+| `bluetape4k-dependencies` | `7c69d5795b1c83526d884ac7609909b7f9adcf95` | `baseVersion=2.0.0`, 아래 검증 증거 기록 전 SHA |
+
+각 merge 뒤의 `develop` SHA와 게시 workflow 대상 SHA는 dispatch 직전에 다시
+고정한다.
 
 ## 저장소 분류와 경계
 
@@ -107,8 +123,16 @@ dependencies `SNAPSHOT`을 dispatch하지 않는다.
   unavailable 0.
 - Python 전체 테스트 283개와 `./gradlew build`, managed catalog 169 aliases 및
   8 sub-BOM 검증, `git diff --check`가 통과했다.
+- 중앙 후보 맵이 central과 9개 관리 저장소의 origin, branch, base SHA,
+  candidate HEAD, clean 상태를 fail-closed로 검증했다.
+- `sync-shared-versions.py`, `sync-managed-catalog.py`,
+  `sync-dependabot-ignores.py`의 candidate-map 검증이 모두 통과했다.
+- 9개 publisher에서 publication POM 174개와 dependency 항목 45,338개를
+  검사했고, Maven effective model 174개가 모두 통과했다(`failures=0`).
+- upstream 7개 변경 저장소와 dependencies candidate commit이 존재한다.
+  `bluetape4k-projects`는 이미 목표 `2.0.0`이어서 source commit이 필요 없다.
+- 9개 열린 milestone의 이름과 open 상태를 GitHub API로 read-back했다.
 
-- upstream과 dependencies candidate commit이 아직 없다.
 - PR CI와 exact-head merge 승인이 아직 없다.
 - 새 upstream `SNAPSHOT` artifact가 아직 공개되지 않았다.
 - 각 `.github/workflows/publish-snapshot.yml`의 정확한 dispatch inputs를 실행
