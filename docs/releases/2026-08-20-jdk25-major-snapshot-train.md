@@ -45,7 +45,7 @@
 | `bluetape4k-exposed` | `6de6a0eb3363b61ceb3dddee469d7d9b7aeafff5` | `baseVersion=2.0.0` |
 | `bluetape4k-aws` | `11bc7752ee0d5a08c0d427a2e4c8c4ce5e1a82af` | `baseVersion=1.0.0` |
 | `bluetape4k-graph` | `67e56b95bf8fa282cd6c2afc46c4f42de83e9583` | `baseVersion=1.0.0` |
-| `bluetape4k-image` | `c2c36659bf73efd0521a3c8309a5c9d16842ef45` | `baseVersion=1.0.0` |
+| `bluetape4k-image` | `4d663bcbdb769521853bfe76b55f6913c74de19d` | `baseVersion=1.0.0`, Ruby 3.4 manifest 직렬화 호환성 수정 포함 |
 | `bluetape4k-javers` | `2da8004fef773b6266eed706583103f50cdfe04c` | `baseVersion=1.0.0` |
 | `bluetape4k-leader` | `356c8c322c2144f64ea1a219096d0da67d87ea76` | `baseVersion=1.0.0` |
 | `bluetape4k-text` | `7f356c60df857f3f848e9c392bc0886ca6d84584` | `baseVersion=1.0.0` |
