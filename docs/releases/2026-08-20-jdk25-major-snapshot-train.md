@@ -171,3 +171,17 @@ dependencies `SNAPSHOT`을 dispatch하지 않는다.
 따라서 Exposed, AWS, Graph, Image, Javers, Text의 full Nightly dispatch hold는
 해제한다. Leader, dependencies, 안정 게시, consumer 전환, Pages와 버전 매뉴얼은
 계속 **BLOCKED**다.
+
+### 2026-08-20 Exposed 동시 merge drift 대응
+
+- Exposed Nightly `32369982424`는 승인·병합된 `9571487b`에서 성공했지만,
+  실행 중 PR #705가 `develop`에 병합돼 자동 publish run `32371593143`의
+  `headSha`는 `5b2f0a1a`가 됐다.
+- publish run은 POM 검증 단계에서 취소했고 실제 `Publish SNAPSHOT` 단계는
+  실행되지 않았다. `2.0.0-SNAPSHOT` metadata는 계속 HTTP 404다.
+- 최신 `develop` `5b2f0a1a`의 push CI `32371088443`은 성공했다. 변경은
+  MySQL 8 JDBC conformance test/docs이며 목표 `baseVersion=2.0.0`을 보존한다.
+- workflow blob은 Nightly `e05b932f`, publish `5dca94d1`로 변하지 않았다.
+
+따라서 Exposed만 최신 `develop` `5b2f0a1a`에서 full Nightly를 다시 실행한다.
+자동 publish가 다른 head를 가리키면 실제 publish 단계 전에 다시 취소한다.
