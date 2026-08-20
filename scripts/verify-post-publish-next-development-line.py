@@ -102,13 +102,24 @@ def validate_manifest(document: dict[str, Any]) -> None:
         "snapshot-catalog-repositories",
         "official-release-repositories",
     }
-    if set(consumer_policy) != required_policy_fields:
-        raise RuntimeError(f"consumer-policy fields must be {sorted(required_policy_fields)}")
+    optional_policy_fields = {"snapshot-catalog-ref-overrides"}
+    actual_policy_fields = set(consumer_policy)
+    if not required_policy_fields.issubset(actual_policy_fields) or (
+        actual_policy_fields - required_policy_fields - optional_policy_fields
+    ):
+        raise RuntimeError(
+            "consumer-policy fields must include "
+            f"{sorted(required_policy_fields)} and may include "
+            f"{sorted(optional_policy_fields)}"
+        )
     snapshot_ref = consumer_policy["snapshot-catalog-ref"]
+    snapshot_ref_overrides = consumer_policy.get("snapshot-catalog-ref-overrides", {})
     snapshot_repositories = consumer_policy["snapshot-catalog-repositories"]
     official_repositories = consumer_policy["official-release-repositories"]
     if not isinstance(snapshot_ref, str) or not GIT_SHA.fullmatch(snapshot_ref):
         raise RuntimeError("snapshot-catalog-ref must be an immutable Git commit SHA")
+    if not isinstance(snapshot_ref_overrides, dict):
+        raise RuntimeError("snapshot-catalog-ref-overrides must be an object")
     if not isinstance(snapshot_repositories, list) or not snapshot_repositories:
         raise RuntimeError("snapshot-catalog-repositories must be a non-empty list")
     if not all(
@@ -118,6 +129,16 @@ def validate_manifest(document: dict[str, Any]) -> None:
         raise RuntimeError("snapshot-catalog-repositories contains an invalid repository")
     if len(snapshot_repositories) != len(set(snapshot_repositories)):
         raise RuntimeError("snapshot-catalog-repositories contains duplicates")
+    for repository, override_ref in snapshot_ref_overrides.items():
+        if repository not in snapshot_repositories:
+            raise RuntimeError(
+                "snapshot-catalog-ref-overrides contains a repository outside "
+                f"snapshot-catalog-repositories: {repository!r}"
+            )
+        if not isinstance(override_ref, str) or not GIT_SHA.fullmatch(override_ref):
+            raise RuntimeError(
+                f"snapshot catalog ref override for {repository} must be an immutable Git commit SHA"
+            )
     if not repositories.issubset(snapshot_repositories):
         raise RuntimeError("every publishable repository must be a snapshot catalog consumer")
     if not isinstance(official_repositories, list) or not official_repositories:
@@ -193,13 +214,18 @@ def snapshot_candidate_branch(manifest: dict[str, Any]) -> str:
     return f"chore/snapshot-catalog-{snapshot_ref[:7]}"
 
 
+def snapshot_catalog_ref_for_repository(policy: dict[str, Any], repository: str) -> str:
+    overrides = policy.get("snapshot-catalog-ref-overrides", {})
+    return overrides.get(repository, policy["snapshot-catalog-ref"])
+
+
 def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     policy = manifest["consumer-policy"]
-    expected_snapshot_ref = policy["snapshot-catalog-ref"]
     stable_version = manifest["stable-version"]
 
     for repository in policy["snapshot-catalog-repositories"]:
+        expected_snapshot_ref = snapshot_catalog_ref_for_repository(policy, repository)
         settings = workspace / repository / "settings.gradle.kts"
         ci_workflow = workspace / repository / ".github" / "workflows" / "ci.yml"
         if not settings.is_file():
