@@ -1,6 +1,6 @@
 # JDK 25 전용선 major `SNAPSHOT` train 체크리스트
 
-상태: **계획 승인 / 변경 진행 중 / dispatch hold**
+상태: **upstream 7개 병합 완료 / 6개 Nightly dispatch 준비 / Leader 복구 hold**
 
 기준 시각: 2026-08-20 KST  
 선택 흐름: `catalog-train-snapshot`  
@@ -140,3 +140,34 @@ dependencies `SNAPSHOT`을 dispatch하지 않는다.
 
 따라서 현재 `SNAPSHOT` dispatch는 **BLOCKED**다. 위 선행 조건을 순서대로
 충족하기 전에는 어떤 workflow도 실행하지 않는다.
+
+### 2026-08-20 upstream 병합 후 dispatch preflight
+
+- 사용자는 upstream 7개 PR의 exact-head 병합을 승인했다. Exposed, AWS,
+  Graph, Image, Javers, Leader, Text는 승인된 head로 `develop`에 반영됐고,
+  원격 branch SHA를 병합 결과와 대조했다.
+- 병합 후 exact-`develop` CI는 Exposed, AWS, Graph, Image, Javers, Text에서
+  성공했다. Leader는 모든 빌드와 module test가 성공했지만 Ruby 3.4의 빈 배열
+  pretty JSON 차이로 manual manifest byte contract만 실패했다.
+- Leader 복구는 별도 local branch `fix/ruby34-manifest-serialization`의
+  `87d1eeb5`에 준비했다. JSON 의미, `releaseRef=0.5.0`, release commit은
+  그대로이며 Ruby 2.6/3.4와 전체 manual/release contract가 통과했다. 새 PR과
+  병합 전에는 Leader Nightly를 dispatch하지 않는다.
+- dispatch 대상 6개 저장소의 target `SNAPSHOT` metadata는 모두 HTTP 404로
+  아직 존재하지 않는다. latest stable은 Exposed `1.12.1`, AWS `0.5.0`,
+  Graph `0.6.0`, Image `0.4.0`, Javers `0.3.0`, Text `0.3.0`이다.
+- Nightly workflow 입력은 Exposed/AWS/Graph/Image/Javers가 `scope=full`,
+  Text가 입력 없음이다. 성공한 Nightly의 `workflow_run`만 각
+  `publish-snapshot.yml`을 자동 실행한다.
+- dispatch 대상 `develop` SHA는 Exposed `9571487b`, AWS `7e97398f`, Graph
+  `37c62769`, Image `50701b8d`, Javers `1ceff1aa`, Text `0b213374`다.
+- Nightly/publish workflow blob SHA는 각각 Exposed `e05b932f`/`5dca94d1`,
+  AWS `9fb960f0`/`df2ce9bd`, Graph `7619df0b`/`8cc66a5f`, Image
+  `6cf188c2`/`04fb1b97`, Javers `18cded52`/`26e2778c`, Text
+  `b4dddc01`/`ceeeaf1e`다.
+- Image는 full Nightly run ID를 publish workflow가 검증하며 수동 override를
+  사용하지 않는다.
+
+따라서 Exposed, AWS, Graph, Image, Javers, Text의 full Nightly dispatch hold는
+해제한다. Leader, dependencies, 안정 게시, consumer 전환, Pages와 버전 매뉴얼은
+계속 **BLOCKED**다.
