@@ -1,6 +1,6 @@
 # JDK 25 전용선 major `SNAPSHOT` train 체크리스트
 
-상태: **upstream 7개 병합 완료 / 6개 Nightly dispatch 준비 / Leader 복구 hold**
+상태: **upstream 7개 병합 완료 / 6개 SNAPSHOT 공개 검증 / Leader 복구 hold**
 
 기준 시각: 2026-08-20 KST  
 선택 흐름: `catalog-train-snapshot`  
@@ -185,3 +185,27 @@ dependencies `SNAPSHOT`을 dispatch하지 않는다.
 
 따라서 Exposed만 최신 `develop` `5b2f0a1a`에서 full Nightly를 다시 실행한다.
 자동 publish가 다른 head를 가리키면 실제 publish 단계 전에 다시 취소한다.
+
+### 2026-08-20 upstream 6개 SNAPSHOT 공개 검증
+
+| Repository | Full Nightly | Publish run | Timestamped version | 대표 module POM |
+| --- | --- | --- | --- | --- |
+| Exposed | `32372288352` | `32373449973` | `2.0.0-20260820.132525-1` | `bluetape4k-exposed-batch` HTTP 200 |
+| AWS | `32369985304` | `32370590989` | `1.0.0-20260820.124935-1` | `bluetape4k-aws-exposed` HTTP 200 |
+| Graph | `32369988208` | `32371025968` | `1.0.0-20260820.125446-1` | `bluetape4k-graph-age` HTTP 200 |
+| Image | `32369991546` | `32371760082` | `1.0.0-20260820.130115-1` | `bluetape4k-images` HTTP 200 |
+| Javers | `32369995404` | `32371091205` | `1.0.0-20260820.125351-1` | `javers-core` HTTP 200 |
+| Text | `32369998165` | `32370816481` | `1.0.0-20260820.125237-1` | `lingua` HTTP 200 |
+
+- 6개 full Nightly와 자동 publish가 모두 성공했다.
+- 6개 target `SNAPSHOT` metadata와 timestamped BOM POM이 HTTP 200이며,
+  BOM이 관리하는 대표 내부 module의 metadata와 timestamped POM도 HTTP 200이다.
+- Image publish는 full Nightly run의 OCR/VIPS validation을 확인했고 manual
+  override를 사용하지 않았다.
+- Exposed 최초 자동 publish는 Nightly와 다른 head를 가리켜 업로드 전에
+  취소했다. 최신 `develop`에서 push CI와 full Nightly를 다시 통과시킨 뒤
+  head가 일치하는 publish만 완료했다.
+
+현재 upstream publication DAG는 Leader만 남았다. Leader 복구 PR과 exact-head
+병합 승인, full Nightly, `1.0.0-SNAPSHOT` 공개 검증 전에는 dependencies PR을
+병합하거나 dependencies `2.0.0-SNAPSHOT`을 게시하지 않는다.
