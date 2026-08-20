@@ -1,6 +1,6 @@
 # JDK 25 전용선 major `SNAPSHOT` train 체크리스트
 
-상태: **upstream 7개 병합 완료 / 6개 SNAPSHOT 공개 검증 / Leader 복구 hold**
+상태: **upstream 7개 병합 완료 / 7개 SNAPSHOT 공개 검증 / dependencies 검증 중**
 
 기준 시각: 2026-08-20 KST  
 선택 흐름: `catalog-train-snapshot`  
@@ -31,7 +31,7 @@
 | `bluetape4k-graph` | `0bb4b6f0ddd6b8bf456fd4df8240863ae0a9d05d` | `0.7.0` | `1.0.0` | `io.github.bluetape4k.graph:bluetape4k-graph-bom:1.0.0-SNAPSHOT` |
 | `bluetape4k-image` | `ceb009718c292023d0e12177a395d0895bff7f62` | `0.5.0` | `1.0.0` | `io.github.bluetape4k.image:bluetape4k-image-bom:1.0.0-SNAPSHOT` |
 | `bluetape4k-javers` | `bea957106293957f2014fe2769ac6ec26a67aa34` | `0.4.0` | `1.0.0` | `io.github.bluetape4k.javers:bluetape4k-javers-bom:1.0.0-SNAPSHOT` |
-| `bluetape4k-leader` | `a9d205be3746a0e535175d17eaadb3fd60110d7a` | `0.6.0` | `1.0.0` | `io.github.bluetape4k.leader:bluetape4k-leader-bom:1.0.0-SNAPSHOT` |
+| `bluetape4k-leader` | `1af73b13d3638fa08e83c7c1984b67132f4dd6f0` | `0.6.0` | `1.0.0` | `io.github.bluetape4k.leader:bluetape4k-leader-bom:1.0.0-SNAPSHOT` |
 | `bluetape4k-text` | `89bf8fdebbb8567ac4b5f3620b3719466ef141b0` | `0.4.0` | `1.0.0` | `io.github.bluetape4k.text:bluetape4k-text-bom:1.0.0-SNAPSHOT` |
 | `bluetape4k-dependencies` | `298dc7cab27c767b0f78aab2b701f6604fd2c559` | `1.5.0` | `2.0.0` | `io.github.bluetape4k:bluetape4k-dependencies:2.0.0-SNAPSHOT` |
 
@@ -209,3 +209,23 @@ dependencies `SNAPSHOT`을 dispatch하지 않는다.
 현재 upstream publication DAG는 Leader만 남았다. Leader 복구 PR과 exact-head
 병합 승인, full Nightly, `1.0.0-SNAPSHOT` 공개 검증 전에는 dependencies PR을
 병합하거나 dependencies `2.0.0-SNAPSHOT`을 게시하지 않는다.
+
+### 2026-08-20 Leader SNAPSHOT 공개 검증
+
+- manual manifest의 Ruby 3.4 직렬화 안정화는 PR #750으로 `develop`에 병합됐다.
+  최신 `develop` `1af73b13`의 push CI `32372737364`와 Dependency Submission
+  `32372737259`가 성공했다.
+- full Nightly `32375263089`는 최초 실행에서 Maven Central의
+  `429 Too Many Requests`로 `leader-exposed-r2dbc (H2)` dependency resolution만
+  실패했다. 나머지 25개 job은 성공했으며, cooldown 후 실패 job만 재실행해
+  동일 exact head에서 최종 28/28 성공을 확인했다.
+- Nightly 성공 event가 생성한 자동 publish run `32376872336`은 같은
+  `headSha=1af73b13`에서 성공했다. 수동 publish dispatch나 release workflow는
+  사용하지 않았다.
+- `bluetape4k-leader-bom`과 `bluetape4k-leader-core`의
+  `1.0.0-SNAPSHOT` metadata 및 timestamped POM은 HTTP 200이다. 공개된 버전은
+  `1.0.0-20260820.135602-1`이다.
+
+이제 upstream 신규 7개 `SNAPSHOT`의 공개 검증이 완료됐다. dependencies draft
+PR의 build/artifact gate를 다시 통과시키되, exact-head 병합 승인 전에는 PR을
+ready로 전환하거나 병합하거나 `2.0.0-SNAPSHOT`을 게시하지 않는다.
