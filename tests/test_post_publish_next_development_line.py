@@ -54,6 +54,12 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             },
         )
         self.assertEqual(
+            policy["snapshot-catalog-ref-overrides"],
+            {
+                "bluetape4k-text": "298dc7cab27c767b0f78aab2b701f6604fd2c559",
+            },
+        )
+        self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
             {
                 "bluetape4k-workshop",
@@ -79,6 +85,16 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         document["source-contract"]["snapshotVersion"] = "-SNAPSHOT"
 
         with self.assertRaisesRegex(RuntimeError, "snapshotVersion"):
+            module.validate_manifest(document)
+
+    def test_manifest_rejects_invalid_snapshot_catalog_ref_override(self) -> None:
+        module = load_script()
+        document = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        document["consumer-policy"]["snapshot-catalog-ref-overrides"] = {
+            "unmanaged-library": "not-a-sha",
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "outside snapshot-catalog-repositories"):
             module.validate_manifest(document)
 
     def test_development_line_rejects_stable_internal_ref(self) -> None:
@@ -254,6 +270,40 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             f"{expected_ref}, got '{('b' * 40)}'",
             errors,
         )
+
+    def test_consumer_policy_accepts_repository_specific_catalog_ref_override(self) -> None:
+        module = load_script()
+        default_ref = "a" * 40
+        override_ref = "b" * 40
+        document = {
+            "stable-version": "1.4.0",
+            "consumer-policy": {
+                "snapshot-catalog-ref": default_ref,
+                "snapshot-catalog-ref-overrides": {
+                    "internal-library": override_ref,
+                },
+                "snapshot-catalog-repositories": ["internal-library"],
+                "official-release-repositories": [],
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            internal = workspace / "internal-library"
+            (internal / ".github" / "workflows").mkdir(parents=True)
+            (internal / "settings.gradle.kts").write_text(
+                f'catalogRef.orElse("{override_ref}")\n', encoding="utf-8"
+            )
+            (internal / ".github" / "workflows" / "ci.yml").write_text(
+                "env:\n"
+                "  BLUETAPE4K_DEPENDENCIES_CATALOG_REF: "
+                f"'{override_ref}'\n",
+                encoding="utf-8",
+            )
+
+            errors = module.verify_consumer_policy(workspace, document)
+
+        self.assertEqual(errors, [])
 
 
 if __name__ == "__main__":
