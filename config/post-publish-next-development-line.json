@@ -2,7 +2,7 @@
   "schema-version": 2,
   "status": "active",
   "stable-version": "1.4.0",
-  "development-version": "1.5.0",
+  "development-version": "2.0.0",
   "snapshot-suffix": "-SNAPSHOT",
   "source-contract": {
     "snapshotVersion": "",
@@ -14,56 +14,56 @@
       "catalog-alias": "bluetape4k-bom",
       "group": "io.github.bluetape4k",
       "artifact": "bluetape4k-bom",
-      "base-version": "1.13.0"
+      "base-version": "2.0.0"
     },
     {
       "repository": "bluetape4k-aws",
       "catalog-alias": "bluetape4k-aws-bom",
       "group": "io.github.bluetape4k.aws",
       "artifact": "bluetape4k-aws-bom",
-      "base-version": "0.6.0"
+      "base-version": "1.0.0"
     },
     {
       "repository": "bluetape4k-exposed",
       "catalog-alias": "bluetape4k-exposed-bom",
       "group": "io.github.bluetape4k.exposed",
       "artifact": "bluetape4k-exposed-bom",
-      "base-version": "1.13.0"
+      "base-version": "2.0.0"
     },
     {
       "repository": "bluetape4k-graph",
       "catalog-alias": "bluetape4k-graph-bom",
       "group": "io.github.bluetape4k.graph",
       "artifact": "bluetape4k-graph-bom",
-      "base-version": "0.7.0"
+      "base-version": "1.0.0"
     },
     {
       "repository": "bluetape4k-image",
       "catalog-alias": "bluetape4k-image-bom",
       "group": "io.github.bluetape4k.image",
       "artifact": "bluetape4k-image-bom",
-      "base-version": "0.5.0"
+      "base-version": "1.0.0"
     },
     {
       "repository": "bluetape4k-javers",
       "catalog-alias": "bluetape4k-javers-bom",
       "group": "io.github.bluetape4k.javers",
       "artifact": "bluetape4k-javers-bom",
-      "base-version": "0.4.0"
+      "base-version": "1.0.0"
     },
     {
       "repository": "bluetape4k-leader",
       "catalog-alias": "bluetape4k-leader-bom",
       "group": "io.github.bluetape4k.leader",
       "artifact": "bluetape4k-leader-bom",
-      "base-version": "0.6.0"
+      "base-version": "1.0.0"
     },
     {
       "repository": "bluetape4k-text",
       "catalog-alias": "bluetape4k-text-bom",
       "group": "io.github.bluetape4k.text",
       "artifact": "bluetape4k-text-bom",
-      "base-version": "0.4.0"
+      "base-version": "1.0.0"
     }
   ],
   "consumer-policy": {
