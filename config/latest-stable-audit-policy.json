@@ -32,10 +32,6 @@
       "disposition": "current",
       "reason": "Keep all Kotlin compiler and Gradle plugin aliases on the approved 2.4.10 line."
     },
-    "kotlin20": {
-      "disposition": "hold-compatibility",
-      "reason": "Preserve the explicit Kotlin 2.0 compiler and standard-library compatibility line."
-    },
     "logback": {
       "disposition": "hold-compatibility",
       "reason": "Align Logback classic and core to Spring Boot 4.1.0's managed 1.5.34 pair; mixing logback-classic 1.6.x with the managed core line causes an AbstractMethodError."

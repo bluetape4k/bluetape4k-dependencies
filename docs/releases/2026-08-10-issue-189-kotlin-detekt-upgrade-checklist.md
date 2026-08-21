@@ -2,6 +2,12 @@
 
 상태: **PR 준비 / 병합 승인 대기**
 
+> 후속 전환(2026-08-21): 이 문서의 `detekt-legacy`,
+> `detekt-formatting-legacy`, `kotlin20` 유지 결정은 당시 legacy consumer를 위한
+> 기록이다. 현재 train에서는 모든 게시 라이브러리가 `dev.detekt`를 사용하므로
+> 해당 호환 alias를 제거한다. 아래 고정 범위·검증 수치는 Issue #189 당시 증거로
+> 보존한다.
+
 ## 고정 범위
 
 - 대상 저장소: `bluetape4k/bluetape4k-dependencies`

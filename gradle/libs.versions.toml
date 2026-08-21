@@ -139,8 +139,6 @@ commons-rng-simple = "1.7"
 commons-text = "1.15.0"
 dependency-check = "12.2.2"
 detekt-dev = "2.0.0-alpha.6"
-detekt-formatting-legacy = "1.23.8"
-detekt-legacy = "1.23.8"
 download = "5.7.0"
 duckdb-jdbc = "1.5.5.1"
 elasticmq-rest-sqs = "1.7.1"
@@ -167,7 +165,6 @@ junit-platform1-runner = "1.14.4"
 junit-platform6-runner = "6.0.3"
 jvips-build69bf715 = "8.12.2-69bf715"
 jvips-buildf9dc8c9 = "8.12.2-f9dc8c9"
-kotlin20 = "2.0.21"
 libphonenumber-v8 = "8.13.55"
 libphonenumber-v9 = "9.0.36"
 logback = "1.5.34"
@@ -540,7 +537,6 @@ aspectj-post-compile-weaving = { id = "io.freefair.aspectj.post-compile-weaving"
 avro-plugin = { id = "com.github.davidmc24.gradle.plugin.avro", version.ref = "managed-avro-plugin-hace42c31bdda" }
 dependency-check = { id = "org.owasp.dependencycheck", version.ref = "dependency-check" }
 detekt-dev = { id = "dev.detekt", version.ref = "detekt-dev" }
-detekt-legacy = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt-legacy" }
 download = { id = "de.undercouch.download", version.ref = "download" }
 foojay-resolver = { id = "org.gradle.toolchains.foojay-resolver-convention", version.ref = "foojay-resolver" }
 graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "managed-graalvm-native-h4df74ed993d6" }
@@ -759,7 +755,6 @@ commons-validator = { module = "commons-validator:commons-validator", version.re
 curator-framework = { module = "org.apache.curator:curator-framework", version.ref = "managed-curator-framework-hb4f00be0bc92" }
 curator-recipes = { module = "org.apache.curator:curator-recipes", version.ref = "managed-curator-recipes-hcc5f007e45c3" }
 datafaker = { module = "net.datafaker:datafaker", version.ref = "managed-datafaker-h8e6439793185" }
-detekt-formatting-legacy = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt-formatting-legacy" }
 detekt-rules-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt-dev" }
 duckdb-jdbc = { module = "org.duckdb:duckdb_jdbc", version.ref = "duckdb-jdbc" }
 eclipse-collections = { module = "org.eclipse.collections:eclipse-collections", version.ref = "managed-eclipse-collections-h1c86dd26d57b" }
@@ -905,8 +900,6 @@ junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", vers
 jvips-build69bf715 = { module = "com.criteo:jvips", version.ref = "jvips-build69bf715" }
 jvips-buildf9dc8c9 = { module = "com.criteo:jvips", version.ref = "jvips-buildf9dc8c9" }
 keycloak-testcontainers = { module = "com.github.dasniko:testcontainers-keycloak", version.ref = "managed-keycloak-testcontainers-hcf9d84cd8012" }
-kotlin20-compiler-embeddable = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin20" }
-kotlin20-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin20" }
 kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "managed-kotlinx-atomicfu-h030266c8e36a" }
 kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime", version.ref = "managed-kotlinx-benchmark-runtime-hb75fd55df187" }
 kotlinx-benchmark-runtime-jvm = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-runtime-jvm", version.ref = "managed-kotlinx-benchmark-runtime-jvm-hde0985ebfbfe" }
