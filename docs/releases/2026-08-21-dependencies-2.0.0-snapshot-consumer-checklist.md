@@ -36,6 +36,7 @@
   Image #32437937942, Javers #32437199766, Leader #32437207868, Text #32437216102
 - [x] Image full Nightly #32437276673 및 자동 SNAPSHOT publication 완료
 - [x] 8개 child BOM의 timestamped POM HTTP 200과 중앙 BOM dependency-management 계약 확인
+- [x] Projects merged develop archive에서 `:bluetape4k-core:dependencies --configuration compileClasspath` 대표 해석 성공
 
 ## 안정 release 이후 작업
 
