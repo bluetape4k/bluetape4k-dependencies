@@ -31,9 +31,11 @@
 
 - [ ] 중앙 소비자 정책 PR #211 exact-head CI 및 병합 승인
 - [ ] 실험 저장소 PR #97 exact-head CI 및 병합 승인
-- [ ] 8개 library publish-snapshot workflow의 POM validation 및 Maven Central metadata 갱신
-- [ ] Image full Nightly #32437276673 성공 후 자동 SNAPSHOT publication
-- [ ] 각 timestamped POM의 중앙 BOM dependency-management와 대표 Gradle resolution 확인
+- [x] 8개 library publish-snapshot workflow의 POM validation 및 Maven Central metadata 갱신
+  Projects #32437154283, Exposed #32437162677, AWS #32437171319, Graph #32437181769,
+  Image #32437937942, Javers #32437199766, Leader #32437207868, Text #32437216102
+- [x] Image full Nightly #32437276673 및 자동 SNAPSHOT publication 완료
+- [x] 8개 child BOM의 timestamped POM HTTP 200과 중앙 BOM dependency-management 계약 확인
 
 ## 안정 release 이후 작업
 
