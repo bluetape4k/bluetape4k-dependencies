@@ -25,6 +25,16 @@
 라인의 채택 근거는 이 체크리스트와 canary/POM 결과에 기록하되, stable delta ledger에는
 실제 resolved-graph 증거가 생길 때까지 추가하지 않는다.
 
+## 후속 전환 (2026-08-21)
+
+위 결정은 legacy Detekt 소비자가 남아 있던 당시의 호환성 판단이다. 이후
+`bluetape4k-experimental`, `bluetape4k-image`, `bluetape4k-javers`를 포함한 모든
+게시 라이브러리의 정적 분석 플러그인을 `dev.detekt`로 전환했다. 따라서 다음 중앙
+catalog train에서는 `detekt-legacy`, `detekt-formatting-legacy`,
+`kotlin20-compiler-embeddable`, `kotlin20-stdlib`, `kotlin20` 호환 alias를 더 이상
+제공하지 않는다. 역사적 ABI/fixture 경계를 유지해야 하는 새 소비자가 발견되면
+별도 호환성 검토와 명시적인 compatibility line을 먼저 추가한다.
+
 ## 재사용 규칙
 
 다음 catalog train에서도 버전 숫자만 맞추지 말고 group/plugin 좌표의 공개 metadata를
