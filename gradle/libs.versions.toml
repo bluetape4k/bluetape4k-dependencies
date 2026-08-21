@@ -1163,6 +1163,7 @@ bluetape4k-spring-boot-r2dbc                   = { module = "io.github.bluetape4
 bluetape4k-spring-boot-redis                   = { module = "io.github.bluetape4k:bluetape4k-spring-boot-redis", version.ref = "bluetape4k-bom" }
 bluetape4k-states                              = { module = "io.github.bluetape4k:bluetape4k-states", version.ref = "bluetape4k-bom" }
 bluetape4k-testcontainers                      = { module = "io.github.bluetape4k:bluetape4k-testcontainers", version.ref = "bluetape4k-bom" }
+bluetape4k-testcontainers-spring               = { module = "io.github.bluetape4k:bluetape4k-testcontainers-spring", version.ref = "bluetape4k-bom" }
 bluetape4k-tink                                = { module = "io.github.bluetape4k:bluetape4k-tink", version.ref = "bluetape4k-bom" }
 bluetape4k-vertx                               = { module = "io.github.bluetape4k:bluetape4k-vertx", version.ref = "bluetape4k-bom" }
 bluetape4k-virtualthread-api                   = { module = "io.github.bluetape4k:bluetape4k-virtualthread-api", version.ref = "bluetape4k-bom" }
