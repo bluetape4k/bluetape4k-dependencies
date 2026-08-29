@@ -28,12 +28,14 @@ version authority는 변경하지 않습니다.
 - [x] tenant alias 계약 RED: 세 alias 누락으로 3개 subtest가 실패함
 - [x] tenant alias 계약 GREEN: 2 tests, failures/errors/skipped=0
 - [x] managed catalog: 181 aliases, 8 sub-BOMs, checksum `a1d06b4c90a691cb7487647af9b2a6733765775e234dae043744f95170d5ce39`
-- [x] Python 3.13 전체 suite: 287 tests, failures/errors=0; worktree 경로에서 sibling을 찾지 못하는 기존 real-workspace 검사 2개는 exact repository-map 검사로 대체 예정
+- [x] Python 3.13 전체 suite: 287 tests, failures/errors=0; worktree 경로에서 sibling을 찾지 못하는 기존 real-workspace 검사 2개는 exact repository-map 검사로 대체함
 - [x] latest-stable audit: authority 515, metadata verified 510, preview-only 5, unavailable 0
 - [x] managed artifact 공개 확인: 181개 확인, self artifact 제외
 - [x] `./gradlew build --no-daemon --no-configuration-cache`: 성공
-- [ ] exact candidate repository-map과 9 publisher publication POM gate
-- [ ] independent review와 exact-head PR CI
+- [x] exact candidate repository-map: 181 aliases, 8 sub-BOMs, shared-version adoption clean
+- [x] 9 publisher publication POM gate: 186 POMs, 49,423 dependencies, failures=0
+- [x] 사용자 지시에 따른 exact-head inline review: P0/P1=0; 독립 review lane 대체 사실을 PR에 명시
+- [ ] exact-head PR CI
 
 ## 버전 계약
 
