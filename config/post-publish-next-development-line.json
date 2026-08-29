@@ -68,7 +68,10 @@
   ],
   "consumer-policy": {
     "snapshot-catalog-ref": "91f9ea9336b5ea991f5675323a1cf25ccfd6f5ed",
-    "snapshot-catalog-ref-overrides": {},
+    "snapshot-catalog-ref-overrides": {
+      "bluetape4k-exposed": "df64293753a9491b337852a158f89d4a93a1734a",
+      "bluetape4k-graph": "df64293753a9491b337852a158f89d4a93a1734a"
+    },
     "snapshot-catalog-repositories": [
       "bluetape4k-projects",
       "bluetape4k-aws",
@@ -90,15 +93,17 @@
         "catalog-version-key": "bluetape4k-dependencies"
       },
       {
+        "repository": "timefold-workshop",
+        "catalog-version-key": "bluetape4k-dependencies"
+      }
+    ],
+    "development-snapshot-repositories": [
+      {
         "repository": "exposed-r2dbc-workshop",
         "catalog-version-key": "bluetape4k-dependencies"
       },
       {
         "repository": "exposed-workshop",
-        "catalog-version-key": "bluetape4k-dependencies"
-      },
-      {
-        "repository": "timefold-workshop",
         "catalog-version-key": "bluetape4k-dependencies"
       }
     ]

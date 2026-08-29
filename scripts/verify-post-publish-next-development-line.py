@@ -102,7 +102,10 @@ def validate_manifest(document: dict[str, Any]) -> None:
         "snapshot-catalog-repositories",
         "official-release-repositories",
     }
-    optional_policy_fields = {"snapshot-catalog-ref-overrides"}
+    optional_policy_fields = {
+        "development-snapshot-repositories",
+        "snapshot-catalog-ref-overrides",
+    }
     actual_policy_fields = set(consumer_policy)
     if not required_policy_fields.issubset(actual_policy_fields) or (
         actual_policy_fields - required_policy_fields - optional_policy_fields
@@ -116,6 +119,9 @@ def validate_manifest(document: dict[str, Any]) -> None:
     snapshot_ref_overrides = consumer_policy.get("snapshot-catalog-ref-overrides", {})
     snapshot_repositories = consumer_policy["snapshot-catalog-repositories"]
     official_repositories = consumer_policy["official-release-repositories"]
+    development_snapshot_repositories = consumer_policy.get(
+        "development-snapshot-repositories", []
+    )
     if not isinstance(snapshot_ref, str) or not GIT_SHA.fullmatch(snapshot_ref):
         raise RuntimeError("snapshot-catalog-ref must be an immutable Git commit SHA")
     if not isinstance(snapshot_ref_overrides, dict):
@@ -143,6 +149,8 @@ def validate_manifest(document: dict[str, Any]) -> None:
         raise RuntimeError("every publishable repository must be a snapshot catalog consumer")
     if not isinstance(official_repositories, list) or not official_repositories:
         raise RuntimeError("official-release-repositories must be a non-empty list")
+    if not isinstance(development_snapshot_repositories, list):
+        raise RuntimeError("development-snapshot-repositories must be a list")
 
     official_names: set[str] = set()
     for item in official_repositories:
@@ -162,6 +170,34 @@ def validate_manifest(document: dict[str, Any]) -> None:
         official_names.add(repository)
     if set(snapshot_repositories).intersection(official_names):
         raise RuntimeError("a repository cannot consume both snapshot and official release catalogs")
+
+    development_snapshot_names: set[str] = set()
+    for item in development_snapshot_repositories:
+        if not isinstance(item, dict):
+            raise RuntimeError("development snapshot consumer entries must be objects")
+        required = {"repository", "catalog-version-key"}
+        if set(item) != required:
+            raise RuntimeError(
+                f"development snapshot consumer fields must be {sorted(required)}"
+            )
+        repository = item["repository"]
+        version_key = item["catalog-version-key"]
+        if not isinstance(repository, str) or not REPOSITORY_NAME.fullmatch(repository):
+            raise RuntimeError(f"invalid development snapshot consumer: {repository!r}")
+        if not isinstance(version_key, str) or not version_key:
+            raise RuntimeError("development snapshot catalog-version-key must be non-empty")
+        if repository in development_snapshot_names:
+            raise RuntimeError(f"duplicate development snapshot consumer: {repository}")
+        development_snapshot_names.add(repository)
+
+    if set(snapshot_repositories).intersection(development_snapshot_names):
+        raise RuntimeError(
+            "a repository cannot consume both snapshot catalog and development snapshot versions"
+        )
+    if official_names.intersection(development_snapshot_names):
+        raise RuntimeError(
+            "a repository cannot consume both official release and development snapshot versions"
+        )
 
 
 def read_properties(path: Path) -> dict[str, str]:
@@ -206,6 +242,10 @@ def required_workspace_repositories(manifest: dict[str, Any]) -> list[str]:
     policy = manifest["consumer-policy"]
     repositories = list(policy["snapshot-catalog-repositories"])
     repositories.extend(item["repository"] for item in policy["official-release-repositories"])
+    repositories.extend(
+        item["repository"]
+        for item in policy.get("development-snapshot-repositories", [])
+    )
     return repositories
 
 
@@ -223,6 +263,14 @@ def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[st
     errors: list[str] = []
     policy = manifest["consumer-policy"]
     stable_version = manifest["stable-version"]
+    development_snapshot_repositories = policy.get(
+        "development-snapshot-repositories", []
+    )
+    development_snapshot_version = None
+    if development_snapshot_repositories:
+        development_snapshot_version = (
+            f"{manifest['development-version']}{manifest['snapshot-suffix']}"
+        )
 
     for repository in policy["snapshot-catalog-repositories"]:
         expected_snapshot_ref = snapshot_catalog_ref_for_repository(policy, repository)
@@ -272,6 +320,25 @@ def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[st
             errors.append(
                 f"{repository} must use official bluetape4k-dependencies "
                 f"{stable_version}, got {actual!r}"
+            )
+
+    for item in development_snapshot_repositories:
+        repository = item["repository"]
+        version_key = item["catalog-version-key"]
+        catalog = workspace / repository / "gradle" / "libs.versions.toml"
+        if not catalog.is_file():
+            errors.append(f"missing development snapshot consumer catalog: {catalog}")
+            continue
+        try:
+            versions = read_versions(catalog)
+        except OSError as error:
+            errors.append(f"cannot read {catalog}: {error}")
+            continue
+        actual = versions.get(version_key)
+        if actual != development_snapshot_version:
+            errors.append(
+                f"{repository} must use development bluetape4k-dependencies "
+                f"{development_snapshot_version}, got {actual!r}"
             )
     return errors
 
@@ -464,7 +531,9 @@ def main() -> int:
             print(
                 "Verified consumer boundary: "
                 f"{len(policy['snapshot-catalog-repositories'])} snapshot libraries, "
-                f"{len(policy['official-release-repositories'])} official-release examples"
+                f"{len(policy['official-release-repositories'])} official-release examples, "
+                f"{len(policy.get('development-snapshot-repositories', []))} "
+                "development-snapshot examples"
             )
         if args.require_artifacts and not args.stable_release:
             print("Verified snapshot metadata for the central BOM and all child BOMs")
