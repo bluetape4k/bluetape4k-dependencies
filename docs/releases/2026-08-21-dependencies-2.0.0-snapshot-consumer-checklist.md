@@ -4,7 +4,9 @@
 
 - 대상 개발선: `2.0.0-SNAPSHOT`
 - 중앙 BOM: `io.github.bluetape4k:bluetape4k-dependencies:2.0.0-SNAPSHOT`
-- 중앙 catalog 소비자 ref: `91f9ea9336b5ea991f5675323a1cf25ccfd6f5ed`
+- 중앙 catalog 기본 소비자 ref: `91f9ea9336b5ea991f5675323a1cf25ccfd6f5ed`
+- 중앙 catalog ref 예외: `bluetape4k-exposed`, `bluetape4k-graph`는
+  `df64293753a9491b337852a158f89d4a93a1734a`
 - 안정 버전 publish/tag/GitHub Release/milestone close: 이 체크리스트의 범위 밖
 
 ## Issue #213 후보 경계
@@ -28,11 +30,12 @@ version authority는 변경하지 않습니다.
 - [x] tenant alias 계약 RED: 세 alias 누락으로 3개 subtest가 실패함
 - [x] tenant alias 계약 GREEN: 2 tests, failures/errors/skipped=0
 - [x] managed catalog: 181 aliases, 8 sub-BOMs, checksum `a1d06b4c90a691cb7487647af9b2a6733765775e234dae043744f95170d5ce39`
-- [x] Python 3.13 전체 suite: 287 tests, failures/errors=0; worktree 경로에서 sibling을 찾지 못하는 기존 real-workspace 검사 2개는 exact repository-map 검사로 대체함
+- [x] Python 3.13 전체 suite: 288 tests, failures/errors=0; worktree 경로에서 sibling을 찾지 못하는 기존 real-workspace 검사 2개는 exact repository-map 검사로 대체함
 - [x] latest-stable audit: authority 515, metadata verified 510, preview-only 5, unavailable 0
 - [x] managed artifact 공개 확인: 181개 확인, self artifact 제외
 - [x] `./gradlew build --no-daemon --no-configuration-cache`: 성공
 - [x] exact candidate repository-map: 181 aliases, 8 sub-BOMs, shared-version adoption clean
+- [x] 실제 workspace 소비자 정책: 9 snapshot libraries, 3 official-release examples, 2 development-snapshot examples
 - [x] 9 publisher publication POM gate: 186 POMs, 49,423 dependencies, failures=0
 - [x] 사용자 지시에 따른 exact-head inline review: P0/P1=0; 독립 review lane 대체 사실을 PR에 명시
 - [ ] exact-head PR CI
@@ -45,7 +48,8 @@ version authority는 변경하지 않습니다.
 | `bluetape4k-exposed-bom` | `2.0.0-SNAPSHOT` |
 | AWS/Image/Text/Graph/Leader/Javers child BOM | `1.0.0-SNAPSHOT` |
 | source `snapshotVersion` | 빈 값; workflow가 `-PsnapshotVersion=-SNAPSHOT` 주입 |
-| snapshot catalog | 모든 내부 소비자가 동일한 immutable SHA 사용 |
+| snapshot catalog | 기본 immutable SHA를 사용하되, 먼저 갱신된 `exposed`와 `graph`는 repository별 immutable SHA 예외를 명시 |
+| example catalog | 안정 예제 3개는 `1.4.0`, 개발 검증 예제 2개는 `2.0.0-SNAPSHOT` 사용 |
 
 ## 완료 증거
 
@@ -54,7 +58,7 @@ version authority는 변경하지 않습니다.
 - [x] 중앙 POM의 `bluetape4k-bom`/`bluetape4k-exposed-bom` 및 6개 child BOM 버전이 위 계약과 일치함
 - [x] 8개 publishable library 소비자 PR이 exact-head로 병합됨: Projects #1461, Exposed #709, AWS #532, Graph #529, Image #556, Javers #331, Leader #751, Text #293
 - [x] managed catalog(169 aliases, 8 sub-BOMs) 및 shared-version adoption 검증 성공
-- [x] post-publish preflight가 8 publishers, 9 snapshot libraries, 5 official-release examples 경계를 통과함
+- [x] post-publish preflight가 8 publishers, 9 snapshot libraries, 3 official-release examples, 2 development-snapshot examples 경계를 통과함
 - [x] `bluetape4k-experimental` 소비자 ref 갱신 PR #97의 wrapper/catalog governance/build가 성공함
 
 ## 진행 중인 SNAPSHOT 검증

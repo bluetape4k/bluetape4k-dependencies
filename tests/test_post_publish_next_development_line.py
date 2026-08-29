@@ -34,7 +34,8 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         )
         self.assertEqual(len(document["publishable-repositories"]), 8)
 
-    def test_manifest_separates_snapshot_libraries_from_official_release_examples(self) -> None:
+    def test_manifest_classifies_snapshot_libraries_and_example_consumers(self) -> None:
+        module = load_script()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))
 
         policy = document.get("consumer-policy")
@@ -53,15 +54,48 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 "bluetape4k-text",
             },
         )
-        self.assertEqual(policy["snapshot-catalog-ref-overrides"], {})
+        self.assertEqual(
+            policy["snapshot-catalog-ref-overrides"],
+            {
+                "bluetape4k-exposed": "df64293753a9491b337852a158f89d4a93a1734a",
+                "bluetape4k-graph": "df64293753a9491b337852a158f89d4a93a1734a",
+            },
+        )
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
             {
                 "bluetape4k-workshop",
                 "clinic-appointment",
+                "timefold-workshop",
+            },
+        )
+        self.assertEqual(
+            {
+                item["repository"]
+                for item in policy["development-snapshot-repositories"]
+            },
+            {
                 "exposed-r2dbc-workshop",
                 "exposed-workshop",
+            },
+        )
+        self.assertEqual(
+            set(module.required_workspace_repositories(document)),
+            {
+                "bluetape4k-projects",
+                "bluetape4k-aws",
+                "bluetape4k-experimental",
+                "bluetape4k-exposed",
+                "bluetape4k-graph",
+                "bluetape4k-image",
+                "bluetape4k-javers",
+                "bluetape4k-leader",
+                "bluetape4k-text",
+                "bluetape4k-workshop",
+                "clinic-appointment",
                 "timefold-workshop",
+                "exposed-r2dbc-workshop",
+                "exposed-workshop",
             },
         )
 
@@ -299,6 +333,49 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             errors = module.verify_consumer_policy(workspace, document)
 
         self.assertEqual(errors, [])
+
+    def test_consumer_policy_requires_development_snapshot_for_snapshot_examples(self) -> None:
+        module = load_script()
+        document = {
+            "stable-version": "1.4.0",
+            "development-version": "2.0.0",
+            "snapshot-suffix": "-SNAPSHOT",
+            "consumer-policy": {
+                "snapshot-catalog-ref": "a" * 40,
+                "snapshot-catalog-repositories": [],
+                "official-release-repositories": [],
+                "development-snapshot-repositories": [
+                    {
+                        "repository": "example-app",
+                        "catalog-version-key": "bluetape4k-dependencies",
+                    }
+                ],
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            catalog = workspace / "example-app" / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir(parents=True)
+            catalog.write_text(
+                '[versions]\nbluetape4k-dependencies = "1.4.0"\n',
+                encoding="utf-8",
+            )
+
+            errors = module.verify_consumer_policy(workspace, document)
+
+            self.assertIn(
+                "example-app must use development bluetape4k-dependencies "
+                "2.0.0-SNAPSHOT, got '1.4.0'",
+                errors,
+            )
+
+            catalog.write_text(
+                '[versions]\nbluetape4k-dependencies = "2.0.0-SNAPSHOT"\n',
+                encoding="utf-8",
+            )
+
+            self.assertEqual(module.verify_consumer_policy(workspace, document), [])
 
 
 if __name__ == "__main__":
