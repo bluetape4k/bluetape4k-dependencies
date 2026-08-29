@@ -7,6 +7,34 @@
 - 중앙 catalog 소비자 ref: `91f9ea9336b5ea991f5675323a1cf25ccfd6f5ed`
 - 안정 버전 publish/tag/GitHub Release/milestone close: 이 체크리스트의 범위 밖
 
+## Issue #213 후보 경계
+
+- 대상 저장소/기준 SHA: `bluetape4k-dependencies` / `df64293753a9491b337852a158f89d4a93a1734a`
+- 대상 branch: `feat/issue-213-tenant-catalog` → `develop`
+- version authority: `gradle/libs.versions.toml`의 `bluetape4k-bom=2.0.0-SNAPSHOT`
+- artifact 범위: `bluetape4k-tenant`, `bluetape4k-tenant-reactor`, `bluetape4k-ktor-tenant`
+- 공개 upstream 증거: 2026-08-30 KST 조회에서 BOM과 세 tenant artifact의 SNAPSHOT metadata가 모두 HTTP 200
+- consumer 범위: `exposed-workshop#255`와 `exposed-r2dbc-workshop#215`; 후자는 갱신된 dependencies SNAPSHOT 공개 후 진행
+- 승인 범위: catalog/BOM 계약 구현, 검증, commit, push, PR 생성
+- dispatch hold: dependencies SNAPSHOT publish, stable release, merge, downstream 저장소 변경은 별도 승인 전까지 실행하지 않음
+
+현재 generator는 세 tenant alias와 함께 이미 `develop`에 병합된 Exposed publishable
+artifact 8개의 누락도 감지합니다. `sync-managed-catalog --check`의 전체 inventory
+계약을 통과시키기 위해 generator-owned alias를 함께 동기화하되, 외부 버전이나 BOM
+version authority는 변경하지 않습니다.
+
+### 후보 검증 상태
+
+- [x] tenant alias 계약 RED: 세 alias 누락으로 3개 subtest가 실패함
+- [x] tenant alias 계약 GREEN: 2 tests, failures/errors/skipped=0
+- [x] managed catalog: 181 aliases, 8 sub-BOMs, checksum `a1d06b4c90a691cb7487647af9b2a6733765775e234dae043744f95170d5ce39`
+- [x] Python 3.13 전체 suite: 287 tests, failures/errors=0; worktree 경로에서 sibling을 찾지 못하는 기존 real-workspace 검사 2개는 exact repository-map 검사로 대체 예정
+- [x] latest-stable audit: authority 515, metadata verified 510, preview-only 5, unavailable 0
+- [x] managed artifact 공개 확인: 181개 확인, self artifact 제외
+- [x] `./gradlew build --no-daemon --no-configuration-cache`: 성공
+- [ ] exact candidate repository-map과 9 publisher publication POM gate
+- [ ] independent review와 exact-head PR CI
+
 ## 버전 계약
 
 | 항목 | 기대값 |
