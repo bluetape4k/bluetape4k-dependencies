@@ -261,31 +261,53 @@ def snapshot_catalog_ref_for_repository(policy: dict[str, Any], repository: str)
 
 
 def git_commit_exists(repository: Path, ref: str) -> bool:
-    result = subprocess.run(
-        ["git", "-C", str(repository), "cat-file", "-e", f"{ref}^{{commit}}"],
-        check=False,
-        capture_output=True,
-        text=True,
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repository), "cat-file", "-e", f"{ref}^{{commit}}"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as error:
+        raise RuntimeError(f"cannot inspect Git commits in {repository}: {error}") from error
+    if result.returncode == 0:
+        return True
+    detail = result.stderr.strip()
+    if "not a valid object name" in detail.lower():
+        return False
+    raise RuntimeError(
+        f"cannot inspect Git commits in {repository}: "
+        f"{detail or f'git exited with status {result.returncode}'}"
     )
-    return result.returncode == 0
 
 
 def git_is_ancestor(repository: Path, ancestor: str, descendant: str) -> bool:
-    result = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(repository),
-            "merge-base",
-            "--is-ancestor",
-            ancestor,
-            descendant,
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repository),
+                "merge-base",
+                "--is-ancestor",
+                ancestor,
+                descendant,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as error:
+        raise RuntimeError(f"cannot verify Git ancestry in {repository}: {error}") from error
+    if result.returncode == 0:
+        return True
+    if result.returncode == 1:
+        return False
+    detail = result.stderr.strip()
+    raise RuntimeError(
+        f"cannot verify Git ancestry in {repository}: "
+        f"{detail or f'git exited with status {result.returncode}'}"
     )
-    return result.returncode == 0
 
 
 def verify_snapshot_catalog_history(
