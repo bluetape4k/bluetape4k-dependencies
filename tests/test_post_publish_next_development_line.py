@@ -98,6 +98,19 @@ def snapshot_policy(
 
 
 class PostPublishNextDevelopmentLineTest(unittest.TestCase):
+    def test_build_bom_checkout_fetches_full_history_for_catalog_ancestry(self) -> None:
+        workflow = (REPO_ROOT / ".github" / "workflows" / "ci.yml").read_text(
+            encoding="utf-8"
+        )
+        build_job = workflow.split("\n  build:\n", maxsplit=1)[1].split(
+            "\n  publication-pom-contract:\n", maxsplit=1
+        )[0]
+
+        self.assertRegex(
+            build_job,
+            r"- uses: actions/checkout@v7\n\s+with:\n\s+fetch-depth: 0",
+        )
+
     def test_checked_in_manifest_has_runtime_snapshot_contract(self) -> None:
         module = load_script()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))

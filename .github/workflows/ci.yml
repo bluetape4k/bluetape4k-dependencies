@@ -70,6 +70,8 @@ jobs:
     needs: validate-wrapper
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Clone managed repositories for catalog script checks
         shell: bash
         env:
