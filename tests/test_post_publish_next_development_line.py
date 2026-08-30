@@ -123,6 +123,25 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         )
         self.assertEqual(len(document["publishable-repositories"]), 8)
 
+    def test_git_commit_exists_raises_for_non_repository(self) -> None:
+        module = load_script()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            non_repository = Path(temporary)
+
+            with self.assertRaisesRegex(RuntimeError, "cannot inspect Git commits"):
+                module.git_commit_exists(non_repository, "a" * 40)
+
+    def test_git_is_ancestor_raises_when_git_cannot_resolve_commit(self) -> None:
+        module = load_script()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            central = Path(temporary) / "central"
+            refs = create_catalog_history(central)
+
+            with self.assertRaisesRegex(RuntimeError, "cannot verify Git ancestry"):
+                module.git_is_ancestor(central, refs["minimum"], "f" * 40)
+
     def test_manifest_classifies_snapshot_libraries_and_example_consumers(self) -> None:
         module = load_script()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -360,7 +379,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
             errors = module.verify_consumer_policy(
                 workspace,
-                snapshot_policy(refs["rollback"], refs["minimum"]),
+                snapshot_policy(refs["forward"], refs["minimum"]),
                 central,
             )
 
@@ -515,6 +534,33 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertIn(
             f"internal-library snapshot catalog ref {missing_ref} "
+            "is missing from central history",
+            errors,
+        )
+
+    def test_consumer_policy_rejects_missing_catalog_minimum(self) -> None:
+        module = load_script()
+        missing_minimum = "e" * 40
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                refs["forward"],
+                refs["forward"],
+            )
+
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(missing_minimum),
+                central,
+            )
+
+        self.assertIn(
+            f"internal-library minimum snapshot catalog ref {missing_minimum} "
             "is missing from central history",
             errors,
         )
