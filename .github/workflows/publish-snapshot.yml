@@ -23,6 +23,7 @@ jobs:
   publish:
     name: Publish SNAPSHOT to Maven Central
     runs-on: ubuntu-latest
+    environment: maven-central-release
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v7
