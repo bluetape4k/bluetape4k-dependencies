@@ -81,6 +81,42 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             release_workflow,
         )
 
+    def test_publish_snapshot_uploads_a_run_scoped_supply_chain_report(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml"
+        ).read_text(encoding="utf-8")
+
+        publish_verification = (
+            "python3 scripts/verify-post-publish-next-development-line.py "
+            "--summary --require-artifacts"
+        )
+        generation = "python3 scripts/generate-supply-chain-report.py"
+        validation = (
+            "python3 scripts/verify-supply-chain-reports.py "
+            "--report build/supply-chain-report/supply-chain-report-only.json --summary"
+        )
+
+        self.assertIn(generation, workflow)
+        self.assertIn(validation, workflow)
+        self.assertLess(
+            workflow.index(publish_verification), workflow.index(generation)
+        )
+        self.assertLess(workflow.index(generation), workflow.index(validation))
+        self.assertIn(
+            'cat build/supply-chain-report/supply-chain-summary.md >> "$GITHUB_STEP_SUMMARY"',
+            workflow,
+        )
+        self.assertIn(
+            "uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7",
+            workflow,
+        )
+        self.assertIn(
+            "name: supply-chain-report-only-${{ github.run_id }}-${{ github.run_attempt }}",
+            workflow,
+        )
+        self.assertIn("path: build/supply-chain-report/", workflow)
+        self.assertIn("if-no-files-found: error", workflow)
+
     def test_pull_requests_use_repo_local_fixture_for_the_adoption_guard(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
