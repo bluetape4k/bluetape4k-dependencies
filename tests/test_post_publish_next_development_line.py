@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,6 +20,81 @@ def load_script():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def run_git(repository: Path, *arguments: str) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(repository), *arguments],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def commit_catalog(repository: Path, content: str, message: str) -> str:
+    catalog = repository / "gradle" / "libs.versions.toml"
+    catalog.parent.mkdir(parents=True, exist_ok=True)
+    catalog.write_text(content, encoding="utf-8")
+    run_git(repository, "add", str(catalog.relative_to(repository)))
+    run_git(repository, "commit", "-m", message)
+    return run_git(repository, "rev-parse", "HEAD")
+
+
+def create_catalog_history(repository: Path) -> dict[str, str]:
+    repository.mkdir(parents=True)
+    run_git(repository, "init", "--initial-branch=develop")
+    run_git(repository, "config", "user.name", "Bluetape Test")
+    run_git(repository, "config", "user.email", "test@bluetape4k.invalid")
+
+    rollback = commit_catalog(repository, '[versions]\nmarker = "rollback"\n', "rollback")
+    minimum = commit_catalog(repository, '[versions]\nmarker = "minimum"\n', "minimum")
+    forward = commit_catalog(repository, '[versions]\nmarker = "forward"\n', "forward")
+    candidate = commit_catalog(repository, '[versions]\nmarker = "candidate"\n', "candidate")
+
+    run_git(repository, "switch", "--detach", minimum)
+    outside = commit_catalog(repository, '[versions]\nmarker = "outside"\n', "outside")
+    run_git(repository, "switch", "develop")
+    return {
+        "rollback": rollback,
+        "minimum": minimum,
+        "forward": forward,
+        "candidate": candidate,
+        "outside": outside,
+    }
+
+
+def write_snapshot_consumer(repository: Path, settings_ref: str, ci_ref: str) -> None:
+    workflow = repository / ".github" / "workflows" / "ci.yml"
+    workflow.parent.mkdir(parents=True)
+    (repository / "settings.gradle.kts").write_text(
+        f'catalogRef.orElse("{settings_ref}")\n', encoding="utf-8"
+    )
+    workflow.write_text(
+        "env:\n"
+        "  BLUETAPE4K_DEPENDENCIES_CATALOG_REF: "
+        f"'{ci_ref}'\n",
+        encoding="utf-8",
+    )
+
+
+def snapshot_policy(
+    minimum_ref: str,
+    override_ref: str | None = None,
+) -> dict[str, object]:
+    policy: dict[str, object] = {
+        "snapshot-catalog-ref": minimum_ref,
+        "snapshot-catalog-repositories": ["internal-library"],
+        "official-release-repositories": [],
+    }
+    if override_ref is not None:
+        policy["snapshot-catalog-ref-overrides"] = {
+            "internal-library": override_ref,
+        }
+    return {
+        "stable-version": "1.4.0",
+        "consumer-policy": policy,
+    }
 
 
 class PostPublishNextDevelopmentLineTest(unittest.TestCase):
@@ -255,84 +331,180 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             errors,
         )
 
-    def test_consumer_policy_rejects_settings_and_ci_catalog_ref_mismatch(self) -> None:
+    def test_consumer_policy_accepts_repository_specific_catalog_minimum(self) -> None:
         module = load_script()
-        expected_ref = "a" * 40
-        document = {
-            "stable-version": "1.4.0",
-            "consumer-policy": {
-                "snapshot-catalog-ref": expected_ref,
-                "snapshot-catalog-repositories": ["internal-library"],
-                "official-release-repositories": [
-                    {
-                        "repository": "example-app",
-                        "catalog-version-key": "bluetape4k-dependencies",
-                    }
-                ],
-            },
-        }
 
         with tempfile.TemporaryDirectory() as temporary:
-            workspace = Path(temporary)
-            internal = workspace / "internal-library"
-            (internal / ".github" / "workflows").mkdir(parents=True)
-            (internal / "settings.gradle.kts").write_text(
-                f'catalogRef.orElse("{expected_ref}")\n', encoding="utf-8"
-            )
-            (internal / ".github" / "workflows" / "ci.yml").write_text(
-                "env:\n"
-                "  BLUETAPE4K_DEPENDENCIES_CATALOG_REF: "
-                f"'{('b' * 40)}'\n",
-                encoding="utf-8",
-            )
-            example_catalog = workspace / "example-app" / "gradle" / "libs.versions.toml"
-            example_catalog.parent.mkdir(parents=True)
-            example_catalog.write_text(
-                '[versions]\nbluetape4k-dependencies = "1.4.0"\n',
-                encoding="utf-8",
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                refs["minimum"],
+                refs["minimum"],
             )
 
-            errors = module.verify_consumer_policy(workspace, document)
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["rollback"], refs["minimum"]),
+                central,
+            )
+
+        self.assertEqual(errors, [])
+
+    def test_consumer_policy_accepts_catalog_ref_after_minimum(self) -> None:
+        module = load_script()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                refs["forward"],
+                refs["forward"],
+            )
+
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["minimum"]),
+                central,
+            )
+
+        self.assertEqual(errors, [])
+
+    def test_consumer_policy_rejects_catalog_ref_before_minimum(self) -> None:
+        module = load_script()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                refs["rollback"],
+                refs["rollback"],
+            )
+
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["minimum"]),
+                central,
+            )
 
         self.assertIn(
-            "internal-library CI must use snapshot catalog ref "
-            f"{expected_ref}, got '{('b' * 40)}'",
+            "internal-library snapshot catalog ref "
+            f"{refs['rollback']} is older than minimum {refs['minimum']}",
             errors,
         )
 
-    def test_consumer_policy_accepts_repository_specific_catalog_ref_override(self) -> None:
+    def test_consumer_policy_rejects_catalog_ref_outside_candidate_history(self) -> None:
         module = load_script()
-        default_ref = "a" * 40
-        override_ref = "b" * 40
-        document = {
-            "stable-version": "1.4.0",
-            "consumer-policy": {
-                "snapshot-catalog-ref": default_ref,
-                "snapshot-catalog-ref-overrides": {
-                    "internal-library": override_ref,
-                },
-                "snapshot-catalog-repositories": ["internal-library"],
-                "official-release-repositories": [],
-            },
-        }
 
         with tempfile.TemporaryDirectory() as temporary:
-            workspace = Path(temporary)
-            internal = workspace / "internal-library"
-            (internal / ".github" / "workflows").mkdir(parents=True)
-            (internal / "settings.gradle.kts").write_text(
-                f'catalogRef.orElse("{override_ref}")\n', encoding="utf-8"
-            )
-            (internal / ".github" / "workflows" / "ci.yml").write_text(
-                "env:\n"
-                "  BLUETAPE4K_DEPENDENCIES_CATALOG_REF: "
-                f"'{override_ref}'\n",
-                encoding="utf-8",
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                refs["outside"],
+                refs["outside"],
             )
 
-            errors = module.verify_consumer_policy(workspace, document)
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["minimum"]),
+                central,
+            )
 
-        self.assertEqual(errors, [])
+        self.assertIn(
+            "internal-library snapshot catalog ref "
+            f"{refs['outside']} is outside candidate HEAD history",
+            errors,
+        )
+
+    def test_consumer_policy_rejects_settings_and_ci_catalog_ref_mismatch(self) -> None:
+        module = load_script()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                refs["forward"],
+                refs["minimum"],
+            )
+
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["minimum"]),
+                central,
+            )
+
+        self.assertIn(
+            "internal-library settings catalog ref "
+            f"{refs['forward']} must match CI catalog ref {refs['minimum']}",
+            errors,
+        )
+
+    def test_consumer_policy_rejects_non_sha_catalog_ref(self) -> None:
+        module = load_script()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                "develop",
+                "develop",
+            )
+
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["minimum"]),
+                central,
+            )
+
+        self.assertIn(
+            "internal-library settings catalog ref must be a lowercase "
+            "40-character Git SHA, got 'develop'",
+            errors,
+        )
+
+    def test_consumer_policy_rejects_missing_catalog_commit(self) -> None:
+        module = load_script()
+        missing_ref = "f" * 40
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                missing_ref,
+                missing_ref,
+            )
+
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["minimum"]),
+                central,
+            )
+
+        self.assertIn(
+            f"internal-library snapshot catalog ref {missing_ref} "
+            "is missing from central history",
+            errors,
+        )
 
     def test_consumer_policy_requires_development_snapshot_for_snapshot_examples(self) -> None:
         module = load_script()
