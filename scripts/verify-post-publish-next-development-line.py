@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -28,9 +29,9 @@ PROPERTY_LINE = re.compile(r"^([A-Za-z0-9_.-]+)\s*=\s*(.*)$")
 REPOSITORY_NAME = re.compile(r"^[a-z0-9][a-z0-9.-]*$")
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 GIT_SHA = re.compile(r"^[0-9a-f]{40}$")
-CATALOG_REF = re.compile(r'\.orElse\("([0-9a-f]{40})"\)')
+CATALOG_REF = re.compile(r'\.orElse\("([^"\s]+)"\)')
 CI_CATALOG_REF = re.compile(
-    r"^\s*BLUETAPE4K_DEPENDENCIES_CATALOG_REF:\s*['\"]?([0-9a-f]{40})['\"]?\s*$",
+    r"^\s*BLUETAPE4K_DEPENDENCIES_CATALOG_REF:\s*['\"]?([^'\"\s]+)['\"]?\s*$",
     re.MULTILINE,
 )
 
@@ -259,7 +260,68 @@ def snapshot_catalog_ref_for_repository(policy: dict[str, Any], repository: str)
     return overrides.get(repository, policy["snapshot-catalog-ref"])
 
 
-def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[str]:
+def git_commit_exists(repository: Path, ref: str) -> bool:
+    result = subprocess.run(
+        ["git", "-C", str(repository), "cat-file", "-e", f"{ref}^{{commit}}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def git_is_ancestor(repository: Path, ancestor: str, descendant: str) -> bool:
+    result = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repository),
+            "merge-base",
+            "--is-ancestor",
+            ancestor,
+            descendant,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
+def verify_snapshot_catalog_history(
+    repository_root: Path,
+    consumer: str,
+    minimum_ref: str,
+    actual_ref: str,
+) -> list[str]:
+    if not git_commit_exists(repository_root, minimum_ref):
+        return [
+            f"{consumer} minimum snapshot catalog ref {minimum_ref} "
+            "is missing from central history"
+        ]
+    if not git_commit_exists(repository_root, actual_ref):
+        return [
+            f"{consumer} snapshot catalog ref {actual_ref} "
+            "is missing from central history"
+        ]
+    if not git_is_ancestor(repository_root, minimum_ref, actual_ref):
+        return [
+            f"{consumer} snapshot catalog ref {actual_ref} "
+            f"is older than minimum {minimum_ref}"
+        ]
+    if not git_is_ancestor(repository_root, actual_ref, "HEAD"):
+        return [
+            f"{consumer} snapshot catalog ref {actual_ref} "
+            "is outside candidate HEAD history"
+        ]
+    return []
+
+
+def verify_consumer_policy(
+    workspace: Path,
+    manifest: dict[str, Any],
+    repository_root: Path = REPO_ROOT,
+) -> list[str]:
     errors: list[str] = []
     policy = manifest["consumer-policy"]
     stable_version = manifest["stable-version"]
@@ -273,7 +335,7 @@ def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[st
         )
 
     for repository in policy["snapshot-catalog-repositories"]:
-        expected_snapshot_ref = snapshot_catalog_ref_for_repository(policy, repository)
+        minimum_snapshot_ref = snapshot_catalog_ref_for_repository(policy, repository)
         settings = workspace / repository / "settings.gradle.kts"
         ci_workflow = workspace / repository / ".github" / "workflows" / "ci.yml"
         if not settings.is_file():
@@ -284,9 +346,9 @@ def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[st
         except OSError as error:
             errors.append(f"cannot read {settings}: {error}")
             continue
-        if catalog_ref != expected_snapshot_ref:
+        if catalog_ref is None or not GIT_SHA.fullmatch(catalog_ref):
             errors.append(
-                f"{repository} must use snapshot catalog ref {expected_snapshot_ref}, "
+                f"{repository} settings catalog ref must be a lowercase 40-character Git SHA, "
                 f"got {catalog_ref!r}"
             )
         if not ci_workflow.is_file():
@@ -297,10 +359,28 @@ def verify_consumer_policy(workspace: Path, manifest: dict[str, Any]) -> list[st
         except OSError as error:
             errors.append(f"cannot read {ci_workflow}: {error}")
             continue
-        if ci_catalog_ref != expected_snapshot_ref:
+        if ci_catalog_ref is None or not GIT_SHA.fullmatch(ci_catalog_ref):
             errors.append(
-                f"{repository} CI must use snapshot catalog ref {expected_snapshot_ref}, "
+                f"{repository} CI catalog ref must be a lowercase 40-character Git SHA, "
                 f"got {ci_catalog_ref!r}"
+            )
+        if catalog_ref != ci_catalog_ref:
+            errors.append(
+                f"{repository} settings catalog ref {catalog_ref} "
+                f"must match CI catalog ref {ci_catalog_ref}"
+            )
+        if (
+            catalog_ref is not None
+            and GIT_SHA.fullmatch(catalog_ref)
+            and catalog_ref == ci_catalog_ref
+        ):
+            errors.extend(
+                verify_snapshot_catalog_history(
+                    repository_root,
+                    repository,
+                    minimum_snapshot_ref,
+                    catalog_ref,
+                )
             )
 
     for item in policy["official-release-repositories"]:
@@ -410,7 +490,7 @@ def verify_development(
         errors.append("catalog self version must equal the development baseVersion")
     if stable_version == development_version:
         errors.append("stable-version and development-version must differ")
-    errors.extend(verify_consumer_policy(workspace, manifest))
+    errors.extend(verify_consumer_policy(workspace, manifest, central_root))
 
     expected_development_version = f"{development_version}{suffix}"
     for item in manifest["publishable-repositories"]:
