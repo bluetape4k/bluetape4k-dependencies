@@ -35,7 +35,8 @@
 - [x] 두 tenant adapter의 `2.0.0-SNAPSHOT` metadata와 timestamped POM이 공개적으로 조회되는지 확인한다.
 - [x] `scripts/sync-managed-catalog.py` 생성 경로로 두 alias와 BOM constraint를 반영한다.
 - [x] catalog checksum, shared-version, Dependabot ignore, publication POM, Gradle build 검증을 통과한다.
-- [ ] dependencies PR을 `develop` 대상으로 생성하고 exact-head CI를 통과한다.
+- [x] dependencies PR #218을 `develop` 대상으로 생성한다.
+- [ ] PR #218의 exact-head CI를 통과한다.
 - [ ] dependencies PR 병합 전 fresh approval에서 멈춘다.
 - [ ] #217 병합 후 PR #216을 최신 `develop`에 맞춰 재검증한다.
 
@@ -55,6 +56,10 @@
 - 검증: refresh 결과를 제거한 뒤 before/after JSON 비교에서 두 파일의 record와 summary가 모두 동일했고 `--check-audit`가 통과했다.
 - 향후 guard: alias-only handoff에서 audit refresh를 실행하기 전에 report regeneration의 이슈 소유권을 확인한다. 별도 이슈가 소유하면 SHA 연결만 갱신하고 record/summary 불변성을 검증한다.
 - 재사용 규칙: linked worktree의 catalog helper에는 `docs/lessons/2026-08-10-issue-164-library-only-catalog-validation.md`에 따라 절대 workspace root를 전달한다.
+- 놓친 가정: `bluetape4k-workshop`은 계속 안정 BOM `1.4.0`을 소비한다고 분류했다.
+- 발견 증거: PR #218의 fresh-clone CI가 `bluetape4k-workshop` `develop`의 `2.0.0-SNAPSHOT`을 확인했고, 전환 커밋 `952804db1be3cd6832abaa990473695f8cdfc46d`는 중앙 SNAPSHOT 소비자 열차에 맞추려는 의도를 명시했다.
+- 결정: workshop을 `official-release-repositories`에서 `development-snapshot-repositories`로 이동하고, 안정 예제는 `clinic-appointment`와 `timefold-workshop`만 유지한다.
+- 향후 guard: consumer가 공식 release와 development SNAPSHOT 사이를 전환하면 해당 consumer PR과 같은 순서에서 중앙 manifest 분류 테스트도 갱신한다.
 
 ## 결과 기록
 
@@ -72,5 +77,5 @@
   - publication POM: 저장소 `9`, POM/Maven model `188`, dependency `50,015`, 실패 `0`
   - Gradle: `BUILD SUCCESSFUL`
   - latest-stable inventory/audit: SHA 연결만 갱신, record와 summary 보존
-  - post-publish next line: 다른 세션의 `bluetape4k-workshop`이 `2.0.0-SNAPSHOT`을 가리켜 local live-workspace 검증 실패; fresh-clone PR CI에서 최종 판정
-- dependencies PR: 대기 중
+  - post-publish next line: PR #218 CI에서 workshop의 의도적 `2.0.0-SNAPSHOT` 전환과 중앙 manifest의 오래된 안정 소비자 분류가 충돌함을 확인
+- dependencies PR: [#218](https://github.com/bluetape4k/bluetape4k-dependencies/pull/218), 첫 exact-head CI [33315729695](https://github.com/bluetape4k/bluetape4k-dependencies/actions/runs/33315729695)는 위 consumer 분류 불일치로 실패
