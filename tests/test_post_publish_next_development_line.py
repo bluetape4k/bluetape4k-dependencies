@@ -172,7 +172,6 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
             {
-                "bluetape4k-workshop",
                 "clinic-appointment",
                 "timefold-workshop",
             },
@@ -183,6 +182,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 for item in policy["development-snapshot-repositories"]
             },
             {
+                "bluetape4k-workshop",
                 "exposed-r2dbc-workshop",
                 "exposed-workshop",
             },
