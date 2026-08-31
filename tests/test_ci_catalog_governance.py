@@ -184,7 +184,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("timeout-minutes: 30", job)
         self.assertIn("scripts/verify-publication-poms.py --print-default-repositories", job)
         self.assertIn("scripts/verify-publication-poms.py --workspace .. --summary", job)
-        self.assertIn("uses: actions/setup-java@v5", job)
+        self.assertIn("uses: actions/setup-java@v6", job)
         self.assertIn("uses: gradle/actions/setup-gradle@v6", job)
 
         status_job = workflow.split("  ci-status:\n", 1)[1]
