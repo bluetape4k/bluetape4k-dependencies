@@ -155,7 +155,21 @@ action pin 작업이 이미 있는 저장소는 새 PR을 만들지 않고 기�
 - Javers PR `#361`
 - Leader PR `#849`
 - Text PR `#312`
-- Projects는 `fix/routine-snapshot-workflow` branch에서 새 PR을 만든다.
+- Projects는 이미 열린 PR `#1584`를 자동 SHA 단순화 PR로 갱신한다.
+
+설계 승인 뒤 확인된 `fix/issue-1578-snapshot-source` PR은 같은 workflow를 별도
+단계로 쌓은 중복 delivery 경로다. Projects `#1584`를 제외한 다음 PR의 자동 SHA
+변경은 위 action pin PR에 통합하고, 동등한 diff와 CI를 확인한 뒤 중복 PR을
+닫는다.
+
+- AWS `#605`
+- Dependencies `#223`
+- Exposed `#774`
+- Graph `#599`
+- Image `#618`
+- Javers `#362`
+- Leader `#850`
+- Text `#313`
 
 이 구현으로 중복되거나 과도해진 이슈는 검증 증거를 남긴 뒤 닫는다.
 
