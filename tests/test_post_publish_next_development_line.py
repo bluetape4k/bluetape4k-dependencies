@@ -136,6 +136,10 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             "2.0.0",
         )
         self.assertEqual(
+            module.expected_catalog_version(document, publishers["bluetape4k-graph"]),
+            "1.0.0",
+        )
+        self.assertEqual(
             module.expected_catalog_version(document, publishers["bluetape4k-aws"]),
             "1.0.0-SNAPSHOT",
         )
