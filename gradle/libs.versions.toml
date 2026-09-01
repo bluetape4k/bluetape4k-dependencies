@@ -20,7 +20,7 @@ bluetape4k-image-bom   = "1.0.0-SNAPSHOT"  # Active post-publish development lin
 bluetape4k-text-bom    = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-graph-bom   = "1.0.0"  # Public Graph 1.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-leader
 bluetape4k-leader-bom  = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.

@@ -3,6 +3,20 @@
 Snapshot: 2026-09-02 KST
 Scope: dependencies 2.0.0 정식 배포 train.
 
+## 2026-09-02 Graph 1.0.0 stable 승격
+
+`bluetape4k-graph:1.0.0`의 signed annotated tag가 release commit
+`a405300799b36d4d6edb7267ad07ff34d4ad3afe`를 가리키고, exact-head Full
+Nightly run `33551524797`과 Publish Release run `33552374208`이 성공했다.
+Maven Central에서 publication 16개의 POM, 15개의 JAR·sources·javadoc 및
+서명 122개와 metadata 16개를 HTTP 200으로 확인하고 central catalog의
+`bluetape4k-graph-bom`을 stable `1.0.0`으로 승격한다.
+
+`config/post-publish-next-development-line.json`의
+`stable-catalog-repositories`에도 `bluetape4k-graph`를 기록한다. 이 승격
+commit은 다음 downstream release wave의 immutable catalog ref가 되며, Graph
+release source와 tag는 변경하지 않는다.
+
 ## 2026-09-02 Projects 2.0.0 stable 승격
 
 `bluetape4k-projects:2.0.0`의 signed tag가 release commit
@@ -66,8 +80,8 @@ Maven Central metadata와 Central-only consumer를 모두 검증했다. issue #1
 #171 및 milestone `1.4.0`도 최종 증거와 함께 닫았다.
 
 현재 `baseVersion`은 `2.0.0`이고 `snapshotVersion`은 비워 둔다. Projects
-2.0.0만 stable로 승격했으며 AWS, Image, Text, Graph, Leader, Exposed, Javers는
-각 정식 공개와 검증이 끝날 때까지 SNAPSHOT line을 유지한다. 모든 internal
+2.0.0과 Graph 1.0.0을 stable로 승격했으며 AWS, Image, Text, Leader, Exposed,
+Javers는 각 정식 공개와 검증이 끝날 때까지 SNAPSHOT line을 유지한다. 모든 internal
 BOM이 stable이 되기 전에는 dependencies 2.0.0 tag나 publication을 만들지
 않는다.
 

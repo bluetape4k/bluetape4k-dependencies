@@ -4,6 +4,8 @@
 
 - Target version: `io.github.bluetape4k:bluetape4k-dependencies:2.0.0`
 - Latest observed external version: `io.github.bluetape4k:bluetape4k-bom:2.0.0`
+- Latest observed Graph version:
+  `io.github.bluetape4k.graph:bluetape4k-graph-bom:1.0.0`
 - Projects release commit: `8165a8989e0075e7c17c489bf3000bf41fef8232`
 - Publication authority: 이번 bluetape4k ecosystem 정식 배포와 후속 조치를
   완료하라는 사용자 승인
@@ -20,8 +22,12 @@
 - [x] Projects Maven Central publication 및 대표 artifact HTTP 200
 - [x] Projects GitHub Release와 2.0.0 milestone 종료
 - [x] Central catalog에서 Projects BOM을 stable 2.0.0으로 승격
-- [x] Post-publish guard가 Projects만 stable, 미배포 7개 BOM은 SNAPSHOT으로 검증
-- [ ] Exposed 2.0.0, Graph/Image/Text 1.0.0 정식 공개
+- [x] Graph 1.0.0 signed tag, exact-head Full Nightly, Maven Central publication,
+  GitHub Release와 milestone 종료
+- [x] Central catalog에서 Graph BOM을 stable 1.0.0으로 승격
+- [x] Post-publish guard가 Projects와 Graph는 stable, 미배포 6개 BOM은
+  SNAPSHOT으로 검증
+- [ ] Exposed 2.0.0, Image/Text 1.0.0 정식 공개
 - [ ] Central catalog에서 Exposed BOM을 stable 2.0.0으로 승격
 - [ ] AWS/Javers/Leader 1.0.0 정식 공개
 - [ ] 모든 internal BOM을 stable로 승격한 최종 catalog commit 확정
@@ -42,5 +48,5 @@
 ## DoD Status
 
 - 상태: PENDING
-- 현재 완료: Projects 2.0.0 공개 및 central catalog 승격 준비
-- 남은 hold: 나머지 7개 internal BOM release와 최종 consumer handoff
+- 현재 완료: Projects 2.0.0과 Graph 1.0.0 공개 및 central catalog 승격
+- 남은 hold: 나머지 6개 internal BOM release와 최종 consumer handoff

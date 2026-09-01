@@ -14,6 +14,10 @@
   publication workflow와 Maven Central의 BOM/module metadata 및 대표 library
   POM 공개 상태를 확인했습니다
   ([#226](https://github.com/bluetape4k/bluetape4k-dependencies/issues/226)).
+- 정식 공개된 `bluetape4k-graph` BOM을 `1.0.0-SNAPSHOT`에서 `1.0.0`으로
+  승격했습니다. Signed tag의 대상 SHA, exact-head Full Nightly, publication
+  workflow와 Maven Central의 publication 16개 및 공개 파일 122개를 확인했습니다
+  ([#228](https://github.com/bluetape4k/bluetape4k-dependencies/issues/228)).
 
 ## [1.4.0] - 2026-08-06
 
