@@ -429,17 +429,25 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 
 ```toml
 [versions]
-bluetape4k-core    = "1.11.0"
-bluetape4k-aws     = "0.4.0"
-bluetape4k-image   = "0.3.0"
-bluetape4k-text    = "0.2.1"
-bluetape4k-graph   = "0.5.1"
-bluetape4k-leader  = "0.4.0"
-bluetape4k-exposed = "1.11.0"
-bluetape4k-javers  = "0.2.1"
+bluetape4k-dependencies = "2.0.0"
+bluetape4k-bom          = "2.0.0"
+bluetape4k-aws-bom      = "1.0.0-SNAPSHOT"
+bluetape4k-image-bom    = "1.0.0-SNAPSHOT"
+bluetape4k-text-bom     = "1.0.0-SNAPSHOT"
+bluetape4k-graph-bom    = "1.0.0-SNAPSHOT"
+bluetape4k-leader-bom   = "1.0.0-SNAPSHOT"
+bluetape4k-exposed-bom  = "2.0.0-SNAPSHOT"
+bluetape4k-javers-bom   = "1.0.0-SNAPSHOT"
 ```
 
-새로운 업스트림 릴리즈를 반영하려면 `libs.versions.toml`에서 해당 버전을 수정하고 새 BOM 버전을 배포하면 됩니다.
+정식 배포 train에서는 각 upstream artifact가 Maven Central에 공개된 뒤 해당
+BOM ref만 순서대로 stable로 승격합니다. Downstream build는 검증·병합된 exact
+catalog commit을 사용하며, 모든 internal BOM이 stable이 되기 전에는 최종
+`bluetape4k-dependencies` BOM을 게시하지 않습니다.
+
+새로운 업스트림 릴리즈를 반영하려면 `libs.versions.toml`에서 해당 버전을
+수정하고 `libs.versions.toml.sha256`을 갱신한 뒤 publication POM을 검증합니다.
+Release checklist가 dispatch를 허용할 때만 새 BOM 버전을 게시합니다.
 
 ---
 

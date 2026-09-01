@@ -1,7 +1,24 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-08-12 KST
-Scope: dependencies 1.5.0 개발선.
+Snapshot: 2026-09-02 KST
+Scope: dependencies 2.0.0 정식 배포 train.
+
+## 2026-09-02 Projects 2.0.0 stable 승격
+
+`bluetape4k-projects:2.0.0`의 signed tag가 release commit
+`8165a8989e0075e7c17c489bf3000bf41fef8232`을 가리키고, exact-head Full
+Nightly run `33522892818`의 47/47 job과 publication run `33537327623`이
+성공했다. Maven Central에서 `bluetape4k-bom`, Gradle module metadata,
+`bluetape4k-core`, `bluetape4k-coroutines` 2.0.0을 HTTP 200으로 확인하고
+central catalog의 `bluetape4k-bom`을 stable `2.0.0`으로 승격한다.
+`config/post-publish-next-development-line.json`의
+`stable-catalog-repositories`에도 `bluetape4k-projects`를 기록해 공개 완료된
+repository만 stable ref를 허용하고 나머지 7개는 계속 SNAPSHOT으로 검증한다.
+
+이 승격 commit은 첫 downstream release wave의 immutable catalog ref가 된다.
+나머지 internal BOM은 각 저장소의 정식 공개 전까지 현재 SNAPSHOT line을
+유지한다. `bluetape4k-dependencies:2.0.0` publication은 모든 internal BOM의
+stable 승격과 최종 downstream handoff가 끝날 때까지 dispatch하지 않는다.
 
 ## 2026-08-12 게시 후속 보강
 
@@ -48,8 +65,11 @@ worktree를 만들었다. 원격 반영과 PR/merge는 별도 전달 gate다.
 Maven Central metadata와 Central-only consumer를 모두 검증했다. issue #168과
 #171 및 milestone `1.4.0`도 최종 증거와 함께 닫았다.
 
-현재 개발 버전은 `1.5.0`이다. `snapshotVersion`은 비워 두며, 다음 catalog
-train이 승인되기 전에는 새로운 stable tag나 publication을 만들지 않는다.
+현재 `baseVersion`은 `2.0.0`이고 `snapshotVersion`은 비워 둔다. Projects
+2.0.0만 stable로 승격했으며 AWS, Image, Text, Graph, Leader, Exposed, Javers는
+각 정식 공개와 검증이 끝날 때까지 SNAPSHOT line을 유지한다. 모든 internal
+BOM이 stable이 되기 전에는 dependencies 2.0.0 tag나 publication을 만들지
+않는다.
 
 ## 1.4.0 완료 증거
 

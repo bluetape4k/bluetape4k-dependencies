@@ -123,6 +123,31 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         )
         self.assertEqual(len(document["publishable-repositories"]), 8)
 
+    def test_catalog_version_tracks_each_repository_release_state(self) -> None:
+        module = load_script()
+        document = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        publishers = {
+            item["repository"]: item
+            for item in document["publishable-repositories"]
+        }
+
+        self.assertEqual(
+            module.expected_catalog_version(document, publishers["bluetape4k-projects"]),
+            "2.0.0",
+        )
+        self.assertEqual(
+            module.expected_catalog_version(document, publishers["bluetape4k-aws"]),
+            "1.0.0-SNAPSHOT",
+        )
+
+    def test_manifest_rejects_unknown_stable_catalog_repository(self) -> None:
+        module = load_script()
+        document = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        document["stable-catalog-repositories"] = ["unknown-repository"]
+
+        with self.assertRaisesRegex(RuntimeError, "stable-catalog-repositories"):
+            module.validate_manifest(document)
+
     def test_git_commit_exists_raises_for_non_repository(self) -> None:
         module = load_script()
 
@@ -234,7 +259,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "outside snapshot-catalog-repositories"):
             module.validate_manifest(document)
 
-    def test_development_line_rejects_stable_internal_ref(self) -> None:
+    def test_development_line_rejects_wrong_stable_internal_ref(self) -> None:
         module = load_script()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))
 
@@ -326,7 +351,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             ]
             for item in document["publishable-repositories"]:
                 catalog_lines.append(
-                    f'{item["catalog-alias"]} = "{item["base-version"]}-SNAPSHOT"'
+                    f'{item["catalog-alias"]} = "{module.expected_catalog_version(document, item)}"'
                 )
                 repo = workspace / item["repository"]
                 (repo / ".github" / "workflows").mkdir(parents=True)
