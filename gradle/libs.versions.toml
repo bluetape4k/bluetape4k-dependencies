@@ -7,7 +7,7 @@
 bluetape4k-dependencies = "2.0.0"  # Current catalog/BOM development line; update after each stable release.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "2.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-bom     = "2.0.0"  # Published stable release; Maven Central and exact-head provenance verified.
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws

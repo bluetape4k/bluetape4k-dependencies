@@ -457,17 +457,25 @@ Each upstream repository maintains its **own independent version**, tracked in `
 
 ```toml
 [versions]
-bluetape4k-core    = "1.11.0"
-bluetape4k-aws     = "0.4.0"
-bluetape4k-image   = "0.3.0"
-bluetape4k-text    = "0.2.1"
-bluetape4k-graph   = "0.5.1"
-bluetape4k-leader  = "0.4.0"
-bluetape4k-exposed = "1.11.0"
-bluetape4k-javers  = "0.2.1"
+bluetape4k-dependencies = "2.0.0"
+bluetape4k-bom          = "2.0.0"
+bluetape4k-aws-bom      = "1.0.0-SNAPSHOT"
+bluetape4k-image-bom    = "1.0.0-SNAPSHOT"
+bluetape4k-text-bom     = "1.0.0-SNAPSHOT"
+bluetape4k-graph-bom    = "1.0.0-SNAPSHOT"
+bluetape4k-leader-bom   = "1.0.0-SNAPSHOT"
+bluetape4k-exposed-bom  = "2.0.0-SNAPSHOT"
+bluetape4k-javers-bom   = "1.0.0-SNAPSHOT"
 ```
 
-To align a new upstream release, edit the version in `libs.versions.toml` and publish a new BOM version.
+During a stable release train, each BOM ref is promoted only after its upstream
+artifact is public on Maven Central. Downstream builds use the exact verified
+and merged catalog commit. The final `bluetape4k-dependencies` BOM is not
+published until every internal BOM ref is stable.
+
+To align a new upstream release, edit the version in `libs.versions.toml`,
+refresh `libs.versions.toml.sha256`, verify generated publication POMs, and
+publish a new BOM version only after the release checklist permits dispatch.
 
 ---
 

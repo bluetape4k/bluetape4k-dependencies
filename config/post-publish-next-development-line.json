@@ -8,6 +8,9 @@
     "snapshotVersion": "",
     "runtime-property": "-PsnapshotVersion=-SNAPSHOT"
   },
+  "stable-catalog-repositories": [
+    "bluetape4k-projects"
+  ],
   "publishable-repositories": [
     {
       "repository": "bluetape4k-projects",

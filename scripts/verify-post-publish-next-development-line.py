@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Fail closed when the post-publish development line is incomplete.
+"""Fail closed when the post-publish development or release line is incomplete.
 
 The stable release workflow cannot mutate ``develop`` safely.  This guard makes
 the follow-up explicit instead: the next ``baseVersion`` stays in source,
-``snapshotVersion`` stays empty, and every published child BOM is referenced
-with the runtime ``-SNAPSHOT`` suffix only after its snapshot metadata exists.
+``snapshotVersion`` stays empty, unreleased child BOMs use the runtime
+``-SNAPSHOT`` suffix, and repositories move to stable catalog refs only after
+they are listed as released in the manifest.
 """
 
 from __future__ import annotations
@@ -55,6 +56,7 @@ def validate_manifest(document: dict[str, Any]) -> None:
     development = document.get("development-version")
     suffix = document.get("snapshot-suffix")
     source_contract = document.get("source-contract")
+    stable_catalog_repositories = document.get("stable-catalog-repositories")
     publishers = document.get("publishable-repositories")
     consumer_policy = document.get("consumer-policy")
     if not isinstance(stable, str) or not SEMVER.fullmatch(stable):
@@ -71,6 +73,8 @@ def validate_manifest(document: dict[str, Any]) -> None:
         raise RuntimeError("runtime snapshot property contract is invalid")
     if not isinstance(publishers, list) or not publishers:
         raise RuntimeError("publishable-repositories must be a non-empty list")
+    if not isinstance(stable_catalog_repositories, list):
+        raise RuntimeError("stable-catalog-repositories must be a list")
     if not isinstance(consumer_policy, dict):
         raise RuntimeError("consumer-policy is required")
 
@@ -97,6 +101,20 @@ def validate_manifest(document: dict[str, Any]) -> None:
             raise RuntimeError(f"duplicate publisher catalog alias: {alias}")
         repositories.add(repository)
         aliases.add(alias)
+
+    if not all(
+        isinstance(repository, str) and REPOSITORY_NAME.fullmatch(repository)
+        for repository in stable_catalog_repositories
+    ):
+        raise RuntimeError("stable-catalog-repositories contains an invalid repository")
+    if len(stable_catalog_repositories) != len(set(stable_catalog_repositories)):
+        raise RuntimeError("stable-catalog-repositories contains duplicates")
+    unknown_stable_repositories = set(stable_catalog_repositories) - repositories
+    if unknown_stable_repositories:
+        raise RuntimeError(
+            "stable-catalog-repositories contains repositories outside "
+            f"publishable-repositories: {sorted(unknown_stable_repositories)}"
+        )
 
     required_policy_fields = {
         "snapshot-catalog-ref",
@@ -483,6 +501,18 @@ def metadata_exists(
     return False, status
 
 
+def expected_catalog_version(
+    manifest: dict[str, Any], publisher: dict[str, Any]
+) -> str:
+    repository = publisher["repository"]
+    suffix = (
+        ""
+        if repository in manifest["stable-catalog-repositories"]
+        else manifest["snapshot-suffix"]
+    )
+    return f"{publisher['base-version']}{suffix}"
+
+
 def verify_development(
     central_root: Path,
     workspace: Path,
@@ -515,14 +545,15 @@ def verify_development(
     errors.extend(verify_consumer_policy(workspace, manifest, central_root))
 
     expected_development_version = f"{development_version}{suffix}"
+    stable_catalog_repositories = set(manifest["stable-catalog-repositories"])
     for item in manifest["publishable-repositories"]:
         repository = item["repository"]
         alias = item["catalog-alias"]
         base_version = item["base-version"]
-        expected_snapshot = f"{base_version}{suffix}"
-        if versions.get(alias) != expected_snapshot:
+        expected_version = expected_catalog_version(manifest, item)
+        if versions.get(alias) != expected_version:
             errors.append(
-                f"catalog {alias} must reference {expected_snapshot}, got {versions.get(alias)!r}"
+                f"catalog {alias} must reference {expected_version}, got {versions.get(alias)!r}"
             )
         repo_root = workspace / repository
         repo_properties = repo_root / "gradle.properties"
@@ -556,7 +587,8 @@ def verify_development(
             text = release_workflow.read_text(encoding="utf-8")
             if "snapshotVersion must be empty for release" not in text:
                 errors.append(f"{repository} release workflow lacks the stable snapshot guard")
-        if require_artifacts:
+        if require_artifacts and repository not in stable_catalog_repositories:
+            expected_snapshot = f"{base_version}{suffix}"
             exists, status = metadata_exists(item["group"], item["artifact"], expected_snapshot)
             if not exists:
                 errors.append(
