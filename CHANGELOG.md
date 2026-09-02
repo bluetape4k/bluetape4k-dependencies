@@ -9,6 +9,10 @@
 
 ### 변경
 
+- 정식 공개된 마지막 3개 internal BOM인 AWS/Javers/Leader를 `1.0.0`
+  안정 버전으로 일괄 승격했습니다. 각 signed tag의 exact commit, release
+  workflow와 Maven Central 공개 상태를 확인했습니다
+  ([#232](https://github.com/bluetape4k/bluetape4k-dependencies/issues/232)).
 - 정식 공개된 `bluetape4k-projects` BOM을 `2.0.0-SNAPSHOT`에서 `2.0.0`으로
   승격했습니다. Signed tag의 대상 SHA, exact-head Full Nightly 47/47,
   publication workflow와 Maven Central의 BOM/module metadata 및 대표 library

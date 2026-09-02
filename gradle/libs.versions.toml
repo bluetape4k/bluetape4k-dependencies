@@ -11,7 +11,7 @@ bluetape4k-bom     = "2.0.0"  # Published stable release; Maven Central and exac
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
-bluetape4k-aws-bom = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-aws-bom = "1.0.0"  # Public AWS 1.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-image
 bluetape4k-image-bom   = "1.0.0"  # Public Image 1.0.0 verified on Maven Central before promotion.
@@ -23,13 +23,13 @@ bluetape4k-text-bom    = "1.0.0"  # Public Text 1.0.0 verified on Maven Central 
 bluetape4k-graph-bom   = "1.0.0"  # Public Graph 1.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-leader
-bluetape4k-leader-bom  = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-leader-bom  = "1.0.0"  # Public Leader 1.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-exposed
 bluetape4k-exposed-bom = "2.0.0"  # Public Exposed 2.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-javers
-bluetape4k-javers-bom  = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-javers-bom  = "1.0.0"  # Public Javers 1.0.0 verified on Maven Central before promotion.
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.4.10"  # Stable line; GHSA-r937-wjx7-w2jp awaits the Kotlin 2.4.20 stable release.

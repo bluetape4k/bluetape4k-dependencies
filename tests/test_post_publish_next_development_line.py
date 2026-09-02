@@ -131,30 +131,22 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             for item in document["publishable-repositories"]
         }
 
-        self.assertEqual(
-            module.expected_catalog_version(document, publishers["bluetape4k-projects"]),
-            "2.0.0",
-        )
-        self.assertEqual(
-            module.expected_catalog_version(document, publishers["bluetape4k-graph"]),
-            "1.0.0",
-        )
-        self.assertEqual(
-            module.expected_catalog_version(document, publishers["bluetape4k-exposed"]),
-            "2.0.0",
-        )
-        self.assertEqual(
-            module.expected_catalog_version(document, publishers["bluetape4k-image"]),
-            "1.0.0",
-        )
-        self.assertEqual(
-            module.expected_catalog_version(document, publishers["bluetape4k-text"]),
-            "1.0.0",
-        )
-        self.assertEqual(
-            module.expected_catalog_version(document, publishers["bluetape4k-aws"]),
-            "1.0.0-SNAPSHOT",
-        )
+        expected_versions = {
+            "bluetape4k-projects": "2.0.0",
+            "bluetape4k-aws": "1.0.0",
+            "bluetape4k-exposed": "2.0.0",
+            "bluetape4k-graph": "1.0.0",
+            "bluetape4k-image": "1.0.0",
+            "bluetape4k-javers": "1.0.0",
+            "bluetape4k-leader": "1.0.0",
+            "bluetape4k-text": "1.0.0",
+        }
+        for repository, expected in expected_versions.items():
+            with self.subTest(repository=repository):
+                self.assertEqual(
+                    module.expected_catalog_version(document, publishers[repository]),
+                    expected,
+                )
 
     def test_manifest_rejects_unknown_stable_catalog_repository(self) -> None:
         module = load_script()
