@@ -299,35 +299,6 @@ def git_commit_exists(repository: Path, ref: str) -> bool:
     )
 
 
-def git_is_ancestor(repository: Path, ancestor: str, descendant: str) -> bool:
-    try:
-        result = subprocess.run(
-            [
-                "git",
-                "-C",
-                str(repository),
-                "merge-base",
-                "--is-ancestor",
-                ancestor,
-                descendant,
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except OSError as error:
-        raise RuntimeError(f"cannot verify Git ancestry in {repository}: {error}") from error
-    if result.returncode == 0:
-        return True
-    if result.returncode == 1:
-        return False
-    detail = result.stderr.strip()
-    raise RuntimeError(
-        f"cannot verify Git ancestry in {repository}: "
-        f"{detail or f'git exited with status {result.returncode}'}"
-    )
-
-
 def verify_snapshot_catalog_history(
     repository_root: Path,
     consumer: str,
@@ -336,23 +307,18 @@ def verify_snapshot_catalog_history(
 ) -> list[str]:
     if not git_commit_exists(repository_root, minimum_ref):
         return [
-            f"{consumer} minimum snapshot catalog ref {minimum_ref} "
-            "is missing from central history"
+            f"{consumer} pinned snapshot catalog ref {minimum_ref} "
+            "is missing from the catalog repository"
         ]
     if not git_commit_exists(repository_root, actual_ref):
         return [
             f"{consumer} snapshot catalog ref {actual_ref} "
-            "is missing from central history"
+            "is missing from the catalog repository"
         ]
-    if not git_is_ancestor(repository_root, minimum_ref, actual_ref):
+    if actual_ref != minimum_ref:
         return [
             f"{consumer} snapshot catalog ref {actual_ref} "
-            f"is older than minimum {minimum_ref}"
-        ]
-    if not git_is_ancestor(repository_root, actual_ref, "HEAD"):
-        return [
-            f"{consumer} snapshot catalog ref {actual_ref} "
-            "is outside candidate HEAD history"
+            f"must match pinned ref {minimum_ref}"
         ]
     return []
 

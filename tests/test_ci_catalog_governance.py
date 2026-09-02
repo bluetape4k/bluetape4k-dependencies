@@ -123,7 +123,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("path: build/supply-chain-report/", workflow)
         self.assertIn("if-no-files-found: error", workflow)
 
-    def test_pull_requests_use_repo_local_fixture_for_the_adoption_guard(self) -> None:
+    def test_develop_validation_prefers_snapshot_candidate_branches(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
         clone_step = workflow.split(
@@ -140,7 +140,16 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             "--print-snapshot-candidate-branch",
             clone_step,
         )
-        self.assertIn('if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]', clone_step)
+        self.assertIn(
+            '[[ "${GITHUB_EVENT_NAME}" == "pull_request" && '
+            '"${GITHUB_BASE_REF}" == "develop" ]]',
+            clone_step,
+        )
+        self.assertIn(
+            '[[ "${GITHUB_EVENT_NAME}" == "push" && '
+            '"${GITHUB_REF}" == "refs/heads/develop" ]]',
+            clone_step,
+        )
         self.assertIn('--branch "$candidate_branch" --single-branch', clone_step)
 
         fixture_step = workflow.split(
