@@ -240,7 +240,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertEqual(
             module.snapshot_candidate_branch(document),
-            "chore/snapshot-catalog-91f9ea9",
+            "chore/snapshot-catalog-850959d",
         )
 
     def test_manifest_rejects_source_snapshot_suffix(self) -> None:
