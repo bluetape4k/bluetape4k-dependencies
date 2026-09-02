@@ -368,6 +368,7 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 |---|---|
 | `bluetape4k-image-bom` | 이미지 모듈 BOM |
 | `images` | 이미지 처리 핵심 유틸리티 |
+| `images-captcha` | CAPTCHA 이미지 생성 |
 | `images-ktor` | 이미지 모듈 Ktor 통합 |
 | `images-ocr` | 이미지 모듈 OCR 통합 |
 | `images-spring-boot` | 이미지 모듈 Spring Boot 통합 |
@@ -432,11 +433,11 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 bluetape4k-dependencies = "2.0.0"
 bluetape4k-bom          = "2.0.0"
 bluetape4k-aws-bom      = "1.0.0-SNAPSHOT"
-bluetape4k-image-bom    = "1.0.0-SNAPSHOT"
-bluetape4k-text-bom     = "1.0.0-SNAPSHOT"
+bluetape4k-image-bom    = "1.0.0"
+bluetape4k-text-bom     = "1.0.0"
 bluetape4k-graph-bom    = "1.0.0"
 bluetape4k-leader-bom   = "1.0.0-SNAPSHOT"
-bluetape4k-exposed-bom  = "2.0.0-SNAPSHOT"
+bluetape4k-exposed-bom  = "2.0.0"
 bluetape4k-javers-bom   = "1.0.0-SNAPSHOT"
 ```
 

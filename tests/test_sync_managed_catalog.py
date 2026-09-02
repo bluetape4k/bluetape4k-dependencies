@@ -289,14 +289,14 @@ class SyncManagedCatalogTest(unittest.TestCase):
             sync.include_module(repo, "bluetape4k-ktor-testing", "io/ktor/ktor-testing")
         )
 
-    def test_image_repo_excludes_unpublished_captcha_and_ktor_modules(self) -> None:
+    def test_image_repo_includes_published_captcha_and_gates_ktor_by_version(self) -> None:
         repo = next(
             managed_repo
             for managed_repo in sync.MANAGED_REPOS
             if managed_repo.label == "bluetape4k-image"
         )
 
-        self.assertFalse(
+        self.assertTrue(
             sync.include_module(repo, "bluetape4k-images-captcha", "images-captcha")
         )
         self.assertFalse(

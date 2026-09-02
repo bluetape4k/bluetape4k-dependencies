@@ -396,6 +396,7 @@ The table below lists every managed `bluetape4k-projects` artifact currently gen
 |---|---|
 | `bluetape4k-image-bom` | Image module BOM |
 | `images` | Core image processing utilities |
+| `images-captcha` | CAPTCHA image generation |
 | `images-ktor` | Ktor integration for image modules |
 | `images-ocr` | OCR integration for image modules |
 | `images-spring-boot` | Spring Boot integration for image modules |
@@ -460,11 +461,11 @@ Each upstream repository maintains its **own independent version**, tracked in `
 bluetape4k-dependencies = "2.0.0"
 bluetape4k-bom          = "2.0.0"
 bluetape4k-aws-bom      = "1.0.0-SNAPSHOT"
-bluetape4k-image-bom    = "1.0.0-SNAPSHOT"
-bluetape4k-text-bom     = "1.0.0-SNAPSHOT"
+bluetape4k-image-bom    = "1.0.0"
+bluetape4k-text-bom     = "1.0.0"
 bluetape4k-graph-bom    = "1.0.0"
 bluetape4k-leader-bom   = "1.0.0-SNAPSHOT"
-bluetape4k-exposed-bom  = "2.0.0-SNAPSHOT"
+bluetape4k-exposed-bom  = "2.0.0"
 bluetape4k-javers-bom   = "1.0.0-SNAPSHOT"
 ```
 

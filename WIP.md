@@ -3,6 +3,22 @@
 Snapshot: 2026-09-02 KST
 Scope: dependencies 2.0.0 정식 배포 train.
 
+## 2026-09-02 Batch 1 stable 승격
+
+첫 배포 묶음인 Exposed 2.0.0, Image 1.0.0, Text 1.0.0을 모두 공개한 뒤
+central catalog에서 한 번만 stable로 승격한다. Exposed release commit
+`d632a0bc0662ae616b786f552150a7fabd1cee3e`의 Full Nightly
+`33591311604`는 51/51 성공했고 Publish Release `33593217541`도 성공했다.
+Maven Central에서 Exposed publication 45개의 POM/module 90개와 batch/core
+migration schema resource 각 9개를 확인했다.
+
+Image release commit `b38d4891b66dff8bc63db0018b5e41810d1da9bc`와 Text release
+commit `59256aea7011d3f9073d74470459a13363150153`도 exact-head Nightly,
+release workflow, GitHub Release, Maven Central 공개를 확인했다. Image 1.0.0의
+정식 publication인 `bluetape4k-images-captcha`를 generator와 catalog alias에
+복구했다. 이 Batch 1 merge commit은 AWS/Javers/Leader 1.0.0 release가 사용할
+하나의 immutable catalog ref가 된다.
+
 ## 2026-09-02 Graph 1.0.0 stable 승격
 
 `bluetape4k-graph:1.0.0`의 signed annotated tag가 release commit
@@ -80,10 +96,10 @@ Maven Central metadata와 Central-only consumer를 모두 검증했다. issue #1
 #171 및 milestone `1.4.0`도 최종 증거와 함께 닫았다.
 
 현재 `baseVersion`은 `2.0.0`이고 `snapshotVersion`은 비워 둔다. Projects
-2.0.0과 Graph 1.0.0을 stable로 승격했으며 AWS, Image, Text, Leader, Exposed,
-Javers는 각 정식 공개와 검증이 끝날 때까지 SNAPSHOT line을 유지한다. 모든 internal
-BOM이 stable이 되기 전에는 dependencies 2.0.0 tag나 publication을 만들지
-않는다.
+2.0.0, Graph/Image/Text 1.0.0, Exposed 2.0.0을 stable로 승격했으며 AWS,
+Leader, Javers는 각 정식 공개와 검증이 끝날 때까지 SNAPSHOT line을 유지한다.
+모든 internal BOM이 stable이 되기 전에는 dependencies 2.0.0 tag나
+publication을 만들지 않는다.
 
 ## 1.4.0 완료 증거
 
