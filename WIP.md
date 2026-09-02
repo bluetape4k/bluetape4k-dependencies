@@ -3,6 +3,24 @@
 Snapshot: 2026-09-02 KST
 Scope: dependencies 2.0.0 정식 배포 train.
 
+## 2026-09-02 Batch 2 stable 승격
+
+마지막 배포 묶음인 AWS/Javers/Leader `1.0.0`의 signed annotated tag,
+exact tag commit의 release workflow, GitHub Release와 Maven Central BOM
+공개를 다시 확인했다. release workflow 기준선은 AWS `33602516061`,
+Javers `33602516342`, Leader `33604184809`이다.
+
+central catalog의 남은 3개 `SNAPSHOT` BOM ref를 stable로 승격하고,
+`stable-catalog-repositories`를 8개 publishable repository 전체로
+완성한다. 이 변경은 dependencies 2.0.0 publication 직전의 최종 internal BOM
+집합이며, downstream 저장소의 source ref를 다시 바꾸는 작업은 포함하지 않는다.
+
+internal BOM ref 변경은 latest-stable inventory의 authority record를 바꾸지
+않고 catalog/input checksum만 바꾼다. 따라서 기존 metadata-verified 510건의
+audit record를 유지한 채 새 inventory checksum에 재바인딩한다. 오늘 시점의
+외부 dependency 151건을 새로 채택하는 별도 upgrade train은 이 release
+경계에 섞지 않는다.
+
 ## 2026-09-02 Batch 1 stable 승격
 
 첫 배포 묶음인 Exposed 2.0.0, Image 1.0.0, Text 1.0.0을 모두 공개한 뒤
@@ -95,11 +113,10 @@ worktree를 만들었다. 원격 반영과 PR/merge는 별도 전달 gate다.
 Maven Central metadata와 Central-only consumer를 모두 검증했다. issue #168과
 #171 및 milestone `1.4.0`도 최종 증거와 함께 닫았다.
 
-현재 `baseVersion`은 `2.0.0`이고 `snapshotVersion`은 비워 둔다. Projects
-2.0.0, Graph/Image/Text 1.0.0, Exposed 2.0.0을 stable로 승격했으며 AWS,
-Leader, Javers는 각 정식 공개와 검증이 끝날 때까지 SNAPSHOT line을 유지한다.
-모든 internal BOM이 stable이 되기 전에는 dependencies 2.0.0 tag나
-publication을 만들지 않는다.
+현재 `baseVersion`은 `2.0.0`이고 `snapshotVersion`은 비워 둔다. Projects와
+Exposed는 `2.0.0`, AWS/Graph/Image/Javers/Leader/Text는 `1.0.0` stable로
+승격했다. 8개 internal BOM의 공개 검증과 중앙 승격이 모두 끝난 뒤에만
+dependencies 2.0.0 tag와 publication을 만든다.
 
 ## 1.4.0 완료 증거
 
