@@ -135,6 +135,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: validate-wrapper
+    # Pull requests and manual runs establish the cross-repository contract.
+    # The merged develop/main push has already passed the exact PR head, so
+    # rerunning every publisher here only duplicates the critical path.
+    if: ${{ github.event_name != 'push' }}
     steps:
       - uses: actions/checkout@v7
       - name: Clone publisher repositories
@@ -181,11 +185,17 @@ jobs:
     steps:
       - name: Check all jobs
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          PUBLICATION_POM_RESULT: ${{ needs.publication-pom-contract.result }}
           RESULTS: ${{ join(needs.*.result, ',') }}
         run: |
           echo "Job results: $RESULTS"
           if echo "$RESULTS" | grep -qE "failure|cancelled"; then
             echo "CI failed"
+            exit 1
+          fi
+          if [[ "$EVENT_NAME" != "push" && "$PUBLICATION_POM_RESULT" != "success" ]]; then
+            echo "Cross-repository Publication POM Contract is required for $EVENT_NAME (result=$PUBLICATION_POM_RESULT)"
             exit 1
           fi
           echo "CI passed"
