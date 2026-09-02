@@ -18,6 +18,11 @@
   승격했습니다. Signed tag의 대상 SHA, exact-head Full Nightly, publication
   workflow와 Maven Central의 publication 16개 및 공개 파일 122개를 확인했습니다
   ([#228](https://github.com/bluetape4k/bluetape4k-dependencies/issues/228)).
+- 첫 공개 배치인 `bluetape4k-exposed` 2.0.0, `bluetape4k-image` 1.0.0,
+  `bluetape4k-text` 1.0.0을 한 catalog commit에서 stable로 승격했습니다.
+  Image 1.0.0에 포함된 `bluetape4k-images-captcha`의 과거 generator 제외도
+  제거해 catalog alias와 문서에 반영했습니다
+  ([#230](https://github.com/bluetape4k/bluetape4k-dependencies/issues/230)).
 
 ## [1.4.0] - 2026-08-06
 

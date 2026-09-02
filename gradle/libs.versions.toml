@@ -14,10 +14,10 @@ bluetape4k-bom     = "2.0.0"  # Published stable release; Maven Central and exac
 bluetape4k-aws-bom = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-image-bom   = "1.0.0"  # Public Image 1.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-text-bom    = "1.0.0"  # Public Text 1.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-graph
 bluetape4k-graph-bom   = "1.0.0"  # Public Graph 1.0.0 verified on Maven Central before promotion.
@@ -26,7 +26,7 @@ bluetape4k-graph-bom   = "1.0.0"  # Public Graph 1.0.0 verified on Maven Central
 bluetape4k-leader-bom  = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "2.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
+bluetape4k-exposed-bom = "2.0.0"  # Public Exposed 2.0.0 verified on Maven Central before promotion.
 
 # https://github.com/bluetape4k/bluetape4k-javers
 bluetape4k-javers-bom  = "1.0.0-SNAPSHOT"  # Active post-publish development line; verify metadata before promotion.
@@ -1180,6 +1180,7 @@ bluetape4k-image-bom                           = { module = "io.github.bluetape4
 bluetape4k-images                              = { module = "io.github.bluetape4k.image:bluetape4k-images", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-barcode-api                  = { module = "io.github.bluetape4k.image:bluetape4k-images-barcode-api", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-barcode-zxing                = { module = "io.github.bluetape4k.image:bluetape4k-images-barcode-zxing", version.ref = "bluetape4k-image-bom" }
+bluetape4k-images-captcha                      = { module = "io.github.bluetape4k.image:bluetape4k-images-captcha", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-ktor                         = { module = "io.github.bluetape4k.image:bluetape4k-images-ktor", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-ocr                          = { module = "io.github.bluetape4k.image:bluetape4k-images-ocr", version.ref = "bluetape4k-image-bom" }
 bluetape4k-images-spring-boot                  = { module = "io.github.bluetape4k.image:bluetape4k-images-spring-boot", version.ref = "bluetape4k-image-bom" }

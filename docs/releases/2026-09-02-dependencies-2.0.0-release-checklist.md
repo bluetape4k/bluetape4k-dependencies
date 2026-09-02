@@ -6,7 +6,14 @@
 - Latest observed external version: `io.github.bluetape4k:bluetape4k-bom:2.0.0`
 - Latest observed Graph version:
   `io.github.bluetape4k.graph:bluetape4k-graph-bom:1.0.0`
+- Latest observed Batch 1 versions:
+  `io.github.bluetape4k.exposed:bluetape4k-exposed-bom:2.0.0`,
+  `io.github.bluetape4k.image:bluetape4k-image-bom:1.0.0`,
+  `io.github.bluetape4k.text:bluetape4k-text-bom:1.0.0`
 - Projects release commit: `8165a8989e0075e7c17c489bf3000bf41fef8232`
+- Exposed release commit: `d632a0bc0662ae616b786f552150a7fabd1cee3e`
+- Image release commit: `b38d4891b66dff8bc63db0018b5e41810d1da9bc`
+- Text release commit: `59256aea7011d3f9073d74470459a13363150153`
 - Publication authority: 이번 bluetape4k ecosystem 정식 배포와 후속 조치를
   완료하라는 사용자 승인
 - Consumer scope: 9개 internal library/catalog consumer와 최종 stable BOM을
@@ -25,10 +32,12 @@
 - [x] Graph 1.0.0 signed tag, exact-head Full Nightly, Maven Central publication,
   GitHub Release와 milestone 종료
 - [x] Central catalog에서 Graph BOM을 stable 1.0.0으로 승격
-- [x] Post-publish guard가 Projects와 Graph는 stable, 미배포 6개 BOM은
-  SNAPSHOT으로 검증
-- [ ] Exposed 2.0.0, Image/Text 1.0.0 정식 공개
-- [ ] Central catalog에서 Exposed BOM을 stable 2.0.0으로 승격
+- [x] Exposed 2.0.0, Image/Text 1.0.0 signed tag, exact-head Nightly,
+  publication workflow, GitHub Release와 Maven Central 공개 확인
+- [x] Batch 1의 Exposed/Image/Text BOM을 한 catalog commit에서 stable로 승격
+- [x] Image captcha publication을 managed alias와 문서에 반영
+- [x] Post-publish guard가 Projects/Graph/Exposed/Image/Text는 stable,
+  미배포 3개 BOM은 SNAPSHOT으로 검증
 - [ ] AWS/Javers/Leader 1.0.0 정식 공개
 - [ ] 모든 internal BOM을 stable로 승격한 최종 catalog commit 확정
 - [ ] 모든 consumer를 최종 exact catalog commit으로 handoff
@@ -48,5 +57,5 @@
 ## DoD Status
 
 - 상태: PENDING
-- 현재 완료: Projects 2.0.0과 Graph 1.0.0 공개 및 central catalog 승격
-- 남은 hold: 나머지 6개 internal BOM release와 최종 consumer handoff
+- 현재 완료: Projects/Graph 및 Batch 1 Exposed/Image/Text 공개와 catalog 승격
+- 남은 hold: AWS/Javers/Leader release와 최종 consumer handoff

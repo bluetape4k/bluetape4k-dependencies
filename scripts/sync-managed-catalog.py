@@ -145,7 +145,7 @@ MANAGED_REPOS: tuple[ManagedRepo, ...] = (
         version_ref="bluetape4k-image-bom",
         alias_mode="prefix",
         exclude_path_fragments=("examples", "benchmark"),
-        exclude_name_suffixes=("-demo", "-examples", "-benchmark", "-captcha"),
+        exclude_name_suffixes=("-demo", "-examples", "-benchmark"),
         minimum_versions=(("bluetape4k-images-ktor", "0.2.0"),),
     ),
     ManagedRepo(

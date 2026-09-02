@@ -10,7 +10,10 @@
   },
   "stable-catalog-repositories": [
     "bluetape4k-projects",
-    "bluetape4k-graph"
+    "bluetape4k-graph",
+    "bluetape4k-exposed",
+    "bluetape4k-image",
+    "bluetape4k-text"
   ],
   "publishable-repositories": [
     {
