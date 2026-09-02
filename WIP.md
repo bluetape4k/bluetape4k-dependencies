@@ -1,7 +1,18 @@
 # WIP - bluetape4k-dependencies
 
 Snapshot: 2026-09-02 KST
-Scope: dependencies 2.0.0 정식 배포 train.
+Scope: dependencies 2.1.0 minor 개발 train.
+
+## 2026-09-02 2.1.0 minor 개발선 전환
+
+`2.0.0` 정식 배포와 8개 내부 BOM의 stable 승격을 완료했다. 다음 개발선은
+Projects와 Exposed 및 Dependencies를 `2.1.0`, AWS/Graph/Image/Javers/Leader/Text를
+`1.1.0`으로 올린다. source의 `snapshotVersion=`은 비워 두고 snapshot
+workflow가 `-SNAPSHOT` suffix를 주입하는 기존 계약을 유지한다.
+
+모든 내부 라이브러리 SNAPSHOT 공개를 검증한 뒤 중앙 BOM을
+`2.1.0-SNAPSHOT`으로 발행하고, 그 catalog commit 하나를 downstream consumer가
+공유한다.
 
 ## 2026-09-02 Batch 2 stable 승격
 
@@ -113,10 +124,11 @@ worktree를 만들었다. 원격 반영과 PR/merge는 별도 전달 gate다.
 Maven Central metadata와 Central-only consumer를 모두 검증했다. issue #168과
 #171 및 milestone `1.4.0`도 최종 증거와 함께 닫았다.
 
-현재 `baseVersion`은 `2.0.0`이고 `snapshotVersion`은 비워 둔다. Projects와
-Exposed는 `2.0.0`, AWS/Graph/Image/Javers/Leader/Text는 `1.0.0` stable로
-승격했다. 8개 internal BOM의 공개 검증과 중앙 승격이 모두 끝난 뒤에만
-dependencies 2.0.0 tag와 publication을 만든다.
+현재 `baseVersion`은 `2.1.0`이고 `snapshotVersion`은 비워 둔다. Projects와
+Exposed는 `2.1.0-SNAPSHOT`, AWS/Graph/Image/Javers/Leader/Text는
+`1.1.0-SNAPSHOT`을 사용한다. 8개 internal BOM의 SNAPSHOT 공개 검증이 끝난
+뒤 dependencies `2.1.0-SNAPSHOT`을 발행하고 downstream catalog ref를 한 번만
+전환한다.
 
 ## 1.4.0 완료 증거
 
