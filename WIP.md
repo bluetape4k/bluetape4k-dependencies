@@ -11,8 +11,8 @@ Projects와 Exposed 및 Dependencies를 `2.1.0`, AWS/Graph/Image/Javers/Leader/T
 workflow가 `-SNAPSHOT` suffix를 주입하는 기존 계약을 유지한다.
 
 모든 내부 라이브러리 SNAPSHOT 공개를 검증한 뒤 중앙 BOM을
-`2.1.0-SNAPSHOT`으로 발행하고, 그 catalog commit 하나를 downstream consumer가
-공유한다.
+`2.1.0-SNAPSHOT`으로 발행한다. downstream consumer는 개발선 catalog를 확정한
+commit `850959d0ea5f76ac7e2c442400f47653d5f95eed` 하나를 공유한다.
 
 ## 2026-09-02 Batch 2 stable 승격
 
