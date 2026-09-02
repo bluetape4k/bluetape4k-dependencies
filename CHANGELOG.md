@@ -9,6 +9,9 @@
 
 ### 변경
 
+- `2.0.0` 정식 배포 이후 `2.1.0` minor 개발선을 열고 Projects와 Exposed를
+  `2.1.0-SNAPSHOT`, 나머지 내부 라이브러리를 `1.1.0-SNAPSHOT`으로 정렬했습니다
+  ([#235](https://github.com/bluetape4k/bluetape4k-dependencies/issues/235)).
 - 정식 공개된 마지막 3개 internal BOM인 AWS/Javers/Leader를 `1.0.0`
   안정 버전으로 일괄 승격했습니다. 각 signed tag의 exact commit, release
   workflow와 Maven Central 공개 상태를 확인했습니다

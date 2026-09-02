@@ -458,15 +458,15 @@ Each upstream repository maintains its **own independent version**, tracked in `
 
 ```toml
 [versions]
-bluetape4k-dependencies = "2.0.0"
-bluetape4k-bom          = "2.0.0"
-bluetape4k-aws-bom      = "1.0.0-SNAPSHOT"
-bluetape4k-image-bom    = "1.0.0"
-bluetape4k-text-bom     = "1.0.0"
-bluetape4k-graph-bom    = "1.0.0"
-bluetape4k-leader-bom   = "1.0.0-SNAPSHOT"
-bluetape4k-exposed-bom  = "2.0.0"
-bluetape4k-javers-bom   = "1.0.0-SNAPSHOT"
+bluetape4k-dependencies = "2.1.0"
+bluetape4k-bom          = "2.1.0-SNAPSHOT"
+bluetape4k-aws-bom      = "1.1.0-SNAPSHOT"
+bluetape4k-image-bom    = "1.1.0-SNAPSHOT"
+bluetape4k-text-bom     = "1.1.0-SNAPSHOT"
+bluetape4k-graph-bom    = "1.1.0-SNAPSHOT"
+bluetape4k-leader-bom   = "1.1.0-SNAPSHOT"
+bluetape4k-exposed-bom  = "2.1.0-SNAPSHOT"
+bluetape4k-javers-bom   = "1.1.0-SNAPSHOT"
 ```
 
 During a stable release train, each BOM ref is promoted only after its upstream

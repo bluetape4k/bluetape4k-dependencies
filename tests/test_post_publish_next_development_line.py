@@ -132,14 +132,14 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         }
 
         expected_versions = {
-            "bluetape4k-projects": "2.0.0",
-            "bluetape4k-aws": "1.0.0",
-            "bluetape4k-exposed": "2.0.0",
-            "bluetape4k-graph": "1.0.0",
-            "bluetape4k-image": "1.0.0",
-            "bluetape4k-javers": "1.0.0",
-            "bluetape4k-leader": "1.0.0",
-            "bluetape4k-text": "1.0.0",
+            "bluetape4k-projects": "2.1.0-SNAPSHOT",
+            "bluetape4k-aws": "1.1.0-SNAPSHOT",
+            "bluetape4k-exposed": "2.1.0-SNAPSHOT",
+            "bluetape4k-graph": "1.1.0-SNAPSHOT",
+            "bluetape4k-image": "1.1.0-SNAPSHOT",
+            "bluetape4k-javers": "1.1.0-SNAPSHOT",
+            "bluetape4k-leader": "1.1.0-SNAPSHOT",
+            "bluetape4k-text": "1.1.0-SNAPSHOT",
         }
         for repository, expected in expected_versions.items():
             with self.subTest(repository=repository):
@@ -195,13 +195,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 "bluetape4k-text",
             },
         )
-        self.assertEqual(
-            policy["snapshot-catalog-ref-overrides"],
-            {
-                "bluetape4k-exposed": "df64293753a9491b337852a158f89d4a93a1734a",
-                "bluetape4k-graph": "df64293753a9491b337852a158f89d4a93a1734a",
-            },
-        )
+        self.assertEqual(policy["snapshot-catalog-ref-overrides"], {})
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
             {
@@ -246,7 +240,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertEqual(
             module.snapshot_candidate_branch(document),
-            "chore/snapshot-catalog-91f9ea9",
+            "chore/snapshot-catalog-850959d",
         )
 
     def test_manifest_rejects_source_snapshot_suffix(self) -> None:
@@ -392,7 +386,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             errors = module.verify_development(central, workspace, document, False)
 
         self.assertIn(
-            "example-app must use official bluetape4k-dependencies 1.4.0, got '1.5.0-SNAPSHOT'",
+            "example-app must use official bluetape4k-dependencies 2.0.0, got '1.5.0-SNAPSHOT'",
             errors,
         )
 

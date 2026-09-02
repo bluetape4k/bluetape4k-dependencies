@@ -4,32 +4,32 @@
 [versions]
 # <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
-bluetape4k-dependencies = "2.0.0"  # Current catalog/BOM development line; update after each stable release.
+bluetape4k-dependencies = "2.1.0"  # Current catalog/BOM development line; update after each stable release.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "2.0.0"  # Published stable release; Maven Central and exact-head provenance verified.
+bluetape4k-bom     = "2.1.0-SNAPSHOT"  # Projects next minor development line.
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
-bluetape4k-aws-bom = "1.0.0"  # Public AWS 1.0.0 verified on Maven Central before promotion.
+bluetape4k-aws-bom = "1.1.0-SNAPSHOT"  # AWS next minor development line.
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "1.0.0"  # Public Image 1.0.0 verified on Maven Central before promotion.
+bluetape4k-image-bom   = "1.1.0-SNAPSHOT"  # Image next minor development line.
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "1.0.0"  # Public Text 1.0.0 verified on Maven Central before promotion.
+bluetape4k-text-bom    = "1.1.0-SNAPSHOT"  # Text next minor development line.
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "1.0.0"  # Public Graph 1.0.0 verified on Maven Central before promotion.
+bluetape4k-graph-bom   = "1.1.0-SNAPSHOT"  # Graph next minor development line.
 
 # https://github.com/bluetape4k/bluetape4k-leader
-bluetape4k-leader-bom  = "1.0.0"  # Public Leader 1.0.0 verified on Maven Central before promotion.
+bluetape4k-leader-bom  = "1.1.0-SNAPSHOT"  # Leader next minor development line.
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "2.0.0"  # Public Exposed 2.0.0 verified on Maven Central before promotion.
+bluetape4k-exposed-bom = "2.1.0-SNAPSHOT"  # Exposed next minor development line.
 
 # https://github.com/bluetape4k/bluetape4k-javers
-bluetape4k-javers-bom  = "1.0.0"  # Public Javers 1.0.0 verified on Maven Central before promotion.
+bluetape4k-javers-bom  = "1.1.0-SNAPSHOT"  # Javers next minor development line.
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.4.10"  # Stable line; GHSA-r937-wjx7-w2jp awaits the Kotlin 2.4.20 stable release.

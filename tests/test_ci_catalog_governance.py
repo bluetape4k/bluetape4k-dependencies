@@ -66,6 +66,12 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             "--print-required-repositories"
         )
         self.assertIn(clone_command, snapshot_workflow)
+        self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py "
+            "--print-snapshot-candidate-branch",
+            snapshot_workflow,
+        )
+        self.assertIn('--branch "$candidate_branch" --single-branch', snapshot_workflow)
         self.assertLess(
             snapshot_workflow.index(clone_command),
             snapshot_workflow.index(
