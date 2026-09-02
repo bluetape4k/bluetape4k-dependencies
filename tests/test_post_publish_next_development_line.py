@@ -165,16 +165,6 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "cannot inspect Git commits"):
                 module.git_commit_exists(non_repository, "a" * 40)
 
-    def test_git_is_ancestor_raises_when_git_cannot_resolve_commit(self) -> None:
-        module = load_script()
-
-        with tempfile.TemporaryDirectory() as temporary:
-            central = Path(temporary) / "central"
-            refs = create_catalog_history(central)
-
-            with self.assertRaisesRegex(RuntimeError, "cannot verify Git ancestry"):
-                module.git_is_ancestor(central, refs["minimum"], "f" * 40)
-
     def test_manifest_classifies_snapshot_libraries_and_example_consumers(self) -> None:
         module = load_script()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -412,7 +402,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertEqual(errors, [])
 
-    def test_consumer_policy_accepts_catalog_ref_after_minimum(self) -> None:
+    def test_consumer_policy_rejects_catalog_ref_after_pinned_ref(self) -> None:
         module = load_script()
 
         with tempfile.TemporaryDirectory() as temporary:
@@ -424,28 +414,6 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 workspace / "internal-library",
                 refs["forward"],
                 refs["forward"],
-            )
-
-            errors = module.verify_consumer_policy(
-                workspace,
-                snapshot_policy(refs["minimum"]),
-                central,
-            )
-
-        self.assertEqual(errors, [])
-
-    def test_consumer_policy_rejects_catalog_ref_before_minimum(self) -> None:
-        module = load_script()
-
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            central = root / "central"
-            workspace = root / "workspace"
-            refs = create_catalog_history(central)
-            write_snapshot_consumer(
-                workspace / "internal-library",
-                refs["rollback"],
-                refs["rollback"],
             )
 
             errors = module.verify_consumer_policy(
@@ -456,11 +424,37 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertIn(
             "internal-library snapshot catalog ref "
-            f"{refs['rollback']} is older than minimum {refs['minimum']}",
+            f"{refs['forward']} must match pinned ref {refs['minimum']}",
             errors,
         )
 
-    def test_consumer_policy_rejects_catalog_ref_outside_candidate_history(self) -> None:
+    def test_consumer_policy_rejects_catalog_ref_before_pinned_ref(self) -> None:
+        module = load_script()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            refs = create_catalog_history(central)
+            write_snapshot_consumer(
+                workspace / "internal-library",
+                refs["rollback"],
+                refs["rollback"],
+            )
+
+            errors = module.verify_consumer_policy(
+                workspace,
+                snapshot_policy(refs["minimum"]),
+                central,
+            )
+
+        self.assertIn(
+            "internal-library snapshot catalog ref "
+            f"{refs['rollback']} must match pinned ref {refs['minimum']}",
+            errors,
+        )
+
+    def test_consumer_policy_rejects_catalog_ref_on_another_history(self) -> None:
         module = load_script()
 
         with tempfile.TemporaryDirectory() as temporary:
@@ -482,7 +476,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertIn(
             "internal-library snapshot catalog ref "
-            f"{refs['outside']} is outside candidate HEAD history",
+            f"{refs['outside']} must match pinned ref {refs['minimum']}",
             errors,
         )
 
@@ -561,7 +555,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertIn(
             f"internal-library snapshot catalog ref {missing_ref} "
-            "is missing from central history",
+            "is missing from the catalog repository",
             errors,
         )
 
@@ -587,8 +581,8 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             )
 
         self.assertIn(
-            f"internal-library minimum snapshot catalog ref {missing_minimum} "
-            "is missing from central history",
+            f"internal-library pinned snapshot catalog ref {missing_minimum} "
+            "is missing from the catalog repository",
             errors,
         )
 
