@@ -1,14 +1,14 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "51bbe443aada395a5162afdf59a243b701b638138c70dec7ddcc92250c28b325",
+    "sha256": "42115def36d9d45db0babc66b00e985cfee59c9ee3c9fd03684504556ee341b7",
     "summary": {
       "authority-count": 515,
       "line-count": 549,
       "line-dispositions": {
-        "current": 443,
+        "current": 442,
         "defer-breaking-migration": 25,
-        "hold-compatibility": 72,
+        "hold-compatibility": 73,
         "hold-unavailable": 9
       },
       "metadata-preview-only": 5,
@@ -22,7 +22,7 @@
     "catalog-sha256": "0c6e5d4916e4093460a9523919b3d2d00bd73223925affbf446da088036385c0"
   },
   "candidate": {
-    "catalog-sha256": "cb2c2c9cbfddde915416eb481158df8dd8c1329e24fc1b7f219d659b9e4edffc"
+    "catalog-sha256": "66608f8261a12ad711dbd33e2df3a60c90f1cd2c22cfb12c0550475e1d0c8c2a"
   },
   "delta": [
     {
@@ -525,28 +525,6 @@
       ],
       "verification": "verified-resolved-graph",
       "version-key": "jnats"
-    },
-    {
-      "adoption-evidence": {
-        "classification": "verified-latest-compatible",
-        "version": "7.7.0.RELEASE"
-      },
-      "after": "7.7.0.RELEASE",
-      "authorities": [
-        {
-          "authority-key": "catalog:library:io.lettuce:lettuce-core",
-          "coordinate-or-plugin-id": "io.lettuce:lettuce-core",
-          "disposition": "current",
-          "kind": "library"
-        }
-      ],
-      "before": "7.6.0.RELEASE",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "resolved-graph-specs": [
-        "9c8dc9e7e69ff2a5fa2819dd8b4931866d3e4763ee9af8ddfe407ec06ddaae8a"
-      ],
-      "verification": "verified-resolved-graph",
-      "version-key": "lettuce"
     },
     {
       "adoption-evidence": {
@@ -3032,10 +3010,10 @@
     }
   ],
   "resolved-graph-evidence": {
-    "observation-count": 310,
+    "observation-count": 308,
     "path": "docs/releases/2026-09-04-catalog-version-refresh-resolved-graphs.json",
-    "sha256": "ea3914a61747c18dfdc7f2756eb11cc0dc3042e2f34b50ae59cfe38b89ec4b66",
-    "spec-count": 155
+    "sha256": "c29aaac2dbe81f9a0b4354d1d67272d481eb0c421b701fcd188da199c10b2f66",
+    "spec-count": 154
   },
   "rollout": "2026-09-04-catalog-version-refresh",
   "schema-version": 3,

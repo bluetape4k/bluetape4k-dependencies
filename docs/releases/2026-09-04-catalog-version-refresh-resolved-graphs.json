@@ -1,5 +1,5 @@
 {
-  "catalog-sha256": "cb2c2c9cbfddde915416eb481158df8dd8c1329e24fc1b7f219d659b9e4edffc",
+  "catalog-sha256": "66608f8261a12ad711dbd33e2df3a60c90f1cd2c22cfb12c0550475e1d0c8c2a",
   "command": [
     "./gradlew",
     "-p",
@@ -1518,15 +1518,6 @@
     },
     {
       "added-components": [
-        "io.lettuce:lettuce-core:7.7.0.RELEASE"
-      ],
-      "removed-components": [
-        "io.lettuce:lettuce-core:7.6.0.RELEASE"
-      ],
-      "spec_id": "9c8dc9e7e69ff2a5fa2819dd8b4931866d3e4763ee9af8ddfe407ec06ddaae8a"
-    },
-    {
-      "added-components": [
         "io.grpc:grpc-api:1.84.0",
         "io.grpc:grpc-context:1.84.0",
         "io.grpc:grpc-core:1.84.0",
@@ -2226,9 +2217,9 @@
       "spec_id": "fbadfee0142c10bb65e30bced877221691c11318d4688be6bb965e07dd6b2241"
     }
   ],
-  "ledger-contract-sha256": "034460e1e391b9d82a9c08623eeff8594dc55f66e9e6a90537155d3bdfa5dee6",
-  "log-sha256": "b77e116e76305718ce96cf67de79fc8138c2217b30049d419998aad743ff2d81",
-  "observation-count": 310,
+  "ledger-contract-sha256": "6414801ab5ef49ba13cad9df6baf7ac0c4475f4cc917e65be997a27774517b91",
+  "log-sha256": "9d0f1ce5e4cec78dd3e7e956195128fe74c840a57f6a32e21324c08aa4c21762",
+  "observation-count": 308,
   "observations": [
     {
       "components": [
@@ -6553,54 +6544,6 @@
     },
     {
       "components": [
-        "io.lettuce:lettuce-core:7.7.0.RELEASE",
-        "io.netty:netty-buffer:4.2.13.Final",
-        "io.netty:netty-codec-base:4.2.13.Final",
-        "io.netty:netty-codec-dns:4.2.13.Final",
-        "io.netty:netty-common:4.2.13.Final",
-        "io.netty:netty-handler:4.2.13.Final",
-        "io.netty:netty-resolver-dns:4.2.13.Final",
-        "io.netty:netty-resolver:4.2.13.Final",
-        "io.netty:netty-transport-native-unix-common:4.2.13.Final",
-        "io.netty:netty-transport:4.2.13.Final",
-        "io.projectreactor:reactor-core:3.6.6",
-        "org.reactivestreams:reactive-streams:1.0.4",
-        "org.slf4j:slf4j-api:1.7.36",
-        "redis.clients.authentication:redis-authx-core:0.1.1-beta2",
-        "root project 'latest-stable-resolved-graphs'"
-      ],
-      "graph_sha256": "49d088b63ec344b1b772b5bd00d53a3d256f907b4842bcd3620ae7910e9acd00",
-      "phase": "after",
-      "requested": "7.7.0.RELEASE",
-      "selected": "7.7.0.RELEASE",
-      "spec_id": "9c8dc9e7e69ff2a5fa2819dd8b4931866d3e4763ee9af8ddfe407ec06ddaae8a"
-    },
-    {
-      "components": [
-        "io.lettuce:lettuce-core:7.6.0.RELEASE",
-        "io.netty:netty-buffer:4.2.13.Final",
-        "io.netty:netty-codec-base:4.2.13.Final",
-        "io.netty:netty-codec-dns:4.2.13.Final",
-        "io.netty:netty-common:4.2.13.Final",
-        "io.netty:netty-handler:4.2.13.Final",
-        "io.netty:netty-resolver-dns:4.2.13.Final",
-        "io.netty:netty-resolver:4.2.13.Final",
-        "io.netty:netty-transport-native-unix-common:4.2.13.Final",
-        "io.netty:netty-transport:4.2.13.Final",
-        "io.projectreactor:reactor-core:3.6.6",
-        "org.reactivestreams:reactive-streams:1.0.4",
-        "org.slf4j:slf4j-api:1.7.36",
-        "redis.clients.authentication:redis-authx-core:0.1.1-beta2",
-        "root project 'latest-stable-resolved-graphs'"
-      ],
-      "graph_sha256": "7e9cca7c752a3e7941e92ef79f6cb3837c8278f4ed8b7e87cd25c36448161941",
-      "phase": "before",
-      "requested": "7.6.0.RELEASE",
-      "selected": "7.6.0.RELEASE",
-      "spec_id": "9c8dc9e7e69ff2a5fa2819dd8b4931866d3e4763ee9af8ddfe407ec06ddaae8a"
-    },
-    {
-      "components": [
         "com.google.android:annotations:4.1.1.4",
         "com.google.code.findbugs:jsr305:3.0.2",
         "com.google.code.gson:gson:2.14.0",
@@ -8463,6 +8406,6 @@
     }
   ],
   "schema-version": 2,
-  "spec-count": 155,
+  "spec-count": 154,
   "status": "verified-resolved-graph"
 }

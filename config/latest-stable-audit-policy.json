@@ -40,6 +40,10 @@
       "disposition": "hold-compatibility",
       "reason": "Preserve Kafka 4.2.1 because Spring Kafka 4.1.0 and spring-kafka-test manage the embedded-test artifacts at 4.2.1."
     },
+    "lettuce": {
+      "disposition": "hold-compatibility",
+      "reason": "Lettuce 7.7 removes the coroutine command overloads psetex and setnx used by bluetape4k-leader; retain 7.6 until the leader adapter migration is validated."
+    },
     "netty4": {
       "disposition": "hold-compatibility",
       "reason": "Preserve the Netty 4.1 ABI line required by Vert.x 4 and Fabric8 consumers."
