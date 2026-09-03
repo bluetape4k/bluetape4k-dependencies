@@ -214,7 +214,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             document["rollout"],
             central_document["subsequent-rollouts"][-1]["rollout"],
         )
-        self.assertEqual(document["audit-cutoff"], "2026-08-09")
+        self.assertEqual(document["audit-cutoff"], "2026-09-04")
         self.assertEqual(document["status"], "verified-resolved-graph")
         required_keys = {
                 "schema-version",
@@ -231,7 +231,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertTrue(
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
-        self.assertEqual(len(document["delta"]), 25)
+        self.assertEqual(len(document["delta"]), 128)
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),
@@ -321,7 +321,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
         self.assertEqual(audit["summary"]["authority-count"], 515)
         self.assertEqual(audit["summary"]["line-count"], 549)
-        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 449)
+        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 443)
         self.assertEqual(audit["summary"]["metadata-verified"], 510)
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:

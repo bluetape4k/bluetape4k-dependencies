@@ -43,6 +43,14 @@
     "netty4": {
       "disposition": "hold-compatibility",
       "reason": "Preserve the Netty 4.1 ABI line required by Vert.x 4 and Fabric8 consumers."
+    },
+    "managed-fastjson2-extension-spring6-h8d2fb4434699": {
+      "disposition": "hold-unavailable",
+      "reason": "The declared 2.0.62 artifact is absent from Maven Central, so the before graph cannot be reproduced; keep this generated alias for a separate removal or migration train."
+    },
+    "timefold-solver": {
+      "disposition": "defer-breaking-migration",
+      "reason": "Timefold Solver 2.6.0 changes the workshop and application integration surface; defer until a dedicated migration train validates all consumers."
     }
   },
   "schema-version": 2
