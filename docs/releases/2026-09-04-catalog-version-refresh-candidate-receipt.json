@@ -1,0 +1,78 @@
+{
+  "schema-version": 1,
+  "status": "verified-local-candidate",
+  "verified-at": "2026-09-04",
+  "rollout": "2026-09-04-catalog-version-refresh",
+  "catalog": {
+    "carrier-head": "4271e471abe9a5da0ecd3835d17311413d55b241",
+    "content-commit": "4271e471abe9a5da0ecd3835d17311413d55b241",
+    "sha256": "66608f8261a12ad711dbd33e2df3a60c90f1cd2c22cfb12c0550475e1d0c8c2a"
+  },
+  "scope": {
+    "included": [
+      "bluetape4k-projects",
+      "bluetape4k-aws",
+      "bluetape4k-experimental",
+      "bluetape4k-exposed",
+      "bluetape4k-graph",
+      "bluetape4k-image",
+      "bluetape4k-javers",
+      "bluetape4k-leader",
+      "bluetape4k-text"
+    ],
+    "excluded": [
+      "bluetape4k-workshop",
+      "clinic-appointment",
+      "exposed-r2dbc-workshop",
+      "exposed-workshop",
+      "timefold-workshop"
+    ]
+  },
+  "resolved-graphs": {
+    "status": "verified-resolved-graph",
+    "receipt": "docs/releases/2026-09-04-catalog-version-refresh-resolved-graphs.json",
+    "receipt-sha256": "c29aaac2dbe81f9a0b4354d1d67272d481eb0c421b701fcd188da199c10b2f66",
+    "spec-count": 154,
+    "observation-count": 308
+  },
+  "publication-poms": {
+    "status": "verified-local-candidate",
+    "repositories": 9,
+    "files": 188,
+    "dependencies": 49313,
+    "maven-models": 188,
+    "failures": 0,
+    "log": "build/candidate-publication-poms.log",
+    "log-sha256": "8e9778d0494ff299ee3d68097b46a972a833f10f0bc240231a54a44a293aaf6f"
+  },
+  "full-builds": {
+    "status": "pending",
+    "failures": null,
+    "repositories": {
+      "bluetape4k-projects": {"head": "57f6b3bb4189460f0fc34a509a701e5de438f350"},
+      "bluetape4k-aws": {"head": "b564319bd6a6f37475fcf628071ac642131da1d7"},
+      "bluetape4k-experimental": {"head": "2698545c693d781b415b3bdcf5f6c468875ec40e"},
+      "bluetape4k-exposed": {"head": "85aae98d7a69925cd92f406ac7d0f29cd5d9ea46"},
+      "bluetape4k-graph": {"head": "ca21bad1ec90d97d1f98d8e9b70894eed714f4ed"},
+      "bluetape4k-image": {"head": "b5cc7dc08fa01409ccdb90e8f281227ec7e22bb8"},
+      "bluetape4k-javers": {"head": "8d7d822918652b37f598741fded46629a600d166"},
+      "bluetape4k-leader": {"head": "b22f88ccaf8d531e4cc2eb0854daa78f9b423756"},
+      "bluetape4k-text": {"head": "47bd772c791fbe60e8f5a355b14cae35970f1bdf"}
+    },
+    "assemble": {
+      "status": "verified",
+      "repositories": 9,
+      "failures": 0,
+      "logs": "build/candidate-assemble-*.log"
+    },
+    "reason": "Testcontainers 기반 full test는 Docker 환경을 사용할 수 없어 완료하지 못했다."
+  },
+  "side-effects": {
+    "catalog-tag-created": false,
+    "merged": false,
+    "published": false,
+    "release-created": false,
+    "workflow-dispatched": false,
+    "remote-immutable-ref-verification": "pending-candidate-commit-and-push"
+  }
+}

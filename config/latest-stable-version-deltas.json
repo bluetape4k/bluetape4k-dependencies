@@ -3015,6 +3015,29 @@
     "sha256": "c29aaac2dbe81f9a0b4354d1d67272d481eb0c421b701fcd188da199c10b2f66",
     "spec-count": 154
   },
+  "candidate-validation-evidence": {
+    "path": "docs/releases/2026-09-04-catalog-version-refresh-candidate-receipt.json",
+    "sha256": "ad8c606b0def64e53f0d1bdb0eac33ad32bd9462615319b57be218d5595f946b",
+    "downstream-full-builds": {
+      "status": "pending",
+      "repositories": 9,
+      "assemble": {
+        "status": "verified",
+        "repositories": 9,
+        "failures": 0
+      },
+      "reason": "Testcontainers 기반 full test는 Docker 환경을 사용할 수 없어 완료하지 못했다."
+    },
+    "publication-poms": {
+      "status": "verified",
+      "repositories": 9,
+      "files": 188,
+      "dependencies": 49313,
+      "maven-models": 188,
+      "failures": 0
+    },
+    "remote-immutable-ref-verification": "pending-candidate-commit-and-push"
+  },
   "rollout": "2026-09-04-catalog-version-refresh",
   "schema-version": 3,
   "status": "verified-resolved-graph"

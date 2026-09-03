@@ -7,7 +7,7 @@ Scope: dependencies 2.1.0 minor 개발 train 및 외부 catalog 최신 안정판
 
 Maven Central의 authoritative metadata를 2026-09-03T21:19:40Z에 다시
 조회해 515개 authority line(이 중 510개 metadata verified)을 감사했다. 그
-결과 128개 외부 version key를 최신 안정판이면서 현재 호환선에 맞는 값으로
+결과 127개 외부 version key를 최신 안정판이면서 현재 호환선에 맞는 값으로
 승격했다. 주요 변경에는 Spring Boot 4.1.1, Jackson 2.22.2/3.2.2,
 Exposed 1.5.0, AWS SDK Java 2.54.12, AWS SDK for Kotlin 1.8.46,
 Fory 1.7.0, MongoDB driver 5.11.0, gRPC 1.84.0, Micrometer 1.17.1,
@@ -17,11 +17,15 @@ Vert.x 4.5.33/5.1.7이 포함된다.
 변경하지 않았다. Kotlin 2.4.10, Netty 4.1.136.Final, Kafka 4.2.1 및
 Timefold Solver 2.4.0은 각각 승인된 compatibility line, audit selector
 제약, 또는 별도 migration 검증이 필요하므로 이번 train에서 보류했다.
+Lettuce 7.7.0.RELEASE도 `bluetape4k-leader`의 coroutine `psetex`/`setnx`
+호출이 제거되어 compile 오류가 발생하므로 7.6.0.RELEASE를 유지했다.
 Maven Central에 2.0.62 POM이 없는 `managed-fastjson2-extension-spring6`은
 before graph를 재현할 수 없어 별도 alias 제거/migration train으로 보류했다.
-`config/latest-stable-version-deltas.json`은 128개 delta를 기록하고
-resolved graph와 downstream build 검증을 기다리는 `validation-pending`
-상태다. 이 작업은 catalog/BOM publication, PR, merge를 포함하지 않는다.
+`config/latest-stable-version-deltas.json`은 127개 delta와 154개 spec/308개
+observation의 resolved graph 증적을 기록한다. 9개 publisher의 POM 188개와
+Maven model 188개를 모두 검증했고, 9개 repository `assemble`도 성공했다.
+Docker가 필요한 full test는 환경 부재로 `PENDING`이며, catalog/BOM
+publication, PR, merge를 포함하지 않는다.
 
 ## 2026-09-02 2.1.0 minor 개발선 전환
 

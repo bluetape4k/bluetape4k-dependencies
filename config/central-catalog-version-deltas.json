@@ -525,12 +525,22 @@
       "catalog-sha256": "66608f8261a12ad711dbd33e2df3a60c90f1cd2c22cfb12c0550475e1d0c8c2a",
       "delta-count": 127,
       "downstream-full-builds": {
+        "status": "pending",
         "repositories": 9,
-        "status": "pending"
+        "assemble": {
+          "status": "verified",
+          "repositories": 9,
+          "failures": 0
+        },
+        "reason": "Testcontainers 기반 full test는 Docker 환경을 사용할 수 없어 완료하지 못했다."
       },
       "publication-pom-verification": {
+        "status": "verified",
         "repositories": 9,
-        "status": "pending"
+        "files": 188,
+        "dependencies": 49313,
+        "maven-models": 188,
+        "failures": 0
       },
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": {
