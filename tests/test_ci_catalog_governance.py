@@ -197,6 +197,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         job = workflow.split("  publication-pom-contract:\n", 1)[1].split("  ci-status:\n", 1)[0]
 
         self.assertIn("timeout-minutes: 30", job)
+        self.assertIn("if: ${{ github.event_name != 'push' }}", job)
         self.assertIn("scripts/verify-publication-poms.py --print-default-repositories", job)
         self.assertIn("scripts/verify-publication-poms.py --workspace .. --summary", job)
         self.assertIn("uses: actions/setup-java@v6", job)
@@ -204,6 +205,11 @@ class CatalogGovernanceCiTest(unittest.TestCase):
 
         status_job = workflow.split("  ci-status:\n", 1)[1]
         self.assertIn("- publication-pom-contract", status_job)
+        self.assertIn("PUBLICATION_POM_RESULT: ${{ needs.publication-pom-contract.result }}", status_job)
+        self.assertIn(
+            'if [[ "$EVENT_NAME" != "push" && "$PUBLICATION_POM_RESULT" != "success" ]]; then',
+            status_job,
+        )
 
 
 if __name__ == "__main__":
