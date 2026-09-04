@@ -36,7 +36,7 @@ build가 중단됐고, 같은 성능 테스트를 후보 catalog에서 3회 재�
 2회 통과·1회 실패했다. 기준 catalog도 3회 중 2회 통과했으며 나머지 1회는
 성능 assertion이 아닌 `:bluetape4k-junit5:compileKotlin`/
 `:bluetape4k-core:compileKotlin` 환경 실패였다. 따라서 catalog 버전 회귀가
-아닌 성능/환경 flake로 분류하고 Projects 이슈 후보로 기록한다. 이전 head의
+아닌 성능/환경 flake로 분류하고 Projects [#1630](https://github.com/bluetape4k/bluetape4k-projects/issues/1630)으로 등록했다. 이전 head의
 Keycloak readiness 기록은 receipt의 `historical-projects-full-build`에 보존했다.
 
 Graph 전체 build의 AGE PostgreSQL 초기화 EOF는 1회 발생했지만 동일 테스트
@@ -44,6 +44,12 @@ Graph 전체 build의 AGE PostgreSQL 초기화 EOF는 1회 발생했지만 동�
 test worker가 JDBC handshake에서 9분 정지하고 SIGTERM되어 환경 blocker로
 남았다. 이 증거 때문에 9개 downstream full-build 상태는 `PENDING`으로
 유지한다. catalog/BOM publication, PR, merge를 포함하지 않는다.
+
+코드 수준에서 확인한 신규 이슈는 Text [#322](https://github.com/bluetape4k/bluetape4k-text/issues/322)의
+`containsMatch` 공백 경계 누락과 Graph [#614](https://github.com/bluetape4k/bluetape4k-graph/issues/614)의
+GraphML property 타입 손실이다. AWS `outputStreamPartSizeBytes` 후보는 기존
+열린 [#615](https://github.com/bluetape4k/bluetape4k-aws/issues/615)와 중복되어
+새 이슈를 만들지 않았다.
 
 ## 2026-09-02 2.1.0 minor 개발선 전환
 
