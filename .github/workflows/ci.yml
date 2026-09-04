@@ -80,6 +80,7 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t repos < <(python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories)
+          mapfile -t snapshot_repositories < <(python3 scripts/verify-post-publish-next-development-line.py --print-snapshot-catalog-repositories)
           candidate_branch=""
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && "${GITHUB_BASE_REF}" == "develop" ]] ||
              [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/develop" ]]; then
@@ -87,7 +88,14 @@ jobs:
           fi
           for repo in "${repos[@]}"; do
             clone_args=(--depth 1)
-            if [[ -n "$candidate_branch" ]] &&
+            use_snapshot_candidate=false
+            for snapshot_repo in "${snapshot_repositories[@]}"; do
+              if [[ "$snapshot_repo" == "$repo" ]]; then
+                use_snapshot_candidate=true
+                break
+              fi
+            done
+            if [[ "$use_snapshot_candidate" == true && -n "$candidate_branch" ]] &&
                gh api "repos/bluetape4k/${repo}/branches/${candidate_branch}" >/dev/null 2>&1; then
               clone_args+=(--branch "$candidate_branch" --single-branch)
             fi
