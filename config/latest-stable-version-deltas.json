@@ -1,14 +1,14 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "42115def36d9d45db0babc66b00e985cfee59c9ee3c9fd03684504556ee341b7",
+    "sha256": "ecb28c1072ccc1fa13e7fff5251e090b3a3aa23b1173d9f8dda42ac61fb90449",
     "summary": {
       "authority-count": 515,
       "line-count": 549,
       "line-dispositions": {
-        "current": 442,
+        "current": 440,
         "defer-breaking-migration": 25,
-        "hold-compatibility": 73,
+        "hold-compatibility": 75,
         "hold-unavailable": 9
       },
       "metadata-preview-only": 5,
@@ -18,42 +18,13 @@
   },
   "audit-cutoff": "2026-09-04",
   "baseline": {
-    "catalog-ref": "e4d0748f6204083e4f4080eab8719e9155cd527b",
+    "catalog-ref": "develop",
     "catalog-sha256": "0c6e5d4916e4093460a9523919b3d2d00bd73223925affbf446da088036385c0"
   },
   "candidate": {
-    "catalog-sha256": "66608f8261a12ad711dbd33e2df3a60c90f1cd2c22cfb12c0550475e1d0c8c2a"
+    "catalog-sha256": "622761bc3e518f052fe769c7fa057b3e1ec0cacd22ad9a871a9d1d8157120e0a"
   },
   "delta": [
-    {
-      "adoption-evidence": {
-        "classification": "verified-latest-compatible",
-        "version": "1.12.2"
-      },
-      "after": "1.12.2",
-      "authorities": [
-        {
-          "authority-key": "catalog:library:org.apache.avro:avro",
-          "coordinate-or-plugin-id": "org.apache.avro:avro",
-          "disposition": "current",
-          "kind": "library"
-        },
-        {
-          "authority-key": "catalog:library:org.apache.avro:avro-compiler",
-          "coordinate-or-plugin-id": "org.apache.avro:avro-compiler",
-          "disposition": "current",
-          "kind": "library"
-        }
-      ],
-      "before": "1.12.1",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "resolved-graph-specs": [
-        "40850655febcde84c88d768cdf865144f5f55b95e0c98077cdd7f82235aac9bb",
-        "d590e673a9aca279f547c4f7c886b823174fa271db2e3ab552feb54b9745f5c3"
-      ],
-      "verification": "verified-resolved-graph",
-      "version-key": "avro"
-    },
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
@@ -288,9 +259,9 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "1.7.0"
+        "version": "1.7.1"
       },
-      "after": "1.7.0",
+      "after": "1.7.1",
       "authorities": [
         {
           "authority-key": "catalog:library:org.apache.fory:fory-core",
@@ -310,9 +281,9 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "1.7.0"
+        "version": "1.7.1"
       },
-      "after": "1.7.0",
+      "after": "1.7.1",
       "authorities": [
         {
           "authority-key": "catalog:library:org.apache.fory:fory-kotlin",
@@ -3010,33 +2981,33 @@
     }
   ],
   "resolved-graph-evidence": {
-    "observation-count": 308,
+    "observation-count": 304,
     "path": "docs/releases/2026-09-04-catalog-version-refresh-resolved-graphs.json",
-    "sha256": "c29aaac2dbe81f9a0b4354d1d67272d481eb0c421b701fcd188da199c10b2f66",
-    "spec-count": 154
+    "sha256": "b7354b6a847bc8e82c6d0e422f9ee601d1e03294ccbd0a13e2f8e87c0564d3ab",
+    "spec-count": 152
   },
   "candidate-validation-evidence": {
-    "path": "docs/releases/2026-09-04-catalog-version-refresh-candidate-receipt.json",
-    "sha256": "ad8c606b0def64e53f0d1bdb0eac33ad32bd9462615319b57be218d5595f946b",
     "downstream-full-builds": {
-      "status": "pending",
-      "repositories": 9,
       "assemble": {
-        "status": "verified",
+        "failures": 0,
         "repositories": 9,
-        "failures": 0
+        "status": "verified"
       },
-      "reason": "Testcontainers 기반 full test는 Docker 환경을 사용할 수 없어 완료하지 못했다."
-    },
-    "publication-poms": {
-      "status": "verified",
+      "reason": "Docker가 가용한 상태에서 bluetape4k-projects 전체 build를 실행했으나, Avro 1.12.2 후보에서 bluetape4k-avro:test 221개 중 134개가 실패했다. 기준 catalog의 Avro 1.12.1에서는 동일 테스트 221개가 통과했으므로 후보를 1.12.1 compatibility hold로 되돌렸다. 또한 cache-core의 NearJCacheDocumentationTest 3개는 BLUETAPE4K_MANUAL_ROOT 미설정으로 실패해 전체 테스트 완료를 보류한다.",
       "repositories": 9,
-      "files": 188,
-      "dependencies": 49313,
-      "maven-models": 188,
-      "failures": 0
+      "status": "pending"
     },
-    "remote-immutable-ref-verification": "pending-candidate-commit-and-push"
+    "path": "docs/releases/2026-09-04-catalog-version-refresh-candidate-receipt.json",
+    "publication-poms": {
+      "dependencies": 49313,
+      "failures": 0,
+      "files": 188,
+      "maven-models": 188,
+      "repositories": 9,
+      "status": "verified"
+    },
+    "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+    "sha256": "9eeb31e89e10375a169fac45c70c9d717d5adee3377632e1420572bf19726557"
   },
   "rollout": "2026-09-04-catalog-version-refresh",
   "schema-version": 3,

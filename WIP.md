@@ -5,12 +5,12 @@ Scope: dependencies 2.1.0 minor 개발 train 및 외부 catalog 최신 안정판
 
 ## 2026-09-04 외부 catalog 최신 안정판 정렬
 
-Maven Central의 authoritative metadata를 2026-09-03T21:19:40Z에 다시
+Maven Central의 authoritative metadata를 2026-09-04T04:40:29Z에 다시
 조회해 515개 authority line(이 중 510개 metadata verified)을 감사했다. 그
-결과 127개 외부 version key를 최신 안정판이면서 현재 호환선에 맞는 값으로
+결과 126개 외부 version key를 최신 안정판이면서 현재 호환선에 맞는 값으로
 승격했다. 주요 변경에는 Spring Boot 4.1.1, Jackson 2.22.2/3.2.2,
 Exposed 1.5.0, AWS SDK Java 2.54.12, AWS SDK for Kotlin 1.8.46,
-Fory 1.7.0, MongoDB driver 5.11.0, gRPC 1.84.0, Micrometer 1.17.1,
+Fory 1.7.1, MongoDB driver 5.11.0, gRPC 1.84.0, Micrometer 1.17.1,
 Vert.x 4.5.33/5.1.7이 포함된다.
 
 내부 `bluetape4k-*` BOM의 `2.1.0-SNAPSHOT`/`1.1.0-SNAPSHOT` 개발선은
@@ -19,13 +19,19 @@ Timefold Solver 2.4.0은 각각 승인된 compatibility line, audit selector
 제약, 또는 별도 migration 검증이 필요하므로 이번 train에서 보류했다.
 Lettuce 7.7.0.RELEASE도 `bluetape4k-leader`의 coroutine `psetex`/`setnx`
 호출이 제거되어 compile 오류가 발생하므로 7.6.0.RELEASE를 유지했다.
+Avro 1.12.2는 `ClassSecurityValidator`의 stricter trust 정책과 ByteBuffer
+serializer 실패 의미 변경으로 `bluetape4k-avro:test` 221개 중 134개가
+실패했고, 기준 Avro 1.12.1에서는 동일 테스트가 모두 통과했다. 따라서
+adapter migration 전까지 1.12.1을 compatibility hold로 유지한다.
 Maven Central에 2.0.62 POM이 없는 `managed-fastjson2-extension-spring6`은
 before graph를 재현할 수 없어 별도 alias 제거/migration train으로 보류했다.
-`config/latest-stable-version-deltas.json`은 127개 delta와 154개 spec/308개
+`config/latest-stable-version-deltas.json`은 126개 delta와 152개 spec/304개
 observation의 resolved graph 증적을 기록한다. 9개 publisher의 POM 188개와
 Maven model 188개를 모두 검증했고, 9개 repository `assemble`도 성공했다.
-Docker가 필요한 full test는 환경 부재로 `PENDING`이며, catalog/BOM
-publication, PR, merge를 포함하지 않는다.
+Docker는 가용했지만 후보 full test에서 위 Avro 회귀가 확인됐고,
+`NearJCacheDocumentationTest` 3개는 `BLUETAPE4K_MANUAL_ROOT`가 필요해
+full test는 `PENDING`이다. catalog/BOM publication, PR, merge를 포함하지
+않는다.
 
 ## 2026-09-02 2.1.0 minor 개발선 전환
 

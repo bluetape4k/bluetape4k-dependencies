@@ -11,17 +11,21 @@
 
 - 2026-09-04 기준 Maven Central authoritative metadata 515개 line을
   재감사하고, 검증된 최신 호환 stable release로 외부 catalog version key
-  127개를 갱신했습니다. Spring Boot 4.1.1, Jackson 2.22.2/3.2.2,
+  126개를 갱신했습니다. Spring Boot 4.1.1, Jackson 2.22.2/3.2.2,
   Exposed 1.5.0, AWS SDK Java 2.54.12, AWS SDK for Kotlin 1.8.46,
-  Fory 1.7.0, MongoDB driver 5.11.0, gRPC 1.84.0, Micrometer 1.17.1,
+  Fory 1.7.1, MongoDB driver 5.11.0, gRPC 1.84.0, Micrometer 1.17.1,
   Vert.x 4.5.33/5.1.7 등을 포함하며, 내부 SNAPSHOT BOM과 승인된
   Kotlin/Netty/Kafka compatibility line은 유지했습니다. Lettuce 7.7은
   `bluetape4k-leader` coroutine `psetex`/`setnx` compile 회귀가 확인되어
   7.6.0.RELEASE로 보류했습니다. Maven Central에 POM이 없는
   `managed-fastjson2-extension-spring6` 2.0.62와 Timefold migration은
-  별도 train으로 보류했습니다. 154개 resolved-graph spec/308개 observation,
-  188개 publication POM 및 9개 repository assemble을 검증했으며 Docker 기반
-  full test는 환경 부재로 `PENDING`입니다.
+  별도 train으로 보류했습니다. Avro 1.12.2는 `ClassSecurityValidator` trust
+  정책과 ByteBuffer serializer 실패 의미 변경으로 `bluetape4k-avro:test`
+  221개 중 134개가 실패했고 기준 1.12.1에서는 모두 통과해 compatibility
+  hold로 유지했습니다. 152개 resolved-graph spec/304개 observation, 188개
+  publication POM 및 9개 repository assemble을 검증했습니다. Docker는
+  가용했지만 Avro 회귀와 `BLUETAPE4K_MANUAL_ROOT`가 필요한
+  `NearJCacheDocumentationTest` 3개 때문에 full test는 `PENDING`입니다.
 - `2.0.0` 정식 배포 이후 `2.1.0` minor 개발선을 열고 Projects와 Exposed를
   `2.1.0-SNAPSHOT`, 나머지 내부 라이브러리를 `1.1.0-SNAPSHOT`으로 정렬했습니다
   ([#235](https://github.com/bluetape4k/bluetape4k-dependencies/issues/235)).

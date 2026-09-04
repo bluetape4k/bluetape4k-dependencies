@@ -4,9 +4,9 @@
   "verified-at": "2026-09-04",
   "rollout": "2026-09-04-catalog-version-refresh",
   "catalog": {
-    "carrier-head": "4271e471abe9a5da0ecd3835d17311413d55b241",
-    "content-commit": "4271e471abe9a5da0ecd3835d17311413d55b241",
-    "sha256": "66608f8261a12ad711dbd33e2df3a60c90f1cd2c22cfb12c0550475e1d0c8c2a"
+    "carrier-head": "c96935db88332ce6c245dae9f5df53a1b778790e",
+    "content-commit": "c96935db88332ce6c245dae9f5df53a1b778790e",
+    "sha256": "622761bc3e518f052fe769c7fa057b3e1ec0cacd22ad9a871a9d1d8157120e0a"
   },
   "scope": {
     "included": [
@@ -31,9 +31,9 @@
   "resolved-graphs": {
     "status": "verified-resolved-graph",
     "receipt": "docs/releases/2026-09-04-catalog-version-refresh-resolved-graphs.json",
-    "receipt-sha256": "c29aaac2dbe81f9a0b4354d1d67272d481eb0c421b701fcd188da199c10b2f66",
-    "spec-count": 154,
-    "observation-count": 308
+    "receipt-sha256": "b7354b6a847bc8e82c6d0e422f9ee601d1e03294ccbd0a13e2f8e87c0564d3ab",
+    "spec-count": 152,
+    "observation-count": 304
   },
   "publication-poms": {
     "status": "verified-local-candidate",
@@ -65,7 +65,7 @@
       "failures": 0,
       "logs": "build/candidate-assemble-*.log"
     },
-    "reason": "Testcontainers 기반 full test는 Docker 환경을 사용할 수 없어 완료하지 못했다."
+    "reason": "Docker가 가용한 상태에서 bluetape4k-projects 전체 build를 실행했으나, Avro 1.12.2 후보에서 bluetape4k-avro:test 221개 중 134개가 실패했다. 기준 catalog의 Avro 1.12.1에서는 동일 테스트 221개가 통과했으므로 후보를 1.12.1 compatibility hold로 되돌렸다. 또한 cache-core의 NearJCacheDocumentationTest 3개는 BLUETAPE4K_MANUAL_ROOT 미설정으로 실패해 전체 테스트 완료를 보류한다."
   },
   "side-effects": {
     "catalog-tag-created": false,

@@ -231,7 +231,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertTrue(
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
-        self.assertEqual(len(document["delta"]), 127)
+        self.assertEqual(len(document["delta"]), 126)
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),
@@ -322,7 +322,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
         self.assertEqual(audit["summary"]["authority-count"], 515)
         self.assertEqual(audit["summary"]["line-count"], 549)
-        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 442)
+        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
         self.assertEqual(audit["summary"]["metadata-verified"], 510)
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:
