@@ -9,9 +9,9 @@
     "sha256": "622761bc3e518f052fe769c7fa057b3e1ec0cacd22ad9a871a9d1d8157120e0a"
   },
   "candidate-manifest": {
-    "path": "/Users/debop/work/bluetape4k/.catalog-candidate-2026-09-04-v2/manifest.json",
-    "sha256": "7b24342cd930d30b2e18d583520148618540700e4be225491f7cd2875f7cd458",
-    "repository-map-sha256": "1b7feeaafc4e608edc1292e6db6f2aa6a866ff576707ffc95b9ba7761067c47b"
+    "path": "/Users/debop/work/bluetape4k/.catalog-candidate-2026-09-04-v3/manifest.json",
+    "sha256": "8246c76f2b7986ae78197f40afef8f1d970a6cb618552eb9ce323e25a7d7a609",
+    "repository-map-sha256": "cdf433fc78d69c1289c04016abaa56953ab01a8786e2cbc5d1a71e8eed3dd2b9"
   },
   "scope": {
     "included": [

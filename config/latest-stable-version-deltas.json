@@ -3027,7 +3027,7 @@
       "status": "verified"
     },
     "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-    "sha256": "17ce1ba17c836a9c6d069faf8362a6e153bd345f0bced8e1c2ab0ff713773602"
+    "sha256": "c06f11b86ca1719d28520cc6ca3aa03194b178cfd2534304051467fd81b82779"
   },
   "rollout": "2026-09-04-catalog-version-refresh",
   "schema-version": 3,
