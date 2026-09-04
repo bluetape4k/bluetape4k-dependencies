@@ -113,7 +113,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             authority["resolved-graph-evidence"]["spec-count"],
         )
         validation = authority.get("candidate-validation-evidence")
-        if validation is None or validation["downstream-full-builds"].get("status") == "pending":
+        if validation is None:
             self.assertEqual(rollout["downstream-full-builds"]["status"], "pending")
             self.assertEqual(
                 rollout["publication-pom-verification"]["status"], "pending"
@@ -123,13 +123,20 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
                 "pending-candidate-commit-and-push",
             )
         else:
-            self.assertEqual(rollout["downstream-full-builds"]["failures"], 0)
+            self.assertEqual(
+                rollout["downstream-full-builds"]["status"],
+                validation["downstream-full-builds"]["status"],
+            )
+            self.assertEqual(
+                rollout["publication-pom-verification"]["status"],
+                validation["publication-poms"]["status"],
+            )
             self.assertEqual(
                 rollout["publication-pom-verification"]["failures"], 0
             )
             self.assertEqual(
                 rollout["remote-immutable-ref-verification"],
-                "verified-fresh-remote-commit-ref",
+                "pending-candidate-commit-and-push",
             )
 
     def test_compatibility_lines_are_not_issue_168_adoption_deltas(self) -> None:

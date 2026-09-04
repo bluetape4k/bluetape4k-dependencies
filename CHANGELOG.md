@@ -9,6 +9,42 @@
 
 ### 변경
 
+- workshop 및 example consumer(`bluetape4k-workshop`, `exposed-r2dbc-workshop`,
+  `exposed-workshop`, `clinic-appointment`, `timefold-workshop`)는 중앙
+  `bluetape4k-dependencies:2.0.0` 안정 BOM을 사용하도록 post-publish 정책을
+  정렬했습니다. `2.1.0-SNAPSHOT`은 내부 라이브러리 catalog 소비자에만
+  적용합니다.
+- 2026-09-04 기준 Maven Central authoritative metadata 515개 line을
+  재감사하고, 검증된 최신 호환 stable release로 외부 catalog version key
+  126개를 갱신했습니다. Spring Boot 4.1.1, Jackson 2.22.2/3.2.2,
+  Exposed 1.5.0, AWS SDK Java 2.54.12, AWS SDK for Kotlin 1.8.46,
+  Fory 1.7.1, MongoDB driver 5.11.0, gRPC 1.84.0, Micrometer 1.17.1,
+  Vert.x 4.5.33/5.1.7 등을 포함하며, 내부 SNAPSHOT BOM과 승인된
+  Kotlin/Netty/Kafka compatibility line은 유지했습니다. Lettuce 7.7은
+  `bluetape4k-leader` coroutine `psetex`/`setnx` compile 회귀가 확인되어
+  7.6.0.RELEASE로 보류했습니다. Maven Central에 POM이 없는
+  `managed-fastjson2-extension-spring6` 2.0.62와 Timefold migration은
+  별도 train으로 보류했습니다. Avro 1.12.2는 `ClassSecurityValidator` trust
+  정책과 ByteBuffer serializer 실패 의미 변경으로 `bluetape4k-avro:test`
+  221개 중 134개가 실패했고 기준 1.12.1에서는 모두 통과해 compatibility
+  hold로 유지했습니다. 152개 resolved-graph spec/304개 observation, 188개
+  publication POM 및 9개 repository assemble을 검증했습니다. central manual
+  checkout을 고정한 원격 exact HEAD `0be7daa7a6d98937126486ff4b84a76e416696d6`의
+  후보 `bluetape4k-projects` 전체 build는
+  `:bluetape4k-lettuce:multiKeyLeasePerformanceTest` normalized p95 비율
+  assertion 1건(`13.390084 > 3.6915`)으로 중단됐습니다. 후보 성능 테스트는
+  3회 중 2회 통과·1회 실패했고 기준 catalog도 3회 중 2회 통과했으며, 기준의
+  나머지 1회는 Kotlin compile 환경 실패였습니다. catalog 회귀가 아닌
+  성능/환경 flake로 분류해 Projects [#1630](https://github.com/bluetape4k/bluetape4k-projects/issues/1630)으로 등록했습니다. 이전 head의
+  Keycloak readiness 기록은 receipt의 `historical-projects-full-build`에
+  보존했습니다. Graph AGE PostgreSQL 초기화 EOF는 1회 실패 후 동일 테스트
+  3회 재실행이 모두 통과했으며, Exposed는 4,934개 실행·230개 skip 뒤
+  PostgreSQL JDBC handshake 정지와 SIGTERM으로 환경 blocker가 발생했습니다.
+  따라서 downstream full test는 `PENDING`으로 유지합니다. Text의
+  `containsMatch` 공백 경계 누락은 [#322](https://github.com/bluetape4k/bluetape4k-text/issues/322),
+  GraphML property 타입 손실은 [#614](https://github.com/bluetape4k/bluetape4k-graph/issues/614)로
+  등록했으며, AWS multipart part-size wiring 후보는 기존 열린
+  [#615](https://github.com/bluetape4k/bluetape4k-aws/issues/615)와 중복입니다.
 - `2.0.0` 정식 배포 이후 `2.1.0` minor 개발선을 열고 Projects와 Exposed를
   `2.1.0-SNAPSHOT`, 나머지 내부 라이브러리를 `1.1.0-SNAPSHOT`으로 정렬했습니다
   ([#235](https://github.com/bluetape4k/bluetape4k-dependencies/issues/235)).

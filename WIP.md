@@ -1,7 +1,70 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-09-02 KST
-Scope: dependencies 2.1.0 minor 개발 train.
+Snapshot: 2026-09-04 KST
+Scope: dependencies 2.1.0 minor 개발 train 및 외부 catalog 최신 안정판 정렬.
+
+## 2026-09-04 workshop 안정 소비자 정책 정렬
+
+`bluetape4k-workshop`, `exposed-r2dbc-workshop`, `exposed-workshop`,
+`clinic-appointment`, `timefold-workshop`은 모두 정식 공개된
+`bluetape4k-dependencies:2.0.0` 안정 BOM을 사용한다. 중앙
+`config/post-publish-next-development-line.json`에서도 이 5개 저장소를
+`official-release-repositories`로 분류하고, `development-snapshot-repositories`는
+비워 둔다. `2.1.0-SNAPSHOT`은 내부 라이브러리 저장소의 다음 개발선에만
+사용한다.
+
+이번 정렬은 PR #241의 hosted CI가 `bluetape4k-workshop/develop`의 안정
+`2.0.0` 소비를 발견한 결과를 반영한다. `exposed-r2dbc-workshop`과
+`exposed-workshop`도 동일한 안정 기준으로 재검증한 뒤 중앙 정책과 함께
+전환한다.
+
+## 2026-09-04 외부 catalog 최신 안정판 정렬
+
+Maven Central의 authoritative metadata를 2026-09-04T04:40:29Z에 다시
+조회해 515개 authority line(이 중 510개 metadata verified)을 감사했다. 그
+결과 126개 외부 version key를 최신 안정판이면서 현재 호환선에 맞는 값으로
+승격했다. 주요 변경에는 Spring Boot 4.1.1, Jackson 2.22.2/3.2.2,
+Exposed 1.5.0, AWS SDK Java 2.54.12, AWS SDK for Kotlin 1.8.46,
+Fory 1.7.1, MongoDB driver 5.11.0, gRPC 1.84.0, Micrometer 1.17.1,
+Vert.x 4.5.33/5.1.7이 포함된다.
+
+내부 `bluetape4k-*` BOM의 `2.1.0-SNAPSHOT`/`1.1.0-SNAPSHOT` 개발선은
+변경하지 않았다. Kotlin 2.4.10, Netty 4.1.136.Final, Kafka 4.2.1 및
+Timefold Solver 2.4.0은 각각 승인된 compatibility line, audit selector
+제약, 또는 별도 migration 검증이 필요하므로 이번 train에서 보류했다.
+Lettuce 7.7.0.RELEASE도 `bluetape4k-leader`의 coroutine `psetex`/`setnx`
+호출이 제거되어 compile 오류가 발생하므로 7.6.0.RELEASE를 유지했다.
+Avro 1.12.2는 `ClassSecurityValidator`의 stricter trust 정책과 ByteBuffer
+serializer 실패 의미 변경으로 `bluetape4k-avro:test` 221개 중 134개가
+실패했고, 기준 Avro 1.12.1에서는 동일 테스트가 모두 통과했다. 따라서
+adapter migration 전까지 1.12.1을 compatibility hold로 유지한다.
+Maven Central에 2.0.62 POM이 없는 `managed-fastjson2-extension-spring6`은
+before graph를 재현할 수 없어 별도 alias 제거/migration train으로 보류했다.
+`config/latest-stable-version-deltas.json`은 126개 delta와 152개 spec/304개
+observation의 resolved graph 증적을 기록한다. 9개 publisher의 POM 188개와
+Maven model 188개를 모두 검증했고, 9개 repository `assemble`도 성공했다.
+Docker와 central manual checkout을 고정한 뒤 원격 exact HEAD
+`0be7daa7a6d98937126486ff4b84a76e416696d6`의 후보 `bluetape4k-projects` 전체
+build를 실행했다. `:bluetape4k-lettuce:multiKeyLeasePerformanceTest`의
+normalized p95 비율 assertion이 한 번 실패(`13.390084 > 3.6915`)해 전체
+build가 중단됐고, 같은 성능 테스트를 후보 catalog에서 3회 재실행한 결과
+2회 통과·1회 실패했다. 기준 catalog도 3회 중 2회 통과했으며 나머지 1회는
+성능 assertion이 아닌 `:bluetape4k-junit5:compileKotlin`/
+`:bluetape4k-core:compileKotlin` 환경 실패였다. 따라서 catalog 버전 회귀가
+아닌 성능/환경 flake로 분류하고 Projects [#1630](https://github.com/bluetape4k/bluetape4k-projects/issues/1630)으로 등록했다. 이전 head의
+Keycloak readiness 기록은 receipt의 `historical-projects-full-build`에 보존했다.
+
+Graph 전체 build의 AGE PostgreSQL 초기화 EOF는 1회 발생했지만 동일 테스트
+3회 재실행은 모두 통과했다. Exposed는 4,934개 실행·230개 skip 뒤 PostgreSQL
+test worker가 JDBC handshake에서 9분 정지하고 SIGTERM되어 환경 blocker로
+남았다. 이 증거 때문에 9개 downstream full-build 상태는 `PENDING`으로
+유지한다. catalog/BOM publication, PR, merge를 포함하지 않는다.
+
+코드 수준에서 확인한 신규 이슈는 Text [#322](https://github.com/bluetape4k/bluetape4k-text/issues/322)의
+`containsMatch` 공백 경계 누락과 Graph [#614](https://github.com/bluetape4k/bluetape4k-graph/issues/614)의
+GraphML property 타입 손실이다. AWS `outputStreamPartSizeBytes` 후보는 기존
+열린 [#615](https://github.com/bluetape4k/bluetape4k-aws/issues/615)와 중복되어
+새 이슈를 만들지 않았다.
 
 ## 2026-09-02 2.1.0 minor 개발선 전환
 

@@ -8,6 +8,10 @@
     }
   },
   "line-overrides": {
+    "avro": {
+      "disposition": "hold-compatibility",
+      "reason": "Avro 1.12.2 enables stricter ClassSecurityValidator behavior and changes ByteBuffer serializer failure semantics; the bluetape4k-avro test suite passes on 1.12.1 but fails on 1.12.2, so retain 1.12.1 until the adapter migration is validated."
+    },
     "byte-buddy": {
       "disposition": "hold-compatibility",
       "reason": "Preserve the unqualified JVM 8+ Byte Buddy channel; the upstream release marker points to the separate jdk5 variant."
@@ -40,9 +44,21 @@
       "disposition": "hold-compatibility",
       "reason": "Preserve Kafka 4.2.1 because Spring Kafka 4.1.0 and spring-kafka-test manage the embedded-test artifacts at 4.2.1."
     },
+    "lettuce": {
+      "disposition": "hold-compatibility",
+      "reason": "Lettuce 7.7 removes the coroutine command overloads psetex and setnx used by bluetape4k-leader; retain 7.6 until the leader adapter migration is validated."
+    },
     "netty4": {
       "disposition": "hold-compatibility",
       "reason": "Preserve the Netty 4.1 ABI line required by Vert.x 4 and Fabric8 consumers."
+    },
+    "managed-fastjson2-extension-spring6-h8d2fb4434699": {
+      "disposition": "hold-unavailable",
+      "reason": "The declared 2.0.62 artifact is absent from Maven Central, so the before graph cannot be reproduced; keep this generated alias for a separate removal or migration train."
+    },
+    "timefold-solver": {
+      "disposition": "defer-breaking-migration",
+      "reason": "Timefold Solver 2.6.0 changes the workshop and application integration surface; defer until a dedicated migration train validates all consumers."
     }
   },
   "schema-version": 2

@@ -191,6 +191,9 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             {
                 "clinic-appointment",
                 "timefold-workshop",
+                "bluetape4k-workshop",
+                "exposed-r2dbc-workshop",
+                "exposed-workshop",
             },
         )
         self.assertEqual(
@@ -198,11 +201,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 item["repository"]
                 for item in policy["development-snapshot-repositories"]
             },
-            {
-                "bluetape4k-workshop",
-                "exposed-r2dbc-workshop",
-                "exposed-workshop",
-            },
+            set(),
         )
         self.assertEqual(
             set(module.required_workspace_repositories(document)),

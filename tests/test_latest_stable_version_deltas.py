@@ -214,7 +214,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             document["rollout"],
             central_document["subsequent-rollouts"][-1]["rollout"],
         )
-        self.assertEqual(document["audit-cutoff"], "2026-08-09")
+        self.assertEqual(document["audit-cutoff"], "2026-09-04")
         self.assertEqual(document["status"], "verified-resolved-graph")
         required_keys = {
                 "schema-version",
@@ -231,7 +231,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertTrue(
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
-        self.assertEqual(len(document["delta"]), 25)
+        self.assertEqual(len(document["delta"]), 126)
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),
@@ -308,10 +308,11 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 candidate_receipt["catalog"]["sha256"],
                 document["candidate"]["catalog-sha256"],
             )
-            self.assertEqual(candidate_receipt["full-builds"]["failures"], 0)
+            self.assertEqual(candidate_receipt["full-builds"]["status"], "pending")
             self.assertEqual(len(candidate_receipt["full-builds"]["repositories"]), 9)
+            self.assertEqual(candidate_receipt["full-builds"]["assemble"]["failures"], 0)
             self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
-            self.assertEqual(candidate_receipt["publication-poms"]["files"], 173)
+            self.assertEqual(candidate_receipt["publication-poms"]["files"], 188)
 
     def test_audit_closes_all_safe_adoption_candidates(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
@@ -321,7 +322,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
         self.assertEqual(audit["summary"]["authority-count"], 515)
         self.assertEqual(audit["summary"]["line-count"], 549)
-        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 449)
+        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
         self.assertEqual(audit["summary"]["metadata-verified"], 510)
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:

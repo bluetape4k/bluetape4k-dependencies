@@ -141,6 +141,12 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             clone_step,
         )
         self.assertIn(
+            "python3 scripts/verify-post-publish-next-development-line.py "
+            "--print-snapshot-catalog-repositories",
+            clone_step,
+        )
+        self.assertIn("use_snapshot_candidate=true", clone_step)
+        self.assertIn(
             '[[ "${GITHUB_EVENT_NAME}" == "pull_request" && '
             '"${GITHUB_BASE_REF}" == "develop" ]]',
             clone_step,
