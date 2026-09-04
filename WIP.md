@@ -28,9 +28,13 @@ before graph를 재현할 수 없어 별도 alias 제거/migration train으로 �
 `config/latest-stable-version-deltas.json`은 126개 delta와 152개 spec/304개
 observation의 resolved graph 증적을 기록한다. 9개 publisher의 POM 188개와
 Maven model 188개를 모두 검증했고, 9개 repository `assemble`도 성공했다.
-Docker는 가용했지만 후보 full test에서 위 Avro 회귀가 확인됐고,
-`NearJCacheDocumentationTest` 3개는 `BLUETAPE4K_MANUAL_ROOT`가 필요해
-full test는 `PENDING`이다. catalog/BOM publication, PR, merge를 포함하지
+Docker와 central manual checkout을 고정한 뒤 후보 `bluetape4k-projects` 전체
+build를 head `255017749cc5f601e9a1eb1396e9a8c209458f43`에서 실행했다.
+`bluetape4k-testcontainers` 449개 중 1개가 Keycloak mapped-port readiness
+race로 실패하고 22개가 skip됐지만, 후보와 기준 catalog의 동일 Keycloak
+단독 테스트를 각각 5회 재실행한 결과 모두 통과했다. 따라서 catalog 버전
+회귀가 아닌 환경/타이밍성 flake로 기록하며 9개 downstream full-build는
+`PENDING`으로 유지한다. catalog/BOM publication, PR, merge를 포함하지
 않는다.
 
 ## 2026-09-02 2.1.0 minor 개발선 전환

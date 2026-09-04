@@ -49,7 +49,7 @@
     "status": "pending",
     "failures": null,
     "repositories": {
-      "bluetape4k-projects": {"head": "57f6b3bb4189460f0fc34a509a701e5de438f350"},
+      "bluetape4k-projects": {"head": "255017749cc5f601e9a1eb1396e9a8c209458f43"},
       "bluetape4k-aws": {"head": "b564319bd6a6f37475fcf628071ac642131da1d7"},
       "bluetape4k-experimental": {"head": "2698545c693d781b415b3bdcf5f6c468875ec40e"},
       "bluetape4k-exposed": {"head": "85aae98d7a69925cd92f406ac7d0f29cd5d9ea46"},
@@ -65,7 +65,25 @@
       "failures": 0,
       "logs": "build/candidate-assemble-*-avro-hold.log"
     },
-    "reason": "Docker가 가용한 상태에서 bluetape4k-projects 전체 build를 실행했으나, Avro 1.12.2 후보에서 bluetape4k-avro:test 221개 중 134개가 실패했다. 기준 catalog의 Avro 1.12.1에서는 동일 테스트 221개가 통과했으므로 후보를 1.12.1 compatibility hold로 되돌렸다. 또한 cache-core의 NearJCacheDocumentationTest 3개는 BLUETAPE4K_MANUAL_ROOT 미설정으로 실패해 전체 테스트 완료를 보류한다."
+    "projects-full-build": {
+      "status": "observed-flake",
+      "repository": "bluetape4k-projects",
+      "head": "255017749cc5f601e9a1eb1396e9a8c209458f43",
+      "command": "./gradlew build --no-daemon --no-configuration-cache --no-build-cache --console=plain",
+      "log": "build/candidate-projects-full-build-direct.log",
+      "log-sha256": "08df2605ab4fb62ca20f52795c3924af9a3f89f0b60f6e591839d86e0e32db3d",
+      "test-summary": {
+        "bluetape4k-testcontainers": {"executed": 449, "failed": 1, "skipped": 22},
+        "bluetape4k-idgenerators": {"executed": 1152, "failed": 0, "skipped": 0}
+      },
+      "failure": "io.bluetape4k.testcontainers.infra.KeycloakServerTest.Admin 액세스 토큰을 획득할 수 있어야 한다()가 Keycloak mapped port readiness race에서 실패했다.",
+      "classification": "environment-readiness-race",
+      "targeted-rechecks": {
+        "candidate": {"runs": 5, "passed": 5, "failed": 0},
+        "baseline": {"runs": 5, "passed": 5, "failed": 0}
+      }
+    },
+    "reason": "Avro 1.12.2 후보의 bluetape4k-avro:test 221개 중 134개 실패와 BLUETAPE4K_MANUAL_ROOT 누락을 재현한 뒤 Avro를 1.12.1 hold로 되돌리고 manual checkout을 고정했다. 이후 bluetape4k-projects 전체 build를 현재 head에서 실행했으며 testcontainers 449개 중 Keycloak admin token 테스트 1개가 mapped port readiness race로 실패하고 22개가 skip되어 전체 downstream full-build 상태는 pending이다. 후보와 기준 catalog의 Keycloak 단독 테스트를 각각 5회 재실행한 결과 모두 통과해 catalog 버전 회귀로 분류하지 않았다."
   },
   "side-effects": {
     "catalog-tag-created": false,

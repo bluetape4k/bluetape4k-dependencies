@@ -23,9 +23,12 @@
   정책과 ByteBuffer serializer 실패 의미 변경으로 `bluetape4k-avro:test`
   221개 중 134개가 실패했고 기준 1.12.1에서는 모두 통과해 compatibility
   hold로 유지했습니다. 152개 resolved-graph spec/304개 observation, 188개
-  publication POM 및 9개 repository assemble을 검증했습니다. Docker는
-  가용했지만 Avro 회귀와 `BLUETAPE4K_MANUAL_ROOT`가 필요한
-  `NearJCacheDocumentationTest` 3개 때문에 full test는 `PENDING`입니다.
+  publication POM 및 9개 repository assemble을 검증했습니다. central manual
+  checkout을 고정한 후보 `bluetape4k-projects` 전체 build는
+  `bluetape4k-testcontainers` 449개 중 Keycloak mapped-port readiness race
+  1건 실패와 22건 skip으로 종료됐습니다. 후보/기준 catalog의 Keycloak
+  단독 테스트를 각각 5회 재실행해 모두 통과했으므로 catalog 회귀가 아닌
+  환경 flake로 기록하고 downstream full test는 `PENDING`으로 유지합니다.
 - `2.0.0` 정식 배포 이후 `2.1.0` minor 개발선을 열고 Projects와 Exposed를
   `2.1.0-SNAPSHOT`, 나머지 내부 라이브러리를 `1.1.0-SNAPSHOT`으로 정렬했습니다
   ([#235](https://github.com/bluetape4k/bluetape4k-dependencies/issues/235)).
