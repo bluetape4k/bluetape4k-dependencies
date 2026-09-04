@@ -59,8 +59,8 @@ spring-kafka      = "3.3.16"  # Spring Kafka 3 compatibility line
 spring-kafka4     = "4.1.1"  # Spring Kafka 4 compatibility line
 testcontainers    = "2.0.5"  # https://mvnrepository.com/artifact/org.testcontainers/testcontainers-bom
 kover             = "0.9.9"  # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kover-gradle-plugin
-fory              = "1.7.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
-fory-kotlin       = "1.7.0"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
+fory              = "1.7.1"  # https://mvnrepository.com/artifact/org.apache.fory/fory-core
+fory-kotlin       = "1.7.1"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
 aws2              = "2.54.12"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
@@ -86,7 +86,7 @@ bouncycastle-bcprov-lts8on = "2.73.12.1"  # Security override for io.nats:jnats 
 classgraph        = "4.8.194"  # https://mvnrepository.com/artifact/io.github.classgraph/classgraph
 tomcat            = "11.0.25"  # https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core
 zookeeper         = "3.9.5"  # https://mvnrepository.com/artifact/org.apache.zookeeper/zookeeper
-avro              = "1.12.2"  # https://mvnrepository.com/artifact/org.apache.avro/avro
+avro              = "1.12.1"  # https://mvnrepository.com/artifact/org.apache.avro/avro; 1.12.2 held until Avro class-security/ByteBuffer compatibility is migrated
 guava             = "33.7.1-jre"  # https://mvnrepository.com/artifact/com.google.guava/guava
 httpclient5       = "5.6.4"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5
 httpcore5         = "5.4.3"  # https://mvnrepository.com/artifact/org.apache.httpcomponents.core5/httpcore5

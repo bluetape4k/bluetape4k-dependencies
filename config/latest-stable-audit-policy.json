@@ -8,6 +8,10 @@
     }
   },
   "line-overrides": {
+    "avro": {
+      "disposition": "hold-compatibility",
+      "reason": "Avro 1.12.2 enables stricter ClassSecurityValidator behavior and changes ByteBuffer serializer failure semantics; the bluetape4k-avro test suite passes on 1.12.1 but fails on 1.12.2, so retain 1.12.1 until the adapter migration is validated."
+    },
     "byte-buddy": {
       "disposition": "hold-compatibility",
       "reason": "Preserve the unqualified JVM 8+ Byte Buddy channel; the upstream release marker points to the separate jdk5 variant."
