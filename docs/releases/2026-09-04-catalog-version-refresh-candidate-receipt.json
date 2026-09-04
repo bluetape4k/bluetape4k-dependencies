@@ -42,7 +42,7 @@
     "dependencies": 49313,
     "maven-models": 188,
     "failures": 0,
-    "log": "build/candidate-publication-poms.log",
+    "log": "build/candidate-publication-poms-final.log",
     "log-sha256": "8e9778d0494ff299ee3d68097b46a972a833f10f0bc240231a54a44a293aaf6f"
   },
   "full-builds": {
