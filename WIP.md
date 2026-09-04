@@ -28,14 +28,22 @@ before graph를 재현할 수 없어 별도 alias 제거/migration train으로 �
 `config/latest-stable-version-deltas.json`은 126개 delta와 152개 spec/304개
 observation의 resolved graph 증적을 기록한다. 9개 publisher의 POM 188개와
 Maven model 188개를 모두 검증했고, 9개 repository `assemble`도 성공했다.
-Docker와 central manual checkout을 고정한 뒤 후보 `bluetape4k-projects` 전체
-build를 head `255017749cc5f601e9a1eb1396e9a8c209458f43`에서 실행했다.
-`bluetape4k-testcontainers` 449개 중 1개가 Keycloak mapped-port readiness
-race로 실패하고 22개가 skip됐지만, 후보와 기준 catalog의 동일 Keycloak
-단독 테스트를 각각 5회 재실행한 결과 모두 통과했다. 따라서 catalog 버전
-회귀가 아닌 환경/타이밍성 flake로 기록하며 9개 downstream full-build는
-`PENDING`으로 유지한다. catalog/BOM publication, PR, merge를 포함하지
-않는다.
+Docker와 central manual checkout을 고정한 뒤 원격 exact HEAD
+`0be7daa7a6d98937126486ff4b84a76e416696d6`의 후보 `bluetape4k-projects` 전체
+build를 실행했다. `:bluetape4k-lettuce:multiKeyLeasePerformanceTest`의
+normalized p95 비율 assertion이 한 번 실패(`13.390084 > 3.6915`)해 전체
+build가 중단됐고, 같은 성능 테스트를 후보 catalog에서 3회 재실행한 결과
+2회 통과·1회 실패했다. 기준 catalog도 3회 중 2회 통과했으며 나머지 1회는
+성능 assertion이 아닌 `:bluetape4k-junit5:compileKotlin`/
+`:bluetape4k-core:compileKotlin` 환경 실패였다. 따라서 catalog 버전 회귀가
+아닌 성능/환경 flake로 분류하고 Projects 이슈 후보로 기록한다. 이전 head의
+Keycloak readiness 기록은 receipt의 `historical-projects-full-build`에 보존했다.
+
+Graph 전체 build의 AGE PostgreSQL 초기화 EOF는 1회 발생했지만 동일 테스트
+3회 재실행은 모두 통과했다. Exposed는 4,934개 실행·230개 skip 뒤 PostgreSQL
+test worker가 JDBC handshake에서 9분 정지하고 SIGTERM되어 환경 blocker로
+남았다. 이 증거 때문에 9개 downstream full-build 상태는 `PENDING`으로
+유지한다. catalog/BOM publication, PR, merge를 포함하지 않는다.
 
 ## 2026-09-02 2.1.0 minor 개발선 전환
 

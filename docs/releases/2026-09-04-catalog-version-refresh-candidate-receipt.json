@@ -8,6 +8,11 @@
     "content-commit": "c96935db88332ce6c245dae9f5df53a1b778790e",
     "sha256": "622761bc3e518f052fe769c7fa057b3e1ec0cacd22ad9a871a9d1d8157120e0a"
   },
+  "candidate-manifest": {
+    "path": "/Users/debop/work/bluetape4k/.catalog-candidate-2026-09-04-v2/manifest.json",
+    "sha256": "7b24342cd930d30b2e18d583520148618540700e4be225491f7cd2875f7cd458",
+    "repository-map-sha256": "1b7feeaafc4e608edc1292e6db6f2aa6a866ff576707ffc95b9ba7761067c47b"
+  },
   "scope": {
     "included": [
       "bluetape4k-projects",
@@ -49,15 +54,15 @@
     "status": "pending",
     "failures": null,
     "repositories": {
-      "bluetape4k-projects": {"head": "255017749cc5f601e9a1eb1396e9a8c209458f43"},
+      "bluetape4k-projects": {"head": "0be7daa7a6d98937126486ff4b84a76e416696d6", "status": "observed-flake"},
       "bluetape4k-aws": {"head": "b564319bd6a6f37475fcf628071ac642131da1d7"},
       "bluetape4k-experimental": {"head": "2698545c693d781b415b3bdcf5f6c468875ec40e"},
-      "bluetape4k-exposed": {"head": "85aae98d7a69925cd92f406ac7d0f29cd5d9ea46"},
-      "bluetape4k-graph": {"head": "ca21bad1ec90d97d1f98d8e9b70894eed714f4ed"},
-      "bluetape4k-image": {"head": "b5cc7dc08fa01409ccdb90e8f281227ec7e22bb8"},
-      "bluetape4k-javers": {"head": "8d7d822918652b37f598741fded46629a600d166"},
+      "bluetape4k-exposed": {"head": "85aae98d7a69925cd92f406ac7d0f29cd5d9ea46", "status": "environment-blocked"},
+      "bluetape4k-graph": {"head": "ca21bad1ec90d97d1f98d8e9b70894eed714f4ed", "status": "observed-flake-recovered"},
+      "bluetape4k-image": {"head": "b5cc7dc08fa01409ccdb90e8f281227ec7e22bb8", "status": "verified"},
+      "bluetape4k-javers": {"head": "8d7d822918652b37f598741fded46629a600d166", "status": "verified"},
       "bluetape4k-leader": {"head": "b22f88ccaf8d531e4cc2eb0854daa78f9b423756"},
-      "bluetape4k-text": {"head": "47bd772c791fbe60e8f5a355b14cae35970f1bdf"}
+      "bluetape4k-text": {"head": "47bd772c791fbe60e8f5a355b14cae35970f1bdf", "status": "verified"}
     },
     "assemble": {
       "status": "verified",
@@ -65,7 +70,7 @@
       "failures": 0,
       "logs": "build/candidate-assemble-*-avro-hold.log"
     },
-    "projects-full-build": {
+    "historical-projects-full-build": {
       "status": "observed-flake",
       "repository": "bluetape4k-projects",
       "head": "255017749cc5f601e9a1eb1396e9a8c209458f43",
@@ -83,7 +88,27 @@
         "baseline": {"runs": 5, "passed": 5, "failed": 0}
       }
     },
-    "reason": "Avro 1.12.2 후보의 bluetape4k-avro:test 221개 중 134개 실패와 BLUETAPE4K_MANUAL_ROOT 누락을 재현한 뒤 Avro를 1.12.1 hold로 되돌리고 manual checkout을 고정했다. 이후 bluetape4k-projects 전체 build를 현재 head에서 실행했으며 testcontainers 449개 중 Keycloak admin token 테스트 1개가 mapped port readiness race로 실패하고 22개가 skip되어 전체 downstream full-build 상태는 pending이다. 후보와 기준 catalog의 Keycloak 단독 테스트를 각각 5회 재실행한 결과 모두 통과해 catalog 버전 회귀로 분류하지 않았다."
+    "projects-full-build": {
+      "status": "observed-flake",
+      "repository": "bluetape4k-projects",
+      "head": "0be7daa7a6d98937126486ff4b84a76e416696d6",
+      "command": "./gradlew build --no-daemon --no-configuration-cache --no-build-cache --console=plain",
+      "evidence": "docs/releases/2026-09-04-catalog-version-refresh-downstream-evidence.md",
+      "failure": ":bluetape4k-lettuce:multiKeyLeasePerformanceTest normalized p95 assertion failed once (13.390084 > 3.6915); candidate targeted rerun passed 2/3 and failed 1/3, baseline passed 2/3 with one unrelated Kotlin compile environment failure.",
+      "classification": "performance-environment-flake",
+      "targeted-rechecks": {
+        "candidate": {"runs": 3, "passed": 2, "failed": 1},
+        "baseline": {"runs": 3, "passed": 2, "failed": 1, "notes": "one run failed during :bluetape4k-junit5:compileKotlin/:bluetape4k-core:compileKotlin"}
+      }
+    },
+    "downstream-evidence": {
+      "path": "docs/releases/2026-09-04-catalog-version-refresh-downstream-evidence.md",
+      "sha256": "e1a1d433fb6f8b2902d53cf7ec025ce33c1375863f763d7086db79c31da5888d",
+      "verified-repositories": 6,
+      "observed-flakes": 2,
+      "environment-blockers": 1
+    },
+    "reason": "Avro 1.12.2 후보의 bluetape4k-avro:test 221개 중 134개 실패와 BLUETAPE4K_MANUAL_ROOT 누락을 재현한 뒤 Avro를 1.12.1 hold로 되돌리고 manual checkout을 고정했다. 2026-09-04 원격 exact HEAD를 재확인한 결과 Projects가 0be7daa7a6d98937126486ff4b84a76e416696d6으로 전진해 repository-map을 갱신했다. 현재 후보 catalog 전체 build는 AWS·Experimental·Image·Javers·Leader·Text에서 통과했고 Graph AGE 초기화 및 Projects Lettuce 성능 기준은 재실행에서 회복되는 flake로 관찰됐다. Exposed PostgreSQL test worker는 JDBC handshake 정지 후 SIGTERM되어 환경 blocker로 남아 downstream full-build 상태는 pending이다."
   },
   "side-effects": {
     "catalog-tag-created": false,

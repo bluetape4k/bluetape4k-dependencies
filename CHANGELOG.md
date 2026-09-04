@@ -24,11 +24,18 @@
   221개 중 134개가 실패했고 기준 1.12.1에서는 모두 통과해 compatibility
   hold로 유지했습니다. 152개 resolved-graph spec/304개 observation, 188개
   publication POM 및 9개 repository assemble을 검증했습니다. central manual
-  checkout을 고정한 후보 `bluetape4k-projects` 전체 build는
-  `bluetape4k-testcontainers` 449개 중 Keycloak mapped-port readiness race
-  1건 실패와 22건 skip으로 종료됐습니다. 후보/기준 catalog의 Keycloak
-  단독 테스트를 각각 5회 재실행해 모두 통과했으므로 catalog 회귀가 아닌
-  환경 flake로 기록하고 downstream full test는 `PENDING`으로 유지합니다.
+  checkout을 고정한 원격 exact HEAD `0be7daa7a6d98937126486ff4b84a76e416696d6`의
+  후보 `bluetape4k-projects` 전체 build는
+  `:bluetape4k-lettuce:multiKeyLeasePerformanceTest` normalized p95 비율
+  assertion 1건(`13.390084 > 3.6915`)으로 중단됐습니다. 후보 성능 테스트는
+  3회 중 2회 통과·1회 실패했고 기준 catalog도 3회 중 2회 통과했으며, 기준의
+  나머지 1회는 Kotlin compile 환경 실패였습니다. catalog 회귀가 아닌
+  성능/환경 flake로 분류해 Projects 이슈 후보로 기록했습니다. 이전 head의
+  Keycloak readiness 기록은 receipt의 `historical-projects-full-build`에
+  보존했습니다. Graph AGE PostgreSQL 초기화 EOF는 1회 실패 후 동일 테스트
+  3회 재실행이 모두 통과했으며, Exposed는 4,934개 실행·230개 skip 뒤
+  PostgreSQL JDBC handshake 정지와 SIGTERM으로 환경 blocker가 발생했습니다.
+  따라서 downstream full test는 `PENDING`으로 유지합니다.
 - `2.0.0` 정식 배포 이후 `2.1.0` minor 개발선을 열고 Projects와 Exposed를
   `2.1.0-SNAPSHOT`, 나머지 내부 라이브러리를 `1.1.0-SNAPSHOT`으로 정렬했습니다
   ([#235](https://github.com/bluetape4k/bluetape4k-dependencies/issues/235)).
