@@ -89,9 +89,7 @@
       {
         "repository": "timefold-workshop",
         "catalog-version-key": "bluetape4k-dependencies"
-      }
-    ],
-    "development-snapshot-repositories": [
+      },
       {
         "repository": "bluetape4k-workshop",
         "catalog-version-key": "bluetape4k-dependencies-version"
@@ -104,6 +102,7 @@
         "repository": "exposed-workshop",
         "catalog-version-key": "bluetape4k-dependencies"
       }
-    ]
+    ],
+    "development-snapshot-repositories": []
   }
 }

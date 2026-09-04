@@ -3,6 +3,21 @@
 Snapshot: 2026-09-04 KST
 Scope: dependencies 2.1.0 minor 개발 train 및 외부 catalog 최신 안정판 정렬.
 
+## 2026-09-04 workshop 안정 소비자 정책 정렬
+
+`bluetape4k-workshop`, `exposed-r2dbc-workshop`, `exposed-workshop`,
+`clinic-appointment`, `timefold-workshop`은 모두 정식 공개된
+`bluetape4k-dependencies:2.0.0` 안정 BOM을 사용한다. 중앙
+`config/post-publish-next-development-line.json`에서도 이 5개 저장소를
+`official-release-repositories`로 분류하고, `development-snapshot-repositories`는
+비워 둔다. `2.1.0-SNAPSHOT`은 내부 라이브러리 저장소의 다음 개발선에만
+사용한다.
+
+이번 정렬은 PR #241의 hosted CI가 `bluetape4k-workshop/develop`의 안정
+`2.0.0` 소비를 발견한 결과를 반영한다. `exposed-r2dbc-workshop`과
+`exposed-workshop`도 동일한 안정 기준으로 재검증한 뒤 중앙 정책과 함께
+전환한다.
+
 ## 2026-09-04 외부 catalog 최신 안정판 정렬
 
 Maven Central의 authoritative metadata를 2026-09-04T04:40:29Z에 다시

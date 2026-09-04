@@ -9,6 +9,11 @@
 
 ### 변경
 
+- workshop 및 example consumer(`bluetape4k-workshop`, `exposed-r2dbc-workshop`,
+  `exposed-workshop`, `clinic-appointment`, `timefold-workshop`)는 중앙
+  `bluetape4k-dependencies:2.0.0` 안정 BOM을 사용하도록 post-publish 정책을
+  정렬했습니다. `2.1.0-SNAPSHOT`은 내부 라이브러리 catalog 소비자에만
+  적용합니다.
 - 2026-09-04 기준 Maven Central authoritative metadata 515개 line을
   재감사하고, 검증된 최신 호환 stable release로 외부 catalog version key
   126개를 갱신했습니다. Spring Boot 4.1.1, Jackson 2.22.2/3.2.2,
