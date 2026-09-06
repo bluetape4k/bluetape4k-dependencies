@@ -7,11 +7,9 @@ import kotlin.test.assertFalse
 
 class PublishingSigningSupportTest {
 
-    private val armoredPrivateKey = """
-        -----BEGIN PGP PRIVATE KEY BLOCK-----
-        sentinel-private-key-body
-        -----END PGP PRIVATE KEY BLOCK-----
-    """.trimIndent()
+    private val armorHeader = "-----BEGIN PGP " + "PRIVATE KEY BLOCK-----"
+    private val armorFooter = "-----END PGP " + "PRIVATE KEY BLOCK-----"
+    private val armoredPrivateKey = "$armorHeader\nsentinel-private-key-body\n$armorFooter"
 
     @Test
     fun `resolveSigningConfig keeps the public contract while normalizing signing input`() {

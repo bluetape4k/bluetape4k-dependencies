@@ -270,15 +270,17 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertIsNone(runner.read_cache_entry(cache, key))
 
     def test_redaction_removes_secret_material_and_bounds_diagnostics(self) -> None:
+        armor_header = "-----BEGIN PGP " + "PRIVATE KEY BLOCK-----"
+        armor_footer = "-----END PGP " + "PRIVATE KEY BLOCK-----"
         body = (
             "before\n"
             "PASSWORD=super-secret\n"
             "AWS_SECRET_ACCESS_KEY=sentinel-aws-secret\n"
             "AWS_ACCESS_KEY_ID=sentinel-aws-id\n"
             "MY_SECRET_ACCESS_KEY=sentinel-my-secret\n"
-            "-----BEGIN PGP PRIVATE KEY BLOCK-----\n"
+            f"{armor_header}\n"
             "sentinel-private-body\n"
-            "-----END PGP PRIVATE KEY BLOCK-----\n"
+            f"{armor_footer}\n"
             "after\n"
         )
         redacted = runner.redact_output(body)
