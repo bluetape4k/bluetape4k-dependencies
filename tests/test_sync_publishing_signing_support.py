@@ -275,7 +275,9 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
                 output=io.StringIO(),
             )
 
-        loader.assert_called_once_with(self.repository_map, self.workspace)
+        self.assertEqual(loader.call_count, 2)
+        for call in loader.call_args_list:
+            self.assertEqual(call.args, (self.repository_map, self.workspace))
 
     def test_experimental_target_is_not_modified(self) -> None:
         self._write_targets(payload=b"stale\n")
@@ -473,6 +475,100 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
             self.assertTrue(close_calls)
         finally:
             real_close(parent_fd)
+
+    def test_repository_head_drift_before_write_aborts_without_target_writes(self) -> None:
+        self._write_targets(payload=b"stale\n")
+        changed = tuple(
+            replace(repository, expected_head="c" * 40)
+            if repository.name == "bluetape4k-aws"
+            else repository
+            for repository in self.repositories
+        )
+        with mock.patch.object(
+            sync.catalog_candidate,
+            "load_repository_map_v1",
+            side_effect=[self.repositories, changed],
+        ) as loader:
+            with self.assertRaisesRegex(sync.SyncError, "repository map changed"):
+                sync.synchronize(
+                    workspace=self.workspace,
+                    repository_map=self.repository_map,
+                    repository_names=None,
+                    write=True,
+                    check=True,
+                    summary=False,
+                    output=io.StringIO(),
+                )
+
+        self.assertEqual(loader.call_count, 2)
+        for name, target in self.target_paths.items():
+            self.assertEqual(target.read_bytes(), b"stale\n", name)
+
+    def test_repository_map_digest_drift_before_check_fails_closed(self) -> None:
+        self._write_targets()
+        calls = 0
+
+        def mutate_map_on_live_load(path, workspace):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                self.repository_map.write_text("changed-map\n", encoding="utf-8")
+            return self.repositories
+
+        with mock.patch.object(
+            sync.catalog_candidate,
+            "load_repository_map_v1",
+            side_effect=mutate_map_on_live_load,
+        ):
+            with self.assertRaisesRegex(sync.SyncError, "repository map changed"):
+                sync.synchronize(
+                    workspace=self.workspace,
+                    repository_map=self.repository_map,
+                    repository_names=None,
+                    write=False,
+                    check=True,
+                    summary=False,
+                    output=io.StringIO(),
+                )
+
+    def test_replace_interrupt_after_success_rolls_back(self) -> None:
+        self._write_targets(payload=b"stale\n")
+        original_replace = sync.os.replace
+        interrupted = False
+
+        def replace_then_interrupt(source, target, **kwargs):
+            nonlocal interrupted
+            result = original_replace(source, target, **kwargs)
+            if not interrupted:
+                interrupted = True
+                raise KeyboardInterrupt()
+            return result
+
+        with mock.patch.object(sync.os, "replace", side_effect=replace_then_interrupt):
+            with self.assertRaises(sync.SyncError):
+                self._sync(write=True)
+
+        self.assertTrue(interrupted)
+        for name, target in self.target_paths.items():
+            self.assertEqual(target.read_bytes(), b"stale\n", name)
+
+        # A replay after the interrupted transaction must be safe and complete.
+        self._sync(write=True)
+        for name, target in self.target_paths.items():
+            self.assertEqual(target.read_bytes(), self.generated, name)
+
+    def test_replace_failure_before_success_is_safe_cas_conflict(self) -> None:
+        self._write_targets(payload=b"stale\n")
+
+        def fail_before_replace(source, target, **kwargs):
+            raise OSError("injected pre-replace failure")
+
+        with mock.patch.object(sync.os, "replace", side_effect=fail_before_replace):
+            with self.assertRaisesRegex(sync.SyncError, "rollback conflict"):
+                self._sync(write=True)
+
+        for name, target in self.target_paths.items():
+            self.assertEqual(target.read_bytes(), b"stale\n", name)
 
 
 if __name__ == "__main__":

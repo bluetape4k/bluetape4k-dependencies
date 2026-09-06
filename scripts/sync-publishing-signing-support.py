@@ -79,8 +79,76 @@ class FileSnapshot:
     mode: int
 
 
+@dataclasses.dataclass(frozen=True)
+class RepositoryMapSnapshot:
+    map_digest: str
+    repositories: Tuple[Tuple[str, ...], ...]
+
+
 def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
+
+
+def _repository_fingerprint(repository: object) -> Tuple[str, ...]:
+    return (
+        str(getattr(repository, "key", "")),
+        str(getattr(repository, "name", "")),
+        str(getattr(repository, "root", "")),
+        str(getattr(repository, "catalog", "")),
+        str(getattr(repository, "origin", "")),
+        str(getattr(repository, "branch", "")),
+        str(getattr(repository, "base_sha", "")),
+        str(getattr(repository, "expected_head", "")),
+    )
+
+
+def _capture_repository_map_snapshot(
+    repository_map: Path, repositories: Sequence[object]
+) -> RepositoryMapSnapshot:
+    try:
+        metadata = repository_map.lstat()
+    except OSError as exc:
+        raise SyncError(f"cannot inspect repository map: {repository_map}") from exc
+    if stat.S_ISLNK(metadata.st_mode):
+        raise SyncError(f"repository map must not be a symlink: {repository_map}")
+    if not stat.S_ISREG(metadata.st_mode):
+        raise SyncError(f"repository map must be a regular file: {repository_map}")
+    try:
+        payload = repository_map.read_bytes()
+    except OSError as exc:
+        raise SyncError(f"cannot read repository map: {repository_map}") from exc
+    return RepositoryMapSnapshot(
+        map_digest=sha256_bytes(payload),
+        repositories=tuple(_repository_fingerprint(repository) for repository in repositories),
+    )
+
+
+def _load_repository_map_snapshot(
+    repository_map: Path, workspace: Path
+) -> Tuple[Tuple[object, ...], RepositoryMapSnapshot]:
+    try:
+        repositories = tuple(
+            catalog_candidate.load_repository_map_v1(repository_map, workspace)
+        )
+    except Exception as exc:
+        if isinstance(exc, SyncError):
+            raise
+        raise SyncError(str(exc)) from exc
+    return repositories, _capture_repository_map_snapshot(repository_map, repositories)
+
+
+def _assert_repository_map_stable(
+    initial: RepositoryMapSnapshot,
+    repository_map: Path,
+    workspace: Path,
+    phase: str,
+) -> None:
+    try:
+        _, live = _load_repository_map_snapshot(repository_map, workspace)
+    except SyncError as exc:
+        raise SyncError(f"repository map changed before {phase}: {exc}") from exc
+    if live != initial:
+        raise SyncError(f"repository map changed before {phase}")
 
 
 def render_generated_content(canonical: bytes) -> bytes:
@@ -476,15 +544,16 @@ def _replace_and_read_back(
     replaced: List[TargetState],
 ) -> None:
     _assert_unchanged(state, parent_fd)
+    # Register before the syscall: an interrupted/partially completed
+    # os.replace must still enter rollback, whose CAS check makes a
+    # pre-replace failure a safe no-op/conflict.
+    replaced.append(state)
     os.replace(
         staged_name,
         TARGET_RELATIVE.name,
         src_dir_fd=parent_fd,
         dst_dir_fd=parent_fd,
     )
-    # The replacement is now owned by the rollback transaction.  Recording it
-    # before fsync/read-back also covers failures after os.replace succeeds.
-    replaced.append(state)
     _fsync_directory(parent_fd)
     snapshot = _read_regular_at(
         parent_fd,
@@ -624,14 +693,9 @@ def synchronize(
     workspace = workspace.resolve()
     if not repository_map.is_absolute():
         raise SyncError("repository map path must be absolute")
-    try:
-        repositories = catalog_candidate.load_repository_map_v1(
-            repository_map, workspace
-        )
-    except Exception as exc:
-        if isinstance(exc, SyncError):
-            raise
-        raise SyncError(str(exc)) from exc
+    repositories, map_snapshot = _load_repository_map_snapshot(
+        repository_map, workspace
+    )
     selected = _select_repositories(repositories, repository_names)
     canonical = _snapshot_source(repositories, workspace)
     desired = render_generated_content(canonical)
@@ -647,9 +711,15 @@ def synchronize(
         latest_canonical = _snapshot_source(repositories, workspace)
         if latest_canonical != canonical:
             raise SyncError("canonical source changed before write")
+        _assert_repository_map_stable(
+            map_snapshot, repository_map, workspace, "write"
+        )
         _write_all(states)
         drifted = []
     else:
+        _assert_repository_map_stable(
+            map_snapshot, repository_map, workspace, "check"
+        )
         drifted = [
             state
             for state in states
