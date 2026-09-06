@@ -56,6 +56,17 @@ class CatalogCandidateTest(unittest.TestCase):
         head = subprocess.check_output(
             ["git", "-C", str(root), "rev-parse", "HEAD"], text=True
         ).strip()
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "update-ref",
+                "refs/remotes/origin/develop",
+                head,
+            ],
+            check=True,
+        )
         return root, origin, head
 
     def make_map(self, workspace: Path) -> tuple[Path, dict[str, object]]:
@@ -137,6 +148,56 @@ class CatalogCandidateTest(unittest.TestCase):
                     lock["catalogs"][item.key]["sha256"],
                     hashlib.sha256(item.catalog.read_bytes()).hexdigest(),
                 )
+
+    def test_base_sha_must_be_the_origin_develop_fork_point(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_map(workspace)
+            projects = Path(document["repositories"]["projects"]["root"])
+            stale_base = str(document["repositories"]["projects"]["base_sha"])
+            (projects / "gradle/libs.versions.toml").write_text(
+                '[versions]\ndemo = "2.0.0"\n', encoding="utf-8"
+            )
+            subprocess.run(
+                ["git", "-C", str(projects), "add", "gradle/libs.versions.toml"],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            advanced = subprocess.check_output(
+                ["git", "-C", str(projects), "rev-parse", "HEAD"], text=True
+            ).strip()
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "update-ref",
+                    "refs/remotes/origin/develop",
+                    advanced,
+                ],
+                check=True,
+            )
+            document["repositories"]["projects"]["expected_head"] = advanced
+            document["repositories"]["projects"]["base_sha"] = stale_base
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            with self.assertRaisesRegex(RuntimeError, "fork point"):
+                candidate.load_repository_map_v1(path, workspace)
 
     def test_manifest_verify_revalidates_every_bound_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

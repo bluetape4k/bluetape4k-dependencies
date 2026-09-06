@@ -159,6 +159,13 @@ def _validate_repository(key: str, value: Any, workspace: Path) -> CandidateRepo
             raise RuntimeError(
                 f"repository map {label} does not peel exactly for {key}"
             )
+    develop_head = _git(
+        resolved_root, "rev-parse", "refs/remotes/origin/develop^{commit}"
+    )
+    if _git(resolved_root, "merge-base", expected_head, develop_head) != base_sha:
+        raise RuntimeError(
+            f"repository map base is not the origin/develop fork point for {key}"
+        )
     if _git(resolved_root, "rev-parse", "HEAD") != expected_head:
         raise RuntimeError(f"repository map HEAD mismatch for {key}")
     if _git(resolved_root, "status", "--porcelain=v1", "--untracked-files=all"):

@@ -376,6 +376,9 @@ def _validate_worktree_entry(
         raise ReceiptError(f"base SHA does not peel for {name}")
     if _git(root, "rev-parse", f"{candidate_sha}^{{commit}}") != candidate_sha:
         raise ReceiptError(f"candidate SHA does not peel for {name}")
+    develop_head = _git(root, "rev-parse", "refs/remotes/origin/develop^{commit}")
+    if _git(root, "merge-base", candidate_sha, develop_head) != base_sha:
+        raise ReceiptError(f"base SHA is not the origin/develop fork point for {name}")
     if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
         raise ReceiptError(f"repository is dirty for {name}")
     return dict(entry)

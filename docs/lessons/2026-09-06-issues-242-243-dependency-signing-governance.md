@@ -28,6 +28,9 @@ signing 영수증은 기록된 digest가 실제 canonical source와 같은지 �
 - toolchain 확인도 validation subprocess다. 전체 budget을 먼저 예약하고 JDK probe를 정제된
   environment와 임시 home에서 실행하며, Gradle version은 wrapper metadata에서 읽어 불필요한
   download와 budget 우회를 없앤다. probe 실패나 빈 version은 cache identity로 허용하지 않는다.
+- baseline은 존재하는 임의 commit이 아니라 candidate HEAD와 `origin/develop`의 merge-base로
+  증명한다. current develop과의 직접 동일성은 정상적인 장기 branch도 무효화하므로 fork point가
+  before/after 비교의 안정적인 기준이다.
 
 ## 결과
 

@@ -247,6 +247,10 @@ local candidate repository map은 기존 `scripts/catalog_candidate.py`의 중�
 catalog repository enum과 canonical path, approved origin, clean worktree, symlink,
 exact-ref 검증을 그대로 재사용한다. signing sync는 그 map에서 중앙 + 8개 signing
 repository만 고정 allowlist로 선택하고 catalog-only Experimental은 수정하지 않는다.
+각 `base_sha`는 candidate HEAD와 local `refs/remotes/origin/develop`의 정확한 merge-base여야
+하며, 단순히 존재하는 오래된 commit을 baseline으로 선언할 수 없다. 장기 feature branch에서
+upstream이 진전해도 fork point 증거 자체는 유지하므로 current develop HEAD와의 직접 동일성은
+요구하지 않는다.
 Timefold Workshop과 Clinic은 catalog enum을 완화하지 않고 전용 receipt의 consumer
 section에서 같은 검증 primitive를 적용한다. 이 작업 전용 receipt는
 `docs/releases/2026-09-06-issues-242-243-local-receipt.json`에 저장하고 다음
