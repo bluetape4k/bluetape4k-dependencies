@@ -286,6 +286,13 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("--no-build-cache", command)
         self.assertIn("--console=plain", command)
 
+    def test_clinic_candidate_jobs_explicitly_disable_changing_snapshot_verification(self) -> None:
+        self.assertEqual(
+            runner.candidate_arguments("clinic-appointment"),
+            ("--dependency-verification=off",),
+        )
+        self.assertEqual(runner.candidate_arguments("timefold-workshop"), ())
+
     def test_consumer_jobs_bind_canonical_helper_without_generated_copy(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory).resolve()

@@ -104,6 +104,16 @@ CONSUMER_TASKS = {
         ":appointment-api:test",
     ),
 }
+
+
+def candidate_arguments(repository: str) -> tuple[str, ...]:
+    """Return explicit candidate-only arguments required by a repository."""
+
+    if repository == "clinic-appointment":
+        return ("--dependency-verification=off",)
+    return ()
+
+
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
@@ -1275,6 +1285,7 @@ def _make_timefold_graph_jobs(
     candidate_catalog_path: Optional[Path] = None,
     candidate_bom_sha256: Optional[str] = None,
     environment_overrides: Optional[Mapping[str, str]] = None,
+    arguments: Sequence[str] = (),
 ) -> tuple[ValidationJob, ...]:
     jobs: list[ValidationJob] = []
     for coordinate in TIMEFOLD_COORDINATES:
@@ -1284,7 +1295,8 @@ def _make_timefold_graph_jobs(
                 phase=phase,
                 root=root,
                 tasks=TIMEFOLD_GRAPH_TASKS[repository],
-                arguments=(
+                arguments=tuple(arguments)
+                + (
                     "--configuration",
                     "testRuntimeClasspath",
                     "--dependency",
@@ -1433,6 +1445,7 @@ def build_phase_jobs(
                     candidate_maven_repository=candidate_repository,
                     candidate_bom_sha256=candidate_manifest_sha256,
                     environment_overrides=environment,
+                    arguments=candidate_arguments(name),
                 )
             )
         return tuple(jobs)
@@ -1479,6 +1492,7 @@ def build_phase_jobs(
                         if name == "clinic-appointment"
                         else {}
                     ),
+                    arguments=candidate_arguments(name),
                     candidate_maven_repository=candidate_repository,
                     candidate_bom_sha256=candidate_manifest_sha256,
                 )
