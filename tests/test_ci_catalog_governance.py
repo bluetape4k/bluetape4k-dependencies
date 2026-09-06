@@ -123,6 +123,25 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("path: build/supply-chain-report/", workflow)
         self.assertIn("if-no-files-found: error", workflow)
 
+    def test_publish_snapshot_limits_candidate_branch_to_snapshot_catalog_consumers(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml"
+        ).read_text(encoding="utf-8")
+        clone_step = workflow.split(
+            "      - name: Clone snapshot libraries and official-release examples\n",
+            1,
+        )[1].split("      - uses:", 1)[0]
+
+        self.assertIn("--print-snapshot-catalog-repositories", clone_step)
+        self.assertIn("use_snapshot_candidate=true", clone_step)
+        self.assertIn(
+            '[[ "$use_snapshot_candidate" == true ]]',
+            clone_step,
+        )
+        self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
+        self.assertIn("snapshot candidate lookup failed", clone_step)
+        self.assertIn("exit 1", clone_step)
+
     def test_develop_validation_prefers_snapshot_candidate_branches(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
@@ -157,6 +176,8 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             clone_step,
         )
         self.assertIn('--branch "$candidate_branch" --single-branch', clone_step)
+        self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
+        self.assertIn("snapshot candidate lookup failed", clone_step)
 
         fixture_step = workflow.split(
             "      - name: Verify PR-safe catalog adoption guard\n",

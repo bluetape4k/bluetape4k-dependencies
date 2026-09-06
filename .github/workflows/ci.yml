@@ -95,9 +95,17 @@ jobs:
                 break
               fi
             done
-            if [[ "$use_snapshot_candidate" == true && -n "$candidate_branch" ]] &&
-               gh api "repos/bluetape4k/${repo}/branches/${candidate_branch}" >/dev/null 2>&1; then
-              clone_args+=(--branch "$candidate_branch" --single-branch)
+            if [[ "$use_snapshot_candidate" == true && -n "$candidate_branch" ]]; then
+              branch_error="$RUNNER_TEMP/snapshot-candidate-${repo}.error"
+              if gh api "repos/bluetape4k/${repo}/branches/${candidate_branch}" \
+                   >/dev/null 2>"$branch_error"; then
+                clone_args+=(--branch "$candidate_branch" --single-branch)
+              elif grep -Fq "(HTTP 404)" "$branch_error"; then
+                : # The repository has no snapshot-candidate branch; use develop.
+              else
+                sed 's/^/snapshot candidate lookup failed: /' "$branch_error" >&2
+                exit 1
+              fi
             fi
             gh repo clone "bluetape4k/${repo}" "../${repo}" -- "${clone_args[@]}"
           done
