@@ -327,8 +327,12 @@ CI는 branch/default HEAD를 임의로 clone하지 않고 manifest의 commit을 
 
 `scripts/verify-issues-242-243-receipt.py`가 schema, exact repository set, digest,
 상태 전이와 필수 Timefold 좌표를 검증한다. receipt에는 secret과 environment
-값을 기록하지 않는다. `blocked`가 하나라도 있거나 `validated`보다 낮은 target이
-있으면 adoption은 실패한다.
+값을 기록하지 않는다. `validated`는 일부 target의 중간 상태가 아니라 모든 target이
+`validated|adopted`이고 signing, baseline/candidate graph, consumer, publication POM과
+candidate artifact phase가 모두 통과한 경우에만 성립한다. `blocked`가 하나라도 있거나
+`validated`보다 낮은 target이 있으면 adoption은 실패한다. 각 Gradle command는 매 실행마다
+새 `0700` 임시 `GRADLE_USER_HOME`을 사용하며 이 정책도 immutable command input digest에
+포함한다.
 
 tracked receipt를 담는 evidence commit은 자신의 SHA를 receipt 안에 기록하지 않는다.
 coordinator는 adopted receipt를 포함하는 prospective commit object를 branch ref

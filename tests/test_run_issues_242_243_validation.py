@@ -42,6 +42,7 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertEqual(runner.CHILD_TIMEOUT_SECONDS, 600)
         self.assertEqual(runner.PUBLICATION_POMS_TIMEOUT_SECONDS, 1800)
         self.assertEqual(runner.TOTAL_VALIDATION_BUDGET_SECONDS, 5400)
+        self.assertEqual(runner.GRADLE_HOME_POLICY, "ephemeral-0700")
         self.assertIn("--no-configuration-cache", runner.GRADLE_FLAGS)
         self.assertIn("--no-build-cache", runner.GRADLE_FLAGS)
 
@@ -604,6 +605,56 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertEqual(result.status, "blocked")
         self.assertIn("total validation budget exceeded", result.diagnostics)
 
+    def test_execute_job_uses_a_fresh_private_gradle_home(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            observed: dict[str, object] = {}
+
+            def run_command(**kwargs: object) -> runner.CommandResult:
+                environment = kwargs["environment"]
+                assert isinstance(environment, dict)
+                gradle_home = Path(str(environment["GRADLE_USER_HOME"]))
+                observed["path"] = gradle_home
+                observed["mode"] = stat.S_IMODE(gradle_home.stat().st_mode)
+                observed["exists_during_run"] = gradle_home.is_dir()
+                return runner.CommandResult(
+                    status="fail",
+                    returncode=1,
+                    stdout="",
+                    stderr="failed",
+                    elapsed_seconds=0.1,
+                    timed_out=False,
+                    process_group_terminated=False,
+                    termination_signal=None,
+                    output_sha256="a" * 64,
+                )
+
+            job = runner.ValidationJob(
+                repository="demo",
+                phase="signing-buildsrc",
+                cwd=root,
+                command=("./gradlew", "test"),
+                configuration="buildSrc",
+                task_set=("test",),
+                repository_head="a" * 40,
+                helper_sha256="b" * 64,
+                catalog_sha256="c" * 64,
+                bom_sha256="d" * 64,
+                jdk_version="25",
+                gradle_version="9.7.0",
+            )
+            with mock.patch.object(runner, "run_command", side_effect=run_command):
+                result = runner.execute_job(
+                    job,
+                    cache_directory=root / "cache",
+                    receipt_path=root / "receipt.json",
+                )
+
+            self.assertEqual(result.status, "fail")
+            self.assertTrue(observed["exists_during_run"])
+            self.assertEqual(observed["mode"], 0o700)
+            self.assertFalse(Path(str(observed["path"])).exists())
+
     def test_clinic_candidate_jobs_explicitly_disable_changing_snapshot_verification(self) -> None:
         self.assertEqual(
             runner.candidate_arguments("clinic-appointment"),
@@ -831,6 +882,7 @@ class ValidationRunnerTest(unittest.TestCase):
                 self.assertEqual(command["bom_sha256"], "d" * 64)
                 self.assertEqual(command["task_set"], ["test"])
                 self.assertEqual(command["override_disposition"], "candidate")
+                self.assertEqual(command["gradle_home_policy"], "ephemeral-0700")
                 self.assertRegex(command["input_sha256"], r"^[0-9a-f]{64}$")
                 self.assertEqual(updated["validation_budget"]["elapsed_seconds"], 0.01)
                 self.assertEqual(updated["validation_budget"]["remaining_seconds"], 5399.99)
@@ -845,6 +897,37 @@ class ValidationRunnerTest(unittest.TestCase):
                         expected_state="discovered",
                     )
                 self.assertEqual(updated, json.loads(receipt.read_text(encoding="utf-8")))
+
+                failed_result = runner.CommandResult(
+                    status="fail",
+                    returncode=1,
+                    stdout="",
+                    stderr="failed",
+                    elapsed_seconds=0.01,
+                    timed_out=False,
+                    process_group_terminated=False,
+                    termination_signal=None,
+                    output_sha256="1" * 64,
+                )
+                failed_phase = runner.PhaseResult(
+                    "signing-buildsrc", "fail", "2" * 64, (failed_result,)
+                )
+                current_digest = hashlib.sha256(receipt.read_bytes()).hexdigest()
+                runner._write_receipt_update(
+                    receipt,
+                    failed_phase,
+                    (job,),
+                    expected_receipt_sha256=current_digest,
+                    expected_state="discovered",
+                    phase_elapsed_seconds=0.01,
+                )
+                failed_document = json.loads(receipt.read_text(encoding="utf-8"))
+                artifact_phase = next(
+                    item
+                    for item in failed_document["phases"]
+                    if item["name"] == "candidate-bom-artifacts"
+                )
+                self.assertEqual(artifact_phase["result"], "fail")
 
     def test_job_binding_rechecks_git_identity_clean_state_and_all_input_digests(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

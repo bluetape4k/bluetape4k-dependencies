@@ -17,7 +17,7 @@ import secrets
 import stat
 import sys
 from pathlib import Path
-from typing import IO, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, IO, Iterable, List, Optional, Sequence, Tuple
 
 
 CANDIDATE_PATH = Path(__file__).resolve().with_name("catalog_candidate.py")
@@ -613,7 +613,10 @@ def _restore_state(state: TargetState, parent_fd: int) -> None:
             raise SyncError(f"rollback read-back mismatch: {state.path}")
 
 
-def _write_all(states: Sequence[TargetState]) -> None:
+def _write_all(
+    states: Sequence[TargetState],
+    postcondition: Optional[Callable[[], None]] = None,
+) -> None:
     parent_fds: List[Tuple[TargetState, int]] = []
     staged: List[Tuple[TargetState, int, str]] = []
     replaced: List[TargetState] = []
@@ -632,6 +635,8 @@ def _write_all(states: Sequence[TargetState]) -> None:
             staged.append((state, parent_fd, staged_name))
         for state, parent_fd, staged_name in staged:
             _replace_and_read_back(state, parent_fd, staged_name, replaced)
+        if postcondition is not None:
+            postcondition()
     except BaseException as exc:
         _remove_staged((parent_fd, name) for _, parent_fd, name in staged)
         rollback_errors = []
@@ -704,7 +709,14 @@ def synchronize(
         _assert_repository_map_stable(
             map_snapshot, repository_map, workspace, "write"
         )
-        _write_all(states)
+        def assert_post_write_inputs() -> None:
+            if _snapshot_source(repositories, workspace) != canonical:
+                raise SyncError("canonical source changed during write")
+            _assert_repository_map_stable(
+                map_snapshot, repository_map, workspace, "write completion"
+            )
+
+        _write_all(states, postcondition=assert_post_write_inputs)
         drifted = []
     else:
         _assert_repository_map_stable(

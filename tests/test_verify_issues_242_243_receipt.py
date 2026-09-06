@@ -260,6 +260,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
                 "gradle": "9.7.0",
                 "coordinate": coordinate,
                 "override_disposition": override_disposition,
+                "gradle_home_policy": "ephemeral-0700",
             }
             commands.append(
                 {
@@ -284,6 +285,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
                     "bom_sha256": "d" * 64,
                     "task_set": task_set,
                     "override_disposition": override_disposition,
+                    "gradle_home_policy": "ephemeral-0700",
                     "input_sha256": receipt.sha256_bytes(
                         receipt.canonical_json_bytes(immutable)
                     ),
@@ -415,6 +417,27 @@ class Issues242243ReceiptTest(unittest.TestCase):
         self.assertEqual(validated["issues"], [242, 243])
         self.assertEqual(len(validated["repositories"]), 10)
         self.assertEqual({item["name"] for item in validated["consumers"]}, set(receipt.CONSUMER_NAMES))
+
+    def test_validated_state_requires_complete_terminal_evidence(self) -> None:
+        workspace, path, document = self.make_fixture()
+        for item in document["repositories"] + document["consumers"]:
+            item["state"] = "validated"
+        document["central"]["state"] = "validated"
+        document["current_state"] = "validated"
+        path.write_bytes(receipt.canonical_json_bytes(document))
+
+        with self.assertRaisesRegex(RuntimeError, "validated receipt is missing required phases"):
+            receipt.validate_receipt(path)
+
+    def test_partial_validation_derives_prepared_global_state(self) -> None:
+        self.assertEqual(
+            receipt._derive_global_state(["validated", "prepared", "discovered"]),
+            "prepared",
+        )
+        self.assertEqual(
+            receipt._derive_global_state(["validated", "adopted", "validated"]),
+            "validated",
+        )
 
     def test_rejects_malformed_schema_and_unknown_field(self) -> None:
         workspace, path, document = self.make_fixture()

@@ -247,6 +247,7 @@ CANDIDATE_ENVIRONMENT_KEYS = frozenset(
         "ISSUES_242_243_CANDIDATE_MAVEN_REPO",
     }
 )
+GRADLE_HOME_POLICY = "ephemeral-0700"
 
 
 class ValidationFailure(RuntimeError):
@@ -540,6 +541,7 @@ def cache_key(
         "configuration": configuration,
         "jdk_version": jdk_version,
         "gradle_version": gradle_version,
+        "gradle_home_policy": GRADLE_HOME_POLICY,
     }
     return sha256_bytes(canonical_json_bytes(payload))
 
@@ -1616,17 +1618,16 @@ def build_phase_jobs(
                 candidate_catalog_path=candidate_catalog,
                 candidate_bom_sha256=candidate_manifest_sha256,
                 environment_overrides={
-                    "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog)
+                    "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog),
+                    "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository),
                 },
             )
         )
         for name in ("timefold-workshop", "clinic-appointment"):
             root, head = consumer_roots[name]
-            environment = (
-                {"ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)}
-                if name == "clinic-appointment"
-                else {}
-            )
+            environment = {
+                "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)
+            }
             jobs.extend(
                 _make_timefold_graph_jobs(
                     repository=name,
@@ -1661,7 +1662,8 @@ def build_phase_jobs(
                 repository_origin=str(exposed["origin"]),
                 repository_branch=str(exposed["candidate_branch"]),
                 environment_overrides={
-                    "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog)
+                    "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog),
+                    "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository),
                 },
                 candidate_maven_repository=candidate_repository,
                 candidate_catalog_path=candidate_catalog,
@@ -1681,11 +1683,9 @@ def build_phase_jobs(
                     central_root=central_root,
                     repository_origin=str(consumer_bindings[name]["origin"]),
                     repository_branch=str(consumer_bindings[name]["candidate_branch"]),
-                    environment_overrides=(
-                        {"ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)}
-                        if name == "clinic-appointment"
-                        else {}
-                    ),
+                    environment_overrides={
+                        "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)
+                    },
                     arguments=candidate_arguments(name),
                     candidate_maven_repository=candidate_repository,
                     candidate_bom_sha256=candidate_manifest_sha256,
@@ -1840,14 +1840,19 @@ def execute_job(
         if remaining <= 0:
             return _bound_result(job, "blocked", "total validation budget exceeded")
         timeout = min(timeout, remaining)
-    result = run_command(
-        command=job.command,
-        cwd=job.cwd,
-        environment=_job_environment(job),
-        timeout_seconds=timeout,
-        failure_artifact=_failure_artifact_for(receipt_path, job),
-        cancel_event=cancel_event,
-    )
+    with tempfile.TemporaryDirectory(prefix="issues-242-243-gradle-home-") as directory:
+        gradle_home = Path(directory).resolve()
+        os.chmod(gradle_home, 0o700)
+        environment = _job_environment(job)
+        environment["GRADLE_USER_HOME"] = str(gradle_home)
+        result = run_command(
+            command=job.command,
+            cwd=job.cwd,
+            environment=environment,
+            timeout_seconds=timeout,
+            failure_artifact=_failure_artifact_for(receipt_path, job),
+            cancel_event=cancel_event,
+        )
     result = dataclasses.replace(result, job_id=job.job_id, repository=job.repository)
     if deadline is not None and result.timed_out and time.monotonic() >= deadline:
         result = dataclasses.replace(
@@ -1944,6 +1949,7 @@ def _bound_command_record(
         "gradle": job.gradle_version,
         "coordinate": coordinate,
         "override_disposition": override_disposition,
+        "gradle_home_policy": GRADLE_HOME_POLICY,
     }
     return {
         "repository": job.repository,
@@ -1965,6 +1971,7 @@ def _bound_command_record(
         "bom_sha256": job.bom_sha256,
         "task_set": task_set,
         "override_disposition": override_disposition,
+        "gradle_home_policy": GRADLE_HOME_POLICY,
         "input_sha256": sha256_bytes(canonical_json_bytes(immutable_input)),
     }
 
@@ -2161,7 +2168,7 @@ def _write_receipt_update(
             phases.append(
                 {
                     "name": "candidate-bom-artifacts",
-                    "result": "pass",
+                    "result": "pass" if result.status == "pass" else result.status,
                     "output_sha256": next(iter(candidate_artifact_digests)),
                 }
             )

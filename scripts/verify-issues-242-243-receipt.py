@@ -624,6 +624,7 @@ BOUND_COMMAND_FIELDS = LEGACY_COMMAND_FIELDS | {
     "bom_sha256",
     "task_set",
     "override_disposition",
+    "gradle_home_policy",
     "input_sha256",
 }
 
@@ -644,6 +645,7 @@ def _bound_command_input(item: Mapping[str, Any]) -> dict[str, Any]:
         "gradle": item["gradle"],
         "coordinate": item["coordinate"],
         "override_disposition": item["override_disposition"],
+        "gradle_home_policy": item["gradle_home_policy"],
     }
 
 
@@ -679,6 +681,8 @@ def _validate_commands(value: Any) -> None:
                 raise ReceiptError("command task_set must be sorted and unique")
             if item["override_disposition"] not in {"baseline", "candidate"}:
                 raise ReceiptError("command override disposition is invalid")
+            if item["gradle_home_policy"] != "ephemeral-0700":
+                raise ReceiptError("command Gradle home policy is invalid")
             coordinate = item["coordinate"]
             selected = item["selected_version"]
             reason = item["selection_reason"]
@@ -708,36 +712,37 @@ def _validate_phases(value: Any) -> None:
         _require_sha256(item["output_sha256"], "phase output")
 
 
-def _validate_adopted_evidence(document: Mapping[str, Any]) -> None:
+def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
+    state = str(document["current_state"])
     phases = document["phases"]
     phase_names = [str(item["name"]) for item in phases]
     if len(phase_names) != len(set(phase_names)):
-        raise ReceiptError("adopted receipt contains duplicate phases")
+        raise ReceiptError(f"{state} receipt contains duplicate phases")
     missing = REQUIRED_ADOPTION_PHASES - set(phase_names)
     if missing:
         raise ReceiptError(
-            "adopted receipt is missing required phases: " + ", ".join(sorted(missing))
+            f"{state} receipt is missing required phases: " + ", ".join(sorted(missing))
         )
     unknown = set(phase_names) - REQUIRED_ADOPTION_PHASES - {"discover"}
     if unknown:
         raise ReceiptError(
-            "adopted receipt contains unknown phases: " + ", ".join(sorted(unknown))
+            f"{state} receipt contains unknown phases: " + ", ".join(sorted(unknown))
         )
     if any(item["result"] != "pass" for item in phases):
-        raise ReceiptError("adopted receipt requires every phase to pass")
+        raise ReceiptError(f"{state} receipt requires every phase to pass")
     artifact_phase = next(
         item for item in phases if item["name"] == "candidate-bom-artifacts"
     )
     if artifact_phase["output_sha256"] == "0" * 64:
-        raise ReceiptError("adopted receipt candidate artifact manifest is empty")
+        raise ReceiptError(f"{state} receipt candidate artifact manifest is empty")
     if document["failure_record"] or document["rollback_record"]:
-        raise ReceiptError("adopted receipt requires empty failure and rollback records")
+        raise ReceiptError(f"{state} receipt requires empty failure and rollback records")
 
     commands = document["commands"]
     if not commands or any(set(item) != BOUND_COMMAND_FIELDS for item in commands):
-        raise ReceiptError("adopted receipt requires immutable command evidence")
+        raise ReceiptError(f"{state} receipt requires immutable command evidence")
     if any(item["result"] != "pass" for item in commands):
-        raise ReceiptError("adopted receipt requires every command to pass")
+        raise ReceiptError(f"{state} receipt requires every command to pass")
 
     known_command_phases = REQUIRED_ADOPTION_PHASES - {"candidate-bom-artifacts"}
     if {item["phase"] for item in commands} - known_command_phases:
@@ -875,9 +880,9 @@ def _derive_global_state(states: Sequence[str]) -> str:
         return "blocked"
     if all(state == "adopted" for state in states):
         return "adopted"
-    if any(state == "validated" for state in states):
+    if all(state in {"validated", "adopted"} for state in states):
         return "validated"
-    if any(state == "prepared" for state in states):
+    if any(state in {"prepared", "validated", "adopted"} for state in states):
         return "prepared"
     return "discovered"
 
@@ -987,8 +992,9 @@ def _validate_receipt_document(
     _validate_records(document["failure_record"], "failure record")
     _validate_records(document["rollback_record"], "rollback record")
     evidence = document["evidence_commit"]
+    if state in {"validated", "adopted"}:
+        _validate_terminal_evidence(document)
     if state == "adopted":
-        _validate_adopted_evidence(document)
         if not isinstance(evidence, Mapping):
             raise ReceiptError("adopted receipt requires evidence metadata")
         if any(item["state"] != "adopted" for item in verified_repositories + verified_consumers):

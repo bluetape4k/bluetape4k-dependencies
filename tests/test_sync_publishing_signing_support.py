@@ -456,6 +456,28 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
         for name, target in self.target_paths.items():
             self.assertEqual(target.read_bytes(), b"stale\n", name)
 
+    def test_canonical_source_change_during_write_rolls_back_every_target(self) -> None:
+        self._write_targets(payload=b"stale\n")
+        original_snapshot = sync._snapshot_source
+        snapshot_count = 0
+
+        def change_before_postcondition(repositories, workspace):
+            nonlocal snapshot_count
+            snapshot_count += 1
+            if snapshot_count == 3:
+                self.source.write_bytes(b"changed-during-write\n")
+            return original_snapshot(repositories, workspace)
+
+        with mock.patch.object(
+            sync, "_snapshot_source", side_effect=change_before_postcondition
+        ):
+            with self.assertRaisesRegex(sync.SyncError, "changed during write"):
+                self._sync(write=True)
+
+        self.assertEqual(snapshot_count, 3)
+        for name, target in self.target_paths.items():
+            self.assertEqual(target.read_bytes(), b"stale\n", name)
+
     def test_read_regular_at_closes_fd_on_keyboard_interrupt(self) -> None:
         self._write_targets()
         target = self.target_paths["bluetape4k-dependencies"]

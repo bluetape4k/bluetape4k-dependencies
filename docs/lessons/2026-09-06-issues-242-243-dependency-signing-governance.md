@@ -19,6 +19,9 @@ signing 영수증은 기록된 digest가 실제 canonical source와 같은지 �
   하나의 전역 deadline과 누적 elapsed/remaining budget을 적용해야 한다.
 - 중앙 governance script의 repository 목록은 공통 inventory에서 재사용해야 새 publisher가
   runner, sync, receipt validator 중 한 곳에서 누락되는 drift를 막을 수 있다.
+- 여러 publisher에 helper를 쓰는 동안 canonical source나 repository map이 바뀌면 이미 쓴
+  target까지 CAS rollback해야 한다. write 직전 확인만으로는 transaction 완료 시점의 입력을
+  증명할 수 없다.
 
 ## 결과
 
