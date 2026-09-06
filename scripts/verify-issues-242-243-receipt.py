@@ -14,6 +14,7 @@ import argparse
 import contextlib
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -244,77 +245,41 @@ def _infer_role(name: str) -> str:
     return "consumer"
 
 
-def _map_entry_value(entry: Mapping[str, Any], *keys: str) -> Any:
-    for key in keys:
-        if key in entry:
-            return entry[key]
-    return None
+def _catalog_candidate_module() -> Any:
+    module_name = "issues_242_243_catalog_candidate"
+    existing = sys.modules.get(module_name)
+    if existing is not None:
+        return existing
+    module_path = Path(__file__).with_name("catalog_candidate.py")
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise ReceiptError("cannot load strict repository map validator")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        sys.modules.pop(module_name, None)
+        raise ReceiptError("cannot load strict repository map validator") from exc
+    return module
 
 
-def _normalise_map_entry(entry: Any) -> dict[str, Any]:
-    if not isinstance(entry, Mapping):
-        raise ReceiptError("repository map entry must be an object")
-    name = _require_nonempty_string(
-        _map_entry_value(entry, "name", "repository"), "repository name"
-    )
-    canonical_path = _map_entry_value(
-        entry, "canonical_path", "path", "root", "candidate_worktree"
-    )
-    worktree = _map_entry_value(
-        entry, "candidate_worktree", "worktree_path", "path", "root", "canonical_path"
-    )
-    origin = _map_entry_value(entry, "origin", "origin_url", "remote")
-    base_ref = _map_entry_value(entry, "base_ref", "base-ref")
-    base_sha = _map_entry_value(entry, "base_sha", "base-head")
-    branch = _map_entry_value(entry, "candidate_branch", "branch")
-    candidate_head = _map_entry_value(
-        entry, "candidate_head", "expected_head", "candidate-head", "head"
-    )
-    clean = entry.get("clean")
-    exact_head = entry.get("exact_head", entry.get("exact-head", True))
-    role = entry.get("role", _infer_role(name))
-    validation_only = entry.get("validation_only", role == "validation-only")
-    return {
-        "name": name,
-        "role": role,
-        "canonical_path": canonical_path,
-        "candidate_worktree": worktree,
-        "origin": origin,
-        "base_ref": base_ref,
-        "base_sha": base_sha,
-        "candidate_branch": branch,
-        "candidate_head": candidate_head,
-        "clean": clean,
-        "exact_head": exact_head,
-        "validation_only": validation_only,
-    }
-
-
-def _map_entries(document: Mapping[str, Any]) -> list[dict[str, Any]]:
-    raw_repositories = document.get("repositories")
-    entries: list[Any]
-    if isinstance(raw_repositories, list):
-        entries = raw_repositories
-    elif isinstance(raw_repositories, Mapping):
-        entries = []
-        if isinstance(document.get("central"), Mapping):
-            central = dict(document["central"])
-            central.setdefault("name", CENTRAL_NAME)
-            entries.append(central)
-        for name, value in raw_repositories.items():
-            if isinstance(value, Mapping):
-                item = dict(value)
-                item.setdefault("name", name if name.startswith("bluetape4k-") else f"bluetape4k-{name}")
-                entries.append(item)
-    else:
-        raise ReceiptError("repository map repositories must be an array or object")
-    normalised = [_normalise_map_entry(item) for item in entries]
-    names = [item["name"] for item in normalised]
-    if len(names) != len(set(names)) or set(names) != set(ALL_NAMES):
-        raise ReceiptError("repository map must contain the exact repository set")
-    if len(normalised) != len(ALL_NAMES):
-        raise ReceiptError("repository map must contain the exact repository set")
-    return sorted(normalised, key=lambda item: ALL_NAMES.index(item["name"]))
+def _strict_map_workspace(document: Any) -> Path:
+    if not isinstance(document, Mapping):
+        raise ReceiptError("repository map must be an object")
+    central = document.get("central")
+    repositories = document.get("repositories")
+    if not isinstance(central, Mapping) or not isinstance(repositories, Mapping):
+        raise ReceiptError("repository map must use the strict v1 schema")
+    entries = [central, *repositories.values()]
+    roots = [entry.get("root") for entry in entries if isinstance(entry, Mapping)]
+    if len(roots) != len(entries) or not all(isinstance(root, str) for root in roots):
+        raise ReceiptError("repository map root fields are invalid")
+    try:
+        workspace = Path(os.path.commonpath(roots))
+    except (TypeError, ValueError) as exc:
+        raise ReceiptError("repository map workspace cannot be resolved") from exc
+    return _canonical_path(workspace, "repository map workspace root")
 
 
 def _validate_worktree_entry(
@@ -354,8 +319,8 @@ def _validate_worktree_entry(
         raise ReceiptError(f"candidate HEAD mismatch for {name}")
     if _git(root, "branch", "--show-current") != branch:
         raise ReceiptError(f"candidate branch mismatch for {name}")
-    if _git(root, "rev-parse", f"{base_ref}^{{commit}}") != base_sha:
-        raise ReceiptError(f"base SHA mismatch for {name}")
+    if _git(root, "rev-parse", f"{base_sha}^{{commit}}") != base_sha:
+        raise ReceiptError(f"base SHA does not peel for {name}")
     if _git(root, "rev-parse", f"{candidate_sha}^{{commit}}") != candidate_sha:
         raise ReceiptError(f"candidate SHA does not peel for {name}")
     if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
@@ -364,25 +329,32 @@ def _validate_worktree_entry(
 
 
 def load_repository_map(path: Path) -> dict[str, Any]:
-    """Load and live-verify the exact central, publisher, and consumer map."""
+    """Reuse the catalog candidate strict-v1 loader for the ten catalog repos."""
     path = _canonical_path(path, "repository map")
     document = _read_json(path, "repository map")
-    if not isinstance(document, Mapping):
-        raise ReceiptError("repository map must be an object")
-    allowed = {"schema_version", "workspace_root", "repositories", "central"}
-    if set(document) - allowed or "schema_version" not in document or "repositories" not in document:
-        raise ReceiptError("repository map schema fields are invalid")
-    if document["schema_version"] != SCHEMA_VERSION:
-        raise ReceiptError("repository map schema version is invalid")
-    roots = document.get("workspace_root")
-    if roots is None:
-        # Legacy candidate maps are bounded by the map's parent workspace.
-        roots = str(path.parent.parent.parent.resolve()) if len(path.parents) >= 3 else str(path.parent.resolve())
-    workspace_root = _canonical_path(roots, "repository map workspace root")
-    if not workspace_root.is_dir():
-        raise ReceiptError("repository map workspace root is not a directory")
-    entries = _map_entries(document)
-    verified = [_validate_worktree_entry(entry, workspace_root) for entry in entries]
+    workspace_root = _strict_map_workspace(document)
+    candidate = _catalog_candidate_module()
+    try:
+        repositories = candidate.load_repository_map_v1(path, workspace_root)
+    except RuntimeError as exc:
+        raise ReceiptError(f"strict repository map validation failed: {exc}") from exc
+    verified = [
+        {
+            "name": item.name,
+            "role": _infer_role(item.name),
+            "canonical_path": str(item.root),
+            "candidate_worktree": str(item.root),
+            "origin": item.origin,
+            "base_ref": "origin/develop",
+            "base_sha": item.base_sha,
+            "candidate_branch": item.branch,
+            "candidate_head": item.expected_head,
+            "clean": True,
+            "exact_head": True,
+            "validation_only": item.name == "bluetape4k-experimental",
+        }
+        for item in repositories
+    ]
     result = {
         "schema_version": SCHEMA_VERSION,
         "workspace_root": str(workspace_root),
@@ -465,7 +437,7 @@ def _validate_graph(graph: Any, consumer: str) -> None:
     _require_sha256(value["output_sha256"], f"graph output for {consumer}")
 
 
-def _validate_consumer(item: Any, mapped: Mapping[str, Any]) -> dict[str, Any]:
+def _validate_consumer(item: Any, workspace_root: Path) -> dict[str, Any]:
     fields = {
         "name",
         "role",
@@ -488,17 +460,25 @@ def _validate_consumer(item: Any, mapped: Mapping[str, Any]) -> dict[str, Any]:
     }
     value = _expected_fields(item, fields, "consumer receipt")
     name = _require_nonempty_string(value["name"], "consumer name")
-    if name != mapped["name"] or value["role"] != "consumer":
-        raise ReceiptError(f"consumer receipt does not match map for {name}")
-    for key in ("origin", "base_ref", "candidate_branch", "candidate_worktree"):
-        if value[key] != mapped[key]:
-            raise ReceiptError(f"consumer receipt {key} mismatch for {name}")
-    if value["clean"] is not True or value["exact_head"] is not True:
-        raise ReceiptError(f"consumer receipt requires clean exact-head state for {name}")
-    if _require_commit(value["base_sha"], f"{name} base") != mapped["base_sha"]:
-        raise ReceiptError(f"consumer receipt base SHA mismatch for {name}")
-    if _require_commit(value["candidate_head"], f"{name} candidate") != mapped["candidate_head"]:
-        raise ReceiptError(f"consumer receipt candidate SHA mismatch for {name}")
+    if name not in CONSUMER_NAMES or value["role"] != "consumer":
+        raise ReceiptError(f"consumer receipt is not allowlisted: {name}")
+    _validate_worktree_entry(
+        {
+            "name": name,
+            "role": "consumer",
+            "canonical_path": value["candidate_worktree"],
+            "candidate_worktree": value["candidate_worktree"],
+            "origin": value["origin"],
+            "base_ref": value["base_ref"],
+            "base_sha": value["base_sha"],
+            "candidate_branch": value["candidate_branch"],
+            "candidate_head": value["candidate_head"],
+            "clean": value["clean"],
+            "exact_head": value["exact_head"],
+            "validation_only": False,
+        },
+        workspace_root,
+    )
     if value["state"] not in STATES:
         raise ReceiptError(f"invalid consumer state for {name}")
     _require_sha256(value["signing_sha256"], f"{name} signing")
@@ -684,7 +664,10 @@ def _validate_receipt_document(
         raise ReceiptError("receipt consumers must contain Workshop and Clinic")
     if {item.get("name") for item in consumers if isinstance(item, Mapping)} != set(CONSUMER_NAMES):
         raise ReceiptError("receipt consumers must contain the exact consumer set")
-    verified_consumers = [_validate_consumer(item, mapped[item["name"]]) for item in consumers]
+    verified_consumers = [
+        _validate_consumer(item, Path(repository_map["workspace_root"]))
+        for item in consumers
+    ]
     _validate_commands(document["commands"])
     _validate_phases(document["phases"])
     _validate_records(document["failure_record"], "failure record")
@@ -834,6 +817,8 @@ def transition_receipt(
             for item in collection:
                 if item["name"] == repository:
                     item["state"] = to_state
+        if repository == CENTRAL_NAME:
+            updated["central"]["state"] = to_state
         states = [updated["central"]["state"]]
         states.extend(item["state"] for item in updated["repositories"] if item["name"] != CENTRAL_NAME)
         states.extend(item["state"] for item in updated["consumers"])

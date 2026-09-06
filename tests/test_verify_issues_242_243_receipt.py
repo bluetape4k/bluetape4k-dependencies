@@ -79,10 +79,27 @@ class Issues242243ReceiptTest(unittest.TestCase):
         entries = [self.make_repository(workspace, name) for name in receipt.ALL_NAMES]
         map_path = workspace / "build/issues-242-243/repository-map.json"
         map_path.parent.mkdir(parents=True)
+        catalog_entries = entries[: len(receipt.CATALOG_NAMES)]
+
+        def strict_entry(item: dict[str, object]) -> dict[str, object]:
+            root = Path(str(item["candidate_worktree"]))
+            return {
+                "root": str(root),
+                "catalog": str(root / "gradle/libs.versions.toml"),
+                "origin": item["origin"],
+                "branch": item["candidate_branch"],
+                "base_sha": item["base_sha"],
+                "expected_head": item["candidate_head"],
+                "clean": True,
+            }
+
         repository_map = {
             "schema_version": 1,
-            "workspace_root": str(workspace),
-            "repositories": entries,
+            "central": strict_entry(catalog_entries[0]),
+            "repositories": {
+                item["name"].removeprefix("bluetape4k-"): strict_entry(item)
+                for item in catalog_entries[1:]
+            },
         }
         map_bytes = receipt.canonical_json_bytes(repository_map)
         map_path.write_bytes(map_bytes)
@@ -275,12 +292,21 @@ class Issues242243ReceiptTest(unittest.TestCase):
         workspace, path, document = self.make_fixture()
         root = Path(document["repositories"][1]["candidate_worktree"])
         (root / "dirty.txt").write_text("dirty\n", encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "dirty"):
+        with self.assertRaisesRegex(RuntimeError, "dirty|not clean"):
             receipt.validate_receipt(path)
         (root / "dirty.txt").unlink()
         document["repositories"][1]["candidate_head"] = "1" * 40
         path.write_bytes(receipt.canonical_json_bytes(document))
         with self.assertRaisesRegex(RuntimeError, "candidate SHA|HEAD"):
+            receipt.validate_receipt(path)
+
+    def test_rejects_consumer_origin_mismatch(self) -> None:
+        workspace, path, document = self.make_fixture()
+        document["consumers"][0]["origin"] = (
+            "git@github.com:bluetape4k/not-the-workshop.git"
+        )
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(RuntimeError, "origin"):
             receipt.validate_receipt(path)
 
     def test_rejects_graph_field_omission_and_invalid_hash(self) -> None:
@@ -375,6 +401,21 @@ class Issues242243ReceiptTest(unittest.TestCase):
             )
         self.assertEqual(path.read_bytes(), before)
 
+    def test_central_transition_updates_both_central_representations(self) -> None:
+        workspace, path, document = self.make_fixture()
+        central = document["repositories"][0]
+        updated = receipt.transition_receipt(
+            path,
+            repository=receipt.CENTRAL_NAME,
+            from_state="discovered",
+            to_state="prepared",
+            expected_head=central["candidate_head"],
+            expected_signing_sha256=central["signing_sha256"],
+        )
+        self.assertEqual(updated["central"]["state"], "prepared")
+        self.assertEqual(updated["repositories"][0]["state"], "prepared")
+        self.assertEqual(updated["current_state"], "prepared")
+
     def test_cli_exposes_validate_and_transition_modes(self) -> None:
         result = subprocess.run(
             [sys.executable, str(SCRIPT_PATH), "--help"],
@@ -384,6 +425,25 @@ class Issues242243ReceiptTest(unittest.TestCase):
         )
         self.assertIn("validate", result.stdout)
         self.assertIn("transition", result.stdout)
+        workspace, path, document = self.make_fixture()
+        default = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH), "validate", str(path)],
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(default.returncode, 0)
+        allowed = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT_PATH),
+                "validate",
+                str(path),
+                "--allow-discovered",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(allowed.returncode, 0, allowed.stderr)
 
 
 if __name__ == "__main__":
