@@ -33,6 +33,7 @@ from typing import Any, Optional
 PHASES = (
     "signing-buildsrc",
     "timefold-graphs-baseline",
+    "timefold-graphs-candidate",
     "consumers",
     "publication-poms",
 )
@@ -62,6 +63,11 @@ SIGNING_REPOSITORIES = (
 )
 CATALOG_REPOSITORIES = SIGNING_REPOSITORIES + ("bluetape4k-experimental",)
 CONSUMER_REPOSITORIES = ("timefold-workshop", "clinic-appointment")
+CANDIDATE_BOM_VERSION = "2.1.0-issue-242.local"
+CANDIDATE_BOM_ARTIFACTS = (
+    f"bluetape4k-dependencies-{CANDIDATE_BOM_VERSION}.pom",
+    f"bluetape4k-dependencies-{CANDIDATE_BOM_VERSION}.module",
+)
 CANONICAL_HELPER_RELATIVE = Path(
     "config/publishing-signing/PublishingSigningKeySupport.kt"
 )
@@ -96,7 +102,6 @@ CONSUMER_TASKS = {
     "clinic-appointment": (
         ":appointment-solver:test",
         ":appointment-api:test",
-        ":appointment-solver:dependencyInsight",
     ),
 }
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -132,6 +137,12 @@ SAFE_ENVIRONMENT_KEYS = frozenset(
         "USER",
         "LOGNAME",
         "TERM",
+    }
+)
+CANDIDATE_ENVIRONMENT_KEYS = frozenset(
+    {
+        "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH",
+        "ISSUES_242_243_CANDIDATE_MAVEN_REPO",
     }
 )
 
@@ -184,6 +195,9 @@ class ValidationJob:
     repository_origin: str = ""
     repository_branch: str = ""
     job_id: str = ""
+    environment_overrides: tuple[tuple[str, str], ...] = ()
+    candidate_maven_repository: Optional[Path] = None
+    candidate_catalog_path: Optional[Path] = None
 
     @property
     def cache_key(self) -> str:
@@ -321,6 +335,48 @@ def _validate_sha256(value: str, description: str) -> str:
     if SHA256_RE.fullmatch(value) is None:
         raise InputContractError(f"invalid {description} SHA-256")
     return value
+
+
+def candidate_artifact_manifest(repository: Path) -> dict[str, Any]:
+    """Return a digest-bound manifest for the local java-platform publication."""
+
+    repository = _canonical_directory(repository, "candidate Maven repository")
+    artifact_directory = (
+        repository
+        / "io"
+        / "github"
+        / "bluetape4k"
+        / "bluetape4k-dependencies"
+        / CANDIDATE_BOM_VERSION
+    )
+    artifacts: dict[str, str] = {}
+    for name in CANDIDATE_BOM_ARTIFACTS:
+        path = _canonical_existing_file(
+            artifact_directory / name, f"candidate BOM artifact {name}"
+        )
+        artifacts[name] = sha256_file(path)
+    digest = sha256_bytes(canonical_json_bytes(artifacts))
+    return {"version": CANDIDATE_BOM_VERSION, "artifacts": artifacts, "sha256": digest}
+
+
+def validated_candidate_catalog(central_root: Path) -> tuple[Path, str]:
+    """Read back the central candidate catalog against its portable sidecar."""
+
+    catalog = _canonical_existing_file(
+        central_root / "gradle" / "libs.versions.toml", "candidate catalog"
+    )
+    sidecar = _canonical_existing_file(
+        central_root / "gradle" / "libs.versions.toml.sha256",
+        "candidate catalog checksum",
+    )
+    checksum_fields = sidecar.read_text(encoding="utf-8").strip().split()
+    if not checksum_fields:
+        raise InputContractError("candidate catalog checksum is empty")
+    declared = checksum_fields[0]
+    actual = sha256_file(catalog)
+    if _validate_sha256(declared, "candidate catalog") != actual:
+        raise InputContractError("candidate catalog checksum mismatch")
+    return catalog, actual
 
 
 def cache_key(
@@ -1030,6 +1086,8 @@ def _job_digests(
     *,
     repository: str,
     phase: str,
+    catalog_path: Optional[Path] = None,
+    bom_sha256: Optional[str] = None,
 ) -> tuple[str, str, str]:
     helper = job_helper_path(
         repository=repository,
@@ -1039,12 +1097,14 @@ def _job_digests(
     )
     if not helper.is_file() or helper.is_symlink():
         raise InputContractError(f"signing helper is missing: {helper}")
-    catalog = root / "gradle" / "libs.versions.toml"
+    catalog = catalog_path or root / "gradle" / "libs.versions.toml"
     bom = central_root / "build.gradle.kts"
     return (
         _digest_required(helper, "generated signing helper"),
         _digest_required(catalog, "repository catalog"),
-        _digest_required(bom, "central BOM build"),
+        _validate_sha256(bom_sha256, "candidate BOM artifact manifest")
+        if bom_sha256 is not None
+        else _digest_required(bom, "central BOM build"),
     )
 
 
@@ -1062,12 +1122,18 @@ def _make_job(
     refresh_dependencies: bool = False,
     repository_origin: str = "",
     repository_branch: str = "",
+    environment_overrides: Optional[Mapping[str, str]] = None,
+    candidate_maven_repository: Optional[Path] = None,
+    candidate_catalog_path: Optional[Path] = None,
+    candidate_bom_sha256: Optional[str] = None,
 ) -> ValidationJob:
     helper, catalog, bom = _job_digests(
         root,
         central_root,
         repository=repository,
         phase=phase,
+        catalog_path=candidate_catalog_path,
+        bom_sha256=candidate_bom_sha256,
     )
     jdk, gradle = detect_toolchain(root)
     return ValidationJob(
@@ -1092,6 +1158,9 @@ def _make_job(
         gradle_version=gradle,
         repository_origin=repository_origin,
         repository_branch=repository_branch,
+        environment_overrides=tuple(sorted((environment_overrides or {}).items())),
+        candidate_maven_repository=candidate_maven_repository,
+        candidate_catalog_path=candidate_catalog_path,
     )
 
 
@@ -1146,8 +1215,14 @@ def validate_job_binding(
         ),
         "job signing helper",
     )
-    catalog_digest = _digest_required(root / "gradle" / "libs.versions.toml", "job catalog")
-    bom_digest = _digest_required(central_root / "build.gradle.kts", "job BOM")
+    catalog_path = job.candidate_catalog_path or root / "gradle" / "libs.versions.toml"
+    catalog_digest = _digest_required(catalog_path, "job catalog")
+    if job.candidate_maven_repository is not None:
+        bom_digest = str(
+            candidate_artifact_manifest(job.candidate_maven_repository)["sha256"]
+        )
+    else:
+        bom_digest = _digest_required(central_root / "build.gradle.kts", "job BOM")
     for actual, expected, label in (
         (helper_digest, job.helper_sha256, "helper"),
         (catalog_digest, job.catalog_sha256, "catalog"),
@@ -1195,13 +1270,18 @@ def _make_timefold_graph_jobs(
     central_root: Path,
     repository_origin: str = "",
     repository_branch: str = "",
+    phase: str = "timefold-graphs-baseline",
+    candidate_maven_repository: Optional[Path] = None,
+    candidate_catalog_path: Optional[Path] = None,
+    candidate_bom_sha256: Optional[str] = None,
+    environment_overrides: Optional[Mapping[str, str]] = None,
 ) -> tuple[ValidationJob, ...]:
     jobs: list[ValidationJob] = []
     for coordinate in TIMEFOLD_COORDINATES:
         jobs.append(
             _make_job(
                 repository=repository,
-                phase="timefold-graphs-baseline",
+                phase=phase,
                 root=root,
                 tasks=TIMEFOLD_GRAPH_TASKS[repository],
                 arguments=(
@@ -1216,6 +1296,10 @@ def _make_timefold_graph_jobs(
                 refresh_dependencies=True,
                 repository_origin=repository_origin,
                 repository_branch=repository_branch,
+                environment_overrides=environment_overrides,
+                candidate_maven_repository=candidate_maven_repository,
+                candidate_catalog_path=candidate_catalog_path,
+                candidate_bom_sha256=candidate_bom_sha256,
             )
         )
     return tuple(jobs)
@@ -1228,6 +1312,7 @@ def build_phase_jobs(
     *,
     workshop_root: Optional[Path] = None,
     clinic_root: Optional[Path] = None,
+    candidate_maven_repository: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
 ) -> tuple[ValidationJob, ...]:
     if phase not in PHASES:
@@ -1258,7 +1343,7 @@ def build_phase_jobs(
 
     consumer_roots: dict[str, tuple[Path, str]] = {}
     consumer_bindings: dict[str, Mapping[str, Any]] = {}
-    if phase in {"timefold-graphs-baseline", "consumers"}:
+    if phase in {"timefold-graphs-baseline", "timefold-graphs-candidate", "consumers"}:
         consumer_bindings["timefold-workshop"] = _consumer_entry(receipt, "timefold-workshop")
         consumer_bindings["clinic-appointment"] = _consumer_entry(receipt, "clinic-appointment")
         consumer_roots["timefold-workshop"] = _consumer_root_from_receipt(
@@ -1267,6 +1352,19 @@ def build_phase_jobs(
         consumer_roots["clinic-appointment"] = _consumer_root_from_receipt(
             receipt, "clinic-appointment", clinic_root
         )
+    candidate_repository: Optional[Path] = None
+    candidate_manifest_sha256: Optional[str] = None
+    candidate_catalog: Optional[Path] = None
+    if phase in {"timefold-graphs-candidate", "consumers"}:
+        if candidate_maven_repository is None:
+            raise InputContractError(f"{phase} requires the candidate Maven repository")
+        candidate_repository = _canonical_directory(
+            candidate_maven_repository, "candidate Maven repository"
+        )
+        candidate_manifest_sha256 = str(
+            candidate_artifact_manifest(candidate_repository)["sha256"]
+        )
+        candidate_catalog, _ = validated_candidate_catalog(central_root)
     if phase == "timefold-graphs-baseline":
         jobs: list[ValidationJob] = []
         exposed = entries["bluetape4k-exposed"]
@@ -1293,7 +1391,55 @@ def build_phase_jobs(
                 )
             )
         return tuple(jobs)
+    if phase == "timefold-graphs-candidate":
+        assert candidate_repository is not None
+        assert candidate_manifest_sha256 is not None
+        assert candidate_catalog is not None
+        jobs = []
+        exposed = entries["bluetape4k-exposed"]
+        jobs.extend(
+            _make_timefold_graph_jobs(
+                repository="bluetape4k-exposed",
+                root=Path(exposed["candidate_worktree"]),
+                repository_head=str(exposed["candidate_head"]),
+                central_root=central_root,
+                repository_origin=str(exposed["origin"]),
+                repository_branch=str(exposed["candidate_branch"]),
+                phase=phase,
+                candidate_maven_repository=candidate_repository,
+                candidate_catalog_path=candidate_catalog,
+                candidate_bom_sha256=candidate_manifest_sha256,
+                environment_overrides={
+                    "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog)
+                },
+            )
+        )
+        for name in ("timefold-workshop", "clinic-appointment"):
+            root, head = consumer_roots[name]
+            environment = (
+                {"ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)}
+                if name == "clinic-appointment"
+                else {}
+            )
+            jobs.extend(
+                _make_timefold_graph_jobs(
+                    repository=name,
+                    root=root,
+                    repository_head=head,
+                    central_root=central_root,
+                    repository_origin=str(consumer_bindings[name]["origin"]),
+                    repository_branch=str(consumer_bindings[name]["candidate_branch"]),
+                    phase=phase,
+                    candidate_maven_repository=candidate_repository,
+                    candidate_bom_sha256=candidate_manifest_sha256,
+                    environment_overrides=environment,
+                )
+            )
+        return tuple(jobs)
     if phase == "consumers":
+        assert candidate_repository is not None
+        assert candidate_manifest_sha256 is not None
+        assert candidate_catalog is not None
         jobs = []
         exposed = entries["bluetape4k-exposed"]
         jobs.append(
@@ -1307,6 +1453,12 @@ def build_phase_jobs(
                 central_root=central_root,
                 repository_origin=str(exposed["origin"]),
                 repository_branch=str(exposed["candidate_branch"]),
+                environment_overrides={
+                    "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog)
+                },
+                candidate_maven_repository=candidate_repository,
+                candidate_catalog_path=candidate_catalog,
+                candidate_bom_sha256=candidate_manifest_sha256,
             )
         )
         for name in ("timefold-workshop", "clinic-appointment"):
@@ -1322,6 +1474,13 @@ def build_phase_jobs(
                     central_root=central_root,
                     repository_origin=str(consumer_bindings[name]["origin"]),
                     repository_branch=str(consumer_bindings[name]["candidate_branch"]),
+                    environment_overrides=(
+                        {"ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)}
+                        if name == "clinic-appointment"
+                        else {}
+                    ),
+                    candidate_maven_repository=candidate_repository,
+                    candidate_bom_sha256=candidate_manifest_sha256,
                 )
             )
         return tuple(jobs)
@@ -1366,8 +1525,15 @@ def _failure_artifact_for(receipt_path: Path, job: ValidationJob) -> Path:
     return directory / f"{safe_phase}-{safe_repo}-{int(time.time() * 1000000)}.log"
 
 
-def _job_environment() -> dict[str, str]:
-    return sanitized_environment(os.environ)
+def _job_environment(job: ValidationJob) -> dict[str, str]:
+    environment = sanitized_environment(os.environ)
+    for key, value in job.environment_overrides:
+        if key not in CANDIDATE_ENVIRONMENT_KEYS:
+            raise InputContractError(f"job environment key is not allowlisted: {key}")
+        if not value:
+            raise InputContractError(f"job environment value is empty: {key}")
+        environment[key] = value
+    return environment
 
 
 def _load_job_bindings(repository_map_path: Path, receipt_path: Path) -> dict[str, dict[str, Any]]:
@@ -1445,7 +1611,7 @@ def execute_job(
     result = run_command(
         command=job.command,
         cwd=job.cwd,
-        environment=_job_environment(),
+        environment=_job_environment(job),
         timeout_seconds=timeout,
         failure_artifact=_failure_artifact_for(receipt_path, job),
         cancel_event=cancel_event,
@@ -1561,6 +1727,25 @@ def _write_receipt_update(
                 "output_sha256": result.output_sha256,
             }
         )
+        candidate_artifact_digests = {
+            job.bom_sha256 for job in jobs if job.candidate_maven_repository is not None
+        }
+        if len(candidate_artifact_digests) > 1:
+            raise InputContractError("candidate jobs do not share one artifact manifest")
+        if candidate_artifact_digests:
+            phases[:] = [
+                item
+                for item in phases
+                if not isinstance(item, Mapping)
+                or item.get("name") != "candidate-bom-artifacts"
+            ]
+            phases.append(
+                {
+                    "name": "candidate-bom-artifacts",
+                    "result": "pass",
+                    "output_sha256": next(iter(candidate_artifact_digests)),
+                }
+            )
         commands = document.setdefault("commands", [])
         if not isinstance(commands, list):
             raise InputContractError("local receipt commands must be an array")
@@ -1617,6 +1802,7 @@ def run_phase(
     receipt_path: Path,
     workshop_root: Optional[Path] = None,
     clinic_root: Optional[Path] = None,
+    candidate_maven_repository: Optional[Path] = None,
     cache_directory: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
     dry_run: bool = False,
@@ -1636,6 +1822,7 @@ def run_phase(
         receipt,
         workshop_root=workshop_root,
         clinic_root=clinic_root,
+        candidate_maven_repository=candidate_maven_repository,
         repositories=repositories,
     )
     if dry_run:
@@ -1713,6 +1900,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--workshop-root", type=Path)
     parser.add_argument("--clinic-root", type=Path)
+    parser.add_argument("--candidate-maven-repository", type=Path)
     parser.add_argument("--cache-dir", type=Path)
     parser.add_argument("--repo", action="append", dest="repositories")
     parser.add_argument("--dry-run", action="store_true")
@@ -1729,6 +1917,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             receipt_path=args.receipt,
             workshop_root=args.workshop_root,
             clinic_root=args.clinic_root,
+            candidate_maven_repository=args.candidate_maven_repository,
             cache_directory=args.cache_dir,
             repositories=args.repositories,
             dry_run=args.dry_run,

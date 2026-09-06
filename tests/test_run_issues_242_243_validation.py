@@ -32,6 +32,7 @@ class ValidationRunnerTest(unittest.TestCase):
             (
                 "signing-buildsrc",
                 "timefold-graphs-baseline",
+                "timefold-graphs-candidate",
                 "consumers",
                 "publication-poms",
             ),
@@ -73,6 +74,77 @@ class ValidationRunnerTest(unittest.TestCase):
             runner.CONSUMER_TASKS["bluetape4k-exposed"],
             (":bluetape4k-exposed-timefold-solver-persistence:test",),
         )
+        self.assertEqual(
+            runner.CONSUMER_TASKS["clinic-appointment"],
+            (":appointment-solver:test", ":appointment-api:test"),
+        )
+
+    def test_candidate_artifact_manifest_binds_actual_platform_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            artifact = (
+                repository
+                / "io/github/bluetape4k/bluetape4k-dependencies"
+                / runner.CANDIDATE_BOM_VERSION
+            )
+            artifact.mkdir(parents=True)
+            pom = artifact / f"bluetape4k-dependencies-{runner.CANDIDATE_BOM_VERSION}.pom"
+            module = artifact / f"bluetape4k-dependencies-{runner.CANDIDATE_BOM_VERSION}.module"
+            pom.write_text("<project/>\n", encoding="utf-8")
+            module.write_text("{}\n", encoding="utf-8")
+
+            first = runner.candidate_artifact_manifest(repository)
+            self.assertEqual(set(first["artifacts"]), {pom.name, module.name})
+            self.assertEqual(len(first["sha256"]), 64)
+            module.write_text('{"changed":true}\n', encoding="utf-8")
+            self.assertNotEqual(first["sha256"], runner.candidate_artifact_manifest(repository)["sha256"])
+
+            module.unlink()
+            with self.assertRaisesRegex(runner.InputContractError, "candidate BOM artifact"):
+                runner.candidate_artifact_manifest(repository)
+
+    def test_candidate_environment_is_explicit_and_not_inherited_implicitly(self) -> None:
+        source = {
+            "PATH": "/bin",
+            "HOME": "/tmp/home",
+            "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": "/candidate/catalog.toml",
+            "ISSUES_242_243_CANDIDATE_MAVEN_REPO": "/candidate/m2",
+            "CENTRAL_PASSWORD": "secret",
+        }
+        environment = runner.sanitized_environment(source)
+        self.assertEqual(set(environment), {"PATH", "HOME"})
+        job = mock.Mock(
+            environment_overrides=(
+                ("BLUETAPE4K_DEPENDENCIES_CATALOG_PATH", "/candidate/catalog.toml"),
+                ("ISSUES_242_243_CANDIDATE_MAVEN_REPO", "/candidate/m2"),
+            )
+        )
+        with mock.patch.dict(os.environ, source, clear=True):
+            explicit = runner._job_environment(job)
+        self.assertEqual(
+            set(explicit),
+            {
+                "PATH",
+                "HOME",
+                "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH",
+                "ISSUES_242_243_CANDIDATE_MAVEN_REPO",
+            },
+        )
+
+    def test_candidate_catalog_must_match_portable_checksum_sidecar(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            central = Path(directory).resolve()
+            catalog = central / "gradle/libs.versions.toml"
+            sidecar = central / "gradle/libs.versions.toml.sha256"
+            catalog.parent.mkdir(parents=True)
+            catalog.write_text('[versions]\ntimefold-solver = "2.6.0"\n', encoding="utf-8")
+            digest = hashlib.sha256(catalog.read_bytes()).hexdigest()
+            sidecar.write_text(f"{digest}\n", encoding="utf-8")
+
+            self.assertEqual(runner.validated_candidate_catalog(central), (catalog, digest))
+            sidecar.write_text(f"{'0' * 64}\n", encoding="utf-8")
+            with self.assertRaisesRegex(runner.InputContractError, "checksum mismatch"):
+                runner.validated_candidate_catalog(central)
 
     def test_cache_key_is_canonical_and_binds_every_required_input(self) -> None:
         first = runner.cache_key(
@@ -378,6 +450,7 @@ class ValidationRunnerTest(unittest.TestCase):
                 bom_sha256="d" * 64,
                 jdk_version="jdk",
                 gradle_version="gradle",
+                candidate_maven_repository=root,
             )
             result = runner.CommandResult(
                 status="pass",
@@ -403,6 +476,12 @@ class ValidationRunnerTest(unittest.TestCase):
                 self.assertGreaterEqual(calls.count("validate"), 2)
                 self.assertEqual(calls[0], "lock-enter")
                 updated = json.loads(receipt.read_text(encoding="utf-8"))
+                artifact_phase = next(
+                    item
+                    for item in updated["phases"]
+                    if item["name"] == "candidate-bom-artifacts"
+                )
+                self.assertEqual(artifact_phase["output_sha256"], "d" * 64)
                 stale_digest = hashlib.sha256(receipt.read_bytes()).hexdigest()
                 self.assertNotEqual(stale_digest, expected_digest)
                 with self.assertRaisesRegex(runner.InputContractError, "digest"):
