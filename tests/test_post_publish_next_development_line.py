@@ -185,7 +185,16 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 "bluetape4k-text",
             },
         )
-        self.assertEqual(policy["snapshot-catalog-ref-overrides"], {})
+        self.assertEqual(
+            policy["snapshot-catalog-ref-overrides"],
+            {
+                "bluetape4k-projects": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+                "bluetape4k-aws": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+                "bluetape4k-exposed": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+                "bluetape4k-javers": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+                "bluetape4k-leader": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+            },
+        )
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
             {
