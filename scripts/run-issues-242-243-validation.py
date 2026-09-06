@@ -109,20 +109,14 @@ PRIVATE_ARMOR_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?im)(\b(?:[A-Za-z_][A-Za-z0-9-]*_)?(?:password|passwd|secret|token|"
-    r"credential|access[_-]?key|private[_-]?key|api[_-]?key|signing[_-]?key|key)"
-    r"\b\s*[=:]\s*)([^\r\n]+)"
+    r"(?im)(\b[A-Za-z_][A-Za-z0-9_-]*\b)(\s*[=:]\s*)([^\r\n]+)"
 )
 SECRET_URI_RE = re.compile(r"(?i)(://[^\s:/]+:)[^\s@]+(@)")
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
 SECRET_NAME_RE = re.compile(
-    r"(?:password|passwd|token|secret|credential|private[_-]?key|access[_-]?key|"
-    r"api[_-]?key|signing[_-]?key|key)$",
-    re.IGNORECASE,
-)
-SECRET_OPTION_RE = re.compile(
-    r"^-{1,2}(?:password|passwd|token|secret|credential|access[_-]?key|"
-    r"private[_-]?key|api[_-]?key|signing[_-]?key|key)$",
+    r"(?:^|[_-])(?:password|passwd|token|secret|credential|private[_-]?key|"
+    r"secret[_-]?access[_-]?key|access[_-]?key(?:[_-]?id)?|api[_-]?key|"
+    r"signing[_-]?key|key)$",
     re.IGNORECASE,
 )
 SECRET_ASSIGNMENT_ARG_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*)(=)(.*)$")
@@ -504,11 +498,20 @@ def redact_output(value: Any) -> str:
     else:
         text = str(value)
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
-    text = SECRET_ASSIGNMENT_RE.sub(r"\1<redacted>", text)
+    text = SECRET_ASSIGNMENT_RE.sub(_redact_assignment, text)
     text = SECRET_URI_RE.sub(r"\1<redacted>\2", text)
     text = ANSI_RE.sub("", text)
     text = CONTROL_RE.sub("", text)
     return text
+
+
+def _is_secret_name(value: str) -> bool:
+    return SECRET_NAME_RE.search(value.replace("-", "_")) is not None
+
+
+def _redact_assignment(match: re.Match[str]) -> str:
+    key, separator, value = match.groups()
+    return f"{key}{separator}<redacted>" if _is_secret_name(key) else f"{key}{separator}{value}"
 
 
 def _redact_value(value: Any) -> Any:
@@ -550,18 +553,18 @@ def redact_command(command: Sequence[str]) -> tuple[str, ...]:
             redact_next = False
             continue
         assignment = SECRET_ASSIGNMENT_ARG_RE.fullmatch(value)
-        if assignment is not None and SECRET_NAME_RE.search(assignment.group(1)):
+        if assignment is not None and _is_secret_name(assignment.group(1)):
             redacted.append(f"{assignment.group(1)}=<redacted>")
             continue
         option_assignment = re.match(r"^(-{1,2}[^=]+)=(.*)$", value)
-        if option_assignment is not None and SECRET_OPTION_RE.fullmatch(option_assignment.group(1)):
+        if option_assignment is not None and _is_secret_name(option_assignment.group(1).lstrip("-")):
             redacted.append(f"{option_assignment.group(1)}=<redacted>")
             continue
         short_property = re.match(r"^(-P[^=]*(?:password|passwd|token|secret|key))=(.*)$", value, re.IGNORECASE)
         if short_property is not None:
             redacted.append(f"{short_property.group(1)}=<redacted>")
             continue
-        if SECRET_OPTION_RE.fullmatch(value):
+        if value.startswith("-") and _is_secret_name(value.lstrip("-")):
             redacted.append(value)
             redact_next = True
             continue

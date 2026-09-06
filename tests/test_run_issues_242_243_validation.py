@@ -150,6 +150,9 @@ class ValidationRunnerTest(unittest.TestCase):
         body = (
             "before\n"
             "PASSWORD=super-secret\n"
+            "AWS_SECRET_ACCESS_KEY=sentinel-aws-secret\n"
+            "AWS_ACCESS_KEY_ID=sentinel-aws-id\n"
+            "MY_SECRET_ACCESS_KEY=sentinel-my-secret\n"
             "-----BEGIN PGP PRIVATE KEY BLOCK-----\n"
             "sentinel-private-body\n"
             "-----END PGP PRIVATE KEY BLOCK-----\n"
@@ -157,6 +160,9 @@ class ValidationRunnerTest(unittest.TestCase):
         )
         redacted = runner.redact_output(body)
         self.assertNotIn("super-secret", redacted)
+        self.assertNotIn("sentinel-aws-secret", redacted)
+        self.assertNotIn("sentinel-aws-id", redacted)
+        self.assertNotIn("sentinel-my-secret", redacted)
         self.assertNotIn("sentinel-private-body", redacted)
         self.assertNotIn("BEGIN PGP PRIVATE KEY BLOCK", redacted)
         lines = runner.bounded_diagnostics("\n".join(f"line-{i}" for i in range(100)))
@@ -212,7 +218,7 @@ class ValidationRunnerTest(unittest.TestCase):
                 command=(
                     sys.executable,
                     "-c",
-                    "import time; print('PASSWORD=secret', flush=True); time.sleep(10)",
+                    "import time; print('PASSWORD=secret\\nAWS_SECRET_ACCESS_KEY=sentinel-aws-secret\\nAWS_ACCESS_KEY_ID=sentinel-aws-id\\nMY_SECRET_ACCESS_KEY=sentinel-my-secret', flush=True); time.sleep(10)",
                 ),
                 cwd=root,
                 environment=os.environ,
@@ -225,6 +231,10 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertTrue(artifact.is_file())
             self.assertEqual(stat.S_IMODE(artifact.stat().st_mode), 0o600)
             self.assertNotIn("secret", artifact.read_text(encoding="utf-8"))
+            artifact_text = artifact.read_text(encoding="utf-8")
+            self.assertNotIn("sentinel-aws-secret", artifact_text)
+            self.assertNotIn("sentinel-aws-id", artifact_text)
+            self.assertNotIn("sentinel-my-secret", artifact_text)
 
     def test_receipt_binding_rejects_map_path_or_digest_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -463,6 +473,8 @@ class ValidationRunnerTest(unittest.TestCase):
             "SERVICE_TOKEN": "secret-token",
             "SERVICE_SECRET": "secret-secret",
             "SERVICE_KEY": "secret-key",
+            "AWS_ACCESS_KEY_ID": "sentinel-aws-id",
+            "MY_SECRET_ACCESS_KEY": "sentinel-my-secret",
         }
         environment = runner.sanitized_environment(source)
         self.assertEqual(set(environment), {"PATH", "HOME", "JAVA_HOME"})
@@ -470,6 +482,9 @@ class ValidationRunnerTest(unittest.TestCase):
             (
                 "gradlew",
                 "CENTRAL_PASSWORD=secret-central",
+                "AWS_SECRET_ACCESS_KEY=sentinel-aws-secret",
+                "AWS_ACCESS_KEY_ID=sentinel-aws-id",
+                "MY_SECRET_ACCESS_KEY=sentinel-my-secret",
                 "SERVICE_KEY=secret-key",
                 "--password=secret-password",
             )
@@ -479,12 +494,21 @@ class ValidationRunnerTest(unittest.TestCase):
             cache = Path(directory).resolve()
             key = "a" * 64
             runner.write_cache_entry(
-                cache, key, b"CENTRAL_PASSWORD=secret-central\nSERVICE_KEY=secret-key\n"
+                cache,
+                key,
+                b"CENTRAL_PASSWORD=secret-central\n"
+                b"AWS_SECRET_ACCESS_KEY=sentinel-aws-secret\n"
+                b"AWS_ACCESS_KEY_ID=sentinel-aws-id\n"
+                b"MY_SECRET_ACCESS_KEY=sentinel-my-secret\n"
+                b"SERVICE_KEY=secret-key\n",
             )
             output = runner.read_cache_entry(cache, key)
             self.assertIsNotNone(output)
             self.assertNotIn("secret-central", output["output"])
             self.assertNotIn("secret-key", output["output"])
+            self.assertNotIn("sentinel-aws-secret", output["output"])
+            self.assertNotIn("sentinel-aws-id", output["output"])
+            self.assertNotIn("sentinel-my-secret", output["output"])
 
 
 if __name__ == "__main__":
