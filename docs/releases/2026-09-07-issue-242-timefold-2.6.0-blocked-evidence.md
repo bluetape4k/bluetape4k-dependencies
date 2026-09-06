@@ -3,19 +3,26 @@
 ## 판정
 
 Timefold Solver `2.6.0` 후보의 필수 소비자 테스트가 모두 통과하지 못했고,
-초기 graph phase도 의미 검증 없이 Gradle 종료 코드만 확인한 것으로 재감사되어
-중앙 catalog 전환을 보류한다.
+초기 graph phase도 의미 검증 없이 Gradle 종료 코드만 확인한 것으로 재감사됐다.
+선택 버전과 `Selection reasons`를 검사하는 semantic graph runner로 재실행한
+baseline과 candidate phase도 모두 실패했으므로 중앙 catalog 전환을 보류한다.
 `gradle/libs.versions.toml`은 `2.4.0`을 유지하고
 `defer-breaking-migration` 정책도 해제하지 않는다.
 
 ## 고정한 증거
 
-- 중앙 검토 구현 HEAD: `7a05d16d68464b438999da7ed6c43710aed35052`
+- semantic graph 검증 구현 HEAD: `1df9d6610c62f86bfed276c720172905bd90a9f4`
 - 후보 BOM: `io.github.bluetape4k:bluetape4k-dependencies:2.1.0-issue-242.local`
 - 후보 POM SHA-256: `cd95fc2cb1c53b982a6190653bf017738a2881f73f6acf1be3be2a117e4ab7ad`
 - 후보 module metadata SHA-256: `60546a834a448d62f07065823eecdc2d865b2e6037439f14714527694e01b993`
+- 후보 Maven repository 전체 manifest phase: 통과,
+  `output_sha256=7ce4935f1a2ba0d8c69af98759e63f2e82c878ab718cfaba9d16e4f944ddc2bd`
 - 초기 후보 graph runner 결과: `12/12 pass`로 기록됐으나 무효,
   `output_sha256=71034c9db77e04feed9c4704f2b47b4e2701e00c81879d80d10ee592ab0caad2`
+- semantic baseline graph phase: 실패,
+  `output_sha256=01a0f0212142f4923f2ef4a07104581d26e6ad53f1bbd95c5b7ca4663b940e39`
+- semantic candidate graph phase: 실패,
+  `output_sha256=fdaf4cf7db15c171b4cb32d46f05b515df7f4f335e596ab5fd5939d6f3a7a7cc`
 - 소비자 phase: 실패,
   `output_sha256=9abbd3904d89e1fa0320788917fcb99cc56fdabad4ac457acfde45b48ff8b1f2`
 
@@ -32,6 +39,19 @@ Timefold Solver `2.6.0` 후보의 필수 소비자 테스트가 모두 통과하
 runner는 이후 실제 소비 모듈에 좌표를 매핑하고, 선택 버전과
 `Selection reasons`를 파싱하며, 후보가 정확히 `2.6.0`을 선택하지 않으면
 fail-closed 처리하도록 보강했다. 이 보강 자체는 기존 후보를 통과로 바꾸지 않는다.
+
+재실행 결과도 승격 조건을 충족하지 못했다.
+
+- `bluetape4k-exposed`의 candidate core graph는 예상 `2.6.0` 대신 `2.4.0`을
+  선택했다.
+- Workshop 검증 worktree는 이미 `2.6.0` 후보로 변경돼 baseline과 candidate가
+  모두 `2.6.0`을 선택했다. 이는 독립적인 `2.2.x` 기준선 증거가 아니다.
+- Clinic baseline은 검증 worktree가 참조하는 로컬 후보 BOM을 baseline repository에서
+  찾지 못해 graph를 만들지 못했다. candidate benchmark graph는 `2.6.0`을 선택했지만,
+  대응하는 immutable baseline이 없으므로 전환 증거로 사용할 수 없다.
+
+따라서 일부 candidate graph의 성공을 전체 승격 성공으로 집계하지 않고 두 phase를
+모두 실패 상태로 영수증에 보존한다.
 
 ### JVM target 불일치
 
