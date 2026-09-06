@@ -302,6 +302,7 @@ class ValidationJob:
     bom_sha256: str
     jdk_version: str
     gradle_version: str
+    arguments: tuple[str, ...] = ()
     repository_origin: str = ""
     repository_branch: str = ""
     job_id: str = ""
@@ -322,6 +323,7 @@ class ValidationJob:
             configuration=self.configuration,
             jdk_version=self.jdk_version,
             gradle_version=self.gradle_version,
+            arguments=self.arguments,
         )
 
 
@@ -514,6 +516,7 @@ def cache_key(
     configuration: str,
     jdk_version: str,
     gradle_version: str,
+    arguments: Sequence[str] = (),
 ) -> str:
     """Return the canonical exact-input evidence cache key."""
 
@@ -541,6 +544,7 @@ def cache_key(
         "configuration": configuration,
         "jdk_version": jdk_version,
         "gradle_version": gradle_version,
+        "arguments": list(arguments),
         "gradle_home_policy": GRADLE_HOME_POLICY,
     }
     return sha256_bytes(canonical_json_bytes(payload))
@@ -1197,27 +1201,56 @@ def _git(root: Path, *args: str) -> str:
     return completed.stdout.strip()
 
 
-def _tool_version(command: Sequence[str], *, cwd: Path) -> str:
-    try:
-        completed = subprocess.run(
-            list(command),
-            cwd=str(cwd),
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+def _tool_version(
+    command: Sequence[str],
+    *,
+    cwd: Path,
+    environment: Mapping[str, str],
+    deadline: Optional[float],
+) -> str:
+    remaining = 30.0 if deadline is None else deadline - time.monotonic()
+    if remaining <= 0:
+        raise InputContractError("total validation budget exceeded during toolchain probe")
+    result = run_command(
+        command=command,
+        cwd=cwd,
+        environment=environment,
+        timeout_seconds=min(30.0, remaining),
+    )
+    if result.timed_out and deadline is not None and time.monotonic() >= deadline:
+        raise InputContractError("total validation budget exceeded during toolchain probe")
+    if result.status != "pass":
         return "unavailable"
-    output = (completed.stdout + "\n" + completed.stderr).strip().splitlines()
+    output = (result.stdout + "\n" + result.stderr).strip().splitlines()
     return output[0][:160] if output else "unavailable"
 
 
-def detect_toolchain(root: Path) -> tuple[str, str]:
-    java = shutil.which("java") or "java"
-    jdk = _tool_version((java, "-version"), cwd=root)
-    gradle = _tool_version((str(root / "gradlew"), "--version"), cwd=root)
-    return jdk, gradle
+def detect_toolchain(
+    root: Path, *, deadline: Optional[float] = None
+) -> tuple[str, str]:
+    with tempfile.TemporaryDirectory(prefix="issues-242-243-toolchain-home-") as directory:
+        gradle_home = Path(directory).resolve()
+        os.chmod(gradle_home, 0o700)
+        environment = sanitized_environment(os.environ)
+        environment["GRADLE_USER_HOME"] = str(gradle_home)
+        java = shutil.which("java") or "java"
+        jdk = _tool_version(
+            (java, "-version"),
+            cwd=root,
+            environment=environment,
+            deadline=deadline,
+        )
+    wrapper = _canonical_existing_file(
+        root / "gradle" / "wrapper" / "gradle-wrapper.properties",
+        "Gradle wrapper properties",
+    )
+    match = re.search(
+        r"(?m)^distributionUrl=.*?/gradle-(.+?)-(?:bin|all)\.zip(?:[?#].*)?$",
+        wrapper.read_text(encoding="utf-8"),
+    )
+    if match is None or not match.group(1).strip():
+        raise InputContractError("Gradle wrapper version is unavailable")
+    return jdk, f"Gradle {match.group(1).strip()} (wrapper)"
 
 
 def _entry_by_name(repository_map: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -1293,6 +1326,7 @@ def _make_job(
     candidate_maven_repository: Optional[Path] = None,
     candidate_catalog_path: Optional[Path] = None,
     candidate_bom_sha256: Optional[str] = None,
+    deadline: Optional[float] = None,
 ) -> ValidationJob:
     helper, catalog, bom = _job_digests(
         root,
@@ -1302,7 +1336,7 @@ def _make_job(
         catalog_path=candidate_catalog_path,
         bom_sha256=candidate_bom_sha256,
     )
-    jdk, gradle = detect_toolchain(root)
+    jdk, gradle = detect_toolchain(root, deadline=deadline)
     return ValidationJob(
         repository=repository,
         phase=phase,
@@ -1316,13 +1350,14 @@ def _make_job(
             refresh_dependencies=refresh_dependencies,
         ),
         configuration=configuration,
-        task_set=tuple(tasks) + tuple(arguments),
+        task_set=tuple(tasks),
         repository_head=repository_head,
         helper_sha256=helper,
         catalog_sha256=catalog,
         bom_sha256=bom,
         jdk_version=jdk,
         gradle_version=gradle,
+        arguments=tuple(arguments),
         repository_origin=repository_origin,
         repository_branch=repository_branch,
         environment_overrides=tuple(sorted((environment_overrides or {}).items())),
@@ -1465,6 +1500,7 @@ def _make_timefold_graph_jobs(
     candidate_bom_sha256: Optional[str] = None,
     environment_overrides: Optional[Mapping[str, str]] = None,
     arguments: Sequence[str] = (),
+    deadline: Optional[float] = None,
 ) -> tuple[ValidationJob, ...]:
     jobs: list[ValidationJob] = []
     for coordinate in TIMEFOLD_GRAPH_COORDINATES[repository]:
@@ -1492,6 +1528,7 @@ def _make_timefold_graph_jobs(
                     candidate_maven_repository=candidate_maven_repository,
                     candidate_catalog_path=candidate_catalog_path,
                     candidate_bom_sha256=candidate_bom_sha256,
+                    deadline=deadline,
                 ),
                 coordinate=coordinate,
             )
@@ -1511,6 +1548,7 @@ def build_phase_jobs(
     clinic_baseline_root: Optional[Path] = None,
     candidate_maven_repository: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
+    deadline: Optional[float] = None,
 ) -> tuple[ValidationJob, ...]:
     if phase not in PHASES:
         raise InputContractError(f"unknown validation phase: {phase}")
@@ -1534,6 +1572,7 @@ def build_phase_jobs(
                 max_workers=MAX_WORKERS,
                 repository_origin=str(entries[name]["origin"]),
                 repository_branch=str(entries[name]["candidate_branch"]),
+                deadline=deadline,
             )
             for name in names
         )
@@ -1578,6 +1617,7 @@ def build_phase_jobs(
                 central_root=central_root,
                 repository_origin=exposed_origin,
                 repository_branch=exposed_branch,
+                deadline=deadline,
             )
         )
         requested_baselines = {
@@ -1596,6 +1636,7 @@ def build_phase_jobs(
                     central_root=central_root,
                     repository_origin=origin,
                     repository_branch=branch,
+                    deadline=deadline,
                 )
             )
         return tuple(jobs)
@@ -1621,6 +1662,7 @@ def build_phase_jobs(
                     "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog),
                     "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository),
                 },
+                deadline=deadline,
             )
         )
         for name in ("timefold-workshop", "clinic-appointment"):
@@ -1641,6 +1683,7 @@ def build_phase_jobs(
                     candidate_bom_sha256=candidate_manifest_sha256,
                     environment_overrides=environment,
                     arguments=candidate_arguments(name),
+                    deadline=deadline,
                 )
             )
         return tuple(jobs)
@@ -1668,6 +1711,7 @@ def build_phase_jobs(
                 candidate_maven_repository=candidate_repository,
                 candidate_catalog_path=candidate_catalog,
                 candidate_bom_sha256=candidate_manifest_sha256,
+                deadline=deadline,
             )
         )
         for name in ("timefold-workshop", "clinic-appointment"):
@@ -1689,6 +1733,7 @@ def build_phase_jobs(
                     arguments=candidate_arguments(name),
                     candidate_maven_repository=candidate_repository,
                     candidate_bom_sha256=candidate_manifest_sha256,
+                    deadline=deadline,
                 )
             )
         return tuple(jobs)
@@ -1949,6 +1994,7 @@ def _bound_command_record(
         "gradle": job.gradle_version,
         "coordinate": coordinate,
         "override_disposition": override_disposition,
+        "arguments": list(job.arguments),
         "gradle_home_policy": GRADLE_HOME_POLICY,
     }
     return {
@@ -1971,6 +2017,7 @@ def _bound_command_record(
         "bom_sha256": job.bom_sha256,
         "task_set": task_set,
         "override_disposition": override_disposition,
+        "arguments": list(job.arguments),
         "gradle_home_policy": GRADLE_HOME_POLICY,
         "input_sha256": sha256_bytes(canonical_json_bytes(immutable_input)),
     }
@@ -2287,6 +2334,17 @@ def run_phase(
     expected_state = receipt.get("current_state")
     if not isinstance(expected_state, str) or not expected_state:
         raise InputContractError("local receipt current_state is invalid")
+    reserved_budget: Optional[float] = None
+    phase_started: Optional[float] = None
+    deadline: Optional[float] = None
+    if not dry_run:
+        reserved_budget, expected_receipt_sha256 = _reserve_validation_budget(
+            receipt_path,
+            expected_receipt_sha256=expected_receipt_sha256,
+            expected_state=expected_state,
+        )
+        phase_started = time.monotonic()
+        deadline = phase_started + reserved_budget
     jobs = build_phase_jobs(
         phase,
         repository_map,
@@ -2298,17 +2356,14 @@ def run_phase(
         clinic_baseline_root=clinic_baseline_root,
         candidate_maven_repository=candidate_maven_repository,
         repositories=repositories,
+        deadline=deadline,
     )
     if dry_run:
         digest = _phase_digest(phase, (), None)
         return PhaseResult(phase, "pass", digest, ())
-    reserved_budget, expected_receipt_sha256 = _reserve_validation_budget(
-        receipt_path,
-        expected_receipt_sha256=expected_receipt_sha256,
-        expected_state=expected_state,
-    )
-    phase_started = time.monotonic()
-    deadline = phase_started + reserved_budget
+    assert reserved_budget is not None
+    assert phase_started is not None
+    assert deadline is not None
     cache_directory = cache_directory or receipt_path.parent / "cache"
     max_workers = 1 if phase == "publication-poms" else MAX_WORKERS
     jobs_by_id = {

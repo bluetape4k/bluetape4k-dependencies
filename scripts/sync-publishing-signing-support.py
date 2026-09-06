@@ -727,6 +727,11 @@ def synchronize(
             for state in states
             if not state.prior_exists or state.prior_bytes != desired
         ]
+        if _snapshot_source(repositories, workspace) != canonical:
+            raise SyncError("canonical source changed during check")
+        _assert_repository_map_stable(
+            map_snapshot, repository_map, workspace, "check completion"
+        )
     if drifted:
         if summary:
             _emit_summary(states, output, "drift")

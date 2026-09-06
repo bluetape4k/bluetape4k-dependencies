@@ -22,6 +22,12 @@ signing 영수증은 기록된 digest가 실제 canonical source와 같은지 �
 - 여러 publisher에 helper를 쓰는 동안 canonical source나 repository map이 바뀌면 이미 쓴
   target까지 CAS rollback해야 한다. write 직전 확인만으로는 transaction 완료 시점의 입력을
   증명할 수 없다.
+- runner와 receipt validator가 같은 inventory를 가져와도 command field의 의미가 다르면 실제
+  성공 증거가 terminal state에 도달하지 못한다. runner가 만든 command record를 validator에
+  직접 넣는 왕복 테스트가 필요하다.
+- toolchain 확인도 validation subprocess다. 전체 budget을 먼저 예약하고 JDK probe를 정제된
+  environment와 임시 home에서 실행하며, Gradle version은 wrapper metadata에서 읽어 불필요한
+  download와 budget 우회를 없앤다.
 
 ## 결과
 

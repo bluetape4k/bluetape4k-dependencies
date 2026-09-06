@@ -415,6 +415,12 @@ class ValidationRunnerTest(unittest.TestCase):
             "gradle_version": "8.14.3",
         }
         self.assertNotEqual(first, runner.cache_key(**changed_tasks))
+        changed_arguments = {
+            **changed_tasks,
+            "task_set": ("test", "compileKotlin"),
+            "arguments": ("--dependency", "demo:artifact"),
+        }
+        self.assertNotEqual(first, runner.cache_key(**changed_arguments))
 
     def test_cache_hit_requires_success_and_readback_digest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -655,6 +661,57 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertEqual(observed["mode"], 0o700)
             self.assertFalse(Path(str(observed["path"])).exists())
 
+    def test_toolchain_probe_uses_one_private_home_and_deadline_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "gradlew").write_text("#!/bin/sh\n", encoding="utf-8")
+            wrapper = root / "gradle/wrapper/gradle-wrapper.properties"
+            wrapper.parent.mkdir(parents=True)
+            wrapper.write_text(
+                "distributionUrl=https\\://services.gradle.org/distributions/gradle-9.6.1-bin.zip\n",
+                encoding="utf-8",
+            )
+            observed: list[tuple[Path, int, bool]] = []
+
+            def run_command(**kwargs: object) -> runner.CommandResult:
+                environment = kwargs["environment"]
+                assert isinstance(environment, dict)
+                gradle_home = Path(str(environment["GRADLE_USER_HOME"]))
+                observed.append(
+                    (
+                        gradle_home,
+                        stat.S_IMODE(gradle_home.stat().st_mode),
+                        "CENTRAL_PASSWORD" in environment,
+                    )
+                )
+                return runner.CommandResult(
+                    status="pass",
+                    returncode=0,
+                    stdout="tool 1.0\n",
+                    stderr="",
+                    elapsed_seconds=0.01,
+                    timed_out=False,
+                    process_group_terminated=False,
+                    termination_signal=None,
+                    output_sha256="a" * 64,
+                )
+
+            with mock.patch.object(runner, "run_command", side_effect=run_command):
+                with mock.patch.dict(os.environ, {"CENTRAL_PASSWORD": "secret"}, clear=False):
+                    self.assertEqual(
+                        runner.detect_toolchain(
+                            root, deadline=time.monotonic() + 10
+                        ),
+                        ("tool 1.0", "Gradle 9.6.1 (wrapper)"),
+                    )
+
+            self.assertEqual(len(observed), 1)
+            self.assertTrue(all(mode == 0o700 for _, mode, _ in observed))
+            self.assertTrue(all(not leaked for _, _, leaked in observed))
+            self.assertFalse(observed[0][0].exists())
+            with self.assertRaisesRegex(runner.InputContractError, "budget exceeded"):
+                runner.detect_toolchain(root, deadline=time.monotonic() - 1)
+
     def test_clinic_candidate_jobs_explicitly_disable_changing_snapshot_verification(self) -> None:
         self.assertEqual(
             runner.candidate_arguments("clinic-appointment"),
@@ -778,6 +835,49 @@ class ValidationRunnerTest(unittest.TestCase):
                 )
             load_map.assert_not_called()
 
+    def test_run_phase_reserves_budget_before_job_toolchain_discovery(self) -> None:
+        class StopAfterOrderCheck(RuntimeError):
+            pass
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            map_path = root / "map.json"
+            receipt_path = root / "receipt.json"
+            map_path.write_text("{}\n", encoding="utf-8")
+            receipt_path.write_text("{}\n", encoding="utf-8")
+            events: list[str] = []
+
+            def reserve(*args: object, **kwargs: object) -> tuple[float, str]:
+                events.append("reserve")
+                return 30.0, "a" * 64
+
+            def build(*args: object, **kwargs: object) -> tuple[runner.ValidationJob, ...]:
+                self.assertEqual(events, ["reserve"])
+                self.assertIsInstance(kwargs.get("deadline"), float)
+                raise StopAfterOrderCheck
+
+            with (
+                mock.patch.object(runner, "load_strict_repository_map", return_value={}),
+                mock.patch.object(
+                    runner,
+                    "load_local_receipt",
+                    return_value={"current_state": "discovered"},
+                ),
+                mock.patch.object(runner, "sha256_file", return_value="b" * 64),
+                mock.patch.object(
+                    runner, "_reserve_validation_budget", side_effect=reserve
+                ),
+                mock.patch.object(runner, "build_phase_jobs", side_effect=build),
+                self.assertRaises(StopAfterOrderCheck),
+            ):
+                runner.run_phase(
+                    "signing-buildsrc",
+                    repository_map_path=map_path,
+                    receipt_path=receipt_path,
+                )
+
+            self.assertEqual(events, ["reserve"])
+
     def test_receipt_update_is_locked_strictly_validated_and_compare_and_swap_bound(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -882,6 +982,7 @@ class ValidationRunnerTest(unittest.TestCase):
                 self.assertEqual(command["bom_sha256"], "d" * 64)
                 self.assertEqual(command["task_set"], ["test"])
                 self.assertEqual(command["override_disposition"], "candidate")
+                self.assertEqual(command["arguments"], [])
                 self.assertEqual(command["gradle_home_policy"], "ephemeral-0700")
                 self.assertRegex(command["input_sha256"], r"^[0-9a-f]{64}$")
                 self.assertEqual(updated["validation_budget"]["elapsed_seconds"], 0.01)

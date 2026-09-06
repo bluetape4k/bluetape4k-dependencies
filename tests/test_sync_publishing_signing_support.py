@@ -281,7 +281,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
                 output=io.StringIO(),
             )
 
-        self.assertEqual(loader.call_count, 2)
+        self.assertEqual(loader.call_count, 3)
         for call in loader.call_args_list:
             self.assertEqual(call.args, (self.repository_map, self.workspace))
 
@@ -477,6 +477,26 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
         self.assertEqual(snapshot_count, 3)
         for name, target in self.target_paths.items():
             self.assertEqual(target.read_bytes(), b"stale\n", name)
+
+    def test_canonical_source_change_during_check_fails_closed(self) -> None:
+        self._write_targets()
+        original_snapshot = sync._snapshot_source
+        snapshot_count = 0
+
+        def change_before_final_check(repositories, workspace):
+            nonlocal snapshot_count
+            snapshot_count += 1
+            if snapshot_count == 2:
+                self.source.write_bytes(b"changed-during-check\n")
+            return original_snapshot(repositories, workspace)
+
+        with mock.patch.object(
+            sync, "_snapshot_source", side_effect=change_before_final_check
+        ):
+            with self.assertRaisesRegex(sync.SyncError, "changed during check"):
+                self._sync()
+
+        self.assertEqual(snapshot_count, 2)
 
     def test_read_regular_at_closes_fd_on_keyboard_interrupt(self) -> None:
         self._write_targets()

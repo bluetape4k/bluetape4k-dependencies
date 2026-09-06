@@ -316,6 +316,9 @@ CI는 branch/default HEAD를 임의로 clone하지 않고 manifest의 commit을 
       "jdk": "...",
       "gradle": "...",
       "configuration": "...",
+      "task-set": ["Gradle task only"],
+      "arguments": ["ordered option or option value"],
+      "gradle-home-policy": "ephemeral-0700",
       "elapsed-seconds": 0,
       "cache": "isolated|shared-read",
       "result": "pass|fail|blocked",
@@ -333,6 +336,13 @@ candidate artifact phase가 모두 통과한 경우에만 성립한다. `blocked
 `validated`보다 낮은 target이 있으면 adoption은 실패한다. 각 Gradle command는 매 실행마다
 새 `0700` 임시 `GRADLE_USER_HOME`을 사용하며 이 정책도 immutable command input digest에
 포함한다.
+
+`task-set`에는 실행 task만 기록하고 `--configuration`, `--dependency`와 candidate-only
+option은 순서가 보존되는 `arguments`에 별도로 기록한다. signing command coverage는 canonical
+repository를 포함한 `SIGNING_REPOSITORIES` 전체와 정확히 일치해야 한다. toolchain probe 전에
+90분 budget을 예약하고, JDK probe는 정제된 environment와 새 `0700` home을 사용하는 동일한
+process-group runner로 실행한다. Gradle version은 wrapper를 실행하지 않고 고정된
+`gradle-wrapper.properties`에서 읽는다.
 
 tracked receipt를 담는 evidence commit은 자신의 SHA를 receipt 안에 기록하지 않는다.
 coordinator는 adopted receipt를 포함하는 prospective commit object를 branch ref

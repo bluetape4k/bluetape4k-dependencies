@@ -18,12 +18,22 @@ receipt = importlib.util.module_from_spec(SPEC)
 sys.modules["issues_242_243_receipt"] = receipt
 SPEC.loader.exec_module(receipt)
 
+RUNNER_PATH = SCRIPT_PATH.with_name("run-issues-242-243-validation.py")
+RUNNER_SPEC = importlib.util.spec_from_file_location(
+    "issues_242_243_validation_runner_for_receipt_test", RUNNER_PATH
+)
+assert RUNNER_SPEC is not None and RUNNER_SPEC.loader is not None
+runner = importlib.util.module_from_spec(RUNNER_SPEC)
+sys.modules["issues_242_243_validation_runner_for_receipt_test"] = runner
+RUNNER_SPEC.loader.exec_module(runner)
+
 
 class Issues242243ReceiptTest(unittest.TestCase):
     def test_repository_inventory_reuses_catalog_candidate_authority(self) -> None:
         candidate = receipt._catalog_candidate_module()
         self.assertEqual(receipt.CATALOG_NAMES, candidate.CATALOG_REPOSITORIES)
-        self.assertEqual(receipt.SIGNING_NAMES, frozenset(candidate.PUBLISHER_REPOSITORIES))
+        self.assertEqual(receipt.PUBLISHER_NAMES, frozenset(candidate.PUBLISHER_REPOSITORIES))
+        self.assertEqual(receipt.SIGNING_NAMES, frozenset(candidate.SIGNING_REPOSITORIES))
 
     def git(
         self,
@@ -230,11 +240,6 @@ class Issues242243ReceiptTest(unittest.TestCase):
             selected_version: str | None = None,
             override_disposition: str = "baseline",
         ) -> None:
-            command = (
-                f"./gradlew dependencyInsight --dependency {coordinate}"
-                if coordinate
-                else "./gradlew test"
-            )
             if phase == "signing-buildsrc":
                 task_set = ["compileKotlin", "test"]
             elif phase == "consumers":
@@ -245,52 +250,62 @@ class Issues242243ReceiptTest(unittest.TestCase):
                 task_set = receipt.ADOPTION_GRAPH_TASKS[repository]
             else:
                 task_set = ["dependencyInsight"]
-            immutable = {
-                "schema_version": 1,
-                "repository": repository,
-                "phase": phase,
-                "command": command,
-                "repository_head": "a" * 40,
-                "helper_sha256": "b" * 64,
-                "catalog_sha256": "c" * 64,
-                "bom_sha256": "d" * 64,
-                "task_set": task_set,
-                "configuration": "testRuntimeClasspath",
-                "jdk": "25",
-                "gradle": "9.7.0",
-                "coordinate": coordinate,
-                "override_disposition": override_disposition,
-                "gradle_home_policy": "ephemeral-0700",
-            }
-            commands.append(
-                {
-                    "repository": repository,
-                    "phase": phase,
-                    "command": command,
-                    "jdk": "25",
-                    "gradle": "9.7.0",
-                    "configuration": "testRuntimeClasspath",
-                    "elapsed_seconds": 1.0,
-                    "cache": "isolated",
-                    "result": "pass",
-                    "output_sha256": hashlib.sha256(
-                        f"{phase}:{repository}:{coordinate}".encode()
-                    ).hexdigest(),
-                    "coordinate": coordinate,
-                    "selected_version": selected_version,
-                    "selection_reason": "selected by immutable fixture" if coordinate else None,
-                    "repository_head": "a" * 40,
-                    "helper_sha256": "b" * 64,
-                    "catalog_sha256": "c" * 64,
-                    "bom_sha256": "d" * 64,
-                    "task_set": task_set,
-                    "override_disposition": override_disposition,
-                    "gradle_home_policy": "ephemeral-0700",
-                    "input_sha256": receipt.sha256_bytes(
-                        receipt.canonical_json_bytes(immutable)
-                    ),
-                }
+            arguments: list[str] = []
+            if phase.startswith("timefold-graphs-"):
+                if phase == "timefold-graphs-candidate" and repository == "clinic-appointment":
+                    arguments.append("--dependency-verification=off")
+                arguments.extend(
+                    [
+                        "--configuration",
+                        "testRuntimeClasspath",
+                        "--dependency",
+                        str(coordinate),
+                    ]
+                )
+            elif phase == "consumers" and repository == "clinic-appointment":
+                arguments.append("--dependency-verification=off")
+            job = runner.ValidationJob(
+                repository=repository,
+                phase=phase,
+                cwd=Path("/fixture"),
+                command=("./gradlew", *task_set, *arguments),
+                configuration="testRuntimeClasspath",
+                task_set=tuple(task_set),
+                repository_head="a" * 40,
+                helper_sha256="b" * 64,
+                catalog_sha256="c" * 64,
+                bom_sha256="d" * 64,
+                jdk_version="25",
+                gradle_version="9.7.0",
+                arguments=tuple(arguments),
+                candidate_maven_repository=(
+                    Path("/candidate")
+                    if override_disposition == "candidate"
+                    else None
+                ),
+                coordinate=coordinate or "",
             )
+            output = ""
+            if coordinate:
+                output = (
+                    f"{coordinate}:{selected_version}\n"
+                    "  Selection reasons:\n"
+                    "      - selected by immutable fixture\n"
+                )
+            result = runner.CommandResult(
+                status="pass",
+                returncode=0,
+                stdout=output,
+                stderr="",
+                elapsed_seconds=1.0,
+                timed_out=False,
+                process_group_terminated=False,
+                termination_signal=None,
+                output_sha256=hashlib.sha256(
+                    f"{phase}:{repository}:{coordinate}".encode()
+                ).hexdigest(),
+            )
+            commands.append(runner._bound_command_record(job, result))
 
         for repository in receipt.SIGNING_NAMES:
             add_command(repository, "signing-buildsrc")
@@ -417,6 +432,22 @@ class Issues242243ReceiptTest(unittest.TestCase):
         self.assertEqual(validated["issues"], [242, 243])
         self.assertEqual(len(validated["repositories"]), 10)
         self.assertEqual({item["name"] for item in validated["consumers"]}, set(receipt.CONSUMER_NAMES))
+
+    def test_runner_command_records_round_trip_through_receipt_validator(self) -> None:
+        workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
+        path.write_bytes(receipt.canonical_json_bytes(document))
+
+        validated = receipt.validate_receipt(path)
+        signing = [
+            item for item in validated["commands"] if item["phase"] == "signing-buildsrc"
+        ]
+        self.assertEqual(
+            {item["repository"] for item in signing},
+            set(runner.SIGNING_REPOSITORIES),
+        )
+        self.assertTrue(all(item["task_set"] == ["compileKotlin", "test"] for item in signing))
+        self.assertTrue(all(item["arguments"] == [] for item in signing))
 
     def test_validated_state_requires_complete_terminal_evidence(self) -> None:
         workspace, path, document = self.make_fixture()
@@ -627,7 +658,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
             manifest["canonical-source"]["sha256"],
             hashlib.sha256(source_path.read_bytes()).hexdigest(),
         )
-        self.assertEqual(set(manifest["repositories"]), set(receipt.SIGNING_NAMES))
+        self.assertEqual(set(manifest["repositories"]), set(receipt.PUBLISHER_NAMES))
         self.assertNotIn("bluetape4k-experimental", manifest["repositories"])
         self.assertNotIn("timefold-workshop", manifest["repositories"])
         self.assertNotIn("clinic-appointment", manifest["repositories"])

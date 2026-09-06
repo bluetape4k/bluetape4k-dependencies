@@ -72,7 +72,8 @@ def _load_signing_sync_module() -> Any:
 _CATALOG_CANDIDATE = _load_catalog_candidate_module()
 CENTRAL_NAME = _CATALOG_CANDIDATE.REPOSITORY_NAMES["central"]
 CATALOG_NAMES = _CATALOG_CANDIDATE.CATALOG_REPOSITORIES
-SIGNING_NAMES = frozenset(_CATALOG_CANDIDATE.PUBLISHER_REPOSITORIES)
+PUBLISHER_NAMES = frozenset(_CATALOG_CANDIDATE.PUBLISHER_REPOSITORIES)
+SIGNING_NAMES = frozenset(_CATALOG_CANDIDATE.SIGNING_REPOSITORIES)
 CONSUMER_NAMES = ("timefold-workshop", "clinic-appointment")
 TIMEFOLD_CONSUMER_COORDINATES = {
     "timefold-workshop": (
@@ -624,6 +625,7 @@ BOUND_COMMAND_FIELDS = LEGACY_COMMAND_FIELDS | {
     "bom_sha256",
     "task_set",
     "override_disposition",
+    "arguments",
     "gradle_home_policy",
     "input_sha256",
 }
@@ -645,6 +647,7 @@ def _bound_command_input(item: Mapping[str, Any]) -> dict[str, Any]:
         "gradle": item["gradle"],
         "coordinate": item["coordinate"],
         "override_disposition": item["override_disposition"],
+        "arguments": item["arguments"],
         "gradle_home_policy": item["gradle_home_policy"],
     }
 
@@ -681,6 +684,11 @@ def _validate_commands(value: Any) -> None:
                 raise ReceiptError("command task_set must be sorted and unique")
             if item["override_disposition"] not in {"baseline", "candidate"}:
                 raise ReceiptError("command override disposition is invalid")
+            if not isinstance(item["arguments"], list) or any(
+                not isinstance(argument, str) or not argument
+                for argument in item["arguments"]
+            ):
+                raise ReceiptError("command arguments are invalid")
             if item["gradle_home_policy"] != "ephemeral-0700":
                 raise ReceiptError("command Gradle home policy is invalid")
             coordinate = item["coordinate"]
@@ -756,6 +764,8 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
         raise ReceiptError("adopted receipt signing command coverage is incomplete")
     if any(item["task_set"] != ["compileKotlin", "test"] for item in signing_commands):
         raise ReceiptError("adopted receipt signing task coverage is incomplete")
+    if any(item["arguments"] for item in signing_commands):
+        raise ReceiptError("adopted receipt signing command arguments are invalid")
 
     expected_graphs = {
         (phase, repository, coordinate)
@@ -788,6 +798,21 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
                 "task_set"
             ] != ADOPTION_GRAPH_TASKS[repository]:
                 raise ReceiptError("adopted receipt graph task coverage is incomplete")
+            expected_baseline_arguments = [
+                "--configuration",
+                "testRuntimeClasspath",
+                "--dependency",
+                coordinate,
+            ]
+            expected_candidate_arguments = (
+                ["--dependency-verification=off"]
+                if repository == "clinic-appointment"
+                else []
+            ) + expected_baseline_arguments
+            if baseline["arguments"] != expected_baseline_arguments:
+                raise ReceiptError("baseline graph command arguments are incomplete")
+            if candidate["arguments"] != expected_candidate_arguments:
+                raise ReceiptError("candidate graph command arguments are incomplete")
             if baseline["input_sha256"] == candidate["input_sha256"]:
                 raise ReceiptError("baseline and candidate graph inputs are not independent")
 
@@ -801,6 +826,13 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
             raise ReceiptError("adopted receipt consumer task coverage is incomplete")
         if item["override_disposition"] != "candidate":
             raise ReceiptError("adopted receipt consumer command lacks candidate overrides")
+        expected_arguments = (
+            ["--dependency-verification=off"]
+            if item["repository"] == "clinic-appointment"
+            else []
+        )
+        if item["arguments"] != expected_arguments:
+            raise ReceiptError("adopted receipt consumer command arguments are incomplete")
 
     publication_commands = [
         item for item in commands if item["phase"] == "publication-poms"
@@ -809,6 +841,8 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
         raise ReceiptError("adopted receipt publication command coverage is incomplete")
     if publication_commands[0]["task_set"] != ["verify-publication-poms.py"]:
         raise ReceiptError("adopted receipt publication task coverage is incomplete")
+    if publication_commands[0]["arguments"]:
+        raise ReceiptError("adopted receipt publication command arguments are invalid")
 
 
 def _validate_records(value: Any, description: str) -> None:
