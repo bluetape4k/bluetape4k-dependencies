@@ -27,7 +27,7 @@ signing 영수증은 기록된 digest가 실제 canonical source와 같은지 �
   직접 넣는 왕복 테스트가 필요하다.
 - toolchain 확인도 validation subprocess다. 전체 budget을 먼저 예약하고 JDK probe를 정제된
   environment와 임시 home에서 실행하며, Gradle version은 wrapper metadata에서 읽어 불필요한
-  download와 budget 우회를 없앤다.
+  download와 budget 우회를 없앤다. probe 실패나 빈 version은 cache identity로 허용하지 않는다.
 
 ## 결과
 

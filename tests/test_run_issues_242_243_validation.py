@@ -712,6 +712,45 @@ class ValidationRunnerTest(unittest.TestCase):
             with self.assertRaisesRegex(runner.InputContractError, "budget exceeded"):
                 runner.detect_toolchain(root, deadline=time.monotonic() - 1)
 
+            for result, message in (
+                (
+                    runner.CommandResult(
+                        status="fail",
+                        returncode=1,
+                        stdout="",
+                        stderr="probe failed",
+                        elapsed_seconds=0.01,
+                        timed_out=False,
+                        process_group_terminated=False,
+                        termination_signal=None,
+                        output_sha256="b" * 64,
+                    ),
+                    "successful result",
+                ),
+                (
+                    runner.CommandResult(
+                        status="pass",
+                        returncode=0,
+                        stdout="",
+                        stderr="",
+                        elapsed_seconds=0.01,
+                        timed_out=False,
+                        process_group_terminated=False,
+                        termination_signal=None,
+                        output_sha256="c" * 64,
+                    ),
+                    "version evidence",
+                ),
+            ):
+                with self.subTest(message=message):
+                    with mock.patch.object(
+                        runner, "run_command", return_value=result
+                    ):
+                        with self.assertRaisesRegex(runner.InputContractError, message):
+                            runner.detect_toolchain(
+                                root, deadline=time.monotonic() + 10
+                            )
+
     def test_clinic_candidate_jobs_explicitly_disable_changing_snapshot_verification(self) -> None:
         self.assertEqual(
             runner.candidate_arguments("clinic-appointment"),

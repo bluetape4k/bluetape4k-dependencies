@@ -342,7 +342,8 @@ option은 순서가 보존되는 `arguments`에 별도로 기록한다. signing 
 repository를 포함한 `SIGNING_REPOSITORIES` 전체와 정확히 일치해야 한다. toolchain probe 전에
 90분 budget을 예약하고, JDK probe는 정제된 environment와 새 `0700` home을 사용하는 동일한
 process-group runner로 실행한다. Gradle version은 wrapper를 실행하지 않고 고정된
-`gradle-wrapper.properties`에서 읽는다.
+`gradle-wrapper.properties`에서 읽는다. JDK probe의 실패나 빈 출력은 `unavailable` 같은
+유효해 보이는 identity로 대체하지 않고 전체 검증을 즉시 실패시킨다.
 
 tracked receipt를 담는 evidence commit은 자신의 SHA를 receipt 안에 기록하지 않는다.
 coordinator는 adopted receipt를 포함하는 prospective commit object를 branch ref

@@ -1220,9 +1220,11 @@ def _tool_version(
     if result.timed_out and deadline is not None and time.monotonic() >= deadline:
         raise InputContractError("total validation budget exceeded during toolchain probe")
     if result.status != "pass":
-        return "unavailable"
+        raise InputContractError("toolchain probe did not produce a successful result")
     output = (result.stdout + "\n" + result.stderr).strip().splitlines()
-    return output[0][:160] if output else "unavailable"
+    if not output:
+        raise InputContractError("toolchain probe did not produce version evidence")
+    return output[0][:160]
 
 
 def detect_toolchain(
