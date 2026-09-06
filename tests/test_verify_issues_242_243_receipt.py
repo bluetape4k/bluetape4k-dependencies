@@ -20,6 +20,11 @@ SPEC.loader.exec_module(receipt)
 
 
 class Issues242243ReceiptTest(unittest.TestCase):
+    def test_repository_inventory_reuses_catalog_candidate_authority(self) -> None:
+        candidate = receipt._catalog_candidate_module()
+        self.assertEqual(receipt.CATALOG_NAMES, candidate.CATALOG_REPOSITORIES)
+        self.assertEqual(receipt.SIGNING_NAMES, frozenset(candidate.PUBLISHER_REPOSITORIES))
+
     def git(
         self,
         root: Path,
@@ -172,6 +177,11 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "schema_version": 1,
             "issues": [242, 243],
             "current_state": "discovered",
+            "validation_budget": {
+                "total_seconds": 5400,
+                "elapsed_seconds": 0.0,
+                "remaining_seconds": 5400.0,
+            },
             "repository_map": {"path": str(map_path), "sha256": receipt.sha256_bytes(map_bytes)},
             "central": {
                 "base_sha": central["base_sha"],
@@ -465,6 +475,40 @@ class Issues242243ReceiptTest(unittest.TestCase):
         self.assertNotIn("bluetape4k-experimental", manifest["repositories"])
         self.assertNotIn("timefold-workshop", manifest["repositories"])
         self.assertNotIn("clinic-appointment", manifest["repositories"])
+
+    def test_signing_digests_are_bound_to_canonical_source(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        document["repositories"][0]["signing_sha256"] = "f" * 64
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "signing digest mismatch"):
+            receipt.validate_receipt(path)
+
+        _workspace, path, document = self.make_fixture()
+        document["consumers"][0]["signing_sha256"] = "f" * 64
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "signing digest mismatch"):
+            receipt.validate_receipt(path)
+
+    def test_passing_candidate_graph_phase_requires_exact_consumer_ledger(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        document["phases"].append(
+            {
+                "name": "timefold-graphs-candidate",
+                "result": "pass",
+                "output_sha256": "e" * 64,
+            }
+        )
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "graph coordinates"):
+            receipt.validate_receipt(path)
+
+    def test_validation_budget_rejects_inconsistent_remaining_time(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        document["validation_budget"]["remaining_seconds"] = 5400.0
+        document["validation_budget"]["elapsed_seconds"] = 1.0
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "validation budget"):
+            receipt.validate_receipt(path)
 
     def test_cli_exposes_validate_and_transition_modes(self) -> None:
         result = subprocess.run(

@@ -31,6 +31,15 @@ REPOSITORY_NAMES = {
     "central": "bluetape4k-dependencies",
     **{key: f"bluetape4k-{key}" for key in REPOSITORY_KEYS},
 }
+CATALOG_REPOSITORIES = tuple(REPOSITORY_NAMES.values())
+SIGNING_REPOSITORIES = tuple(
+    name for name in CATALOG_REPOSITORIES if name != "bluetape4k-experimental"
+)
+PUBLISHER_REPOSITORIES = tuple(
+    name
+    for name in SIGNING_REPOSITORIES
+    if name != REPOSITORY_NAMES["central"]
+)
 TOP_LEVEL_FIELDS = frozenset({"schema_version", "central", "repositories"})
 REPOSITORY_FIELDS = frozenset(
     {"root", "catalog", "origin", "branch", "base_sha", "expected_head", "clean"}

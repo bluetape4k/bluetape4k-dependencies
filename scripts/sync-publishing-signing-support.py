@@ -35,17 +35,7 @@ SOURCE_RELATIVE = Path("config/publishing-signing/PublishingSigningKeySupport.kt
 TARGET_RELATIVE = Path(
     "buildSrc/src/main/kotlin/PublishingSigningKeySupport.kt"
 )
-SIGNING_REPOSITORIES = (
-    "bluetape4k-dependencies",
-    "bluetape4k-projects",
-    "bluetape4k-aws",
-    "bluetape4k-exposed",
-    "bluetape4k-graph",
-    "bluetape4k-image",
-    "bluetape4k-javers",
-    "bluetape4k-leader",
-    "bluetape4k-text",
-)
+SIGNING_REPOSITORIES = catalog_candidate.SIGNING_REPOSITORIES
 SAFE_NEW_FILE_MODE = 0o644
 TEMP_FILE_MODE = 0o600
 GENERATED_HEADER = (

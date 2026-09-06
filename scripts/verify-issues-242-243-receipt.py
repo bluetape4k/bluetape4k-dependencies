@@ -27,6 +27,7 @@ from typing import Any, Iterator, Mapping, Sequence
 
 
 SCHEMA_VERSION = 1
+TOTAL_VALIDATION_BUDGET_SECONDS = 90 * 60
 ISSUES = (242, 243)
 STATES = frozenset({"discovered", "prepared", "validated", "adopted", "blocked"})
 TERMINAL_STATE = "adopted"
@@ -38,21 +39,34 @@ LEGAL_TRANSITIONS = {
     "adopted": frozenset(),
 }
 
-CENTRAL_NAME = "bluetape4k-dependencies"
-CATALOG_NAMES = (
-    CENTRAL_NAME,
-    "bluetape4k-projects",
-    "bluetape4k-aws",
-    "bluetape4k-experimental",
-    "bluetape4k-exposed",
-    "bluetape4k-graph",
-    "bluetape4k-image",
-    "bluetape4k-javers",
-    "bluetape4k-leader",
-    "bluetape4k-text",
-)
-SIGNING_NAMES = frozenset(CATALOG_NAMES[1:]) - {"bluetape4k-experimental"}
+def _load_catalog_candidate_module() -> Any:
+    module_name = "issues_242_243_catalog_candidate"
+    existing = sys.modules.get(module_name)
+    if existing is not None:
+        return existing
+    module_path = Path(__file__).with_name("catalog_candidate.py")
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load catalog_candidate.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_CATALOG_CANDIDATE = _load_catalog_candidate_module()
+CENTRAL_NAME = _CATALOG_CANDIDATE.REPOSITORY_NAMES["central"]
+CATALOG_NAMES = _CATALOG_CANDIDATE.CATALOG_REPOSITORIES
+SIGNING_NAMES = frozenset(_CATALOG_CANDIDATE.PUBLISHER_REPOSITORIES)
 CONSUMER_NAMES = ("timefold-workshop", "clinic-appointment")
+TIMEFOLD_CONSUMER_COORDINATES = {
+    "timefold-workshop": (
+        "ai.timefold.solver:timefold-solver-core",
+        "ai.timefold.solver:timefold-solver-jackson",
+        "ai.timefold.solver:timefold-solver-spring-boot-starter",
+    ),
+    "clinic-appointment": ("ai.timefold.solver:timefold-solver-benchmark",),
+}
 ALL_NAMES = CATALOG_NAMES + CONSUMER_NAMES
 EVIDENCE_RECEIPT_PATH = "docs/releases/2026-09-06-issues-242-243-local-receipt.json"
 CANONICAL_SOURCE_RELATIVE = "config/publishing-signing/PublishingSigningKeySupport.kt"
@@ -246,22 +260,7 @@ def _infer_role(name: str) -> str:
 
 
 def _catalog_candidate_module() -> Any:
-    module_name = "issues_242_243_catalog_candidate"
-    existing = sys.modules.get(module_name)
-    if existing is not None:
-        return existing
-    module_path = Path(__file__).with_name("catalog_candidate.py")
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    if spec is None or spec.loader is None:
-        raise ReceiptError("cannot load strict repository map validator")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    try:
-        spec.loader.exec_module(module)
-    except Exception as exc:
-        sys.modules.pop(module_name, None)
-        raise ReceiptError("cannot load strict repository map validator") from exc
-    return module
+    return _CATALOG_CANDIDATE
 
 
 def _strict_map_workspace(document: Any) -> Path:
@@ -384,7 +383,7 @@ def _validate_common_repo_receipt(
     item: Any,
     mapped: Mapping[str, Any],
     *,
-    signing_required: bool,
+    expected_signing_sha256: str,
 ) -> dict[str, Any]:
     fields = {
         "name",
@@ -417,8 +416,8 @@ def _validate_common_repo_receipt(
     if state not in STATES:
         raise ReceiptError(f"invalid state for {name}")
     signing = _require_sha256(value["signing_sha256"], f"{name} signing")
-    if not signing_required and signing != value["signing_sha256"]:
-        raise ReceiptError(f"invalid signing digest for {name}")
+    if signing != expected_signing_sha256:
+        raise ReceiptError(f"signing digest mismatch for {name}")
     return dict(value)
 
 
@@ -437,7 +436,9 @@ def _validate_graph(graph: Any, consumer: str) -> None:
     _require_sha256(value["output_sha256"], f"graph output for {consumer}")
 
 
-def _validate_consumer(item: Any, workspace_root: Path) -> dict[str, Any]:
+def _validate_consumer(
+    item: Any, workspace_root: Path, expected_signing_sha256: str
+) -> dict[str, Any]:
     fields = {
         "name",
         "role",
@@ -481,7 +482,9 @@ def _validate_consumer(item: Any, workspace_root: Path) -> dict[str, Any]:
     )
     if value["state"] not in STATES:
         raise ReceiptError(f"invalid consumer state for {name}")
-    _require_sha256(value["signing_sha256"], f"{name} signing")
+    signing = _require_sha256(value["signing_sha256"], f"{name} signing")
+    if signing != expected_signing_sha256:
+        raise ReceiptError(f"signing digest mismatch for {name}")
     _require_nonempty_string(value["catalog_ref"], f"{name} catalog ref")
     _require_sha256(value["catalog_sha256"], f"{name} catalog")
     if value["catalog_source"] not in {"local-candidate", "immutable-ref", "repo-local"}:
@@ -494,6 +497,41 @@ def _validate_consumer(item: Any, workspace_root: Path) -> dict[str, Any]:
     for graph in value["graphs"]:
         _validate_graph(graph, name)
     return dict(value)
+
+
+def _validate_passed_candidate_graphs(
+    consumers: Sequence[Mapping[str, Any]], commands: Sequence[Mapping[str, Any]]
+) -> None:
+    for consumer in consumers:
+        name = str(consumer["name"])
+        expected = TIMEFOLD_CONSUMER_COORDINATES[name]
+        graphs = consumer["graphs"]
+        coordinates = [graph.get("coordinate") for graph in graphs]
+        if len(coordinates) != len(expected) or set(coordinates) != set(expected):
+            raise ReceiptError(f"consumer graph coordinates mismatch for {name}")
+        for graph in graphs:
+            coordinate = str(graph["coordinate"])
+            if graph["configuration"] != "testRuntimeClasspath":
+                raise ReceiptError(f"consumer graph configuration mismatch for {name}")
+            if graph["before_version"] == "pending-baseline":
+                raise ReceiptError(f"consumer baseline graph is pending for {name}")
+            if graph["after_version"] != "2.6.0":
+                raise ReceiptError(f"consumer candidate graph version mismatch for {name}")
+            reason = str(graph["selection_reason"])
+            if not reason.startswith("before: ") or "; after: " not in reason:
+                raise ReceiptError(f"consumer graph selection reason mismatch for {name}")
+            digest = str(graph["output_sha256"])
+            if digest == "0" * 64:
+                raise ReceiptError(f"consumer graph output is pending for {name}")
+            if not any(
+                command.get("repository") == name
+                and command.get("configuration") == graph["configuration"]
+                and command.get("result") == "pass"
+                and command.get("output_sha256") == digest
+                and f"--dependency {coordinate}" in str(command.get("command", ""))
+                for command in commands
+            ):
+                raise ReceiptError(f"consumer graph command binding mismatch for {name}")
 
 
 def _validate_commands(value: Any) -> None:
@@ -544,6 +582,25 @@ def _validate_records(value: Any, description: str) -> None:
         for key in ("repository", "phase", "reason"):
             _require_nonempty_string(item[key], f"{description} {key}")
         _require_sha256(item["output_sha256"], f"{description} output")
+
+
+def _validate_validation_budget(value: Any) -> None:
+    fields = {"total_seconds", "elapsed_seconds", "remaining_seconds"}
+    item = _expected_fields(value, fields, "validation budget")
+    total = item["total_seconds"]
+    elapsed = item["elapsed_seconds"]
+    remaining = item["remaining_seconds"]
+    if (
+        isinstance(total, bool)
+        or isinstance(elapsed, bool)
+        or isinstance(remaining, bool)
+        or not all(isinstance(number, (int, float)) for number in (total, elapsed, remaining))
+        or float(total) != float(TOTAL_VALIDATION_BUDGET_SECONDS)
+        or float(elapsed) < 0
+        or float(remaining) < 0
+        or abs(float(total) - float(elapsed) - float(remaining)) > 0.001
+    ):
+        raise ReceiptError("validation budget is invalid")
 
 
 def _git_commit_parents(root: Path, commit: str) -> list[str]:
@@ -602,6 +659,7 @@ def _validate_receipt_document(
         "schema_version",
         "issues",
         "current_state",
+        "validation_budget",
         "repository_map",
         "central",
         "canonical_signing_source",
@@ -618,6 +676,7 @@ def _validate_receipt_document(
         raise ReceiptError("receipt schema version is invalid")
     if document["issues"] != list(ISSUES):
         raise ReceiptError("receipt issue IDs must be [242, 243]")
+    _validate_validation_budget(document["validation_budget"])
     state = document["current_state"]
     if state not in STATES:
         raise ReceiptError("receipt current state is invalid")
@@ -657,7 +716,11 @@ def _validate_receipt_document(
         if name not in mapped or name not in CATALOG_NAMES:
             raise ReceiptError("receipt repository is not in the catalog allowlist")
         verified_repositories.append(
-            _validate_common_repo_receipt(item, mapped[name], signing_required=name in SIGNING_NAMES)
+            _validate_common_repo_receipt(
+                item,
+                mapped[name],
+                expected_signing_sha256=str(source["sha256"]),
+            )
         )
     consumers = document["consumers"]
     if not isinstance(consumers, list) or len(consumers) != len(CONSUMER_NAMES):
@@ -665,11 +728,25 @@ def _validate_receipt_document(
     if {item.get("name") for item in consumers if isinstance(item, Mapping)} != set(CONSUMER_NAMES):
         raise ReceiptError("receipt consumers must contain the exact consumer set")
     verified_consumers = [
-        _validate_consumer(item, Path(repository_map["workspace_root"]))
+        _validate_consumer(
+            item,
+            Path(repository_map["workspace_root"]),
+            str(source["sha256"]),
+        )
         for item in consumers
     ]
     _validate_commands(document["commands"])
     _validate_phases(document["phases"])
+    if any(
+        phase.get("name") == "timefold-graphs-candidate"
+        and phase.get("result") == "pass"
+        for phase in document["phases"]
+        if isinstance(phase, Mapping)
+    ):
+        _validate_passed_candidate_graphs(
+            verified_consumers,
+            document["commands"],
+        )
     _validate_records(document["failure_record"], "failure record")
     _validate_records(document["rollback_record"], "rollback record")
     evidence = document["evidence_commit"]

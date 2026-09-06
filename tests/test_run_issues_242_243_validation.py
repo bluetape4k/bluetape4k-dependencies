@@ -40,6 +40,7 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertEqual(runner.MAX_WORKERS, 2)
         self.assertEqual(runner.CHILD_TIMEOUT_SECONDS, 600)
         self.assertEqual(runner.PUBLICATION_POMS_TIMEOUT_SECONDS, 1800)
+        self.assertEqual(runner.TOTAL_VALIDATION_BUDGET_SECONDS, 5400)
         self.assertIn("--no-configuration-cache", runner.GRADLE_FLAGS)
         self.assertIn("--no-build-cache", runner.GRADLE_FLAGS)
 
@@ -62,6 +63,20 @@ class ValidationRunnerTest(unittest.TestCase):
             (":school-timetabling:dependencyInsight",),
         )
         self.assertEqual(
+            runner.TIMEFOLD_GRAPH_COORDINATES,
+            {
+                "bluetape4k-exposed": ("ai.timefold.solver:timefold-solver-core",),
+                "timefold-workshop": (
+                    "ai.timefold.solver:timefold-solver-core",
+                    "ai.timefold.solver:timefold-solver-jackson",
+                    "ai.timefold.solver:timefold-solver-spring-boot-starter",
+                ),
+                "clinic-appointment": (
+                    "ai.timefold.solver:timefold-solver-benchmark",
+                ),
+            },
+        )
+        self.assertEqual(
             runner.CONSUMER_TASKS["timefold-workshop"],
             (
                 ":bluetape4k-timefold:test",
@@ -77,6 +92,123 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertEqual(
             runner.CONSUMER_TASKS["clinic-appointment"],
             (":appointment-solver:test", ":appointment-api:test"),
+        )
+
+    def test_dependency_insight_parser_requires_selected_version_and_reason(self) -> None:
+        coordinate = "ai.timefold.solver:timefold-solver-core"
+        output = f"""
+> Task :module:dependencyInsight
+{coordinate}:2.4.0 -> 2.6.0
+  Selection reasons:
+      - Selected by rule
+      - By constraint: candidate BOM
+
+{coordinate}:2.6.0
+\\--- testRuntimeClasspath
+"""
+        observation = runner.parse_dependency_insight(output, coordinate)
+        self.assertEqual(observation.selected_version, "2.6.0")
+        self.assertEqual(
+            observation.selection_reason,
+            "Selected by rule; By constraint: candidate BOM",
+        )
+
+        with self.assertRaisesRegex(runner.InputContractError, "not resolved"):
+            runner.parse_dependency_insight(
+                "No dependencies matching given input were found in configuration",
+                coordinate,
+            )
+        with self.assertRaisesRegex(runner.InputContractError, "selection reason"):
+            runner.parse_dependency_insight(f"{coordinate}:2.6.0\n", coordinate)
+
+    def test_candidate_graph_result_fails_closed_on_wrong_selected_version(self) -> None:
+        coordinate = "ai.timefold.solver:timefold-solver-core"
+        job = mock.Mock(
+            phase="timefold-graphs-candidate",
+            coordinate=coordinate,
+            repository="bluetape4k-exposed",
+        )
+        result = runner.CommandResult(
+            status="pass",
+            returncode=0,
+            stdout=(
+                f"{coordinate}:2.4.0\n"
+                "  Selection reasons:\n"
+                "      - By constraint: stale BOM\n"
+            ),
+            stderr="",
+            elapsed_seconds=0.1,
+            timed_out=False,
+            process_group_terminated=False,
+            termination_signal=None,
+            output_sha256="a" * 64,
+        )
+        checked = runner.validate_graph_result(job, result)
+        self.assertEqual(checked.status, "fail")
+        self.assertIn("expected 2.6.0", checked.diagnostics)
+
+    def test_consumer_graph_receipt_records_before_after_and_selection_reasons(self) -> None:
+        coordinate = "ai.timefold.solver:timefold-solver-benchmark"
+        document = {
+            "consumers": [
+                {"name": "timefold-workshop", "graphs": []},
+                {"name": "clinic-appointment", "graphs": []},
+            ]
+        }
+        job = mock.Mock(
+            repository="clinic-appointment",
+            coordinate=coordinate,
+            configuration="testRuntimeClasspath",
+        )
+
+        def result(version: str, digest: str, reason: str) -> runner.CommandResult:
+            return runner.CommandResult(
+                status="pass",
+                returncode=0,
+                stdout=(
+                    f"{coordinate}:{version}\n"
+                    "  Selection reasons:\n"
+                    f"      - {reason}\n"
+                ),
+                stderr="",
+                elapsed_seconds=0.1,
+                timed_out=False,
+                process_group_terminated=False,
+                termination_signal=None,
+                output_sha256=digest,
+            )
+
+        baseline_result = result("2.4.0", "a" * 64, "By constraint: stable BOM")
+        runner._update_consumer_graphs(
+            document,
+            runner.PhaseResult(
+                "timefold-graphs-baseline", "pass", "c" * 64, (baseline_result,)
+            ),
+            (job,),
+        )
+        candidate_result = result("2.6.0", "b" * 64, "By constraint: candidate BOM")
+        runner._update_consumer_graphs(
+            document,
+            runner.PhaseResult(
+                "timefold-graphs-candidate", "pass", "d" * 64, (candidate_result,)
+            ),
+            (job,),
+        )
+        graph = document["consumers"][1]["graphs"][0]
+        self.assertEqual(graph["before_version"], "2.4.0")
+        self.assertEqual(graph["after_version"], "2.6.0")
+        self.assertIn("before: By constraint: stable BOM", graph["selection_reason"])
+        self.assertIn("after: By constraint: candidate BOM", graph["selection_reason"])
+        self.assertEqual(graph["output_sha256"], "b" * 64)
+
+    def test_repository_inventory_reuses_catalog_candidate_authority(self) -> None:
+        self.assertEqual(
+            runner.CATALOG_REPOSITORIES,
+            runner.catalog_candidate.CATALOG_REPOSITORIES,
+        )
+        self.assertEqual(
+            runner.SIGNING_REPOSITORIES,
+            runner.catalog_candidate.SIGNING_REPOSITORIES,
         )
 
     def test_candidate_artifact_manifest_binds_actual_platform_outputs(self) -> None:
@@ -98,6 +230,14 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertEqual(len(first["sha256"]), 64)
             module.write_text('{"changed":true}\n', encoding="utf-8")
             self.assertNotEqual(first["sha256"], runner.candidate_artifact_manifest(repository)["sha256"])
+
+            changed = runner.candidate_artifact_manifest(repository)
+            extra = artifact / "unexpected-extra.jar"
+            extra.write_bytes(b"extra")
+            self.assertNotEqual(
+                changed["sha256"],
+                runner.candidate_artifact_manifest(repository)["sha256"],
+            )
 
             module.unlink()
             with self.assertRaisesRegex(runner.InputContractError, "candidate BOM artifact"):
@@ -290,6 +430,19 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertNotIn("sentinel-my-secret", redacted)
         self.assertNotIn("sentinel-private-body", redacted)
         self.assertNotIn("BEGIN PGP PRIVATE KEY BLOCK", redacted)
+        bypasses = runner.redact_output(
+            "error: PASSWORD=sentinel-password\n"
+            "Authorization: Bearer sentinel-bearer\n"
+            "https://example.invalid/path?token=sentinel-query&safe=yes\n"
+            "warning: api_key=sentinel-api-key\n"
+        )
+        for sentinel in (
+            "sentinel-password",
+            "sentinel-bearer",
+            "sentinel-query",
+            "sentinel-api-key",
+        ):
+            self.assertNotIn(sentinel, bypasses)
         lines = runner.bounded_diagnostics("\n".join(f"line-{i}" for i in range(100)))
         self.assertEqual(lines, "\n".join(f"line-{i}" for i in range(20, 100)))
 
@@ -306,6 +459,54 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("--no-configuration-cache", command)
         self.assertIn("--no-build-cache", command)
         self.assertIn("--console=plain", command)
+
+    def test_only_candidate_graphs_refresh_dependencies(self) -> None:
+        self.assertFalse(
+            runner.should_refresh_graph_dependencies("timefold-graphs-baseline")
+        )
+        self.assertTrue(
+            runner.should_refresh_graph_dependencies("timefold-graphs-candidate")
+        )
+
+    def test_validation_budget_is_fail_closed_and_receipt_bound(self) -> None:
+        self.assertEqual(
+            runner.validation_budget_remaining(
+                {
+                    "validation_budget": {
+                        "total_seconds": 5400,
+                        "elapsed_seconds": 123.5,
+                        "remaining_seconds": 5276.5,
+                    }
+                }
+            ),
+            5276.5,
+        )
+        with self.assertRaisesRegex(runner.InputContractError, "validation budget"):
+            runner.validation_budget_remaining({})
+
+    def test_expired_total_budget_blocks_job_before_cache_or_launch(self) -> None:
+        job = runner.ValidationJob(
+            repository="demo",
+            phase="signing-buildsrc",
+            cwd=Path("/tmp"),
+            command=("echo", "ok"),
+            configuration="buildSrc",
+            task_set=("test",),
+            repository_head="a" * 40,
+            helper_sha256="b" * 64,
+            catalog_sha256="c" * 64,
+            bom_sha256="d" * 64,
+            jdk_version="25",
+            gradle_version="9.7.0",
+        )
+        result = runner.execute_job(
+            job,
+            cache_directory=Path("/path/that/must/not/be/read"),
+            receipt_path=Path("/path/that/must/not/be/read.json"),
+            deadline=time.monotonic() - 1,
+        )
+        self.assertEqual(result.status, "blocked")
+        self.assertIn("total validation budget exceeded", result.diagnostics)
 
     def test_clinic_candidate_jobs_explicitly_disable_changing_snapshot_verification(self) -> None:
         self.assertEqual(
@@ -437,6 +638,11 @@ class ValidationRunnerTest(unittest.TestCase):
             initial = {
                 "repository_map": {"path": str(root / "map.json"), "sha256": "a" * 64},
                 "current_state": "discovered",
+                "validation_budget": {
+                    "total_seconds": 5400,
+                    "elapsed_seconds": 0.0,
+                    "remaining_seconds": 5400.0,
+                },
                 "phases": [],
                 "commands": [],
                 "failure_record": [],

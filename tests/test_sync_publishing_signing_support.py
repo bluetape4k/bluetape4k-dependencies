@@ -28,6 +28,12 @@ SPEC.loader.exec_module(sync)
 
 
 class SyncPublishingSigningSupportTest(unittest.TestCase):
+    def test_repository_inventory_reuses_catalog_candidate_authority(self) -> None:
+        self.assertEqual(
+            sync.SIGNING_REPOSITORIES,
+            sync.catalog_candidate.SIGNING_REPOSITORIES,
+        )
+
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp_dir.cleanup)

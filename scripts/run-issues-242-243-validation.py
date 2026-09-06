@@ -30,6 +30,16 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Optional
 
+CATALOG_CANDIDATE_PATH = Path(__file__).resolve().with_name("catalog_candidate.py")
+CATALOG_CANDIDATE_SPEC = importlib.util.spec_from_file_location(
+    "issues_242_243_catalog_candidate_runner", CATALOG_CANDIDATE_PATH
+)
+if CATALOG_CANDIDATE_SPEC is None or CATALOG_CANDIDATE_SPEC.loader is None:
+    raise RuntimeError("cannot load catalog_candidate.py")
+catalog_candidate = importlib.util.module_from_spec(CATALOG_CANDIDATE_SPEC)
+sys.modules.setdefault(CATALOG_CANDIDATE_SPEC.name, catalog_candidate)
+CATALOG_CANDIDATE_SPEC.loader.exec_module(catalog_candidate)
+
 PHASES = (
     "signing-buildsrc",
     "timefold-graphs-baseline",
@@ -40,6 +50,7 @@ PHASES = (
 MAX_WORKERS = 2
 CHILD_TIMEOUT_SECONDS = 600
 PUBLICATION_POMS_TIMEOUT_SECONDS = 1800
+TOTAL_VALIDATION_BUDGET_SECONDS = 90 * 60
 TERMINATE_GRACE_SECONDS = 5
 DRAIN_SECONDS = 5
 MAX_DIAGNOSTIC_LINES = 80
@@ -50,18 +61,8 @@ GRADLE_FLAGS = (
     "--no-build-cache",
     "--console=plain",
 )
-SIGNING_REPOSITORIES = (
-    "bluetape4k-dependencies",
-    "bluetape4k-projects",
-    "bluetape4k-aws",
-    "bluetape4k-exposed",
-    "bluetape4k-graph",
-    "bluetape4k-image",
-    "bluetape4k-javers",
-    "bluetape4k-leader",
-    "bluetape4k-text",
-)
-CATALOG_REPOSITORIES = SIGNING_REPOSITORIES + ("bluetape4k-experimental",)
+SIGNING_REPOSITORIES = catalog_candidate.SIGNING_REPOSITORIES
+CATALOG_REPOSITORIES = catalog_candidate.CATALOG_REPOSITORIES
 CONSUMER_REPOSITORIES = ("timefold-workshop", "clinic-appointment")
 CANDIDATE_BOM_VERSION = "2.1.0-issue-242.local"
 CANDIDATE_BOM_ARTIFACTS = (
@@ -91,6 +92,15 @@ TIMEFOLD_GRAPH_TASKS = {
         ":appointment-solver:dependencyInsight",
     ),
 }
+TIMEFOLD_GRAPH_COORDINATES = {
+    "bluetape4k-exposed": ("ai.timefold.solver:timefold-solver-core",),
+    "timefold-workshop": (
+        "ai.timefold.solver:timefold-solver-core",
+        "ai.timefold.solver:timefold-solver-jackson",
+        "ai.timefold.solver:timefold-solver-spring-boot-starter",
+    ),
+    "clinic-appointment": ("ai.timefold.solver:timefold-solver-benchmark",),
+}
 CONSUMER_TASKS = {
     "bluetape4k-exposed": (":bluetape4k-exposed-timefold-solver-persistence:test",),
     "timefold-workshop": (
@@ -114,6 +124,80 @@ def candidate_arguments(repository: str) -> tuple[str, ...]:
     return ()
 
 
+def parse_dependency_insight(
+    output: str, coordinate: str
+) -> DependencyInsightObservation:
+    """Parse one exact dependencyInsight component and its selection reasons."""
+
+    if "No dependencies matching given input were found" in output:
+        raise InputContractError(f"dependency was not resolved: {coordinate}")
+    selected_pattern = re.compile(
+        rf"^{re.escape(coordinate)}:([^\s]+)(?:\s+->\s+([^\s]+))?\s*$",
+        re.MULTILINE,
+    )
+    selected_match = selected_pattern.search(output)
+    if selected_match is None:
+        raise InputContractError(f"dependency was not resolved: {coordinate}")
+    selected_version = selected_match.group(2) or selected_match.group(1)
+    if not selected_version or selected_version.startswith(("{", "[", "(")):
+        raise InputContractError(f"selected version is invalid: {coordinate}")
+
+    tail = output[selected_match.end() :]
+    reason_heading = re.search(r"^\s*Selection reasons:\s*$", tail, re.MULTILINE)
+    if reason_heading is None:
+        raise InputContractError(f"selection reason is missing: {coordinate}")
+    reasons: list[str] = []
+    for line in tail[reason_heading.end() :].splitlines():
+        match = re.match(r"^\s+-\s+(.+?)\s*$", line)
+        if match is not None:
+            reason = match.group(1)
+            if reason not in reasons:
+                reasons.append(reason)
+            continue
+        if reasons:
+            break
+        if line.strip():
+            break
+    if not reasons:
+        raise InputContractError(f"selection reason is missing: {coordinate}")
+    return DependencyInsightObservation(
+        coordinate=coordinate,
+        selected_version=selected_version,
+        selection_reason="; ".join(reasons),
+    )
+
+
+def validate_graph_result(job: ValidationJob, result: CommandResult) -> CommandResult:
+    """Fail a successful Gradle invocation unless its graph evidence is semantic."""
+
+    if result.status != "pass" or not job.phase.startswith("timefold-graphs-"):
+        return result
+    if not job.coordinate:
+        return dataclasses.replace(
+            result,
+            status="fail",
+            diagnostics="graph job is missing an exact dependency coordinate",
+        )
+    output = result.stdout + ("\n" if result.stdout and result.stderr else "") + result.stderr
+    try:
+        observation = parse_dependency_insight(output, job.coordinate)
+        if (
+            job.phase == "timefold-graphs-candidate"
+            and observation.selected_version != "2.6.0"
+        ):
+            raise InputContractError(
+                f"expected 2.6.0 but selected {observation.selected_version}: "
+                f"{job.coordinate}"
+            )
+    except InputContractError as exc:
+        return dataclasses.replace(
+            result,
+            status="fail",
+            diagnostics=bounded_diagnostics(str(exc)),
+        )
+    return result
+
+
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
@@ -124,9 +208,17 @@ PRIVATE_ARMOR_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?im)(\b[A-Za-z_][A-Za-z0-9_-]*\b)(\s*[=:]\s*)([^\r\n]+)"
+    r"(?im)\b((?:[A-Za-z0-9]+[_-])*(?:password|passwd|token|secret|credential|"
+    r"private[_-]?key|secret[_-]?access[_-]?key|access[_-]?key(?:[_-]?id)?|"
+    r"api[_-]?key|signing[_-]?key|key)(?:[_-][A-Za-z0-9]+)*)\b"
+    r"(\s*[=:]\s*)([^\r\n]+)"
 )
 SECRET_URI_RE = re.compile(r"(?i)(://[^\s:/]+:)[^\s@]+(@)")
+AUTHORIZATION_RE = re.compile(r"(?im)^(\s*Authorization\s*:\s*)[^\r\n]+")
+BEARER_RE = re.compile(r"(?i)(\bBearer\s+)[^\s,;]+")
+QUERY_SECRET_RE = re.compile(
+    r"(?i)([?&](?:token|password|passwd|secret|api[_-]?key|access[_-]?key)\s*=)[^&#\s]+"
+)
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
 SECRET_NAME_RE = re.compile(
     r"(?:^|[_-])(?:password|passwd|token|secret|credential|private[_-]?key|"
@@ -170,6 +262,13 @@ class InputContractError(RuntimeError):
 
 
 @dataclasses.dataclass(frozen=True)
+class DependencyInsightObservation:
+    coordinate: str
+    selected_version: str
+    selection_reason: str
+
+
+@dataclasses.dataclass(frozen=True)
 class CommandResult:
     status: str
     returncode: Optional[int]
@@ -208,6 +307,7 @@ class ValidationJob:
     environment_overrides: tuple[tuple[str, str], ...] = ()
     candidate_maven_repository: Optional[Path] = None
     candidate_catalog_path: Optional[Path] = None
+    coordinate: str = ""
 
     @property
     def cache_key(self) -> str:
@@ -365,8 +465,21 @@ def candidate_artifact_manifest(repository: Path) -> dict[str, Any]:
             artifact_directory / name, f"candidate BOM artifact {name}"
         )
         artifacts[name] = sha256_file(path)
-    digest = sha256_bytes(canonical_json_bytes(artifacts))
-    return {"version": CANDIDATE_BOM_VERSION, "artifacts": artifacts, "sha256": digest}
+    repository_files: dict[str, str] = {}
+    for path in sorted(repository.rglob("*")):
+        if path.is_symlink():
+            raise InputContractError(f"candidate Maven repository contains a symlink: {path}")
+        if path.is_dir():
+            continue
+        _regular_file(path, f"candidate Maven repository file {path}")
+        repository_files[path.relative_to(repository).as_posix()] = sha256_file(path)
+    digest = sha256_bytes(canonical_json_bytes(repository_files))
+    return {
+        "version": CANDIDATE_BOM_VERSION,
+        "artifacts": artifacts,
+        "repository_files": repository_files,
+        "sha256": digest,
+    }
 
 
 def validated_candidate_catalog(central_root: Path) -> tuple[Path, str]:
@@ -564,6 +677,9 @@ def redact_output(value: Any) -> str:
     else:
         text = str(value)
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
+    text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
+    text = BEARER_RE.sub(r"\1<redacted>", text)
+    text = QUERY_SECRET_RE.sub(r"\1<redacted>", text)
     text = SECRET_ASSIGNMENT_RE.sub(_redact_assignment, text)
     text = SECRET_URI_RE.sub(r"\1<redacted>\2", text)
     text = ANSI_RE.sub("", text)
@@ -996,6 +1112,28 @@ def load_local_receipt(path: Path, repository_map: Path) -> dict[str, Any]:
     return document
 
 
+def validation_budget_remaining(receipt: Mapping[str, Any]) -> float:
+    value = receipt.get("validation_budget")
+    fields = {"total_seconds", "elapsed_seconds", "remaining_seconds"}
+    if not isinstance(value, Mapping) or set(value) != fields:
+        raise InputContractError("validation budget receipt is invalid")
+    total = value["total_seconds"]
+    elapsed = value["elapsed_seconds"]
+    remaining = value["remaining_seconds"]
+    if (
+        isinstance(total, bool)
+        or isinstance(elapsed, bool)
+        or isinstance(remaining, bool)
+        or not all(isinstance(item, (int, float)) for item in (total, elapsed, remaining))
+        or float(total) != float(TOTAL_VALIDATION_BUDGET_SECONDS)
+        or float(elapsed) < 0
+        or float(remaining) < 0
+        or abs(float(total) - float(elapsed) - float(remaining)) > 0.001
+    ):
+        raise InputContractError("validation budget receipt is invalid")
+    return float(remaining)
+
+
 def gradle_command(
     repository_root: Path,
     tasks: Sequence[str],
@@ -1021,6 +1159,12 @@ def gradle_command(
             raise InputContractError("Gradle max-workers must be positive")
         command.append(f"--max-workers={max_workers}")
     return tuple(command)
+
+
+def should_refresh_graph_dependencies(phase: str) -> bool:
+    if phase not in {"timefold-graphs-baseline", "timefold-graphs-candidate"}:
+        raise InputContractError(f"not a Timefold graph phase: {phase}")
+    return phase == "timefold-graphs-candidate"
 
 
 def publication_pom_command(
@@ -1299,30 +1443,33 @@ def _make_timefold_graph_jobs(
     arguments: Sequence[str] = (),
 ) -> tuple[ValidationJob, ...]:
     jobs: list[ValidationJob] = []
-    for coordinate in TIMEFOLD_COORDINATES:
+    for coordinate in TIMEFOLD_GRAPH_COORDINATES[repository]:
         jobs.append(
-            _make_job(
-                repository=repository,
-                phase=phase,
-                root=root,
-                tasks=TIMEFOLD_GRAPH_TASKS[repository],
-                arguments=tuple(arguments)
-                + (
-                    "--configuration",
-                    "testRuntimeClasspath",
-                    "--dependency",
-                    coordinate,
+            dataclasses.replace(
+                _make_job(
+                    repository=repository,
+                    phase=phase,
+                    root=root,
+                    tasks=TIMEFOLD_GRAPH_TASKS[repository],
+                    arguments=tuple(arguments)
+                    + (
+                        "--configuration",
+                        "testRuntimeClasspath",
+                        "--dependency",
+                        coordinate,
+                    ),
+                    configuration="testRuntimeClasspath",
+                    repository_head=repository_head,
+                    central_root=central_root,
+                    refresh_dependencies=should_refresh_graph_dependencies(phase),
+                    repository_origin=repository_origin,
+                    repository_branch=repository_branch,
+                    environment_overrides=environment_overrides,
+                    candidate_maven_repository=candidate_maven_repository,
+                    candidate_catalog_path=candidate_catalog_path,
+                    candidate_bom_sha256=candidate_bom_sha256,
                 ),
-                configuration="testRuntimeClasspath",
-                repository_head=repository_head,
-                central_root=central_root,
-                refresh_dependencies=True,
-                repository_origin=repository_origin,
-                repository_branch=repository_branch,
-                environment_overrides=environment_overrides,
-                candidate_maven_repository=candidate_maven_repository,
-                candidate_catalog_path=candidate_catalog_path,
-                candidate_bom_sha256=candidate_bom_sha256,
+                coordinate=coordinate,
             )
         )
     return tuple(jobs)
@@ -1600,10 +1747,14 @@ def execute_job(
     receipt_path: Path,
     binding_loader: Optional[Callable[[], Mapping[str, Mapping[str, Any]]]] = None,
     cancel_event: Optional[threading.Event] = None,
+    deadline: Optional[float] = None,
 ) -> CommandResult:
     def revalidate() -> None:
         if binding_loader is not None:
             validate_job_binding(job, binding_loader())
+
+    if deadline is not None and time.monotonic() >= deadline:
+        return _bound_result(job, "blocked", "total validation budget exceeded")
 
     # Revalidate immediately before reading a cache and again before trusting a
     # hit or launching a child.  This closes the TOCTOU window around every job.
@@ -1633,6 +1784,11 @@ def execute_job(
         if job.phase == "publication-poms"
         else CHILD_TIMEOUT_SECONDS
     )
+    if deadline is not None:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return _bound_result(job, "blocked", "total validation budget exceeded")
+        timeout = min(timeout, remaining)
     result = run_command(
         command=job.command,
         cwd=job.cwd,
@@ -1642,6 +1798,11 @@ def execute_job(
         cancel_event=cancel_event,
     )
     result = dataclasses.replace(result, job_id=job.job_id, repository=job.repository)
+    if deadline is not None and result.timed_out and time.monotonic() >= deadline:
+        result = dataclasses.replace(
+            result,
+            diagnostics="total validation budget exceeded",
+        )
     if result.status == "pass":
         output = (result.stdout + ("\n" if result.stdout and result.stderr else "") + result.stderr).encode("utf-8")
         write_cache_entry(
@@ -1664,6 +1825,7 @@ def _worker(
     receipt_path: Path,
     binding_loader: Optional[Callable[[], Mapping[str, Mapping[str, Any]]]] = None,
     cancel_event: Optional[threading.Event] = None,
+    deadline: Optional[float] = None,
 ) -> CommandResult:
     return execute_job(
         job,
@@ -1671,6 +1833,7 @@ def _worker(
         receipt_path=receipt_path,
         binding_loader=binding_loader,
         cancel_event=cancel_event,
+        deadline=deadline,
     )
 
 
@@ -1694,6 +1857,101 @@ def _phase_digest(phase: str, results: Sequence[CommandResult], failure: Optiona
     return sha256_bytes(canonical_json_bytes(payload))
 
 
+def _update_consumer_graphs(
+    document: dict[str, Any], result: PhaseResult, jobs: Sequence[ValidationJob]
+) -> None:
+    """Bind parsed graph values to the two external consumer receipt entries."""
+
+    if result.phase not in {
+        "timefold-graphs-baseline",
+        "timefold-graphs-candidate",
+    }:
+        return
+    consumers = document.get("consumers")
+    if not isinstance(consumers, list):
+        raise InputContractError("local receipt consumers must be an array")
+    by_name = {
+        item.get("name"): item
+        for item in consumers
+        if isinstance(item, dict) and isinstance(item.get("name"), str)
+    }
+    for repository in CONSUMER_REPOSITORIES:
+        expected = TIMEFOLD_GRAPH_COORDINATES[repository]
+        pairs = [
+            (job, command_result)
+            for job, command_result in zip(jobs, result.jobs)
+            if job.repository == repository
+        ]
+        if not pairs or any(command_result.status != "pass" for _, command_result in pairs):
+            continue
+        if tuple(job.coordinate for job, _ in pairs) != expected:
+            raise InputContractError(
+                f"consumer graph coordinates are incomplete: {repository}"
+            )
+        parsed = [
+            (
+                job,
+                command_result,
+                parse_dependency_insight(
+                    command_result.stdout
+                    + ("\n" if command_result.stdout and command_result.stderr else "")
+                    + command_result.stderr,
+                    job.coordinate,
+                ),
+            )
+            for job, command_result in pairs
+        ]
+        consumer = by_name.get(repository)
+        if not isinstance(consumer, dict):
+            raise InputContractError(f"local receipt is missing consumer: {repository}")
+        if result.phase == "timefold-graphs-baseline":
+            consumer["graphs"] = [
+                {
+                    "coordinate": observation.coordinate,
+                    "configuration": job.configuration,
+                    "before_version": observation.selected_version,
+                    "after_version": "pending-candidate",
+                    "selection_reason": (
+                        f"before: {observation.selection_reason}; after: pending-candidate"
+                    ),
+                    "output_sha256": command_result.output_sha256,
+                }
+                for job, command_result, observation in parsed
+            ]
+            continue
+        existing = {
+            item.get("coordinate"): item
+            for item in consumer.get("graphs", [])
+            if isinstance(item, dict)
+        }
+        updated: list[dict[str, Any]] = []
+        for job, command_result, observation in parsed:
+            graph = existing.get(job.coordinate)
+            if not isinstance(graph, dict) or graph.get("before_version") in {
+                None,
+                "pending-baseline",
+            }:
+                raise InputContractError(
+                    f"candidate graph lacks baseline evidence: {repository} {job.coordinate}"
+                )
+            before_reason = str(graph.get("selection_reason", "")).split(
+                "; after:", 1
+            )[0]
+            updated.append(
+                {
+                    "coordinate": observation.coordinate,
+                    "configuration": job.configuration,
+                    "before_version": graph["before_version"],
+                    "after_version": observation.selected_version,
+                    "selection_reason": (
+                        f"{before_reason}; after: {observation.selection_reason}"
+                    ),
+                    "output_sha256": command_result.output_sha256,
+                }
+            )
+        consumer["graphs"] = updated
+
+
 def _write_receipt_update(
     path: Path,
     result: PhaseResult,
@@ -1701,6 +1959,7 @@ def _write_receipt_update(
     *,
     expected_receipt_sha256: Optional[str] = None,
     expected_state: Optional[str] = None,
+    phase_elapsed_seconds: float = 0.0,
 ) -> None:
     """CAS-update a receipt under its strict validator's lock."""
 
@@ -1739,6 +1998,13 @@ def _write_receipt_update(
         if not isinstance(validated, Mapping):
             raise InputContractError("strict receipt validator returned an invalid document")
         document = json.loads(json.dumps(dict(validated)))
+        remaining = validation_budget_remaining(document)
+        if phase_elapsed_seconds < 0:
+            raise InputContractError("phase elapsed time is invalid")
+        consumed = min(remaining, phase_elapsed_seconds)
+        budget = document["validation_budget"]
+        budget["elapsed_seconds"] = float(budget["elapsed_seconds"]) + consumed
+        budget["remaining_seconds"] = remaining - consumed
         phases = document.setdefault("phases", [])
         if not isinstance(phases, list):
             raise InputContractError("local receipt phases must be an array")
@@ -1771,6 +2037,7 @@ def _write_receipt_update(
                     "output_sha256": next(iter(candidate_artifact_digests)),
                 }
             )
+        _update_consumer_graphs(document, result, jobs)
         commands = document.setdefault("commands", [])
         if not isinstance(commands, list):
             raise InputContractError("local receipt commands must be an array")
@@ -1837,6 +2104,9 @@ def run_phase(
     receipt_path = _canonical_input_path(receipt_path, "local receipt")
     repository_map = load_strict_repository_map(repository_map_path)
     receipt = load_local_receipt(receipt_path, repository_map_path)
+    remaining_budget = validation_budget_remaining(receipt)
+    phase_started = time.monotonic()
+    deadline = phase_started + remaining_budget
     expected_receipt_sha256 = sha256_file(receipt_path)
     expected_state = receipt.get("current_state")
     if not isinstance(expected_state, str) or not expected_state:
@@ -1871,6 +2141,7 @@ def run_phase(
             receipt_path=receipt_path,
             binding_loader=binding_loader,
             cancel_event=cancel_event,
+            deadline=deadline,
         ),
         max_workers=max_workers,
         failure_predicate=lambda result: getattr(result, "status", "fail") != "pass",
@@ -1891,7 +2162,10 @@ def run_phase(
             index,
             _bound_result(job, "blocked", "job result was not observed"),
         )
-    results = [result_by_id[index] for index in sorted(jobs_by_id)]
+    results = [
+        validate_graph_result(jobs_by_id[index], result_by_id[index])
+        for index in sorted(jobs_by_id)
+    ]
     if outcome.first_failure is not None:
         first_result = result_by_id.get(outcome.first_failure)
         failure = f"first failed job: {jobs_by_id[outcome.first_failure].job_id}"
@@ -1914,6 +2188,7 @@ def run_phase(
         tuple(jobs_by_id[index] for index in sorted(jobs_by_id)),
         expected_receipt_sha256=expected_receipt_sha256,
         expected_state=expected_state,
+        phase_elapsed_seconds=time.monotonic() - phase_started,
     )
     return phase_result
 

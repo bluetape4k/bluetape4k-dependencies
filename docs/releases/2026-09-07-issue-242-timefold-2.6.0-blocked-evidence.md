@@ -2,8 +2,9 @@
 
 ## 판정
 
-Timefold Solver `2.6.0` 후보의 resolved graph는 세 소비자에서 검증됐지만,
-필수 소비자 테스트가 모두 통과하지 못해 중앙 catalog 전환을 보류한다.
+Timefold Solver `2.6.0` 후보의 필수 소비자 테스트가 모두 통과하지 못했고,
+초기 graph phase도 의미 검증 없이 Gradle 종료 코드만 확인한 것으로 재감사되어
+중앙 catalog 전환을 보류한다.
 `gradle/libs.versions.toml`은 `2.4.0`을 유지하고
 `defer-breaking-migration` 정책도 해제하지 않는다.
 
@@ -13,12 +14,26 @@ Timefold Solver `2.6.0` 후보의 resolved graph는 세 소비자에서 검증�
 - 후보 BOM: `io.github.bluetape4k:bluetape4k-dependencies:2.1.0-issue-242.local`
 - 후보 POM SHA-256: `cd95fc2cb1c53b982a6190653bf017738a2881f73f6acf1be3be2a117e4ab7ad`
 - 후보 module metadata SHA-256: `60546a834a448d62f07065823eecdc2d865b2e6037439f14714527694e01b993`
-- 후보 graph: 12/12 통과,
+- 초기 후보 graph runner 결과: `12/12 pass`로 기록됐으나 무효,
   `output_sha256=71034c9db77e04feed9c4704f2b47b4e2701e00c81879d80d10ee592ab0caad2`
 - 소비자 phase: 실패,
   `output_sha256=9abbd3904d89e1fa0320788917fcb99cc56fdabad4ac457acfde45b48ff8b1f2`
 
 ## 보류 원인
+
+### Resolved graph 증거 결함
+
+초기 runner는 `dependencyInsight`가 exit code `0`을 반환하면 통과 처리했다.
+보존한 출력을 다시 검사한 결과, 실제 소비하지 않는 좌표에는
+`No dependencies matching given input were found`가 포함됐고,
+`bluetape4k-exposed`의 후보 core graph는 `2.4.0`을 선택했다. 따라서 위의
+`12/12 pass`는 버전 전환 증거로 사용할 수 없다.
+
+runner는 이후 실제 소비 모듈에 좌표를 매핑하고, 선택 버전과
+`Selection reasons`를 파싱하며, 후보가 정확히 `2.6.0`을 선택하지 않으면
+fail-closed 처리하도록 보강했다. 이 보강 자체는 기존 후보를 통과로 바꾸지 않는다.
+
+### JVM target 불일치
 
 `timefold-workshop`은 Java 21 toolchain을 사용하지만 현재 게시된
 `bluetape4k 2.0.0` 및 `bluetape4k-exposed 2.0.0` artifact는 JVM 25 metadata를
