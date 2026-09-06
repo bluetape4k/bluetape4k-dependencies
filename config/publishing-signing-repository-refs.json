@@ -2,8 +2,8 @@
   "schema-version": 1,
   "canonical-source": {
     "path": "config/publishing-signing/PublishingSigningKeySupport.kt",
-    "sha256": null,
-    "status": "pending"
+    "sha256": "22fa0667bef66fb35946a64c7c72ef411b73764693db837e6ad12b4e26cdd0be",
+    "status": "prepared"
   },
   "repositories": {
     "bluetape4k-aws": {

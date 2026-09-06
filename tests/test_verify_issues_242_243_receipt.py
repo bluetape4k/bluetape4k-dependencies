@@ -451,12 +451,16 @@ class Issues242243ReceiptTest(unittest.TestCase):
             hashlib.sha256(content).hexdigest(),
         )
 
-    def test_repository_ref_manifest_has_exact_pending_envelope(self) -> None:
+    def test_repository_ref_manifest_has_exact_signing_envelope(self) -> None:
         manifest_path = SCRIPT_PATH.parents[1] / "config/publishing-signing-repository-refs.json"
         manifest = __import__("json").loads(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(manifest["schema-version"], 1)
-        self.assertEqual(manifest["canonical-source"]["status"], "pending")
-        self.assertIsNone(manifest["canonical-source"]["sha256"])
+        source_path = SCRIPT_PATH.parents[1] / manifest["canonical-source"]["path"]
+        self.assertEqual(manifest["canonical-source"]["status"], "prepared")
+        self.assertEqual(
+            manifest["canonical-source"]["sha256"],
+            hashlib.sha256(source_path.read_bytes()).hexdigest(),
+        )
         self.assertEqual(set(manifest["repositories"]), set(receipt.SIGNING_NAMES))
         self.assertNotIn("bluetape4k-experimental", manifest["repositories"])
         self.assertNotIn("timefold-workshop", manifest["repositories"])
