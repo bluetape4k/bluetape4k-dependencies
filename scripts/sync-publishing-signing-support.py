@@ -12,11 +12,10 @@ import argparse
 import dataclasses
 import hashlib
 import importlib.util
-import io
 import os
+import secrets
 import stat
 import sys
-import tempfile
 from pathlib import Path
 from typing import IO, Iterable, List, Optional, Sequence, Tuple
 
@@ -72,6 +71,12 @@ class TargetState:
     prior_mode: int
     current_digest: str
     desired_digest: str
+
+
+@dataclasses.dataclass(frozen=True)
+class FileSnapshot:
+    payload: bytes
+    mode: int
 
 
 def sha256_bytes(payload: bytes) -> str:
@@ -141,6 +146,119 @@ def _require_no_symlink_components(path: Path, root: Path, description: str) -> 
             raise SyncError(f"{description} must not contain symlinks: {current}")
 
 
+def _directory_open_flags() -> int:
+    try:
+        return os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+    except AttributeError as exc:
+        raise SyncError("platform lacks O_DIRECTORY/O_NOFOLLOW support") from exc
+
+
+def _regular_open_flags() -> int:
+    try:
+        return os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC
+    except AttributeError as exc:
+        raise SyncError("platform lacks O_NOFOLLOW support") from exc
+
+
+def _open_directory_fd(path: Path, root: Path) -> int:
+    """Open every directory component with O_DIRECTORY|O_NOFOLLOW.
+
+    The returned descriptor remains anchored to the checked directory even if
+    an attacker replaces a path component after this function returns.
+    """
+    try:
+        relative = path.relative_to(root)
+    except ValueError as exc:
+        raise SyncError(f"directory escapes repository root: {path}") from exc
+
+    flags = _directory_open_flags()
+    descriptor: Optional[int] = None
+    try:
+        descriptor = os.open(str(root), flags)
+        for component in relative.parts:
+            next_descriptor = os.open(component, flags, dir_fd=descriptor)
+            try:
+                os.close(descriptor)
+            except BaseException:
+                try:
+                    os.close(next_descriptor)
+                except BaseException:
+                    pass
+                raise
+            descriptor = next_descriptor
+        assert descriptor is not None
+        return descriptor
+    except BaseException as exc:
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except BaseException:
+                pass
+        if isinstance(exc, SyncError):
+            raise
+        raise SyncError(f"cannot open directory without following symlinks: {path}") from exc
+
+
+def _read_fd(descriptor: int) -> bytes:
+    chunks = []
+    while True:
+        chunk = os.read(descriptor, 1024 * 1024)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+
+
+def _read_regular_at(
+    parent_fd: int, name: str, description: str
+) -> Optional[FileSnapshot]:
+    """Read a regular file through a no-follow directory descriptor."""
+    try:
+        metadata = os.lstat(name, dir_fd=parent_fd)
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        raise SyncError(f"cannot inspect {description}: {name}") from exc
+
+    if stat.S_ISLNK(metadata.st_mode):
+        raise SyncError(f"{description} must not be a symlink: {name}")
+    if not stat.S_ISREG(metadata.st_mode):
+        raise SyncError(f"{description} must be a regular file: {name}")
+
+    descriptor: Optional[int] = None
+    snapshot: Optional[FileSnapshot] = None
+    primary: Optional[BaseException] = None
+    try:
+        descriptor = os.open(name, _regular_open_flags(), dir_fd=parent_fd)
+        opened = os.fstat(descriptor)
+        if stat.S_ISLNK(opened.st_mode) or not stat.S_ISREG(opened.st_mode):
+            raise SyncError(f"{description} changed to a non-regular file: {name}")
+        snapshot = FileSnapshot(_read_fd(descriptor), stat.S_IMODE(opened.st_mode))
+    except SyncError as exc:
+        primary = exc
+    except OSError as exc:
+        primary = SyncError(f"cannot read {description}: {name}")
+        primary.__cause__ = exc
+    if descriptor is not None:
+        close_result = _close_fd_preserving(descriptor, primary)
+        if close_result is not None:
+            if isinstance(close_result, SyncError):
+                raise close_result
+            raise close_result
+    if primary is not None:
+        raise primary
+    if snapshot is None:
+        raise SyncError(f"cannot read {description}: {name}")
+    return snapshot
+
+
+def _close_fd_preserving(descriptor: int, primary: Optional[BaseException]) -> Optional[BaseException]:
+    try:
+        os.close(descriptor)
+    except BaseException as close_error:
+        return primary if primary is not None else close_error
+    return primary
+
+
 def _validate_repository_root(repository: object, workspace: Path) -> Path:
     root = getattr(repository, "root", None)
     name = getattr(repository, "name", "repository")
@@ -186,10 +304,22 @@ def _read_target_state(
         raise SyncError(f"target path must be canonical for {name}: {target}")
     _require_no_symlink_components(target.parent, root, f"target parent for {name}")
     _require_directory(target.parent, f"target parent for {name}")
-
+    parent_fd = _open_directory_fd(target.parent, root)
+    snapshot: Optional[FileSnapshot] = None
+    primary: Optional[BaseException] = None
     try:
-        metadata = target.lstat()
-    except FileNotFoundError:
+        snapshot = _read_regular_at(
+            parent_fd,
+            TARGET_RELATIVE.name,
+            f"generated target for {name}",
+        )
+    except BaseException as exc:
+        primary = exc
+    close_result = _close_fd_preserving(parent_fd, primary)
+    if close_result is not None:
+        raise close_result
+
+    if snapshot is None:
         return TargetState(
             repository=name,
             root=root,
@@ -201,26 +331,15 @@ def _read_target_state(
             current_digest=sha256_bytes(b""),
             desired_digest=sha256_bytes(desired),
         )
-    except OSError as exc:
-        raise SyncError(f"cannot inspect generated target for {name}: {target}") from exc
-
-    if stat.S_ISLNK(metadata.st_mode):
-        raise SyncError(f"generated target must not be a symlink for {name}: {target}")
-    if not stat.S_ISREG(metadata.st_mode):
-        raise SyncError(f"generated target must be a regular file for {name}: {target}")
-    try:
-        current = target.read_bytes()
-    except OSError as exc:
-        raise SyncError(f"cannot read generated target for {name}: {target}") from exc
     return TargetState(
         repository=name,
         root=root,
         path=target,
         desired=desired,
         prior_exists=True,
-        prior_bytes=current,
-        prior_mode=stat.S_IMODE(metadata.st_mode),
-        current_digest=sha256_bytes(current),
+        prior_bytes=snapshot.payload,
+        prior_mode=snapshot.mode,
+        current_digest=sha256_bytes(snapshot.payload),
         desired_digest=sha256_bytes(desired),
     )
 
@@ -237,138 +356,210 @@ def _snapshot_source(repositories: Sequence[object], workspace: Path) -> bytes:
     if source.resolve(strict=False) != source:
         raise SyncError(f"canonical source path must be canonical: {source}")
     _require_no_symlink_components(source.parent, root, "canonical source parent")
-    _require_regular_file(source, "canonical source")
+    _require_directory(source.parent, "canonical source parent")
+    parent_fd = _open_directory_fd(source.parent, root)
+    snapshot: Optional[FileSnapshot] = None
+    primary: Optional[BaseException] = None
     try:
-        return source.read_bytes()
-    except OSError as exc:
-        raise SyncError(f"cannot read canonical source: {source}") from exc
+        snapshot = _read_regular_at(parent_fd, source.name, "canonical source")
+    except BaseException as exc:
+        primary = exc
+    close_result = _close_fd_preserving(parent_fd, primary)
+    if close_result is not None:
+        raise close_result
+    if snapshot is None:
+        raise SyncError(f"canonical source is missing: {source}")
+    return snapshot.payload
 
 
-def _assert_unchanged(state: TargetState) -> None:
-    try:
-        metadata = state.path.lstat()
-    except FileNotFoundError:
+def _assert_unchanged(state: TargetState, parent_fd: int) -> None:
+    snapshot = _read_regular_at(
+        parent_fd,
+        TARGET_RELATIVE.name,
+        f"generated target for {state.repository}",
+    )
+    if snapshot is None:
         if state.prior_exists:
             raise SyncError(f"target changed during sync: {state.path}")
         return
-    except OSError as exc:
-        raise SyncError(f"cannot recheck target before replacement: {state.path}") from exc
-    if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
-        raise SyncError(f"target changed to a non-regular file: {state.path}")
-    current = state.path.read_bytes()
     if (
         not state.prior_exists
-        or current != state.prior_bytes
-        or stat.S_IMODE(metadata.st_mode) != state.prior_mode
+        or snapshot.payload != state.prior_bytes
+        or snapshot.mode != state.prior_mode
     ):
         raise SyncError(f"target changed during sync: {state.path}")
 
 
-def _fsync_directory(directory: Path) -> None:
-    descriptor = os.open(str(directory), os.O_RDONLY)
+def _fsync_directory(parent_fd: int) -> None:
     try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
+        os.fsync(parent_fd)
+    except OSError as exc:
+        raise SyncError("cannot fsync target directory") from exc
 
 
-def _stage_file(directory: Path, payload: bytes, mode: int) -> Path:
-    descriptor, raw_path = tempfile.mkstemp(
-        prefix=".PublishingSigningKeySupport.kt.", suffix=".tmp", dir=str(directory)
-    )
-    path = Path(raw_path)
+def _write_all_fd(descriptor: int, payload: bytes) -> None:
+    offset = 0
+    while offset < len(payload):
+        written = os.write(descriptor, payload[offset:])
+        if written <= 0:
+            raise OSError("short write while staging generated helper")
+        offset += written
+
+
+def _stage_file(parent_fd: int, payload: bytes, mode: int) -> str:
+    """Create and fsync a staged file using only its open directory FD."""
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_CLOEXEC | os.O_NOFOLLOW
+    staged_name: Optional[str] = None
+    descriptor: Optional[int] = None
+    for _ in range(32):
+        candidate = ".PublishingSigningKeySupport.kt." + secrets.token_hex(12) + ".tmp"
+        try:
+            descriptor = os.open(candidate, flags, TEMP_FILE_MODE, dir_fd=parent_fd)
+            staged_name = candidate
+            break
+        except FileExistsError:
+            continue
+        except OSError as exc:
+            raise SyncError("cannot create staged generated helper") from exc
+    if descriptor is None or staged_name is None:
+        raise SyncError("cannot allocate unique staged generated helper")
+
+    primary: Optional[BaseException] = None
     try:
         os.fchmod(descriptor, TEMP_FILE_MODE)
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.chmod(path, mode)
-        descriptor = -1
-        descriptor = os.open(str(path), os.O_RDONLY)
+        _write_all_fd(descriptor, payload)
         os.fsync(descriptor)
-        return path
-    except BaseException:
-        if descriptor >= 0:
-            os.close(descriptor)
+        os.fchmod(descriptor, mode)
+        os.fsync(descriptor)
+    except BaseException as exc:
+        primary = exc
+
+    close_result = _close_fd_preserving(descriptor, primary)
+    descriptor = None
+    if close_result is None:
+        return staged_name
+
+    try:
+        os.unlink(staged_name, dir_fd=parent_fd)
+    except FileNotFoundError:
+        pass
+    except BaseException as cleanup_error:
+        # Preserve the primary staging/close error; cleanup failure is only
+        # surfaced when there was no earlier error to report.
+        if primary is None:
+            close_result = cleanup_error
+
+    if isinstance(close_result, SyncError):
+        raise close_result
+    raise close_result
+
+
+def _remove_staged(staged: Iterable[Tuple[int, str]]) -> None:
+    for parent_fd, name in staged:
         try:
-            path.unlink()
+            os.unlink(name, dir_fd=parent_fd)
         except FileNotFoundError:
             pass
         except OSError:
             pass
-        raise
-    finally:
-        if descriptor >= 0:
-            os.close(descriptor)
 
 
-def _remove_staged(staged: Iterable[Path]) -> None:
-    for path in staged:
-        try:
-            path.unlink()
-        except FileNotFoundError:
-            pass
-        except OSError:
-            pass
-
-
-def _replace_and_read_back(state: TargetState, staged: Path) -> None:
-    _require_no_symlink_components(
-        state.path.parent, state.root, f"target parent for {state.repository}"
+def _replace_and_read_back(
+    state: TargetState, parent_fd: int, staged_name: str
+) -> None:
+    _assert_unchanged(state, parent_fd)
+    os.replace(
+        staged_name,
+        TARGET_RELATIVE.name,
+        src_dir_fd=parent_fd,
+        dst_dir_fd=parent_fd,
     )
-    _assert_unchanged(state)
-    os.replace(str(staged), str(state.path))
-    _fsync_directory(state.path.parent)
-    _require_regular_file(state.path, f"generated target for {state.repository}")
-    metadata = state.path.stat()
-    current = state.path.read_bytes()
-    if current != state.desired or stat.S_IMODE(metadata.st_mode) != state.prior_mode:
+    _fsync_directory(parent_fd)
+    snapshot = _read_regular_at(
+        parent_fd,
+        TARGET_RELATIVE.name,
+        f"generated target for {state.repository}",
+    )
+    if snapshot is None or snapshot.payload != state.desired or snapshot.mode != state.prior_mode:
         raise SyncError(f"replacement read-back mismatch: {state.path}")
 
 
-def _restore_state(state: TargetState) -> None:
-    _require_directory(state.path.parent, "target parent")
+def _restore_state(state: TargetState, parent_fd: int) -> None:
     if state.prior_exists:
-        restore = _stage_file(state.path.parent, state.prior_bytes or b"", state.prior_mode)
+        restore_name = _stage_file(
+            parent_fd, state.prior_bytes or b"", state.prior_mode
+        )
         try:
-            os.replace(str(restore), str(state.path))
-            _fsync_directory(state.path.parent)
+            os.replace(
+                restore_name,
+                TARGET_RELATIVE.name,
+                src_dir_fd=parent_fd,
+                dst_dir_fd=parent_fd,
+            )
+            _fsync_directory(parent_fd)
+            restored = _read_regular_at(
+                parent_fd,
+                TARGET_RELATIVE.name,
+                f"rollback target for {state.repository}",
+            )
+            if (
+                restored is None
+                or restored.payload != (state.prior_bytes or b"")
+                or restored.mode != state.prior_mode
+            ):
+                raise SyncError(f"rollback read-back mismatch: {state.path}")
         finally:
-            _remove_staged((restore,))
+            _remove_staged(((parent_fd, restore_name),))
     else:
-        try:
-            metadata = state.path.lstat()
-        except FileNotFoundError:
+        snapshot = _read_regular_at(
+            parent_fd,
+            TARGET_RELATIVE.name,
+            f"generated target for {state.repository}",
+        )
+        if snapshot is None:
             return
-        if stat.S_ISLNK(metadata.st_mode) or not stat.S_ISREG(metadata.st_mode):
-            raise SyncError(f"cannot safely remove replacement: {state.path}")
-        state.path.unlink()
-        _fsync_directory(state.path.parent)
+        os.unlink(TARGET_RELATIVE.name, dir_fd=parent_fd)
+        _fsync_directory(parent_fd)
+        if (
+            _read_regular_at(
+                parent_fd,
+                TARGET_RELATIVE.name,
+                f"rollback target for {state.repository}",
+            )
+            is not None
+        ):
+            raise SyncError(f"rollback read-back mismatch: {state.path}")
 
 
 def _write_all(states: Sequence[TargetState]) -> None:
-    staged: List[Tuple[TargetState, Path]] = []
+    parent_fds: List[Tuple[TargetState, int]] = []
+    staged: List[Tuple[TargetState, int, str]] = []
     replaced: List[TargetState] = []
     try:
+        # Open and anchor every target directory before creating any staged
+        # file.  All later checks and replacements use these descriptors.
         for state in states:
             _require_no_symlink_components(
                 state.path.parent, state.root, f"target parent for {state.repository}"
             )
-            staged.append(
-                (state, _stage_file(state.path.parent, state.desired, state.prior_mode))
-            )
-        for state, staged_path in staged:
+            parent_fd = _open_directory_fd(state.path.parent, state.root)
+            parent_fds.append((state, parent_fd))
+            _assert_unchanged(state, parent_fd)
+        for state, parent_fd in parent_fds:
+            staged_name = _stage_file(parent_fd, state.desired, state.prior_mode)
+            staged.append((state, parent_fd, staged_name))
+        for state, parent_fd, staged_name in staged:
             # Record the target before replacement so a post-replace read-back
             # failure is covered by the same rollback transaction.
             replaced.append(state)
-            _replace_and_read_back(state, staged_path)
+            _replace_and_read_back(state, parent_fd, staged_name)
     except BaseException as exc:
-        _remove_staged(path for _, path in staged)
+        _remove_staged((parent_fd, name) for _, parent_fd, name in staged)
         rollback_errors = []
+        fd_by_name = {state.repository: parent_fd for state, parent_fd in parent_fds}
         for state in reversed(replaced):
             try:
-                _restore_state(state)
+                _restore_state(state, fd_by_name[state.repository])
             except BaseException as rollback_exc:
                 rollback_errors.append(str(rollback_exc))
         detail = str(exc)
@@ -376,7 +567,12 @@ def _write_all(states: Sequence[TargetState]) -> None:
             detail += "; rollback failed: " + " | ".join(rollback_errors)
         raise SyncError(detail) from exc
     finally:
-        _remove_staged(path for _, path in staged)
+        _remove_staged((parent_fd, name) for _, parent_fd, name in staged)
+        for _, parent_fd in reversed(parent_fds):
+            try:
+                os.close(parent_fd)
+            except OSError:
+                pass
 
 
 def _emit_summary(
