@@ -429,10 +429,15 @@ configuration만 입력받는다. 각 child는 600초 timeout을 가진다.
 python3 scripts/run-issues-242-243-validation.py \
   --phase timefold-graphs-baseline \
   --repository-map "$PWD/build/issues-242-243/repository-map.json" \
-  --workshop-root /Users/debop/work/bluetape4k/timefold-workshop/.worktrees/chore/issues-242-243-validation \
-  --clinic-root /Users/debop/work/bluetape4k/clinic-appointment/.worktrees/chore/issues-242-243-validation \
+  --exposed-baseline-root /absolute/path/to/bluetape4k-exposed-base-worktree \
+  --workshop-baseline-root /absolute/path/to/timefold-workshop-base-worktree \
+  --clinic-baseline-root /absolute/path/to/clinic-appointment-base-worktree \
   --receipt "$PWD/build/issues-242-243/local-receipt.json"
 ```
+
+세 baseline worktree는 receipt에 기록된 각 `base_sha`를 정확히 checkout한 clean
+worktree여야 한다. candidate worktree를 baseline에도 재사용하면 runner가 실행 전에
+거부한다.
 
 - [ ] **Step 2: 중앙 전환 RED 테스트 작성**
 

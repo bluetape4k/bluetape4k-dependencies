@@ -66,7 +66,7 @@ jobs:
   build:
     name: Build BOM
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     needs: validate-wrapper
     steps:
       - uses: actions/checkout@v7
@@ -149,6 +149,9 @@ jobs:
           import sys
           from pathlib import Path
 
+          sys.path.insert(0, str(Path.cwd() / "scripts"))
+          import catalog_candidate
+
           central = Path(sys.argv[1]).resolve()
           output = Path(sys.argv[2]).resolve()
           workspace = central.parent.resolve()
@@ -158,15 +161,8 @@ jobs:
               )
           )
           repositories = {
-              "projects": "bluetape4k-projects",
-              "aws": "bluetape4k-aws",
-              "experimental": "bluetape4k-experimental",
-              "exposed": "bluetape4k-exposed",
-              "graph": "bluetape4k-graph",
-              "image": "bluetape4k-image",
-              "javers": "bluetape4k-javers",
-              "leader": "bluetape4k-leader",
-              "text": "bluetape4k-text",
+              key: catalog_candidate.REPOSITORY_NAMES[key]
+              for key in catalog_candidate.REPOSITORY_KEYS
           }
 
           def git(root: Path, *arguments: str) -> str:
@@ -271,13 +267,81 @@ jobs:
           PY
           )
 
-      - name: Verify central generated signing copy
+      - name: Verify all generated signing copies
         run: |
           python3 scripts/sync-publishing-signing-support.py \
             --workspace .. \
             --repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json" \
-            --repo bluetape4k-dependencies \
             --check --summary
+
+      - name: Compile generated signing helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "$RUNNER_TEMP/issues-242-243-repository-map.json" <<'PY'
+          import concurrent.futures
+          import importlib.util
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          map_path = Path(sys.argv[1]).resolve()
+          module_path = Path.cwd() / "scripts" / "catalog_candidate.py"
+          spec = importlib.util.spec_from_file_location("ci_catalog_candidate", module_path)
+          if spec is None or spec.loader is None:
+              raise SystemExit("cannot load catalog_candidate.py")
+          catalog_candidate = importlib.util.module_from_spec(spec)
+          sys.modules[spec.name] = catalog_candidate
+          spec.loader.exec_module(catalog_candidate)
+          runner_path = Path.cwd() / "scripts" / "run-issues-242-243-validation.py"
+          runner_spec = importlib.util.spec_from_file_location("ci_validation_runner", runner_path)
+          if runner_spec is None or runner_spec.loader is None:
+              raise SystemExit("cannot load validation runner")
+          runner = importlib.util.module_from_spec(runner_spec)
+          sys.modules[runner_spec.name] = runner
+          runner_spec.loader.exec_module(runner)
+          repositories = catalog_candidate.load_repository_map_v1(
+              map_path, Path.cwd().parent.resolve()
+          )
+          selected = [
+              repository
+              for repository in repositories
+              if repository.name in catalog_candidate.SIGNING_REPOSITORIES
+          ]
+
+          def compile_helper(repository):
+              environment = runner.sanitized_environment(os.environ)
+              environment["GRADLE_OPTS"] = "-Dorg.gradle.daemon=false"
+              completed = subprocess.run(
+                  [
+                      str(repository.root / "gradlew"),
+                      "-p",
+                      "buildSrc",
+                      "test",
+                      "compileKotlin",
+                      "--no-daemon",
+                      "--no-configuration-cache",
+                      "--no-build-cache",
+                      "--console=plain",
+                  ],
+                  cwd=repository.root,
+                  env=environment,
+                  check=False,
+                  text=True,
+              )
+              if completed.returncode:
+                  raise RuntimeError(
+                      f"buildSrc validation failed for {repository.name}: "
+                      f"exit {completed.returncode}"
+                  )
+              return repository.name
+
+          with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+              futures = [executor.submit(compile_helper, repository) for repository in selected]
+              for future in concurrent.futures.as_completed(futures):
+                  print(f"validated={future.result()}")
+          PY
 
       - name: Verify catalog scripts
         run: |

@@ -54,6 +54,14 @@ class Issues242243ReceiptTest(unittest.TestCase):
             source = root / receipt.CANONICAL_SOURCE_RELATIVE
             source.parent.mkdir(parents=True)
             source.write_text("canonical signing helper\n", encoding="utf-8")
+        if name in receipt.SIGNING_NAMES:
+            target = root / receipt.GENERATED_SIGNING_TARGET_RELATIVE
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(
+                receipt._load_signing_sync_module().render_generated_content(
+                    b"canonical signing helper\n"
+                )
+            )
         self.git(root.parent, "init", "-b", "candidate", str(root))
         origin = f"git@github.com:bluetape4k/{name}.git"
         self.git(root, "remote", "add", "origin", origin)
@@ -203,6 +211,128 @@ class Issues242243ReceiptTest(unittest.TestCase):
         receipt_path.write_bytes(receipt.canonical_json_bytes(document))
         return workspace, receipt_path, document
 
+    def make_adoptable(self, document: dict[str, object]) -> None:
+        phases = [
+            {
+                "name": name,
+                "result": "pass",
+                "output_sha256": hashlib.sha256(name.encode()).hexdigest(),
+            }
+            for name in sorted(receipt.REQUIRED_ADOPTION_PHASES)
+        ]
+        commands: list[dict[str, object]] = []
+
+        def add_command(
+            repository: str,
+            phase: str,
+            *,
+            coordinate: str | None = None,
+            selected_version: str | None = None,
+            override_disposition: str = "baseline",
+        ) -> None:
+            command = (
+                f"./gradlew dependencyInsight --dependency {coordinate}"
+                if coordinate
+                else "./gradlew test"
+            )
+            if phase == "signing-buildsrc":
+                task_set = ["compileKotlin", "test"]
+            elif phase == "consumers":
+                task_set = receipt.ADOPTION_CONSUMER_TASKS[repository]
+            elif phase == "publication-poms":
+                task_set = ["verify-publication-poms.py"]
+            elif phase.startswith("timefold-graphs-"):
+                task_set = receipt.ADOPTION_GRAPH_TASKS[repository]
+            else:
+                task_set = ["dependencyInsight"]
+            immutable = {
+                "schema_version": 1,
+                "repository": repository,
+                "phase": phase,
+                "command": command,
+                "repository_head": "a" * 40,
+                "helper_sha256": "b" * 64,
+                "catalog_sha256": "c" * 64,
+                "bom_sha256": "d" * 64,
+                "task_set": task_set,
+                "configuration": "testRuntimeClasspath",
+                "jdk": "25",
+                "gradle": "9.7.0",
+                "coordinate": coordinate,
+                "override_disposition": override_disposition,
+            }
+            commands.append(
+                {
+                    "repository": repository,
+                    "phase": phase,
+                    "command": command,
+                    "jdk": "25",
+                    "gradle": "9.7.0",
+                    "configuration": "testRuntimeClasspath",
+                    "elapsed_seconds": 1.0,
+                    "cache": "isolated",
+                    "result": "pass",
+                    "output_sha256": hashlib.sha256(
+                        f"{phase}:{repository}:{coordinate}".encode()
+                    ).hexdigest(),
+                    "coordinate": coordinate,
+                    "selected_version": selected_version,
+                    "selection_reason": "selected by immutable fixture" if coordinate else None,
+                    "repository_head": "a" * 40,
+                    "helper_sha256": "b" * 64,
+                    "catalog_sha256": "c" * 64,
+                    "bom_sha256": "d" * 64,
+                    "task_set": task_set,
+                    "override_disposition": override_disposition,
+                    "input_sha256": receipt.sha256_bytes(
+                        receipt.canonical_json_bytes(immutable)
+                    ),
+                }
+            )
+
+        for repository in receipt.SIGNING_NAMES:
+            add_command(repository, "signing-buildsrc")
+        for phase, selected, disposition in (
+            ("timefold-graphs-baseline", "2.4.0", "baseline"),
+            ("timefold-graphs-candidate", "2.6.0", "candidate"),
+        ):
+            for repository, coordinates in receipt.ADOPTION_GRAPH_COORDINATES.items():
+                for coordinate in coordinates:
+                    add_command(
+                        repository,
+                        phase,
+                        coordinate=coordinate,
+                        selected_version=selected,
+                        override_disposition=disposition,
+                    )
+        for repository in receipt.ADOPTION_GRAPH_COORDINATES:
+            add_command(repository, "consumers", override_disposition="candidate")
+        add_command("publication-poms", "publication-poms")
+        document["phases"] = phases
+        document["commands"] = commands
+        for consumer in document["consumers"]:
+            coordinates = receipt.TIMEFOLD_CONSUMER_COORDINATES[consumer["name"]]
+            consumer["graphs"] = [
+                {
+                    "coordinate": coordinate,
+                    "configuration": "testRuntimeClasspath",
+                    "before_version": "2.4.0",
+                    "after_version": "2.6.0",
+                    "selection_reason": (
+                        "before: selected by immutable fixture; "
+                        "after: selected by immutable fixture"
+                    ),
+                    "output_sha256": next(
+                        item["output_sha256"]
+                        for item in commands
+                        if item["phase"] == "timefold-graphs-candidate"
+                        and item["repository"] == consumer["name"]
+                        and item["coordinate"] == coordinate
+                    ),
+                }
+                for coordinate in coordinates
+            ]
+
     def make_prospective_commit(self, root: Path, parent: str, content: bytes) -> str:
         blob = self.git(root, "hash-object", "-w", "--stdin", input_bytes=content)
         index = root / ".receipt-test-index"
@@ -340,6 +470,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
 
     def test_adopted_receipt_checks_prospective_parent_path_and_blob_digest(self) -> None:
         workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
         for item in document["repositories"] + document["consumers"]:
             item["state"] = "adopted"
         document["central"]["state"] = "adopted"
@@ -363,6 +494,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
 
     def test_adopted_receipt_rejects_path_and_digest_mismatch(self) -> None:
         workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
         for item in document["repositories"] + document["consumers"]:
             item["state"] = "adopted"
         document["central"]["state"] = "adopted"
@@ -433,6 +565,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
 
     def test_last_adopted_transition_derives_prospective_evidence_metadata(self) -> None:
         workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
         for item in document["repositories"] + document["consumers"]:
             item["state"] = "adopted"
         document["repositories"][0]["state"] = "validated"
@@ -482,6 +615,41 @@ class Issues242243ReceiptTest(unittest.TestCase):
         path.write_bytes(receipt.canonical_json_bytes(document))
         with self.assertRaisesRegex(receipt.ReceiptError, "signing digest mismatch"):
             receipt.validate_receipt(path)
+
+    def test_generated_signing_helpers_are_read_back_from_every_publisher(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        publisher = next(
+            item
+            for item in document["repositories"]
+            if item["name"] != receipt.CENTRAL_NAME and item["name"] in receipt.SIGNING_NAMES
+        )
+        target = Path(publisher["candidate_worktree"]) / receipt.GENERATED_SIGNING_TARGET_RELATIVE
+        self.git(
+            Path(publisher["candidate_worktree"]),
+            "update-index",
+            "--assume-unchanged",
+            receipt.GENERATED_SIGNING_TARGET_RELATIVE,
+        )
+        target.write_text("drift\n", encoding="utf-8")
+        with self.assertRaisesRegex(
+            receipt.ReceiptError, "generated signing helper mismatch"
+        ):
+            receipt.validate_receipt(path)
+
+    def test_adopted_receipt_requires_complete_immutable_evidence(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        for item in document["repositories"] + document["consumers"]:
+            item["state"] = "adopted"
+        document["central"]["state"] = "adopted"
+        document["current_state"] = "adopted"
+        document["evidence_commit"] = {
+            "parent": document["central"]["candidate_head"],
+            "path": receipt.EVIDENCE_RECEIPT_PATH,
+            "bytes_sha256": "a" * 64,
+        }
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "missing required phases"):
+            receipt.validate_receipt(path, evidence_commit="b" * 40)
 
         _workspace, path, document = self.make_fixture()
         document["consumers"][0]["signing_sha256"] = "f" * 64

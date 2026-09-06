@@ -54,6 +54,21 @@ def _load_catalog_candidate_module() -> Any:
     return module
 
 
+def _load_signing_sync_module() -> Any:
+    module_name = "issues_242_243_signing_sync"
+    existing = sys.modules.get(module_name)
+    if existing is not None:
+        return existing
+    module_path = Path(__file__).with_name("sync-publishing-signing-support.py")
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("cannot load sync-publishing-signing-support.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 _CATALOG_CANDIDATE = _load_catalog_candidate_module()
 CENTRAL_NAME = _CATALOG_CANDIDATE.REPOSITORY_NAMES["central"]
 CATALOG_NAMES = _CATALOG_CANDIDATE.CATALOG_REPOSITORIES
@@ -70,6 +85,44 @@ TIMEFOLD_CONSUMER_COORDINATES = {
 ALL_NAMES = CATALOG_NAMES + CONSUMER_NAMES
 EVIDENCE_RECEIPT_PATH = "docs/releases/2026-09-06-issues-242-243-local-receipt.json"
 CANONICAL_SOURCE_RELATIVE = "config/publishing-signing/PublishingSigningKeySupport.kt"
+GENERATED_SIGNING_TARGET_RELATIVE = (
+    "buildSrc/src/main/kotlin/PublishingSigningKeySupport.kt"
+)
+REQUIRED_ADOPTION_PHASES = frozenset(
+    {
+        "signing-buildsrc",
+        "timefold-graphs-baseline",
+        "timefold-graphs-candidate",
+        "consumers",
+        "publication-poms",
+        "candidate-bom-artifacts",
+    }
+)
+ADOPTION_GRAPH_COORDINATES = {
+    "bluetape4k-exposed": ("ai.timefold.solver:timefold-solver-core",),
+    **TIMEFOLD_CONSUMER_COORDINATES,
+}
+ADOPTION_GRAPH_TASKS = {
+    "bluetape4k-exposed": [
+        ":bluetape4k-exposed-timefold-solver-persistence:dependencyInsight"
+    ],
+    "timefold-workshop": [":school-timetabling:dependencyInsight"],
+    "clinic-appointment": [":appointment-solver:dependencyInsight"],
+}
+ADOPTION_CONSUMER_TASKS = {
+    "bluetape4k-exposed": [":bluetape4k-exposed-timefold-solver-persistence:test"],
+    "timefold-workshop": sorted(
+        [
+            ":bluetape4k-timefold:test",
+            ":school-timetabling:test",
+            ":exposed-jdbc-examples:test",
+            ":exposed-r2dbc-examples:test",
+        ]
+    ),
+    "clinic-appointment": sorted(
+        [":appointment-solver:test", ":appointment-api:test"]
+    ),
+}
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
@@ -421,6 +474,21 @@ def _validate_common_repo_receipt(
     return dict(value)
 
 
+def _validate_generated_signing_helper(
+    repository: Mapping[str, Any], expected_payload: bytes
+) -> None:
+    name = str(repository["name"])
+    if name not in SIGNING_NAMES:
+        return
+    root = _canonical_path(
+        repository["candidate_worktree"], f"{name} candidate worktree"
+    )
+    target = root / GENERATED_SIGNING_TARGET_RELATIVE
+    _regular_nonsymlink(target, f"generated signing helper for {name}")
+    if target.read_bytes() != expected_payload:
+        raise ReceiptError(f"generated signing helper mismatch for {name}")
+
+
 def _validate_graph(graph: Any, consumer: str) -> None:
     fields = {
         "coordinate",
@@ -534,22 +602,61 @@ def _validate_passed_candidate_graphs(
                 raise ReceiptError(f"consumer graph command binding mismatch for {name}")
 
 
+LEGACY_COMMAND_FIELDS = {
+    "repository",
+    "command",
+    "jdk",
+    "gradle",
+    "configuration",
+    "elapsed_seconds",
+    "cache",
+    "result",
+    "output_sha256",
+}
+BOUND_COMMAND_FIELDS = LEGACY_COMMAND_FIELDS | {
+    "phase",
+    "coordinate",
+    "selected_version",
+    "selection_reason",
+    "repository_head",
+    "helper_sha256",
+    "catalog_sha256",
+    "bom_sha256",
+    "task_set",
+    "override_disposition",
+    "input_sha256",
+}
+
+
+def _bound_command_input(item: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "repository": item["repository"],
+        "phase": item["phase"],
+        "command": item["command"],
+        "repository_head": item["repository_head"],
+        "helper_sha256": item["helper_sha256"],
+        "catalog_sha256": item["catalog_sha256"],
+        "bom_sha256": item["bom_sha256"],
+        "task_set": item["task_set"],
+        "configuration": item["configuration"],
+        "jdk": item["jdk"],
+        "gradle": item["gradle"],
+        "coordinate": item["coordinate"],
+        "override_disposition": item["override_disposition"],
+    }
+
+
 def _validate_commands(value: Any) -> None:
     if not isinstance(value, list):
         raise ReceiptError("commands must be an array")
-    fields = {
-        "repository",
-        "command",
-        "jdk",
-        "gradle",
-        "configuration",
-        "elapsed_seconds",
-        "cache",
-        "result",
-        "output_sha256",
-    }
     for command in value:
-        item = _expected_fields(command, fields, "command")
+        if not isinstance(command, Mapping) or frozenset(command) not in {
+            frozenset(LEGACY_COMMAND_FIELDS),
+            frozenset(BOUND_COMMAND_FIELDS),
+        }:
+            raise ReceiptError("command fields are invalid")
+        item = command
         for key in ("repository", "command", "jdk", "gradle", "configuration"):
             _require_nonempty_string(item[key], f"command {key}")
         if not isinstance(item["elapsed_seconds"], (int, float)) or item["elapsed_seconds"] < 0:
@@ -559,6 +666,34 @@ def _validate_commands(value: Any) -> None:
         if item["result"] not in {"pass", "fail", "blocked"}:
             raise ReceiptError("command result is invalid")
         _require_sha256(item["output_sha256"], "command output")
+        if set(item) == BOUND_COMMAND_FIELDS:
+            _require_nonempty_string(item["phase"], "command phase")
+            _require_commit(item["repository_head"], "command repository HEAD")
+            for key in ("helper_sha256", "catalog_sha256", "bom_sha256"):
+                _require_sha256(item[key], f"command {key}")
+            if not isinstance(item["task_set"], list) or not item["task_set"]:
+                raise ReceiptError("command task_set is invalid")
+            for task in item["task_set"]:
+                _require_nonempty_string(task, "command task")
+            if item["task_set"] != sorted(set(item["task_set"])):
+                raise ReceiptError("command task_set must be sorted and unique")
+            if item["override_disposition"] not in {"baseline", "candidate"}:
+                raise ReceiptError("command override disposition is invalid")
+            coordinate = item["coordinate"]
+            selected = item["selected_version"]
+            reason = item["selection_reason"]
+            if not all(value is None or isinstance(value, str) for value in (coordinate, selected, reason)):
+                raise ReceiptError("command graph evidence is invalid")
+            if item["phase"].startswith("timefold-graphs-"):
+                _require_nonempty_string(coordinate, "command graph coordinate")
+                if item["result"] == "pass":
+                    _require_nonempty_string(selected, "command selected version")
+                    _require_nonempty_string(reason, "command selection reason")
+            elif any(value is not None for value in (coordinate, selected, reason)):
+                raise ReceiptError("non-graph command contains graph evidence")
+            expected_input = sha256_bytes(canonical_json_bytes(_bound_command_input(item)))
+            if _require_sha256(item["input_sha256"], "command input") != expected_input:
+                raise ReceiptError("command input SHA-256 mismatch")
 
 
 def _validate_phases(value: Any) -> None:
@@ -571,6 +706,104 @@ def _validate_phases(value: Any) -> None:
         if item["result"] not in {"pass", "fail", "blocked"}:
             raise ReceiptError("phase result is invalid")
         _require_sha256(item["output_sha256"], "phase output")
+
+
+def _validate_adopted_evidence(document: Mapping[str, Any]) -> None:
+    phases = document["phases"]
+    phase_names = [str(item["name"]) for item in phases]
+    if len(phase_names) != len(set(phase_names)):
+        raise ReceiptError("adopted receipt contains duplicate phases")
+    missing = REQUIRED_ADOPTION_PHASES - set(phase_names)
+    if missing:
+        raise ReceiptError(
+            "adopted receipt is missing required phases: " + ", ".join(sorted(missing))
+        )
+    unknown = set(phase_names) - REQUIRED_ADOPTION_PHASES - {"discover"}
+    if unknown:
+        raise ReceiptError(
+            "adopted receipt contains unknown phases: " + ", ".join(sorted(unknown))
+        )
+    if any(item["result"] != "pass" for item in phases):
+        raise ReceiptError("adopted receipt requires every phase to pass")
+    artifact_phase = next(
+        item for item in phases if item["name"] == "candidate-bom-artifacts"
+    )
+    if artifact_phase["output_sha256"] == "0" * 64:
+        raise ReceiptError("adopted receipt candidate artifact manifest is empty")
+    if document["failure_record"] or document["rollback_record"]:
+        raise ReceiptError("adopted receipt requires empty failure and rollback records")
+
+    commands = document["commands"]
+    if not commands or any(set(item) != BOUND_COMMAND_FIELDS for item in commands):
+        raise ReceiptError("adopted receipt requires immutable command evidence")
+    if any(item["result"] != "pass" for item in commands):
+        raise ReceiptError("adopted receipt requires every command to pass")
+
+    known_command_phases = REQUIRED_ADOPTION_PHASES - {"candidate-bom-artifacts"}
+    if {item["phase"] for item in commands} - known_command_phases:
+        raise ReceiptError("adopted receipt contains unknown command phases")
+    signing_commands = [
+        item for item in commands if item["phase"] == "signing-buildsrc"
+    ]
+    if len(signing_commands) != len(SIGNING_NAMES) or {
+        item["repository"] for item in signing_commands
+    } != set(SIGNING_NAMES):
+        raise ReceiptError("adopted receipt signing command coverage is incomplete")
+    if any(item["task_set"] != ["compileKotlin", "test"] for item in signing_commands):
+        raise ReceiptError("adopted receipt signing task coverage is incomplete")
+
+    expected_graphs = {
+        (phase, repository, coordinate)
+        for phase in ("timefold-graphs-baseline", "timefold-graphs-candidate")
+        for repository, coordinates in ADOPTION_GRAPH_COORDINATES.items()
+        for coordinate in coordinates
+    }
+    graph_command_values = [
+        item for item in commands if item["phase"].startswith("timefold-graphs-")
+    ]
+    graph_commands = {
+        (item["phase"], item["repository"], item["coordinate"]): item
+        for item in graph_command_values
+    }
+    if len(graph_command_values) != len(expected_graphs) or set(graph_commands) != expected_graphs:
+        raise ReceiptError("adopted receipt graph command coverage is incomplete")
+    for repository, coordinates in ADOPTION_GRAPH_COORDINATES.items():
+        for coordinate in coordinates:
+            baseline = graph_commands[("timefold-graphs-baseline", repository, coordinate)]
+            candidate = graph_commands[("timefold-graphs-candidate", repository, coordinate)]
+            if baseline["override_disposition"] != "baseline":
+                raise ReceiptError("baseline graph command uses candidate overrides")
+            if candidate["override_disposition"] != "candidate":
+                raise ReceiptError("candidate graph command lacks candidate overrides")
+            if baseline["selected_version"] == "2.6.0":
+                raise ReceiptError("baseline graph already selects candidate Timefold")
+            if candidate["selected_version"] != "2.6.0":
+                raise ReceiptError("candidate graph does not select Timefold 2.6.0")
+            if baseline["task_set"] != ADOPTION_GRAPH_TASKS[repository] or candidate[
+                "task_set"
+            ] != ADOPTION_GRAPH_TASKS[repository]:
+                raise ReceiptError("adopted receipt graph task coverage is incomplete")
+            if baseline["input_sha256"] == candidate["input_sha256"]:
+                raise ReceiptError("baseline and candidate graph inputs are not independent")
+
+    consumer_commands = [item for item in commands if item["phase"] == "consumers"]
+    if len(consumer_commands) != len(ADOPTION_CONSUMER_TASKS) or {
+        item["repository"] for item in consumer_commands
+    } != set(ADOPTION_CONSUMER_TASKS):
+        raise ReceiptError("adopted receipt consumer command coverage is incomplete")
+    for item in consumer_commands:
+        if item["task_set"] != ADOPTION_CONSUMER_TASKS[item["repository"]]:
+            raise ReceiptError("adopted receipt consumer task coverage is incomplete")
+        if item["override_disposition"] != "candidate":
+            raise ReceiptError("adopted receipt consumer command lacks candidate overrides")
+
+    publication_commands = [
+        item for item in commands if item["phase"] == "publication-poms"
+    ]
+    if len(publication_commands) != 1 or publication_commands[0]["repository"] != "publication-poms":
+        raise ReceiptError("adopted receipt publication command coverage is incomplete")
+    if publication_commands[0]["task_set"] != ["verify-publication-poms.py"]:
+        raise ReceiptError("adopted receipt publication task coverage is incomplete")
 
 
 def _validate_records(value: Any, description: str) -> None:
@@ -705,6 +938,10 @@ def _validate_receipt_document(
     )
     if source_path.relative_to(Path(central_map["candidate_worktree"])).as_posix() != CANONICAL_SOURCE_RELATIVE:
         raise ReceiptError("canonical signing source path is not allowlisted")
+    signing_sync = _load_signing_sync_module()
+    expected_generated_helper = signing_sync.render_generated_content(
+        source_path.read_bytes()
+    )
     repository_values = document["repositories"]
     if not isinstance(repository_values, list) or {item.get("name") for item in repository_values if isinstance(item, Mapping)} != set(CATALOG_NAMES):
         raise ReceiptError("receipt repositories must contain the exact catalog set")
@@ -715,13 +952,13 @@ def _validate_receipt_document(
         name = item.get("name") if isinstance(item, Mapping) else None
         if name not in mapped or name not in CATALOG_NAMES:
             raise ReceiptError("receipt repository is not in the catalog allowlist")
-        verified_repositories.append(
-            _validate_common_repo_receipt(
+        verified = _validate_common_repo_receipt(
                 item,
                 mapped[name],
                 expected_signing_sha256=str(source["sha256"]),
             )
-        )
+        _validate_generated_signing_helper(verified, expected_generated_helper)
+        verified_repositories.append(verified)
     consumers = document["consumers"]
     if not isinstance(consumers, list) or len(consumers) != len(CONSUMER_NAMES):
         raise ReceiptError("receipt consumers must contain Workshop and Clinic")
@@ -751,6 +988,7 @@ def _validate_receipt_document(
     _validate_records(document["rollback_record"], "rollback record")
     evidence = document["evidence_commit"]
     if state == "adopted":
+        _validate_adopted_evidence(document)
         if not isinstance(evidence, Mapping):
             raise ReceiptError("adopted receipt requires evidence metadata")
         if any(item["state"] != "adopted" for item in verified_repositories + verified_consumers):

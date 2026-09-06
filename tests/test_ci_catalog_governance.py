@@ -269,7 +269,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("status --porcelain=v1 --untracked-files=all", recheck_step)
 
         central_step = workflow.split(
-            "      - name: Verify central generated signing copy\n", 1
+            "      - name: Verify all generated signing copies\n", 1
         )[1].split("      - name:", 1)[0]
         self.assertNotIn("if:", central_step)
         self.assertIn(
@@ -277,17 +277,28 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             central_step,
         )
         self.assertIn("python3 scripts/sync-publishing-signing-support.py", central_step)
-        self.assertIn("--repo bluetape4k-dependencies", central_step)
+        self.assertNotIn("--repo ", central_step)
         self.assertNotIn("Verify PR central generated signing copy", workflow)
+        self.assertIn("catalog_candidate.REPOSITORY_KEYS", map_step)
+        compile_step = workflow.split(
+            "      - name: Compile generated signing helpers\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("ThreadPoolExecutor(max_workers=2)", compile_step)
+        self.assertIn("catalog_candidate.SIGNING_REPOSITORIES", compile_step)
+        self.assertIn("runner.sanitized_environment", compile_step)
+        self.assertIn('"-p",', compile_step)
+        self.assertIn('"buildSrc",', compile_step)
+        self.assertIn('"compileKotlin",', compile_step)
+        self.assertIn('"test",', compile_step)
 
     def test_ci_does_not_reclone_signing_siblings_for_a_pr_central_check(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         check_step = workflow.split(
-            "      - name: Verify central generated signing copy\n", 1
+            "      - name: Verify all generated signing copies\n", 1
         )[1].split("      - name:", 1)[0]
         self.assertNotIn("if:", check_step)
         self.assertIn("python3 scripts/sync-publishing-signing-support.py", check_step)
-        self.assertIn("--repo bluetape4k-dependencies", check_step)
+        self.assertNotIn("--repo ", check_step)
         self.assertNotIn("gh repo clone", check_step)
         self.assertNotIn("Verify PR central generated signing copy", workflow)
 

@@ -5,6 +5,7 @@ import importlib.util
 import json
 import os
 import stat
+import subprocess
 import sys
 import tempfile
 import threading
@@ -516,6 +517,53 @@ class ValidationRunnerTest(unittest.TestCase):
             runner.should_refresh_graph_dependencies("timefold-graphs-candidate")
         )
 
+    def test_baseline_graph_requires_a_clean_exact_base_worktree(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            subprocess.run(
+                ["git", "init", "-b", "baseline", str(root)],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "config", "user.name", "Baseline Test"],
+                check=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(root), "config", "user.email", "baseline@example.invalid"],
+                check=True,
+            )
+            (root / "fixture.txt").write_text("baseline\n", encoding="utf-8")
+            subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+            subprocess.run(
+                ["git", "-C", str(root), "commit", "-m", "fixture"],
+                check=True,
+                capture_output=True,
+            )
+            origin = "git@github.com:bluetape4k/demo.git"
+            subprocess.run(
+                ["git", "-C", str(root), "remote", "add", "origin", origin], check=True
+            )
+            head = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            binding = {"base_sha": head, "origin": origin}
+            actual = runner._baseline_root_from_binding(binding, root, "demo")
+            self.assertEqual(actual, (root, head, origin, "baseline"))
+            with self.assertRaisesRegex(runner.InputContractError, "exact base worktree"):
+                runner._baseline_root_from_binding(binding, None, "demo")
+            with self.assertRaisesRegex(runner.InputContractError, "reuses candidate"):
+                runner._baseline_root_from_binding(
+                    {**binding, "candidate_worktree": str(root)}, root, "demo"
+                )
+            with self.assertRaisesRegex(runner.InputContractError, "HEAD mismatch"):
+                runner._baseline_root_from_binding(
+                    {"base_sha": "a" * 40, "origin": origin}, root, "demo"
+                )
+
     def test_validation_budget_is_fail_closed_and_receipt_bound(self) -> None:
         self.assertEqual(
             runner.validation_budget_remaining(
@@ -748,12 +796,23 @@ class ValidationRunnerTest(unittest.TestCase):
             phase = runner.PhaseResult("signing-buildsrc", "pass", "f" * 64, (result,))
             expected_digest = hashlib.sha256(receipt.read_bytes()).hexdigest()
             with mock.patch.object(runner, "_load_receipt_module", return_value=StrictReceipt):
+                reserved, reserved_digest = runner._reserve_validation_budget(
+                    receipt,
+                    expected_receipt_sha256=expected_digest,
+                    expected_state="discovered",
+                )
+                self.assertEqual(reserved, 5400.0)
+                reserved_document = json.loads(receipt.read_text(encoding="utf-8"))
+                self.assertEqual(reserved_document["validation_budget"]["elapsed_seconds"], 5400.0)
+                self.assertEqual(reserved_document["validation_budget"]["remaining_seconds"], 0.0)
                 runner._write_receipt_update(
                     receipt,
                     phase,
                     (job,),
-                    expected_receipt_sha256=expected_digest,
+                    expected_receipt_sha256=reserved_digest,
                     expected_state="discovered",
+                    phase_elapsed_seconds=0.01,
+                    reserved_seconds=reserved,
                 )
                 self.assertGreaterEqual(calls.count("validate"), 2)
                 self.assertEqual(calls[0], "lock-enter")
@@ -764,6 +823,17 @@ class ValidationRunnerTest(unittest.TestCase):
                     if item["name"] == "candidate-bom-artifacts"
                 )
                 self.assertEqual(artifact_phase["output_sha256"], "d" * 64)
+                command = updated["commands"][0]
+                self.assertEqual(command["phase"], "signing-buildsrc")
+                self.assertEqual(command["repository_head"], "a" * 40)
+                self.assertEqual(command["helper_sha256"], "b" * 64)
+                self.assertEqual(command["catalog_sha256"], "c" * 64)
+                self.assertEqual(command["bom_sha256"], "d" * 64)
+                self.assertEqual(command["task_set"], ["test"])
+                self.assertEqual(command["override_disposition"], "candidate")
+                self.assertRegex(command["input_sha256"], r"^[0-9a-f]{64}$")
+                self.assertEqual(updated["validation_budget"]["elapsed_seconds"], 0.01)
+                self.assertEqual(updated["validation_budget"]["remaining_seconds"], 5399.99)
                 stale_digest = hashlib.sha256(receipt.read_bytes()).hexdigest()
                 self.assertNotEqual(stale_digest, expected_digest)
                 with self.assertRaisesRegex(runner.InputContractError, "digest"):

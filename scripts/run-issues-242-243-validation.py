@@ -1427,6 +1427,28 @@ def _consumer_root_from_receipt(
     return root, head
 
 
+def _baseline_root_from_binding(
+    binding: Mapping[str, Any], requested_root: Optional[Path], name: str
+) -> tuple[Path, str, str, str]:
+    if requested_root is None:
+        raise InputContractError(f"baseline phase requires an exact base worktree: {name}")
+    root = _canonical_directory(requested_root, f"baseline worktree for {name}")
+    candidate_worktree = binding.get("candidate_worktree")
+    if isinstance(candidate_worktree, str) and root == Path(candidate_worktree):
+        raise InputContractError(f"baseline worktree reuses candidate worktree: {name}")
+    base_sha = binding.get("base_sha")
+    origin = binding.get("origin")
+    if not isinstance(base_sha, str) or not isinstance(origin, str):
+        raise InputContractError(f"baseline binding is incomplete: {name}")
+    if _git(root, "rev-parse", "HEAD") != base_sha:
+        raise InputContractError(f"baseline HEAD mismatch: {name}")
+    if _git(root, "remote", "get-url", "origin") != origin:
+        raise InputContractError(f"baseline origin mismatch: {name}")
+    if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
+        raise InputContractError(f"baseline worktree is dirty: {name}")
+    return root, base_sha, origin, _git(root, "branch", "--show-current")
+
+
 def _make_timefold_graph_jobs(
     *,
     repository: str,
@@ -1482,6 +1504,9 @@ def build_phase_jobs(
     *,
     workshop_root: Optional[Path] = None,
     clinic_root: Optional[Path] = None,
+    exposed_baseline_root: Optional[Path] = None,
+    workshop_baseline_root: Optional[Path] = None,
+    clinic_baseline_root: Optional[Path] = None,
     candidate_maven_repository: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
 ) -> tuple[ValidationJob, ...]:
@@ -1538,26 +1563,37 @@ def build_phase_jobs(
     if phase == "timefold-graphs-baseline":
         jobs: list[ValidationJob] = []
         exposed = entries["bluetape4k-exposed"]
+        exposed_root, exposed_head, exposed_origin, exposed_branch = (
+            _baseline_root_from_binding(
+                exposed, exposed_baseline_root, "bluetape4k-exposed"
+            )
+        )
         jobs.extend(
             _make_timefold_graph_jobs(
                 repository="bluetape4k-exposed",
-                root=Path(exposed["candidate_worktree"]),
-                repository_head=str(exposed["candidate_head"]),
+                root=exposed_root,
+                repository_head=exposed_head,
                 central_root=central_root,
-                repository_origin=str(exposed["origin"]),
-                repository_branch=str(exposed["candidate_branch"]),
+                repository_origin=exposed_origin,
+                repository_branch=exposed_branch,
             )
         )
+        requested_baselines = {
+            "timefold-workshop": workshop_baseline_root,
+            "clinic-appointment": clinic_baseline_root,
+        }
         for name in ("timefold-workshop", "clinic-appointment"):
-            root, head = consumer_roots[name]
+            root, head, origin, branch = _baseline_root_from_binding(
+                consumer_bindings[name], requested_baselines[name], name
+            )
             jobs.extend(
                 _make_timefold_graph_jobs(
                     repository=name,
                     root=root,
                     repository_head=head,
                     central_root=central_root,
-                    repository_origin=str(consumer_bindings[name]["origin"]),
-                    repository_branch=str(consumer_bindings[name]["candidate_branch"]),
+                    repository_origin=origin,
+                    repository_branch=branch,
                 )
             )
         return tuple(jobs)
@@ -1708,7 +1744,11 @@ def _job_environment(job: ValidationJob) -> dict[str, str]:
     return environment
 
 
-def _load_job_bindings(repository_map_path: Path, receipt_path: Path) -> dict[str, dict[str, Any]]:
+def _load_job_bindings(
+    repository_map_path: Path,
+    receipt_path: Path,
+    jobs: Sequence[ValidationJob] = (),
+) -> dict[str, dict[str, Any]]:
     latest_map = load_strict_repository_map(repository_map_path)
     latest_receipt = load_local_receipt(receipt_path, repository_map_path)
     bindings = _entry_by_name(latest_map)
@@ -1718,6 +1758,17 @@ def _load_job_bindings(repository_map_path: Path, receipt_path: Path) -> dict[st
     for item in consumers:
         if isinstance(item, Mapping) and isinstance(item.get("name"), str):
             bindings[str(item["name"])] = dict(item)
+    for job in jobs:
+        if job.phase != "timefold-graphs-baseline":
+            continue
+        bindings[job.repository] = {
+            "candidate_worktree": str(job.cwd),
+            "candidate_head": job.repository_head,
+            "origin": job.repository_origin,
+            "candidate_branch": job.repository_branch,
+            "clean": True,
+            "exact_head": True,
+        }
     return bindings
 
 
@@ -1857,6 +1908,67 @@ def _phase_digest(phase: str, results: Sequence[CommandResult], failure: Optiona
     return sha256_bytes(canonical_json_bytes(payload))
 
 
+def _bound_command_record(
+    job: ValidationJob, command_result: CommandResult
+) -> dict[str, Any]:
+    command = " ".join(redact_command(job.command))
+    coordinate: str | None = job.coordinate or None
+    selected_version: str | None = None
+    selection_reason: str | None = None
+    if job.phase.startswith("timefold-graphs-") and command_result.status == "pass":
+        output = command_result.stdout + (
+            "\n" if command_result.stdout and command_result.stderr else ""
+        ) + command_result.stderr
+        observation = parse_dependency_insight(output, job.coordinate)
+        selected_version = observation.selected_version
+        selection_reason = observation.selection_reason
+    override_disposition = (
+        "candidate"
+        if job.candidate_maven_repository is not None
+        or job.candidate_catalog_path is not None
+        else "baseline"
+    )
+    task_set = sorted(set(job.task_set))
+    immutable_input = {
+        "schema_version": 1,
+        "repository": job.repository,
+        "phase": job.phase,
+        "command": command,
+        "repository_head": job.repository_head,
+        "helper_sha256": job.helper_sha256,
+        "catalog_sha256": job.catalog_sha256,
+        "bom_sha256": job.bom_sha256,
+        "task_set": task_set,
+        "configuration": job.configuration,
+        "jdk": job.jdk_version,
+        "gradle": job.gradle_version,
+        "coordinate": coordinate,
+        "override_disposition": override_disposition,
+    }
+    return {
+        "repository": job.repository,
+        "phase": job.phase,
+        "command": command,
+        "jdk": job.jdk_version,
+        "gradle": job.gradle_version,
+        "configuration": job.configuration,
+        "elapsed_seconds": command_result.elapsed_seconds,
+        "cache": "shared-read" if command_result.cached else "isolated",
+        "result": command_result.status,
+        "output_sha256": command_result.output_sha256,
+        "coordinate": coordinate,
+        "selected_version": selected_version,
+        "selection_reason": selection_reason,
+        "repository_head": job.repository_head,
+        "helper_sha256": job.helper_sha256,
+        "catalog_sha256": job.catalog_sha256,
+        "bom_sha256": job.bom_sha256,
+        "task_set": task_set,
+        "override_disposition": override_disposition,
+        "input_sha256": sha256_bytes(canonical_json_bytes(immutable_input)),
+    }
+
+
 def _update_consumer_graphs(
     document: dict[str, Any], result: PhaseResult, jobs: Sequence[ValidationJob]
 ) -> None:
@@ -1964,6 +2076,7 @@ def _write_receipt_update(
     expected_receipt_sha256: Optional[str] = None,
     expected_state: Optional[str] = None,
     phase_elapsed_seconds: float = 0.0,
+    reserved_seconds: Optional[float] = None,
 ) -> None:
     """CAS-update a receipt under its strict validator's lock."""
 
@@ -2002,13 +2115,24 @@ def _write_receipt_update(
         if not isinstance(validated, Mapping):
             raise InputContractError("strict receipt validator returned an invalid document")
         document = json.loads(json.dumps(dict(validated)))
-        remaining = validation_budget_remaining(document)
         if phase_elapsed_seconds < 0:
             raise InputContractError("phase elapsed time is invalid")
-        consumed = min(remaining, phase_elapsed_seconds)
         budget = document["validation_budget"]
-        budget["elapsed_seconds"] = float(budget["elapsed_seconds"]) + consumed
-        budget["remaining_seconds"] = remaining - consumed
+        if reserved_seconds is None:
+            remaining = validation_budget_remaining(document)
+            consumed = min(remaining, phase_elapsed_seconds)
+            budget["elapsed_seconds"] = float(budget["elapsed_seconds"]) + consumed
+            budget["remaining_seconds"] = remaining - consumed
+        else:
+            if reserved_seconds <= 0 or reserved_seconds > float(budget["total_seconds"]):
+                raise InputContractError("validation budget reservation is invalid")
+            if float(budget["remaining_seconds"]) != 0.0:
+                raise InputContractError("validation budget reservation was not consumed")
+            consumed = min(reserved_seconds, phase_elapsed_seconds)
+            budget["elapsed_seconds"] = (
+                float(budget["total_seconds"]) - reserved_seconds + consumed
+            )
+            budget["remaining_seconds"] = reserved_seconds - consumed
         phases = document.setdefault("phases", [])
         if not isinstance(phases, list):
             raise InputContractError("local receipt phases must be an array")
@@ -2046,19 +2170,7 @@ def _write_receipt_update(
         if not isinstance(commands, list):
             raise InputContractError("local receipt commands must be an array")
         for job, command_result in zip(jobs, result.jobs):
-            commands.append(
-                {
-                    "repository": job.repository,
-                    "command": " ".join(redact_command(job.command)),
-                    "jdk": job.jdk_version,
-                    "gradle": job.gradle_version,
-                    "configuration": job.configuration,
-                    "elapsed_seconds": command_result.elapsed_seconds,
-                    "cache": "shared-read" if command_result.cached else "isolated",
-                    "result": command_result.status,
-                    "output_sha256": command_result.output_sha256,
-                }
-            )
+            commands.append(_bound_command_record(job, command_result))
         failures = document.setdefault("failure_record", [])
         if not isinstance(failures, list):
             raise InputContractError("local receipt failure_record must be an array")
@@ -2091,6 +2203,59 @@ def _write_receipt_update(
             raise InputContractError("strict receipt read-back is invalid")
 
 
+def _reserve_validation_budget(
+    path: Path,
+    *,
+    expected_receipt_sha256: str,
+    expected_state: str,
+) -> tuple[float, str]:
+    """Reserve all remaining budget before execution so crashes fail closed."""
+
+    path = _canonical_existing_file(path, "local receipt")
+    _validate_sha256(expected_receipt_sha256, "expected receipt")
+    receipt_module = _load_receipt_module()
+    lock = getattr(receipt_module, "_receipt_lock", None)
+    validate = getattr(receipt_module, "validate_receipt", None)
+    write_atomic = getattr(receipt_module, "write_atomic", None)
+    if not callable(lock) or not callable(validate) or not callable(write_atomic):
+        raise InputContractError("strict receipt module lacks lock/validate/write helpers")
+    with lock(path):
+        path = _canonical_existing_file(path, "local receipt")
+        original_bytes = path.read_bytes()
+        if sha256_bytes(original_bytes) != expected_receipt_sha256:
+            raise InputContractError("stale receipt digest for budget reservation")
+        try:
+            document = validate(path)
+        except Exception as exc:
+            raise InputContractError(f"latest receipt validation failed: {exc}") from exc
+        if not isinstance(document, Mapping) or document.get("current_state") != expected_state:
+            raise InputContractError("stale receipt state for budget reservation")
+        updated = json.loads(json.dumps(dict(document)))
+        reserved = validation_budget_remaining(updated)
+        if reserved <= 0:
+            raise InputContractError("total validation budget exceeded")
+        budget = updated["validation_budget"]
+        budget["elapsed_seconds"] = float(budget["total_seconds"])
+        budget["remaining_seconds"] = 0.0
+        try:
+            write_atomic(path, canonical_json_bytes(updated))
+            readback = validate(path)
+        except Exception as exc:
+            try:
+                write_atomic(path, original_bytes)
+            except Exception as restore_exc:  # noqa: BLE001 - preserve primary failure
+                raise InputContractError(
+                    "budget reservation validation failed and restore failed: "
+                    f"{restore_exc}"
+                ) from exc
+            raise InputContractError(
+                f"budget reservation read-back validation failed: {exc}"
+            ) from exc
+        if not isinstance(readback, Mapping):
+            raise InputContractError("strict receipt read-back is invalid")
+        return reserved, sha256_file(path)
+
+
 def run_phase(
     phase: str,
     *,
@@ -2098,6 +2263,9 @@ def run_phase(
     receipt_path: Path,
     workshop_root: Optional[Path] = None,
     clinic_root: Optional[Path] = None,
+    exposed_baseline_root: Optional[Path] = None,
+    workshop_baseline_root: Optional[Path] = None,
+    clinic_baseline_root: Optional[Path] = None,
     candidate_maven_repository: Optional[Path] = None,
     cache_directory: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
@@ -2108,9 +2276,6 @@ def run_phase(
     receipt_path = _canonical_input_path(receipt_path, "local receipt")
     repository_map = load_strict_repository_map(repository_map_path)
     receipt = load_local_receipt(receipt_path, repository_map_path)
-    remaining_budget = validation_budget_remaining(receipt)
-    phase_started = time.monotonic()
-    deadline = phase_started + remaining_budget
     expected_receipt_sha256 = sha256_file(receipt_path)
     expected_state = receipt.get("current_state")
     if not isinstance(expected_state, str) or not expected_state:
@@ -2121,12 +2286,22 @@ def run_phase(
         receipt,
         workshop_root=workshop_root,
         clinic_root=clinic_root,
+        exposed_baseline_root=exposed_baseline_root,
+        workshop_baseline_root=workshop_baseline_root,
+        clinic_baseline_root=clinic_baseline_root,
         candidate_maven_repository=candidate_maven_repository,
         repositories=repositories,
     )
     if dry_run:
         digest = _phase_digest(phase, (), None)
         return PhaseResult(phase, "pass", digest, ())
+    reserved_budget, expected_receipt_sha256 = _reserve_validation_budget(
+        receipt_path,
+        expected_receipt_sha256=expected_receipt_sha256,
+        expected_state=expected_state,
+    )
+    phase_started = time.monotonic()
+    deadline = phase_started + reserved_budget
     cache_directory = cache_directory or receipt_path.parent / "cache"
     max_workers = 1 if phase == "publication-poms" else MAX_WORKERS
     jobs_by_id = {
@@ -2134,7 +2309,9 @@ def run_phase(
         for index, job in enumerate(jobs)
     }
     cancel_event = threading.Event()
-    binding_loader = lambda: _load_job_bindings(repository_map_path, receipt_path)
+    binding_loader = lambda: _load_job_bindings(
+        repository_map_path, receipt_path, tuple(jobs_by_id.values())
+    )
     result_by_id: dict[int, CommandResult] = {}
     failure: Optional[str] = None
     outcome = run_bounded_jobs(
@@ -2193,6 +2370,7 @@ def run_phase(
         expected_receipt_sha256=expected_receipt_sha256,
         expected_state=expected_state,
         phase_elapsed_seconds=time.monotonic() - phase_started,
+        reserved_seconds=reserved_budget,
     )
     return phase_result
 
@@ -2204,6 +2382,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--workshop-root", type=Path)
     parser.add_argument("--clinic-root", type=Path)
+    parser.add_argument("--exposed-baseline-root", type=Path)
+    parser.add_argument("--workshop-baseline-root", type=Path)
+    parser.add_argument("--clinic-baseline-root", type=Path)
     parser.add_argument("--candidate-maven-repository", type=Path)
     parser.add_argument("--cache-dir", type=Path)
     parser.add_argument("--repo", action="append", dest="repositories")
@@ -2221,6 +2402,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             receipt_path=args.receipt,
             workshop_root=args.workshop_root,
             clinic_root=args.clinic_root,
+            exposed_baseline_root=args.exposed_baseline_root,
+            workshop_baseline_root=args.workshop_baseline_root,
+            clinic_baseline_root=args.clinic_baseline_root,
             candidate_maven_repository=args.candidate_maven_repository,
             cache_directory=args.cache_dir,
             repositories=args.repositories,

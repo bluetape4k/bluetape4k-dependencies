@@ -48,7 +48,12 @@ fail-closed 처리하도록 보강했다. 이 보강 자체는 기존 후보를 
   모두 `2.6.0`을 선택했다. 이는 독립적인 `2.2.x` 기준선 증거가 아니다.
 - Clinic baseline은 검증 worktree가 참조하는 로컬 후보 BOM을 baseline repository에서
   찾지 못해 graph를 만들지 못했다. candidate benchmark graph는 `2.6.0`을 선택했지만,
-  대응하는 immutable baseline이 없으므로 전환 증거로 사용할 수 없다.
+대응하는 immutable baseline이 없으므로 전환 증거로 사용할 수 없다.
+
+후속 보강으로 baseline phase는 이제 Exposed, Workshop, Clinic 각각에 대해 receipt의
+`base_sha`를 정확히 checkout한 별도 clean worktree를 요구한다. 같은 candidate
+worktree를 baseline과 candidate에 재사용하는 실행은 증거를 기록하기 전에
+fail-closed 처리된다.
 
 따라서 일부 candidate graph의 성공을 전체 승격 성공으로 집계하지 않고 두 phase를
 모두 실패 상태로 영수증에 보존한다.
