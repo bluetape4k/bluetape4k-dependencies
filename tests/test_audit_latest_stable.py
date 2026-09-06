@@ -29,10 +29,13 @@ def load_script():
 
 
 class LatestStableInventoryTest(unittest.TestCase):
-    def test_timefold_solver_candidate_releases_breaking_migration_hold(self) -> None:
+    def test_timefold_solver_keeps_breaking_migration_hold(self) -> None:
         policy = json.loads(AUDIT_POLICY.read_text(encoding="utf-8"))
 
-        self.assertNotIn("timefold-solver", policy["line-overrides"])
+        self.assertEqual(
+            policy["line-overrides"]["timefold-solver"]["disposition"],
+            "defer-breaking-migration",
+        )
 
     def test_utc_timestamp_is_supported_by_the_active_python(self) -> None:
         module = load_script()

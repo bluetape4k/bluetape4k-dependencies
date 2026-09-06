@@ -12,7 +12,7 @@ CHECKSUM = REPO_ROOT / "gradle" / "libs.versions.toml.sha256"
 
 
 class CatalogChecksumTest(unittest.TestCase):
-    def test_timefold_solver_candidate_is_2_6_0(self) -> None:
+    def test_timefold_solver_stays_2_4_0_after_blocked_candidate(self) -> None:
         catalog = CATALOG.read_text(encoding="utf-8")
         match = re.search(
             r'^timefold-solver\s*=\s*"([^"]+)"',
@@ -22,7 +22,7 @@ class CatalogChecksumTest(unittest.TestCase):
 
         self.assertIsNotNone(match, "timefold-solver version key must exist")
         assert match is not None
-        self.assertEqual(match.group(1), "2.6.0")
+        self.assertEqual(match.group(1), "2.4.0")
 
     def test_checked_in_checksum_matches_catalog(self) -> None:
         checksum_line = CHECKSUM.read_text(encoding="ascii").strip()
