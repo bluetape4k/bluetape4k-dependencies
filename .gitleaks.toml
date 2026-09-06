@@ -25,5 +25,6 @@ regexes = [
     '''YOUR_.*_HERE''',
     '''example[-_]key''',
     '''test[-_]api[-_]key''',
+    '''^private const val PRIVATE_KEY_(?:HEADER|FOOTER) = "-----(?:BEGIN|END) PGP PRIVATE KEY BLOCK-----"$''',
     '''^(?:maxmind-geoip2|jakarta-persistence-v3[12]|bouncycastle-bcprov-lts8on)$''',
 ]
