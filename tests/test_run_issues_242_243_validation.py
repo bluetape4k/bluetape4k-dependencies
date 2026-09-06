@@ -42,6 +42,38 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("--no-configuration-cache", runner.GRADLE_FLAGS)
         self.assertIn("--no-build-cache", runner.GRADLE_FLAGS)
 
+    def test_timefold_tasks_use_exact_included_project_names(self) -> None:
+        self.assertEqual(
+            runner.TIMEFOLD_COORDINATES,
+            (
+                "ai.timefold.solver:timefold-solver-core",
+                "ai.timefold.solver:timefold-solver-benchmark",
+                "ai.timefold.solver:timefold-solver-jackson",
+                "ai.timefold.solver:timefold-solver-spring-boot-starter",
+            ),
+        )
+        self.assertEqual(
+            runner.TIMEFOLD_GRAPH_TASKS["bluetape4k-exposed"],
+            (":bluetape4k-exposed-timefold-solver-persistence:dependencyInsight",),
+        )
+        self.assertEqual(
+            runner.TIMEFOLD_GRAPH_TASKS["timefold-workshop"],
+            (":school-timetabling:dependencyInsight",),
+        )
+        self.assertEqual(
+            runner.CONSUMER_TASKS["timefold-workshop"],
+            (
+                ":bluetape4k-timefold:test",
+                ":school-timetabling:test",
+                ":exposed-jdbc-examples:test",
+                ":exposed-r2dbc-examples:test",
+            ),
+        )
+        self.assertEqual(
+            runner.CONSUMER_TASKS["bluetape4k-exposed"],
+            (":bluetape4k-exposed-timefold-solver-persistence:test",),
+        )
+
     def test_cache_key_is_canonical_and_binds_every_required_input(self) -> None:
         first = runner.cache_key(
             repository="bluetape4k-projects",
@@ -181,6 +213,28 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("--no-configuration-cache", command)
         self.assertIn("--no-build-cache", command)
         self.assertIn("--console=plain", command)
+
+    def test_consumer_jobs_bind_canonical_helper_without_generated_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            central = workspace / "bluetape4k-dependencies"
+            consumer = workspace / "timefold-workshop"
+            canonical = central / runner.CANONICAL_HELPER_RELATIVE
+            generated = consumer / runner.GENERATED_HELPER_RELATIVE
+            canonical.parent.mkdir(parents=True)
+            consumer.mkdir()
+            canonical.write_text("canonical helper\n", encoding="utf-8")
+
+            self.assertFalse(generated.exists())
+            self.assertEqual(
+                runner.job_helper_path(
+                    repository="timefold-workshop",
+                    root=consumer,
+                    central_root=central,
+                    phase="timefold-graphs-baseline",
+                ),
+                canonical,
+            )
 
     def test_publication_pom_command_reuses_strict_non_candidate_map(self) -> None:
         command = runner.publication_pom_command(

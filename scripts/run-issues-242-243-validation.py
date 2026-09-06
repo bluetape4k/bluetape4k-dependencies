@@ -71,27 +71,27 @@ GENERATED_HELPER_RELATIVE = Path(
 TIMEFOLD_COORDINATES = (
     "ai.timefold.solver:timefold-solver-core",
     "ai.timefold.solver:timefold-solver-benchmark",
-    "com.fasterxml.jackson.core:jackson-databind",
-    "org.springframework.boot:spring-boot-starter",
+    "ai.timefold.solver:timefold-solver-jackson",
+    "ai.timefold.solver:timefold-solver-spring-boot-starter",
 )
 TIMEFOLD_GRAPH_TASKS = {
     "bluetape4k-exposed": (
-        ":exposed:timefold-solver-persistence:dependencyInsight",
+        ":bluetape4k-exposed-timefold-solver-persistence:dependencyInsight",
     ),
     "timefold-workshop": (
-        ":01-quickstarts:school-timetabling:dependencyInsight",
+        ":school-timetabling:dependencyInsight",
     ),
     "clinic-appointment": (
         ":appointment-solver:dependencyInsight",
     ),
 }
 CONSUMER_TASKS = {
-    "bluetape4k-exposed": (":exposed:timefold-solver-persistence:test",),
+    "bluetape4k-exposed": (":bluetape4k-exposed-timefold-solver-persistence:test",),
     "timefold-workshop": (
-        ":00-shared:bluetape4k-timefold:test",
-        ":01-quickstarts:school-timetabling:test",
-        ":exposed:jdbc-examples:test",
-        ":exposed:r2dbc-examples:test",
+        ":bluetape4k-timefold:test",
+        ":school-timetabling:test",
+        ":exposed-jdbc-examples:test",
+        ":exposed-r2dbc-examples:test",
     ),
     "clinic-appointment": (
         ":appointment-solver:test",
@@ -1016,10 +1016,29 @@ def _digest_required(path: Path, description: str) -> str:
     return sha256_file(path)
 
 
-def _job_digests(root: Path, central_root: Path) -> tuple[str, str, str]:
-    helper = root / GENERATED_HELPER_RELATIVE
+def job_helper_path(
+    *, repository: str, root: Path, central_root: Path, phase: str
+) -> Path:
+    if repository in CONSUMER_REPOSITORIES or phase == "publication-poms":
+        return central_root / CANONICAL_HELPER_RELATIVE
+    return root / GENERATED_HELPER_RELATIVE
+
+
+def _job_digests(
+    root: Path,
+    central_root: Path,
+    *,
+    repository: str,
+    phase: str,
+) -> tuple[str, str, str]:
+    helper = job_helper_path(
+        repository=repository,
+        root=root,
+        central_root=central_root,
+        phase=phase,
+    )
     if not helper.is_file() or helper.is_symlink():
-        raise InputContractError(f"generated signing helper is missing: {helper}")
+        raise InputContractError(f"signing helper is missing: {helper}")
     catalog = root / "gradle" / "libs.versions.toml"
     bom = central_root / "build.gradle.kts"
     return (
@@ -1044,7 +1063,12 @@ def _make_job(
     repository_origin: str = "",
     repository_branch: str = "",
 ) -> ValidationJob:
-    helper, catalog, bom = _job_digests(root, central_root)
+    helper, catalog, bom = _job_digests(
+        root,
+        central_root,
+        repository=repository,
+        phase=phase,
+    )
     jdk, gradle = detect_toolchain(root)
     return ValidationJob(
         repository=repository,
@@ -1108,17 +1132,20 @@ def validate_job_binding(
     if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
         raise InputContractError(f"repository became dirty: {job.repository}")
 
-    helper_relative = (
-        CANONICAL_HELPER_RELATIVE
-        if job.phase == "publication-poms"
-        else GENERATED_HELPER_RELATIVE
-    )
     central_binding = bindings.get("bluetape4k-dependencies", binding)
     central_value = central_binding.get("candidate_worktree")
     if not isinstance(central_value, str):
         raise InputContractError("central repository binding is invalid")
     central_root = _canonical_directory(Path(central_value), "central repository worktree")
-    helper_digest = _digest_required(root / helper_relative, "job signing helper")
+    helper_digest = _digest_required(
+        job_helper_path(
+            repository=job.repository,
+            root=root,
+            central_root=central_root,
+            phase=job.phase,
+        ),
+        "job signing helper",
+    )
     catalog_digest = _digest_required(root / "gradle" / "libs.versions.toml", "job catalog")
     bom_digest = _digest_required(central_root / "build.gradle.kts", "job BOM")
     for actual, expected, label in (
