@@ -201,6 +201,54 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("after: By constraint: candidate BOM", graph["selection_reason"])
         self.assertEqual(graph["output_sha256"], "b" * 64)
 
+    def test_failed_candidate_phase_keeps_pending_consumer_baseline_without_crashing(self) -> None:
+        coordinate = "ai.timefold.solver:timefold-solver-benchmark"
+        document = {
+            "consumers": [
+                {"name": "timefold-workshop", "graphs": []},
+                {
+                    "name": "clinic-appointment",
+                    "graphs": [
+                        {
+                            "coordinate": coordinate,
+                            "before_version": "pending-baseline",
+                        }
+                    ],
+                },
+            ]
+        }
+        job = mock.Mock(
+            repository="clinic-appointment",
+            coordinate=coordinate,
+            configuration="testRuntimeClasspath",
+        )
+        command_result = runner.CommandResult(
+            status="pass",
+            returncode=0,
+            stdout=(
+                f"{coordinate}:2.6.0\n"
+                "  Selection reasons:\n"
+                "      - By constraint: candidate BOM\n"
+            ),
+            stderr="",
+            elapsed_seconds=0.1,
+            timed_out=False,
+            process_group_terminated=False,
+            termination_signal=None,
+            output_sha256="a" * 64,
+        )
+        runner._update_consumer_graphs(
+            document,
+            runner.PhaseResult(
+                "timefold-graphs-candidate", "fail", "b" * 64, (command_result,)
+            ),
+            (job,),
+        )
+        self.assertEqual(
+            document["consumers"][1]["graphs"][0]["before_version"],
+            "pending-baseline",
+        )
+
     def test_repository_inventory_reuses_catalog_candidate_authority(self) -> None:
         self.assertEqual(
             runner.CATALOG_REPOSITORIES,

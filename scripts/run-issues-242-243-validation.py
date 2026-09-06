@@ -1931,6 +1931,9 @@ def _update_consumer_graphs(
                 None,
                 "pending-baseline",
             }:
+                if result.status != "pass":
+                    updated = []
+                    break
                 raise InputContractError(
                     f"candidate graph lacks baseline evidence: {repository} {job.coordinate}"
                 )
@@ -1949,7 +1952,8 @@ def _update_consumer_graphs(
                     "output_sha256": command_result.output_sha256,
                 }
             )
-        consumer["graphs"] = updated
+        if updated:
+            consumer["graphs"] = updated
 
 
 def _write_receipt_update(
