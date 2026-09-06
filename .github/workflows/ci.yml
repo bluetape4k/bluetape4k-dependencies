@@ -122,8 +122,10 @@ jobs:
               clone_args+=(--branch "$candidate_branch" --single-branch)
             fi
             gh repo clone "bluetape4k/${repo}" "../${repo}" -- "${clone_args[@]}"
-            git -C "../${repo}" remote set-url origin "git@github.com:bluetape4k/${repo}.git"
             if [[ -n "$expected_sha" ]]; then
+              # Keep the authenticated HTTPS remote installed by gh for the
+              # immutable fetch.  The strict map gets its SSH origin only
+              # after this exact object has been checked out.
               git -C "../${repo}" fetch --no-tags origin "$expected_sha"
               git -C "../${repo}" fetch --no-tags origin "develop:refs/remotes/origin/develop"
               git -C "../${repo}" checkout -B "issues-242-243-${repo}" "$expected_sha"
@@ -131,8 +133,9 @@ jobs:
               test "$peeled_sha" = "$expected_sha"
               test "$(git -C "../${repo}" rev-parse HEAD)" = "$expected_sha"
               test -z "$(git -C "../${repo}" status --porcelain=v1 --untracked-files=all)"
-              test "$(git -C "../${repo}" remote get-url origin)" = "git@github.com:bluetape4k/${repo}.git"
             fi
+            git -C "../${repo}" remote set-url origin "git@github.com:bluetape4k/${repo}.git"
+            test "$(git -C "../${repo}" remote get-url origin)" = "git@github.com:bluetape4k/${repo}.git"
           done
 
       - name: Build exact catalog repository map
@@ -267,6 +270,9 @@ jobs:
               print(f"{repository}\t{value['commit']}")
           PY
           )
+
+      - name: Verify central generated signing copy
+        run: |
           python3 scripts/sync-publishing-signing-support.py \
             --workspace .. \
             --repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json" \
@@ -275,7 +281,7 @@ jobs:
 
       - name: Verify catalog scripts
         run: |
-          python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
+          python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/sync-publishing-signing-support.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
           python3 -m unittest \
             tests/test_sync_publishing_signing_support.py \
             tests/test_run_issues_242_243_validation.py \
@@ -292,15 +298,6 @@ jobs:
           if [[ "${GITHUB_REF}" == "refs/heads/develop" || "${GITHUB_BASE_REF:-}" == "develop" ]]; then
             python3 scripts/verify-post-publish-next-development-line.py --summary
           fi
-
-      - name: Verify PR central generated signing copy
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          scripts/sync-publishing-signing-support.py \
-            --workspace .. \
-            --repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json" \
-            --repo bluetape4k-dependencies \
-            --check --summary
 
       - name: Verify PR-safe catalog adoption guard
         if: ${{ github.event_name == 'pull_request' }}

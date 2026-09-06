@@ -14,9 +14,18 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIXTURE_ROOT = REPO_ROOT / "tests" / "fixtures" / "publishing-signing-smoke"
 WRAPPER = REPO_ROOT / "gradlew"
+CANONICAL_HELPER = REPO_ROOT / "config" / "publishing-signing" / "PublishingSigningKeySupport.kt"
 ADAPTER = REPO_ROOT / "buildSrc" / "src" / "main" / "kotlin" / "PublishingSigningSupport.kt"
 HELPER = REPO_ROOT / "buildSrc" / "src" / "main" / "kotlin" / "PublishingSigningKeySupport.kt"
 BUILDSRC = REPO_ROOT / "buildSrc" / "build.gradle.kts"
+CANONICAL_HELPER_SHA256 = "22fa0667bef66fb35946a64c7c72ef411b73764693db837e6ad12b4e26cdd0be"
+GENERATED_HELPER_SHA256 = "fcd38470b536f30b21c132994eecb1bea32aa4d1e4ce10412d6914c59d0a1fff"
+GENERATED_HEADER = (
+    "// GENERATED FILE - DO NOT EDIT.\n"
+    "// Source: config/publishing-signing/PublishingSigningKeySupport.kt\n"
+    "// Synchronize with: python3 scripts/sync-publishing-signing-support.py --write --check\n\n"
+)
+GENERATED_HEADER_SHA256 = "8130d65489c176187925aeff077f1f6ff6a1055e2158755aea3ab84cb87913e9"
 SENTINEL_PASSWORD = "issue-242-243-smoke-password"
 ARMOR_HEADER = "-----BEGIN PGP PRIVATE KEY BLOCK-----"
 ARMOR_FOOTER = "-----END PGP PRIVATE KEY BLOCK-----"
@@ -80,6 +89,15 @@ class PublishingSigningSmokeTest(unittest.TestCase):
             self.assertTrue(signatures, "positive smoke did not publish an .asc artifact")
             for signature in signatures:
                 self.assertTrue(signature.read_bytes(), signature)
+                artifact = signature.with_suffix("")
+                self.assertTrue(artifact.is_file(), artifact)
+                verified = self._run(
+                    ["gpg", "--batch", "--verify", str(signature), str(artifact)],
+                    cwd=fixture,
+                    environment=environment,
+                )
+                self.assertEqual(verified.returncode, 0, self._diagnostic(verified))
+                self._assert_redacted_output(verified.stdout + verified.stderr)
 
             malformed_key = (
                 f"{ARMOR_HEADER}\nmalformed-key-body-sentinel\n{ARMOR_FOOTER}"
@@ -100,6 +118,18 @@ class PublishingSigningSmokeTest(unittest.TestCase):
                 )
 
     def test_fixture_inputs_are_canonical_and_private_material_stays_out_of_argv(self) -> None:
+        canonical_bytes = CANONICAL_HELPER.read_bytes()
+        generated_bytes = HELPER.read_bytes()
+        self.assertEqual(sha256(CANONICAL_HELPER), CANONICAL_HELPER_SHA256)
+        self.assertEqual(
+            generated_bytes,
+            GENERATED_HEADER.encode("utf-8") + canonical_bytes,
+        )
+        self.assertEqual(sha256(HELPER), GENERATED_HELPER_SHA256)
+        self.assertEqual(
+            hashlib.sha256(GENERATED_HEADER.encode("utf-8")).hexdigest(),
+            GENERATED_HEADER_SHA256,
+        )
         for path in (ADAPTER, HELPER, BUILDSRC):
             self.assertTrue(path.is_file(), path)
         self.assertTrue((FIXTURE_ROOT / "settings.gradle.kts").is_file())

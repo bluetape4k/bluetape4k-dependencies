@@ -245,6 +245,11 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("rev-parse --verify", clone_step)
         self.assertIn("rev-parse HEAD", clone_step)
         self.assertIn("status --porcelain=v1 --untracked-files=all", clone_step)
+        self.assertIn("remote set-url origin", clone_step)
+        self.assertIn(
+            'test "$(git -C "../${repo}" remote get-url origin)" =',
+            clone_step,
+        )
 
         map_step = workflow.split(
             "      - name: Build exact catalog repository map\n", 1
@@ -262,23 +267,29 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("config/publishing-signing-repository-refs.json", recheck_step)
         self.assertIn("rev-parse HEAD", recheck_step)
         self.assertIn("status --porcelain=v1 --untracked-files=all", recheck_step)
+
+        central_step = workflow.split(
+            "      - name: Verify central generated signing copy\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertNotIn("if:", central_step)
         self.assertIn(
             '--repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json"',
-            recheck_step,
+            central_step,
         )
-        self.assertIn(
-            "scripts/sync-publishing-signing-support.py",
-            recheck_step,
-        )
+        self.assertIn("python3 scripts/sync-publishing-signing-support.py", central_step)
+        self.assertIn("--repo bluetape4k-dependencies", central_step)
+        self.assertNotIn("Verify PR central generated signing copy", workflow)
 
     def test_ci_does_not_reclone_signing_siblings_for_a_pr_central_check(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         check_step = workflow.split(
-            "      - name: Verify PR central generated signing copy\n", 1
+            "      - name: Verify central generated signing copy\n", 1
         )[1].split("      - name:", 1)[0]
-        self.assertIn("if: ${{ github.event_name == 'pull_request' }}", check_step)
+        self.assertNotIn("if:", check_step)
+        self.assertIn("python3 scripts/sync-publishing-signing-support.py", check_step)
         self.assertIn("--repo bluetape4k-dependencies", check_step)
         self.assertNotIn("gh repo clone", check_step)
+        self.assertNotIn("Verify PR central generated signing copy", workflow)
 
     def test_release_diagnostic_matches_transport_classes_without_secret_output(self) -> None:
         workflow = (
