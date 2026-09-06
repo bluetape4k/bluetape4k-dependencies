@@ -100,6 +100,13 @@ Gradle API에 의존하지 않는 다음 계약만 동일한 generated Kotlin �
 - `resolveSigningKeyId`
 - `resolveSigningKey`
 
+canonical helper는 기존 Projects buildSrc API를 그대로 보존한다.
+`NormalizedSigningKeyId`와 네 함수는 public top-level 선언이며,
+`resolveSigningKeyId(raw: String): String`, `resolveSigningKey(raw: String): String`의
+nullability와 반환 타입을 바꾸지 않는다. adapter 내부 진단은
+`normalizeSigningKeyId(raw: String): NormalizedSigningKeyId`의 bounded warning을
+사용한다.
+
 각 저장소의 `PublishingSigningSupport.kt`는 기존 공개 buildSrc 함수와
 publication 동작을 유지하면서 이 helper를 호출한다. 이번 설계는 이 방식을
 사용한다. 구현 범위가 작고 compile-time에 전체 연결을 검증할 수 있으며,
@@ -208,31 +215,50 @@ adapter migration 표는 다음과 같다.
 buildSrc/src/main/kotlin/PublishingSigningKeySupport.kt
 ```
 
-고정된 managed repository 목록만 허용하고 `--workspace`, `--repo`, `--write`,
-`--check`, `--summary`를 제공한다. 경로 이탈, symlink target, 저장소 누락,
+고정된 managed repository 목록만 허용하고 `--workspace`, `--repository-map`,
+`--repo`, `--write`, `--check`, `--summary`를 제공한다. `--repository-map`은 각
+대상의 canonical absolute worktree path, approved origin과 exact HEAD를 고정하며,
+write/check 직전에 다시 검증한다. 경로 이탈, symlink target, 저장소 누락,
 canonical source 누락과 content drift는 실패한다. `--write --check`는 쓰기 후
 동일성까지 검증한다. 중앙 CI는 Python 단위 테스트와 중앙 generated copy를
 모든 PR에서 검사하고, sibling workspace drift는 저장소가 준비되는 전체
 workspace gate에서 검사한다.
 
-sync는 쓰기 전에 모든 대상 경로, symlink, 현재 bytes와 canonical digest를
-검사한다. 전체 preflight가 성공한 뒤 같은 디렉터리의 임시 파일을 atomic replace
-하며, 한 대상에서 실패하면 이미 교체한 대상은 사전에 보관한 bytes로 복구한다.
+sync는 쓰기 전에 모든 대상 경로, symlink, 현재 bytes, mode와 canonical digest를
+검사한다. 전체 preflight가 성공한 뒤 같은 디렉터리의 0600 임시 파일을 fsync하고
+원래 mode를 적용한 다음 atomic replace한다. 대상 parent를 다시 열어 no-follow
+검증하고 directory fsync로 교체를 확정한다. 한 대상에서 실패하면 이미 교체한
+대상은 사전에 보관한 bytes와 mode로 복구한다.
 검증 receipt는 대상 저장소 exact HEAD, clean/dirty 기준선, 이전/이후 digest와
-결과를 기록한다. multi-repo Git commit 자체는 원자적이지 않으므로 각 저장소를
-`prepared`로 커밋한 다음 전체 exact-ref map을 `validated`로 고정하고, 중앙
-drift gate가 모두 일치할 때만 `adopted`로 판정한다. 일부 저장소만 준비된 상태는
-`blocked`이며 promotion 증거로 사용할 수 없다.
+결과를 기록한다. worktree를 발견했지만 후보 commit이 없는 상태는 `discovered`다.
+multi-repo Git commit 자체는 원자적이지 않으므로 각 저장소를 `prepared`로
+커밋한 다음 전체 exact-ref map을 `validated`로 고정하고, 중앙 drift gate가 모두
+일치할 때만 `adopted`로 판정한다. 일부 저장소만 준비된 상태는 `blocked`이며
+promotion 증거로 사용할 수 없다. 모든 전이는 이전 state, expected HEAD와 digest를
+compare-and-set 방식으로 검사하고 receipt 자체도 temporary-file, fsync, atomic
+replace로 갱신한다.
 
 PR delivery를 수행할 때는 중앙 canonical revision과 8개 sibling exact ref를
 candidate repository map으로 묶고 `sibling prepared -> 중앙 validated -> 중앙
 adopted` 순서를 따른다. 이번 로컬 작업은 PR을 만들지 않으므로 동일한 map을
 local worktree SHA와 digest receipt로 검증한다.
 
-candidate repository map은 기존 `scripts/catalog_candidate.py`의 repository map
-loader와 direct-child/symlink/exact-ref 검증을 재사용한다. 이 작업 전용 receipt는
+local candidate repository map은 기존 `scripts/catalog_candidate.py`의 중앙 + 9개
+catalog repository enum과 canonical path, approved origin, clean worktree, symlink,
+exact-ref 검증을 그대로 재사용한다. signing sync는 그 map에서 중앙 + 8개 signing
+repository만 고정 allowlist로 선택하고 catalog-only Experimental은 수정하지 않는다.
+Timefold Workshop과 Clinic은 catalog enum을 완화하지 않고 전용 receipt의 consumer
+section에서 같은 검증 primitive를 적용한다. 이 작업 전용 receipt는
 `docs/releases/2026-09-06-issues-242-243-local-receipt.json`에 저장하고 다음
 versioned schema를 사용한다.
+
+source-controlled `config/publishing-signing-repository-refs.json`은 canonical source
+SHA-256과 8개 sibling candidate commit SHA를 고정한다. 자신의 Git commit을 문서
+안에 기록하는 self-reference는 만들지 않는다. 로컬 repository map은 이
+manifest에 absolute worktree path와 catalog-only Experimental entry를 결합한다.
+CI는 branch/default HEAD를 임의로 clone하지 않고 manifest의 commit을 fetch/check out한
+뒤 origin, peeled commit, clean 상태를 재검증한다. manifest commit이 remote에 없으면
+부분 rollout으로 fail-closed한다.
 
 ```json
 {
@@ -248,6 +274,7 @@ versioned schema를 사용한다.
       "origin": "git@github.com:bluetape4k/bluetape4k-exposed.git",
       "base-head": "...",
       "candidate-head": "...",
+      "reviewed-implementation-head": "...",
       "clean-before": true,
       "signing-sha256": "...",
       "catalog-ref": "...",
@@ -255,7 +282,31 @@ versioned schema를 사용한다.
       "catalog-source": "local-candidate|immutable-ref|repo-local",
       "bom-coordinate": "...",
       "local-override": "present|removed|not-applicable",
-      "state": "prepared|validated|adopted|blocked"
+      "state": "discovered|prepared|validated|adopted|blocked"
+    }
+  ],
+  "consumers": [
+    {
+      "name": "bluetape4k-exposed|timefold-workshop|clinic-appointment",
+      "origin": "git@github.com:bluetape4k/repository-name.git",
+      "base-head": "...",
+      "candidate-head": "...",
+      "catalog-ref": "...",
+      "catalog-sha256": "...",
+      "catalog-source": "local-candidate|immutable-ref|repo-local",
+      "bom-coordinate": "...",
+      "local-override": "present|removed|not-applicable",
+      "graphs": [
+        {
+          "coordinate": "ai.timefold.solver:timefold-solver-core",
+          "configuration": "testRuntimeClasspath",
+          "before-version": "2.4.0",
+          "after-version": "2.6.0",
+          "selection-reason": "selected by candidate BOM",
+          "output-sha256": "..."
+        }
+      ],
+      "state": "discovered|prepared|validated|adopted|blocked"
     }
   ],
   "commands": [
@@ -279,10 +330,21 @@ versioned schema를 사용한다.
 값을 기록하지 않는다. `blocked`가 하나라도 있거나 `validated`보다 낮은 target이
 있으면 adoption은 실패한다.
 
+tracked receipt를 담는 evidence commit은 자신의 SHA를 receipt 안에 기록하지 않는다.
+coordinator는 adopted receipt를 포함하는 prospective commit object를 branch ref
+갱신 없이 만들고, final validator는 별도 `--evidence-commit` 입력을 받아 그 commit의 parent가
+central `reviewed-implementation-head`와 같고 diff가 receipt 경로 하나뿐인지
+검증한다. 검증 성공 후에만 expected reviewed HEAD를 old value로 둔 compare-and-swap
+ref update로 prospective commit을 채택한다. strict repository map은 reviewed
+implementation envelope를 계속 가리켜 evidence commit과 implementation exact-head의
+의미를 혼합하지 않는다.
+
 release workflow의 inline signing diagnostic은 key의 길이 또는 입력 형식만
 검사하는 별도 운영 진단이다. 실제 Gradle signing parser의 기준 데이터 원본으로
-사용하지 않는다. 이번 변경에서는 해당 diagnostic이 key 원문을 출력하지 않고
-canonical parser의 허용 형식과 모순되지 않는지만 검증한다.
+사용하지 않는다. 이번 변경에서는 해당 diagnostic이 raw armor, escaped newline,
+Base64-encoded armor, Base64 non-armor와 invalid Base64를 canonical transport
+normalizer와 같은 분류로 처리하도록 갱신한다. diagnostic은 key 원문이나 decoded
+본문을 출력하지 않으며 sentinel 기반 workflow policy test로 이를 검증한다.
 
 ## Timefold 전환 계약
 
@@ -327,9 +389,11 @@ Timefold graph ledger는 네 좌표를 반드시 포함한다.
 | `timefold-solver` | `ai.timefold.solver:timefold-solver-jackson` | 실제 Jackson consumer runtime | candidate `2.6.0` 선택 |
 | `timefold-solver` | `ai.timefold.solver:timefold-solver-spring-boot-starter` | 실제 starter consumer runtime | candidate `2.6.0` 선택 |
 
-기존 `scripts/verify-latest-stable-resolved-graphs.py` ledger/validator를 재사용하고,
-각 consumer receipt가 catalog ref/source/checksum, BOM coordinate, configuration,
-before/after, selection reason과 local override 상태를 참조하게 한다. clinic은
+범용 검증 runner는 기존 `scripts/verify-latest-stable-resolved-graphs.py`의 observation
+parser와 ledger serializer를 재사용하되, 전체 latest-stable delta를 다시 resolve하지
+않고 Timefold 네 좌표와 실제 consumer configuration만 실행한다. 각 consumer receipt가
+catalog ref/source/checksum, BOM coordinate, configuration, before/after, selection
+reason과 local override 상태를 참조하게 한다. clinic은
 runtime graph에 `2.4.0` BOM이 남거나 direct override 없이 candidate `2.6.0`을
 선택하지 못하면 실패한다.
 
@@ -387,7 +451,10 @@ timeout은 10분, POM 전체 gate는 30분, 전체 local validation budget은 90
 coordinate, phase)` graph 요청은 한 번만 resolve하며 후속 검사는 기존 output
 digest를 재사용한다. POM 생성물도 같은 exact candidate에서 재생성하지 않는다.
 cache는 exact HEAD와 catalog/BOM digest로 구분하고, receipt에 worker 수, elapsed,
-cache policy, 재실행 여부를 기록한다. 중앙 CI의 기존 managed-repository clone
+cache policy, 재실행 여부를 기록한다. Gradle build/configuration cache는 끄되,
+runner는 HEAD, helper/catalog/BOM digest, task/configuration과 toolchain으로 만든
+evidence key의 성공 receipt와 output digest를 read-back한 경우 subprocess를 생략한다.
+`--refresh-dependencies`는 새 candidate의 최초 graph resolve에만 사용한다. 중앙 CI의 기존 managed-repository clone
 step에서 signing drift를 함께 검사해 별도 checkout을 만들지 않는다.
 
 ## 호환성과 운영 경계
