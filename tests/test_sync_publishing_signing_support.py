@@ -304,7 +304,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
         read_count = 0
         # One source read, target preflight, anchored preflight, then the
         # first replacement's unchanged check and read-back.
-        mismatch_at = len(self.target_paths) * 2 + 3
+        mismatch_at = len(self.target_paths) * 2 + 4
 
         def mismatch_on_first_read_back(parent_fd, name, description):
             nonlocal read_count
@@ -376,6 +376,102 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
         finally:
             if staged_fds:
                 real_close(staged_fds[0])
+            real_close(parent_fd)
+
+    def test_repository_map_symlink_is_rejected_before_loader_normalization(self) -> None:
+        symlink_map = self.workspace / "repository-map-link.json"
+        symlink_map.symlink_to(self.repository_map)
+
+        with self.assertRaisesRegex(sync.SyncError, "repository map"):
+            sync.synchronize(
+                workspace=self.workspace,
+                repository_map=symlink_map,
+                repository_names=["bluetape4k-projects"],
+                write=False,
+                check=True,
+                summary=False,
+                output=io.StringIO(),
+            )
+
+    def test_rollback_conflict_does_not_overwrite_external_change(self) -> None:
+        self._write_targets(payload=b"stale\n")
+        first_target = next(iter(self.target_paths.values()))
+        original_fsync = sync._fsync_directory
+        fsync_count = 0
+
+        def mutate_after_first_replace(parent_fd):
+            nonlocal fsync_count
+            fsync_count += 1
+            original_fsync(parent_fd)
+            if fsync_count == 1:
+                first_target.write_bytes(b"external-change\n")
+                first_target.chmod(0o600)
+
+        original_replace = sync.os.replace
+        replace_count = 0
+
+        def fail_on_second_replace(source, target, **kwargs):
+            nonlocal replace_count
+            replace_count += 1
+            if replace_count == 2:
+                raise OSError("injected replace failure")
+            return original_replace(source, target, **kwargs)
+
+        with mock.patch.object(sync, "_fsync_directory", side_effect=mutate_after_first_replace):
+            with mock.patch.object(sync.os, "replace", side_effect=fail_on_second_replace):
+                with self.assertRaisesRegex(sync.SyncError, "rollback conflict"):
+                    self._sync(write=True)
+
+        self.assertEqual(first_target.read_bytes(), b"external-change\n")
+        self.assertEqual(first_target.stat().st_mode & 0o777, 0o600)
+
+    def test_canonical_source_change_before_write_aborts_without_target_writes(self) -> None:
+        self._write_targets(payload=b"stale\n")
+        original_snapshot = sync._snapshot_source
+        snapshot_count = 0
+
+        def change_after_initial_snapshot(repositories, workspace):
+            nonlocal snapshot_count
+            snapshot_count += 1
+            snapshot = original_snapshot(repositories, workspace)
+            if snapshot_count == 1:
+                self.source.write_bytes(b"changed-before-write\n")
+            return snapshot
+
+        with mock.patch.object(
+            sync, "_snapshot_source", side_effect=change_after_initial_snapshot
+        ):
+            with self.assertRaisesRegex(sync.SyncError, "canonical source changed"):
+                self._sync(write=True)
+
+        self.assertEqual(snapshot_count, 2)
+        for name, target in self.target_paths.items():
+            self.assertEqual(target.read_bytes(), b"stale\n", name)
+
+    def test_read_regular_at_closes_fd_on_keyboard_interrupt(self) -> None:
+        self._write_targets()
+        target = self.target_paths["bluetape4k-dependencies"]
+        parent_fd = sync._open_directory_fd(target.parent, self.central)
+        close_calls = []
+        real_close = sync.os.close
+
+        def observe_close(descriptor):
+            close_calls.append(descriptor)
+            return real_close(descriptor)
+
+        try:
+            with mock.patch.object(
+                sync, "_read_fd", side_effect=KeyboardInterrupt()
+            ):
+                with mock.patch.object(sync.os, "close", side_effect=observe_close):
+                    with self.assertRaises(KeyboardInterrupt):
+                        sync._read_regular_at(
+                            parent_fd,
+                            target.name,
+                            "generated target",
+                        )
+            self.assertTrue(close_calls)
+        finally:
             real_close(parent_fd)
 
 

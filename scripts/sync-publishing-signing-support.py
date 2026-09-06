@@ -233,11 +233,16 @@ def _read_regular_at(
         if stat.S_ISLNK(opened.st_mode) or not stat.S_ISREG(opened.st_mode):
             raise SyncError(f"{description} changed to a non-regular file: {name}")
         snapshot = FileSnapshot(_read_fd(descriptor), stat.S_IMODE(opened.st_mode))
-    except SyncError as exc:
-        primary = exc
-    except OSError as exc:
-        primary = SyncError(f"cannot read {description}: {name}")
-        primary.__cause__ = exc
+    except BaseException as exc:
+        if isinstance(exc, SyncError):
+            primary = exc
+        elif isinstance(exc, OSError):
+            primary = SyncError(f"cannot read {description}: {name}")
+            primary.__cause__ = exc
+        else:
+            # Preserve interruption/system exceptions while still closing the
+            # descriptor below.
+            primary = exc
     if descriptor is not None:
         close_result = _close_fd_preserving(descriptor, primary)
         if close_result is not None:
@@ -465,7 +470,10 @@ def _remove_staged(staged: Iterable[Tuple[int, str]]) -> None:
 
 
 def _replace_and_read_back(
-    state: TargetState, parent_fd: int, staged_name: str
+    state: TargetState,
+    parent_fd: int,
+    staged_name: str,
+    replaced: List[TargetState],
 ) -> None:
     _assert_unchanged(state, parent_fd)
     os.replace(
@@ -474,6 +482,9 @@ def _replace_and_read_back(
         src_dir_fd=parent_fd,
         dst_dir_fd=parent_fd,
     )
+    # The replacement is now owned by the rollback transaction.  Recording it
+    # before fsync/read-back also covers failures after os.replace succeeds.
+    replaced.append(state)
     _fsync_directory(parent_fd)
     snapshot = _read_regular_at(
         parent_fd,
@@ -485,6 +496,18 @@ def _replace_and_read_back(
 
 
 def _restore_state(state: TargetState, parent_fd: int) -> None:
+    current = _read_regular_at(
+        parent_fd,
+        TARGET_RELATIVE.name,
+        f"rollback target for {state.repository}",
+    )
+    if (
+        current is None
+        or current.payload != state.desired
+        or current.mode != state.prior_mode
+    ):
+        raise SyncError(f"rollback conflict: target changed externally: {state.path}")
+
     if state.prior_exists:
         restore_name = _stage_file(
             parent_fd, state.prior_bytes or b"", state.prior_mode
@@ -549,10 +572,7 @@ def _write_all(states: Sequence[TargetState]) -> None:
             staged_name = _stage_file(parent_fd, state.desired, state.prior_mode)
             staged.append((state, parent_fd, staged_name))
         for state, parent_fd, staged_name in staged:
-            # Record the target before replacement so a post-replace read-back
-            # failure is covered by the same rollback transaction.
-            replaced.append(state)
-            _replace_and_read_back(state, parent_fd, staged_name)
+            _replace_and_read_back(state, parent_fd, staged_name, replaced)
     except BaseException as exc:
         _remove_staged((parent_fd, name) for _, parent_fd, name in staged)
         rollback_errors = []
@@ -602,7 +622,8 @@ def synchronize(
     if not write and not check:
         raise SyncError("at least one of --write or --check is required")
     workspace = workspace.resolve()
-    repository_map = repository_map.resolve()
+    if not repository_map.is_absolute():
+        raise SyncError("repository map path must be absolute")
     try:
         repositories = catalog_candidate.load_repository_map_v1(
             repository_map, workspace
@@ -620,6 +641,12 @@ def synchronize(
     output = output or sys.stdout
 
     if write:
+        # Re-read through a freshly anchored, no-follow directory FD directly
+        # before staging.  A source edit after preflight must leave every
+        # target untouched and force the caller to replay the operation.
+        latest_canonical = _snapshot_source(repositories, workspace)
+        if latest_canonical != canonical:
+            raise SyncError("canonical source changed before write")
         _write_all(states)
         drifted = []
     else:
