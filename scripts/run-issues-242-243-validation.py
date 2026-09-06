@@ -607,6 +607,17 @@ def sanitized_environment(source: Optional[Mapping[str, str]] = None) -> dict[st
     }
 
 
+def child_environment(source: Mapping[str, str]) -> dict[str, str]:
+    """Keep safe base variables plus explicitly injected candidate bindings."""
+
+    allowed = SAFE_ENVIRONMENT_KEYS | CANDIDATE_ENVIRONMENT_KEYS
+    return {
+        str(key): str(value)
+        for key, value in source.items()
+        if str(key) in allowed and SECRET_NAME_RE.search(str(key)) is None
+    }
+
+
 def redact_command(command: Sequence[str]) -> tuple[str, ...]:
     """Redact secret assignments and option values without changing argv shape."""
 
@@ -716,7 +727,7 @@ def run_command(
         process = subprocess.Popen(
             [str(value) for value in command],
             cwd=str(cwd),
-            env=sanitized_environment(environment),
+            env=child_environment(environment),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             start_new_session=True,

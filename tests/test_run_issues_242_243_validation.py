@@ -131,6 +131,25 @@ class ValidationRunnerTest(unittest.TestCase):
             },
         )
 
+    def test_run_command_preserves_explicit_candidate_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            result = runner.run_command(
+                command=(
+                    sys.executable,
+                    "-c",
+                    "import os; print(os.environ['ISSUES_242_243_CANDIDATE_MAVEN_REPO'])",
+                ),
+                cwd=root,
+                environment={
+                    "PATH": os.environ["PATH"],
+                    "ISSUES_242_243_CANDIDATE_MAVEN_REPO": "/candidate/m2",
+                },
+                timeout_seconds=5,
+            )
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(result.stdout.strip(), "/candidate/m2")
+
     def test_candidate_catalog_must_match_portable_checksum_sidecar(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             central = Path(directory).resolve()
