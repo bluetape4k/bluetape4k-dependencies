@@ -22,11 +22,12 @@ import stat
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 TOTAL_VALIDATION_BUDGET_SECONDS = 90 * 60
 ISSUES = (242, 243)
 STATES = frozenset({"discovered", "prepared", "validated", "adopted", "blocked"})
@@ -92,6 +93,7 @@ GENERATED_SIGNING_TARGET_RELATIVE = (
 REQUIRED_ADOPTION_PHASES = frozenset(
     {
         "signing-buildsrc",
+        "candidate-bom-publication",
         "timefold-graphs-baseline",
         "timefold-graphs-candidate",
         "consumers",
@@ -124,6 +126,16 @@ ADOPTION_CONSUMER_TASKS = {
         [":appointment-solver:test", ":appointment-api:test"]
     ),
 }
+CANDIDATE_BOM_VERSION = "2.1.0-issue-242.local"
+CANDIDATE_INIT_SCRIPT_RELATIVE = Path("config/issues-242-243-candidate.init.gradle")
+CANDIDATE_REPOSITORY_PROPERTY = "issues242243CandidateMavenRepo"
+CANDIDATE_VERSION_PROPERTY = "issues242243CandidateBomVersion"
+CANDIDATE_BOM_ARTIFACTS = frozenset(
+    {
+        f"bluetape4k-dependencies-{CANDIDATE_BOM_VERSION}.pom",
+        f"bluetape4k-dependencies-{CANDIDATE_BOM_VERSION}.module",
+    }
+)
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
@@ -631,6 +643,9 @@ BOUND_COMMAND_FIELDS = LEGACY_COMMAND_FIELDS | {
     "arguments",
     "gradle_home_policy",
     "input_sha256",
+    "job_id",
+    "cache_key",
+    "cache_output_path",
 }
 
 
@@ -655,7 +670,7 @@ def _bound_command_input(item: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _validate_commands(value: Any) -> None:
+def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
     if not isinstance(value, list):
         raise ReceiptError("commands must be an array")
     for command in value:
@@ -676,6 +691,7 @@ def _validate_commands(value: Any) -> None:
         _require_sha256(item["output_sha256"], "command output")
         if set(item) == BOUND_COMMAND_FIELDS:
             _require_nonempty_string(item["phase"], "command phase")
+            _require_nonempty_string(item["job_id"], "command job ID")
             _require_commit(item["repository_head"], "command repository HEAD")
             for key in ("helper_sha256", "catalog_sha256", "bom_sha256"):
                 _require_sha256(item[key], f"command {key}")
@@ -709,18 +725,187 @@ def _validate_commands(value: Any) -> None:
             expected_input = sha256_bytes(canonical_json_bytes(_bound_command_input(item)))
             if _require_sha256(item["input_sha256"], "command input") != expected_input:
                 raise ReceiptError("command input SHA-256 mismatch")
+            cache_key_value = item["cache_key"]
+            cache_output_value = item["cache_output_path"]
+            if item["result"] == "pass":
+                expected_cache_key = sha256_bytes(
+                    canonical_json_bytes(
+                        {
+                            "schema_version": 1,
+                            "repository": item["repository"],
+                            "repository_head": item["repository_head"],
+                            "helper_sha256": item["helper_sha256"],
+                            "catalog_sha256": item["catalog_sha256"],
+                            "bom_sha256": item["bom_sha256"],
+                            "task_set": item["task_set"],
+                            "configuration": item["configuration"],
+                            "jdk_version": item["jdk"],
+                            "gradle_version": item["gradle"],
+                            "arguments": item["arguments"],
+                            "gradle_home_policy": item["gradle_home_policy"],
+                        }
+                    )
+                )
+                if _require_sha256(cache_key_value, "command cache key") != expected_cache_key:
+                    raise ReceiptError("command cache key mismatch")
+                output_path = _canonical_path(cache_output_value, "command cache output")
+                if evidence_cache_root is None or output_path.parent != evidence_cache_root:
+                    raise ReceiptError("command cache output escapes receipt cache root")
+                if output_path.name != f"{expected_cache_key}.output":
+                    raise ReceiptError("command cache output path mismatch")
+                _regular_nonsymlink(output_path, "command cache output")
+                if stat.S_IMODE(output_path.stat().st_mode) & 0o077:
+                    raise ReceiptError("command cache output permissions are not private")
+                if sha256_bytes(output_path.read_bytes()) != item["output_sha256"]:
+                    raise ReceiptError("command cache output SHA-256 mismatch")
+            elif cache_key_value is not None or cache_output_value is not None:
+                raise ReceiptError("non-passing command must not claim cache evidence")
 
 
 def _validate_phases(value: Any) -> None:
     if not isinstance(value, list) or not value:
         raise ReceiptError("phases are missing")
-    fields = {"name", "result", "output_sha256"}
+    fields = {
+        "name",
+        "result",
+        "output_sha256",
+        "elapsed_seconds",
+        "reserved_seconds",
+        "job_ids",
+    }
     for phase in value:
         item = _expected_fields(phase, fields, "phase")
         _require_nonempty_string(item["name"], "phase name")
         if item["result"] not in {"pass", "fail", "blocked"}:
             raise ReceiptError("phase result is invalid")
         _require_sha256(item["output_sha256"], "phase output")
+        for field in ("elapsed_seconds", "reserved_seconds"):
+            number = item[field]
+            if isinstance(number, bool) or not isinstance(number, (int, float)) or number < 0:
+                raise ReceiptError(f"phase {field} is invalid")
+        if not isinstance(item["job_ids"], list) or any(
+            not isinstance(job_id, str) or not job_id for job_id in item["job_ids"]
+        ):
+            raise ReceiptError("phase job IDs are invalid")
+        if len(item["job_ids"]) != len(set(item["job_ids"])):
+            raise ReceiptError("phase job IDs must be unique")
+
+
+def _validate_candidate_artifact_manifest(
+    value: Any,
+    *,
+    central: Mapping[str, Any],
+    artifact_phase: Mapping[str, Any],
+) -> None:
+    fields = {
+        "repository_path",
+        "version",
+        "artifacts",
+        "repository_files",
+        "sha256",
+        "central_head",
+        "catalog_sha256",
+        "source_tree_sha256",
+        "producer_job_id",
+        "producer_input_sha256",
+        "producer_output_sha256",
+    }
+    item = _expected_fields(value, fields, "candidate artifact manifest")
+    repository = _canonical_path(
+        item["repository_path"], "candidate Maven repository"
+    )
+    if not repository.is_dir() or repository.is_symlink():
+        raise ReceiptError("candidate Maven repository must be a directory")
+    if item["version"] != CANDIDATE_BOM_VERSION:
+        raise ReceiptError("candidate BOM version mismatch")
+    if item["central_head"] != central["candidate_head"]:
+        raise ReceiptError("candidate artifact central HEAD mismatch")
+    central_root = _canonical_path(
+        central["candidate_worktree"], "central candidate worktree"
+    )
+    catalog = central_root / "gradle/libs.versions.toml"
+    _regular_nonsymlink(catalog, "candidate catalog")
+    if _require_sha256(item["catalog_sha256"], "candidate catalog") != sha256_bytes(
+        catalog.read_bytes()
+    ):
+        raise ReceiptError("candidate artifact catalog SHA-256 mismatch")
+    source_tree = _git_bytes(
+        central_root, "ls-tree", "-r", "-z", str(item["central_head"])
+    )
+    if _require_sha256(item["source_tree_sha256"], "candidate source tree") != sha256_bytes(
+        source_tree
+    ):
+        raise ReceiptError("candidate source tree SHA-256 mismatch")
+    _require_nonempty_string(item["producer_job_id"], "candidate producer job ID")
+    _require_sha256(item["producer_input_sha256"], "candidate producer input")
+    _require_sha256(item["producer_output_sha256"], "candidate producer output")
+
+    repository_files = item["repository_files"]
+    if not isinstance(repository_files, Mapping) or not repository_files:
+        raise ReceiptError("candidate repository file manifest is missing")
+    actual_files: dict[str, str] = {}
+    for path in sorted(repository.rglob("*")):
+        try:
+            mode = path.lstat().st_mode
+        except OSError as exc:
+            raise ReceiptError("candidate Maven repository cannot be read") from exc
+        if stat.S_ISLNK(mode):
+            raise ReceiptError("candidate Maven repository contains a symlink")
+        if stat.S_ISDIR(mode):
+            continue
+        if not stat.S_ISREG(mode):
+            raise ReceiptError("candidate Maven repository contains a non-file")
+        actual_files[path.relative_to(repository).as_posix()] = sha256_bytes(
+            path.read_bytes()
+        )
+    if dict(repository_files) != actual_files:
+        raise ReceiptError("candidate repository file manifest mismatch")
+    repository_sha256 = sha256_bytes(canonical_json_bytes(actual_files))
+    if _require_sha256(item["sha256"], "candidate repository") != repository_sha256:
+        raise ReceiptError("candidate repository SHA-256 mismatch")
+    if artifact_phase["output_sha256"] != repository_sha256:
+        raise ReceiptError("candidate artifact phase does not bind repository manifest")
+
+    artifacts = item["artifacts"]
+    if not isinstance(artifacts, Mapping) or set(artifacts) != CANDIDATE_BOM_ARTIFACTS:
+        raise ReceiptError("candidate BOM artifact allowlist mismatch")
+    artifact_prefix = (
+        f"io/github/bluetape4k/bluetape4k-dependencies/{CANDIDATE_BOM_VERSION}/"
+    )
+    for name, digest in artifacts.items():
+        if _require_sha256(digest, f"candidate BOM artifact {name}") != actual_files.get(
+            artifact_prefix + str(name)
+        ):
+            raise ReceiptError("candidate BOM artifact SHA-256 mismatch")
+    pom_name = f"bluetape4k-dependencies-{CANDIDATE_BOM_VERSION}.pom"
+    module_name = f"bluetape4k-dependencies-{CANDIDATE_BOM_VERSION}.module"
+    artifact_directory = repository / artifact_prefix
+    try:
+        pom_root = ET.parse(artifact_directory / pom_name).getroot()
+        namespace = ""
+        if pom_root.tag.startswith("{"):
+            namespace = pom_root.tag.partition("}")[0] + "}"
+        pom_identity = tuple(
+            (pom_root.findtext(f"{namespace}{field}") or "").strip()
+            for field in ("groupId", "artifactId", "version")
+        )
+        component = json.loads(
+            (artifact_directory / module_name).read_text(encoding="utf-8")
+        )["component"]
+        module_identity = (
+            component["group"],
+            component["module"],
+            component["version"],
+        )
+    except (ET.ParseError, OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise ReceiptError("candidate BOM metadata is malformed") from exc
+    expected_identity = (
+        "io.github.bluetape4k",
+        "bluetape4k-dependencies",
+        CANDIDATE_BOM_VERSION,
+    )
+    if pom_identity != expected_identity or module_identity != expected_identity:
+        raise ReceiptError("candidate BOM metadata identity mismatch")
 
 
 def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
@@ -749,15 +934,139 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
     if document["failure_record"] or document["rollback_record"]:
         raise ReceiptError(f"{state} receipt requires empty failure and rollback records")
 
+    central_receipt = next(
+        item for item in document["repositories"] if item["name"] == CENTRAL_NAME
+    )
+    _validate_candidate_artifact_manifest(
+        document["candidate_artifact_manifest"],
+        central=central_receipt,
+        artifact_phase=artifact_phase,
+    )
+
     commands = document["commands"]
     if not commands or any(set(item) != BOUND_COMMAND_FIELDS for item in commands):
         raise ReceiptError(f"{state} receipt requires immutable command evidence")
     if any(item["result"] != "pass" for item in commands):
         raise ReceiptError(f"{state} receipt requires every command to pass")
+    command_job_ids = [str(item["job_id"]) for item in commands]
+    if len(command_job_ids) != len(set(command_job_ids)):
+        raise ReceiptError(f"{state} receipt contains duplicate command job IDs")
+
+    elapsed_total = 0.0
+    remaining = float(TOTAL_VALIDATION_BUDGET_SECONDS)
+    for phase in phases:
+        name = str(phase["name"])
+        if name in {"discover", "candidate-bom-artifacts"}:
+            if phase["elapsed_seconds"] != 0 or phase["reserved_seconds"] != 0 or phase["job_ids"]:
+                raise ReceiptError(f"{name} phase must not consume validation budget")
+            continue
+        phase_commands = {
+            str(item["job_id"]): item for item in commands if item["phase"] == name
+        }
+        if phase["job_ids"] != list(phase_commands):
+            raise ReceiptError("phase job IDs do not bind exact command coverage")
+        reserved = float(phase["reserved_seconds"])
+        elapsed = float(phase["elapsed_seconds"])
+        if abs(reserved - remaining) > 0.001 or elapsed > reserved + 0.001:
+            raise ReceiptError("phase validation budget reservation mismatch")
+        command_elapsed = max(
+            (
+                float(phase_commands[job_id]["elapsed_seconds"])
+                for job_id in phase["job_ids"]
+            ),
+            default=0.0,
+        )
+        if command_elapsed > elapsed + 0.001:
+            raise ReceiptError("phase elapsed time is smaller than a command elapsed time")
+        phase_payload = {
+            "schema_version": 1,
+            "phase": name,
+            "results": [
+                {
+                    "status": phase_commands[job_id]["result"],
+                    "output_sha256": phase_commands[job_id]["output_sha256"],
+                    "cached": phase_commands[job_id]["cache"] == "shared-read",
+                    "job_id": job_id,
+                    "repository": phase_commands[job_id]["repository"],
+                    "cancelled": False,
+                }
+                for job_id in phase["job_ids"]
+            ],
+            "failure": None,
+        }
+        if phase["output_sha256"] != sha256_bytes(canonical_json_bytes(phase_payload)):
+            raise ReceiptError("phase output SHA-256 mismatch")
+        elapsed_total += elapsed
+        remaining -= elapsed
+    budget = document["validation_budget"]
+    if (
+        abs(float(budget["elapsed_seconds"]) - elapsed_total) > 0.001
+        or abs(float(budget["remaining_seconds"]) - remaining) > 0.001
+    ):
+        raise ReceiptError("validation budget is not bound to phase evidence")
 
     known_command_phases = REQUIRED_ADOPTION_PHASES - {"candidate-bom-artifacts"}
     if {item["phase"] for item in commands} - known_command_phases:
         raise ReceiptError("adopted receipt contains unknown command phases")
+    producer_commands = [
+        item for item in commands if item["phase"] == "candidate-bom-publication"
+    ]
+    if len(producer_commands) != 1:
+        raise ReceiptError("adopted receipt candidate producer coverage is incomplete")
+    producer = producer_commands[0]
+    manifest = document["candidate_artifact_manifest"]
+    expected_repository = str(
+        Path(document["repository_map"]["path"]).parent / "candidate-m2"
+    )
+    expected_arguments = [
+        f"-Dmaven.repo.local={expected_repository}",
+        f"-PbaseVersion={CANDIDATE_BOM_VERSION}",
+        "-PsnapshotVersion=",
+    ]
+    if (
+        producer["repository"] != CENTRAL_NAME
+        or producer["repository_head"] != document["central"]["candidate_head"]
+        or producer["task_set"]
+        != ["publishBluetapeDependenciesPublicationToMavenLocal"]
+        or producer["configuration"] != "candidate-bom-publication"
+        or producer["arguments"] != expected_arguments
+        or producer["job_id"] != manifest["producer_job_id"]
+        or producer["input_sha256"] != manifest["producer_input_sha256"]
+        or producer["output_sha256"] != manifest["producer_output_sha256"]
+        or manifest["repository_path"] != expected_repository
+    ):
+        raise ReceiptError("candidate producer provenance mismatch")
+    central_root = Path(central_receipt["candidate_worktree"])
+    for field, relative in (
+        ("helper_sha256", GENERATED_SIGNING_TARGET_RELATIVE),
+        ("catalog_sha256", "gradle/libs.versions.toml"),
+        ("bom_sha256", "build.gradle.kts"),
+    ):
+        source = central_root / relative
+        _regular_nonsymlink(source, f"candidate producer {field}")
+        if producer[field] != sha256_bytes(source.read_bytes()):
+            raise ReceiptError("candidate producer source digest mismatch")
+    candidate_init_script = central_root / CANDIDATE_INIT_SCRIPT_RELATIVE
+    _regular_nonsymlink(candidate_init_script, "candidate init script")
+    candidate_init_sha256 = sha256_bytes(candidate_init_script.read_bytes())
+    candidate_arguments = [
+        "--init-script",
+        str(candidate_init_script),
+        f"-D{CANDIDATE_REPOSITORY_PROPERTY}={expected_repository}",
+        f"-D{CANDIDATE_VERSION_PROPERTY}={CANDIDATE_BOM_VERSION}",
+    ]
+    candidate_commands = [
+        item
+        for item in commands
+        if item["phase"] in {"timefold-graphs-candidate", "consumers"}
+    ]
+    if not candidate_commands or any(
+        item["helper_sha256"] != candidate_init_sha256
+        or item["bom_sha256"] != manifest["sha256"]
+        or item["arguments"][: len(candidate_arguments)] != candidate_arguments
+        for item in candidate_commands
+    ):
+        raise ReceiptError("candidate consumer injection provenance mismatch")
     signing_commands = [
         item for item in commands if item["phase"] == "signing-buildsrc"
     ]
@@ -807,11 +1116,7 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
                 "--dependency",
                 coordinate,
             ]
-            expected_candidate_arguments = (
-                ["--dependency-verification=off"]
-                if repository == "clinic-appointment"
-                else []
-            ) + expected_baseline_arguments
+            expected_candidate_arguments = candidate_arguments + expected_baseline_arguments
             if baseline["arguments"] != expected_baseline_arguments:
                 raise ReceiptError("baseline graph command arguments are incomplete")
             if candidate["arguments"] != expected_candidate_arguments:
@@ -829,11 +1134,7 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
             raise ReceiptError("adopted receipt consumer task coverage is incomplete")
         if item["override_disposition"] != "candidate":
             raise ReceiptError("adopted receipt consumer command lacks candidate overrides")
-        expected_arguments = (
-            ["--dependency-verification=off"]
-            if item["repository"] == "clinic-appointment"
-            else []
-        )
+        expected_arguments = candidate_arguments
         if item["arguments"] != expected_arguments:
             raise ReceiptError("adopted receipt consumer command arguments are incomplete")
 
@@ -938,6 +1239,8 @@ def _validate_receipt_document(
         "repository_map",
         "central",
         "canonical_signing_source",
+        "candidate_artifact_manifest",
+        "evidence_cache_root",
         "repositories",
         "consumers",
         "commands",
@@ -1014,7 +1317,18 @@ def _validate_receipt_document(
         )
         for item in consumers
     ]
-    _validate_commands(document["commands"])
+    cache_root_value = document["evidence_cache_root"]
+    evidence_cache_root = (
+        None
+        if cache_root_value is None
+        else _canonical_path(cache_root_value, "evidence cache root")
+    )
+    if evidence_cache_root is not None:
+        if not evidence_cache_root.is_dir() or evidence_cache_root.is_symlink():
+            raise ReceiptError("evidence cache root must be a directory")
+        if evidence_cache_root != path.parent / "cache":
+            raise ReceiptError("evidence cache root is not receipt-bound")
+    _validate_commands(document["commands"], evidence_cache_root)
     _validate_phases(document["phases"])
     if any(
         phase.get("name") == "timefold-graphs-candidate"

@@ -367,9 +367,10 @@ python3 scripts/run-issues-242-243-validation.py \
   --receipt "$PWD/build/issues-242-243/local-receipt.json"
 ```
 
-runner evidence cache는 `build/issues-242-243/cache/`의 canonical JSON과 output
-digest다. key는 repository HEAD, helper/catalog/BOM digest, task set, configuration,
-JDK/Gradle version이다. 같은 key의 성공 receipt와 output digest를 read-back한
+runner evidence cache는 `build/issues-242-243/cache/`의 canonical JSON과 `0600` output
+file이다. key는 repository HEAD, helper/catalog/BOM digest, task set, ordered arguments,
+configuration, JDK/Gradle version이다. terminal receipt는 canonical cache output path와
+key를 보존하고 실제 파일을 다시 해시한다. 같은 key의 성공 receipt와 output digest를 read-back한
 경우에만 subprocess를 생략한다. Gradle build/configuration cache를 끄는 것은
 cross-candidate state 재사용을 막기 위한 것이며 runner evidence cache와 구분한다.
 

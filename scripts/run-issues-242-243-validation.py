@@ -26,6 +26,7 @@ import sys
 import tempfile
 import threading
 import time
+import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any, Optional
@@ -42,6 +43,7 @@ CATALOG_CANDIDATE_SPEC.loader.exec_module(catalog_candidate)
 
 PHASES = (
     "signing-buildsrc",
+    "candidate-bom-publication",
     "timefold-graphs-baseline",
     "timefold-graphs-candidate",
     "consumers",
@@ -75,6 +77,9 @@ CANONICAL_HELPER_RELATIVE = Path(
 GENERATED_HELPER_RELATIVE = Path(
     "buildSrc/src/main/kotlin/PublishingSigningKeySupport.kt"
 )
+CANDIDATE_INIT_SCRIPT_RELATIVE = Path("config/issues-242-243-candidate.init.gradle")
+CANDIDATE_REPOSITORY_PROPERTY = "issues242243CandidateMavenRepo"
+CANDIDATE_VERSION_PROPERTY = "issues242243CandidateBomVersion"
 TIMEFOLD_COORDINATES = (
     "ai.timefold.solver:timefold-solver-core",
     "ai.timefold.solver:timefold-solver-benchmark",
@@ -116,12 +121,19 @@ CONSUMER_TASKS = {
 }
 
 
-def candidate_arguments(repository: str) -> tuple[str, ...]:
+def candidate_arguments(
+    *,
+    central_root: Path,
+    candidate_maven_repository: Path,
+) -> tuple[str, ...]:
     """Return explicit candidate-only arguments required by a repository."""
 
-    if repository == "clinic-appointment":
-        return ("--dependency-verification=off",)
-    return ()
+    return (
+        "--init-script",
+        str(central_root / CANDIDATE_INIT_SCRIPT_RELATIVE),
+        f"-D{CANDIDATE_REPOSITORY_PROPERTY}={candidate_maven_repository}",
+        f"-D{CANDIDATE_VERSION_PROPERTY}={CANDIDATE_BOM_VERSION}",
+    )
 
 
 def parse_dependency_insight(
@@ -286,6 +298,9 @@ class CommandResult:
     job_id: str = ""
     repository: str = ""
     cancelled: bool = False
+    cache_key: str = ""
+    cache_output_path: str = ""
+    candidate_artifact_manifest_bytes: bytes = b""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -308,6 +323,7 @@ class ValidationJob:
     job_id: str = ""
     environment_overrides: tuple[tuple[str, str], ...] = ()
     candidate_maven_repository: Optional[Path] = None
+    produced_maven_repository: Optional[Path] = None
     candidate_catalog_path: Optional[Path] = None
     coordinate: str = ""
 
@@ -468,6 +484,34 @@ def candidate_artifact_manifest(repository: Path) -> dict[str, Any]:
             artifact_directory / name, f"candidate BOM artifact {name}"
         )
         artifacts[name] = sha256_file(path)
+    pom_name, module_name = CANDIDATE_BOM_ARTIFACTS
+    try:
+        pom_root = ET.parse(artifact_directory / pom_name).getroot()
+        namespace = ""
+        if pom_root.tag.startswith("{"):
+            namespace = pom_root.tag.partition("}")[0] + "}"
+        pom_identity = tuple(
+            (pom_root.findtext(f"{namespace}{field}") or "").strip()
+            for field in ("groupId", "artifactId", "version")
+        )
+        module_document = json.loads(
+            (artifact_directory / module_name).read_text(encoding="utf-8")
+        )
+        component = module_document["component"]
+        module_identity = (
+            component["group"],
+            component["module"],
+            component["version"],
+        )
+    except (ET.ParseError, OSError, UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise InputContractError("candidate BOM metadata is malformed") from exc
+    expected_identity = (
+        "io.github.bluetape4k",
+        "bluetape4k-dependencies",
+        CANDIDATE_BOM_VERSION,
+    )
+    if pom_identity != expected_identity or module_identity != expected_identity:
+        raise InputContractError("candidate BOM metadata identity mismatch")
     repository_files: dict[str, str] = {}
     for path in sorted(repository.rglob("*")):
         if path.is_symlink():
@@ -478,6 +522,7 @@ def candidate_artifact_manifest(repository: Path) -> dict[str, Any]:
         repository_files[path.relative_to(repository).as_posix()] = sha256_file(path)
     digest = sha256_bytes(canonical_json_bytes(repository_files))
     return {
+        "repository_path": str(repository),
         "version": CANDIDATE_BOM_VERSION,
         "artifacts": artifacts,
         "repository_files": repository_files,
@@ -560,6 +605,17 @@ def _safe_cache_directory(path: Path) -> Path:
     if not path.is_dir():
         raise InputContractError(f"cache path is not a directory: {path}")
     return path
+
+
+def _empty_candidate_repository(path: Path) -> Path:
+    path = _absolute_without_following(path)
+    _reject_symlink_components(path.parent)
+    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(path, 0o700)
+    repository = _canonical_directory(path, "candidate Maven repository")
+    if any(repository.iterdir()):
+        raise InputContractError("candidate Maven repository must be empty before publication")
+    return repository
 
 
 def _atomic_write(path: Path, payload: bytes, mode: int = 0o600) -> None:
@@ -1201,6 +1257,25 @@ def _git(root: Path, *args: str) -> str:
     return completed.stdout.strip()
 
 
+def git_source_tree_sha256(root: Path, head: str) -> str:
+    """Bind the exact tracked source tree used by a producer job."""
+
+    root = _canonical_directory(root, "source worktree")
+    if COMMIT_RE.fullmatch(head) is None:
+        raise InputContractError("invalid source HEAD")
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), "ls-tree", "-r", "-z", head],
+            check=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise InputContractError("cannot read source tree") from exc
+    if not completed.stdout:
+        raise InputContractError("source tree is empty")
+    return sha256_bytes(completed.stdout)
+
+
 def _tool_version(
     command: Sequence[str],
     *,
@@ -1277,6 +1352,10 @@ def _digest_required(path: Path, description: str) -> str:
 def job_helper_path(
     *, repository: str, root: Path, central_root: Path, phase: str
 ) -> Path:
+    """Return the phase helper bound by the receipt's ``helper_sha256`` field."""
+
+    if phase in {"timefold-graphs-candidate", "consumers"}:
+        return central_root / CANDIDATE_INIT_SCRIPT_RELATIVE
     if repository in CONSUMER_REPOSITORIES or phase == "publication-poms":
         return central_root / CANONICAL_HELPER_RELATIVE
     return root / GENERATED_HELPER_RELATIVE
@@ -1291,18 +1370,18 @@ def _job_digests(
     catalog_path: Optional[Path] = None,
     bom_sha256: Optional[str] = None,
 ) -> tuple[str, str, str]:
-    helper = job_helper_path(
+    phase_helper = job_helper_path(
         repository=repository,
         root=root,
         central_root=central_root,
         phase=phase,
     )
-    if not helper.is_file() or helper.is_symlink():
-        raise InputContractError(f"signing helper is missing: {helper}")
+    if not phase_helper.is_file() or phase_helper.is_symlink():
+        raise InputContractError(f"phase helper is missing: {phase_helper}")
     catalog = catalog_path or root / "gradle" / "libs.versions.toml"
     bom = central_root / "build.gradle.kts"
     return (
-        _digest_required(helper, "generated signing helper"),
+        _digest_required(phase_helper, "phase helper"),
         _digest_required(catalog, "repository catalog"),
         _validate_sha256(bom_sha256, "candidate BOM artifact manifest")
         if bom_sha256 is not None
@@ -1326,6 +1405,7 @@ def _make_job(
     repository_branch: str = "",
     environment_overrides: Optional[Mapping[str, str]] = None,
     candidate_maven_repository: Optional[Path] = None,
+    produced_maven_repository: Optional[Path] = None,
     candidate_catalog_path: Optional[Path] = None,
     candidate_bom_sha256: Optional[str] = None,
     deadline: Optional[float] = None,
@@ -1364,6 +1444,7 @@ def _make_job(
         repository_branch=repository_branch,
         environment_overrides=tuple(sorted((environment_overrides or {}).items())),
         candidate_maven_repository=candidate_maven_repository,
+        produced_maven_repository=produced_maven_repository,
         candidate_catalog_path=candidate_catalog_path,
     )
 
@@ -1417,7 +1498,7 @@ def validate_job_binding(
             central_root=central_root,
             phase=job.phase,
         ),
-        "job signing helper",
+        "job phase helper",
     )
     catalog_path = job.candidate_catalog_path or root / "gradle" / "libs.versions.toml"
     catalog_digest = _digest_required(catalog_path, "job catalog")
@@ -1579,6 +1660,41 @@ def build_phase_jobs(
             for name in names
         )
 
+    if phase == "candidate-bom-publication":
+        if selected:
+            raise InputContractError(
+                "candidate-bom-publication does not accept repository selection"
+            )
+        if candidate_maven_repository is None:
+            raise InputContractError(
+                "candidate-bom-publication requires the candidate Maven repository"
+            )
+        candidate_repository = _empty_candidate_repository(
+            candidate_maven_repository
+        )
+        central = entries["bluetape4k-dependencies"]
+        return (
+            _make_job(
+                repository="bluetape4k-dependencies",
+                phase=phase,
+                root=central_root,
+                tasks=("publishBluetapeDependenciesPublicationToMavenLocal",),
+                configuration="candidate-bom-publication",
+                arguments=(
+                    f"-Dmaven.repo.local={candidate_repository}",
+                    f"-PbaseVersion={CANDIDATE_BOM_VERSION}",
+                    "-PsnapshotVersion=",
+                ),
+                repository_head=str(central["candidate_head"]),
+                central_root=central_root,
+                max_workers=1,
+                repository_origin=str(central["origin"]),
+                repository_branch=str(central["candidate_branch"]),
+                produced_maven_repository=candidate_repository,
+                deadline=deadline,
+            ),
+        )
+
     consumer_roots: dict[str, tuple[Path, str]] = {}
     consumer_bindings: dict[str, Mapping[str, Any]] = {}
     if phase in {"timefold-graphs-baseline", "timefold-graphs-candidate", "consumers"}:
@@ -1662,16 +1778,16 @@ def build_phase_jobs(
                 candidate_bom_sha256=candidate_manifest_sha256,
                 environment_overrides={
                     "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog),
-                    "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository),
                 },
+                arguments=candidate_arguments(
+                    central_root=central_root,
+                    candidate_maven_repository=candidate_repository,
+                ),
                 deadline=deadline,
             )
         )
         for name in ("timefold-workshop", "clinic-appointment"):
             root, head = consumer_roots[name]
-            environment = {
-                "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)
-            }
             jobs.extend(
                 _make_timefold_graph_jobs(
                     repository=name,
@@ -1683,8 +1799,10 @@ def build_phase_jobs(
                     phase=phase,
                     candidate_maven_repository=candidate_repository,
                     candidate_bom_sha256=candidate_manifest_sha256,
-                    environment_overrides=environment,
-                    arguments=candidate_arguments(name),
+                    arguments=candidate_arguments(
+                        central_root=central_root,
+                        candidate_maven_repository=candidate_repository,
+                    ),
                     deadline=deadline,
                 )
             )
@@ -1708,8 +1826,11 @@ def build_phase_jobs(
                 repository_branch=str(exposed["candidate_branch"]),
                 environment_overrides={
                     "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog),
-                    "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository),
                 },
+                arguments=candidate_arguments(
+                    central_root=central_root,
+                    candidate_maven_repository=candidate_repository,
+                ),
                 candidate_maven_repository=candidate_repository,
                 candidate_catalog_path=candidate_catalog,
                 candidate_bom_sha256=candidate_manifest_sha256,
@@ -1729,10 +1850,10 @@ def build_phase_jobs(
                     central_root=central_root,
                     repository_origin=str(consumer_bindings[name]["origin"]),
                     repository_branch=str(consumer_bindings[name]["candidate_branch"]),
-                    environment_overrides={
-                        "ISSUES_242_243_CANDIDATE_MAVEN_REPO": str(candidate_repository)
-                    },
-                    arguments=candidate_arguments(name),
+                    arguments=candidate_arguments(
+                        central_root=central_root,
+                        candidate_maven_repository=candidate_repository,
+                    ),
                     candidate_maven_repository=candidate_repository,
                     candidate_bom_sha256=candidate_manifest_sha256,
                     deadline=deadline,
@@ -1857,9 +1978,21 @@ def execute_job(
     # Revalidate immediately before reading a cache and again before trusting a
     # hit or launching a child.  This closes the TOCTOU window around every job.
     revalidate()
-    hit = read_cache_entry(cache_directory, job.cache_key)
+    # A producer's stdout cache cannot reconstruct its artifact tree. Always
+    # execute producers against an empty receipt-bound repository instead of
+    # treating scalar command output as publication evidence.
+    hit = (
+        None
+        if job.produced_maven_repository is not None
+        else read_cache_entry(cache_directory, job.cache_key)
+    )
     if hit is not None:
         revalidate()
+        manifest_bytes = b""
+        if job.produced_maven_repository is not None:
+            manifest_bytes = canonical_json_bytes(
+                candidate_artifact_manifest(job.produced_maven_repository)
+            )
         output = str(hit.get("output", ""))
         return CommandResult(
             status="pass",
@@ -1875,6 +2008,9 @@ def execute_job(
             cached=True,
             job_id=job.job_id,
             repository=job.repository,
+            cache_key=job.cache_key,
+            cache_output_path=str(hit["output_path"]),
+            candidate_artifact_manifest_bytes=manifest_bytes,
         )
     revalidate()
     timeout = (
@@ -1907,8 +2043,17 @@ def execute_job(
             diagnostics="total validation budget exceeded",
         )
     if result.status == "pass":
+        # Bind successful output to the same clean exact source inputs after the
+        # child exits. A concurrent tracked-file edit during publication must
+        # never be attested as output of the preflighted HEAD.
+        revalidate()
+        manifest_bytes = b""
+        if job.produced_maven_repository is not None:
+            manifest_bytes = canonical_json_bytes(
+                candidate_artifact_manifest(job.produced_maven_repository)
+            )
         output = (result.stdout + ("\n" if result.stdout and result.stderr else "") + result.stderr).encode("utf-8")
-        write_cache_entry(
+        cache_entry = write_cache_entry(
             cache_directory,
             job.cache_key,
             output,
@@ -1917,6 +2062,13 @@ def execute_job(
                 "phase": job.phase,
                 "configuration": job.configuration,
             },
+        )
+        result = dataclasses.replace(
+            result,
+            output_sha256=str(cache_entry["output_sha256"]),
+            cache_key=job.cache_key,
+            cache_output_path=str(cache_entry["output_path"]),
+            candidate_artifact_manifest_bytes=manifest_bytes,
         )
     return result
 
@@ -1977,6 +2129,7 @@ def _bound_command_record(
     override_disposition = (
         "candidate"
         if job.candidate_maven_repository is not None
+        or job.produced_maven_repository is not None
         or job.candidate_catalog_path is not None
         else "baseline"
     )
@@ -2008,6 +2161,9 @@ def _bound_command_record(
         "configuration": job.configuration,
         "elapsed_seconds": command_result.elapsed_seconds,
         "cache": "shared-read" if command_result.cached else "isolated",
+        "job_id": job.job_id,
+        "cache_key": command_result.cache_key or None,
+        "cache_output_path": command_result.cache_output_path or None,
         "result": command_result.status,
         "output_sha256": command_result.output_sha256,
         "coordinate": coordinate,
@@ -2189,25 +2345,83 @@ def _write_receipt_update(
                 float(budget["total_seconds"]) - reserved_seconds + consumed
             )
             budget["remaining_seconds"] = reserved_seconds - consumed
+        effective_result = result
+        budget_exceeded = (
+            reserved_seconds is not None
+            and phase_elapsed_seconds > reserved_seconds + 0.001
+        )
+        if budget_exceeded:
+            failure = "total validation budget exceeded during phase execution"
+            effective_result = PhaseResult(
+                phase=result.phase,
+                status="blocked",
+                output_sha256=_phase_digest(result.phase, result.jobs, failure),
+                jobs=result.jobs,
+                failure=failure,
+            )
         phases = document.setdefault("phases", [])
         if not isinstance(phases, list):
             raise InputContractError("local receipt phases must be an array")
+        previous_phase = next(
+            (
+                item
+                for item in phases
+                if isinstance(item, Mapping) and item.get("name") == effective_result.phase
+            ),
+            None,
+        )
+        previous_elapsed = (
+            float(previous_phase.get("elapsed_seconds", 0.0))
+            if previous_phase is not None
+            else 0.0
+        )
         phases[:] = [
-            item for item in phases if not isinstance(item, Mapping) or item.get("name") != result.phase
+            item
+            for item in phases
+            if not isinstance(item, Mapping) or item.get("name") != effective_result.phase
         ]
         phases.append(
             {
-                "name": result.phase,
-                "result": result.status,
-                "output_sha256": result.output_sha256,
+                "name": effective_result.phase,
+                "result": effective_result.status,
+                "output_sha256": effective_result.output_sha256,
+                "elapsed_seconds": previous_elapsed + phase_elapsed_seconds,
+                "reserved_seconds": previous_elapsed + (reserved_seconds or 0.0),
+                "job_ids": [job.job_id for job in jobs],
             }
         )
+        producer_pairs = [
+            (job, command_result)
+            for job, command_result in zip(jobs, result.jobs)
+            if job.produced_maven_repository is not None
+        ]
+        if len(producer_pairs) > 1:
+            raise InputContractError("candidate BOM phase has multiple producers")
         candidate_artifact_digests = {
-            job.bom_sha256 for job in jobs if job.candidate_maven_repository is not None
+            job.bom_sha256
+            for job in jobs
+            if job.candidate_maven_repository is not None
         }
         if len(candidate_artifact_digests) > 1:
             raise InputContractError("candidate jobs do not share one artifact manifest")
-        if candidate_artifact_digests:
+        if producer_pairs and producer_pairs[0][1].status == "pass":
+            producer_job, producer_result = producer_pairs[0]
+            assert producer_job.produced_maven_repository is not None
+            try:
+                manifest = json.loads(
+                    producer_result.candidate_artifact_manifest_bytes.decode("utf-8")
+                )
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise InputContractError(
+                    "candidate BOM producer manifest snapshot is invalid"
+                ) from exc
+            if not isinstance(manifest, dict) or (
+                manifest.get("repository_path")
+                != str(producer_job.produced_maven_repository)
+            ):
+                raise InputContractError(
+                    "candidate BOM producer manifest snapshot is invalid"
+                )
             phases[:] = [
                 item
                 for item in phases
@@ -2217,16 +2431,66 @@ def _write_receipt_update(
             phases.append(
                 {
                     "name": "candidate-bom-artifacts",
-                    "result": "pass" if result.status == "pass" else result.status,
-                    "output_sha256": next(iter(candidate_artifact_digests)),
+                    "result": (
+                        "pass"
+                        if effective_result.status == "pass"
+                        else effective_result.status
+                    ),
+                    "output_sha256": manifest["sha256"],
+                    "elapsed_seconds": 0.0,
+                    "reserved_seconds": 0.0,
+                    "job_ids": [],
                 }
             )
-        _update_consumer_graphs(document, result, jobs)
+            manifest["central_head"] = document["central"]["candidate_head"]
+            manifest["catalog_sha256"] = producer_job.catalog_sha256
+            manifest["source_tree_sha256"] = git_source_tree_sha256(
+                producer_job.cwd, producer_job.repository_head
+            )
+            producer_record = _bound_command_record(producer_job, producer_result)
+            manifest["producer_job_id"] = producer_job.job_id
+            manifest["producer_input_sha256"] = producer_record["input_sha256"]
+            manifest["producer_output_sha256"] = producer_result.output_sha256
+            document["candidate_artifact_manifest"] = manifest
+        elif candidate_artifact_digests:
+            manifest = document.get("candidate_artifact_manifest")
+            if not isinstance(manifest, Mapping):
+                raise InputContractError("candidate artifact producer evidence is missing")
+            candidate_repository_paths = {
+                str(job.candidate_maven_repository)
+                for job in jobs
+                if job.candidate_maven_repository is not None
+            }
+            if (
+                len(candidate_repository_paths) != 1
+                or manifest.get("repository_path") not in candidate_repository_paths
+                or manifest.get("sha256") not in candidate_artifact_digests
+            ):
+                raise InputContractError("candidate jobs do not match producer evidence")
+        _update_consumer_graphs(document, effective_result, jobs)
         commands = document.setdefault("commands", [])
         if not isinstance(commands, list):
             raise InputContractError("local receipt commands must be an array")
+        commands[:] = [
+            item
+            for item in commands
+            if not isinstance(item, Mapping) or item.get("phase") != effective_result.phase
+        ]
         for job, command_result in zip(jobs, result.jobs):
             commands.append(_bound_command_record(job, command_result))
+        cache_roots = {
+            str(Path(command_result.cache_output_path).parent)
+            for command_result in result.jobs
+            if command_result.cache_output_path
+        }
+        if len(cache_roots) > 1:
+            raise InputContractError("phase command outputs use multiple cache roots")
+        if cache_roots:
+            cache_root = next(iter(cache_roots))
+            existing_cache_root = document.get("evidence_cache_root")
+            if existing_cache_root not in {None, cache_root}:
+                raise InputContractError("receipt evidence cache root changed")
+            document["evidence_cache_root"] = cache_root
         failures = document.setdefault("failure_record", [])
         if not isinstance(failures, list):
             raise InputContractError("local receipt failure_record must be an array")
@@ -2242,6 +2506,34 @@ def _write_receipt_update(
                         "output_sha256": command_result.output_sha256,
                     }
                 )
+        if budget_exceeded:
+            failures.append(
+                {
+                    "repository": "validation-budget",
+                    "phase": effective_result.phase,
+                    "reason": effective_result.failure,
+                    "output_sha256": effective_result.output_sha256,
+                }
+            )
+        if effective_result.status != "pass":
+            blocked_names = {
+                job.repository
+                for job, command_result in zip(jobs, result.jobs)
+                if command_result.status != "pass"
+            }
+            if budget_exceeded or "publication-poms" in blocked_names:
+                blocked_names.add("bluetape4k-dependencies")
+            for section in ("repositories", "consumers"):
+                values = document.get(section, [])
+                if isinstance(values, list):
+                    for item in values:
+                        if isinstance(item, dict) and item.get("name") in blocked_names:
+                            item["state"] = "blocked"
+            if "bluetape4k-dependencies" in blocked_names:
+                central = document.get("central")
+                if isinstance(central, dict):
+                    central["state"] = "blocked"
+            document["current_state"] = "blocked"
         _reject_secret_content(document)
         payload = canonical_json_bytes(document)
         try:
@@ -2336,6 +2628,41 @@ def run_phase(
     expected_state = receipt.get("current_state")
     if not isinstance(expected_state, str) or not expected_state:
         raise InputContractError("local receipt current_state is invalid")
+    recorded_phases = [
+        str(item["name"])
+        for item in receipt.get("phases", [])
+        if isinstance(item, Mapping)
+        and item.get("name") not in {"discover", "candidate-bom-artifacts"}
+    ]
+    if phase in recorded_phases:
+        if phase == "candidate-bom-publication":
+            raise InputContractError(
+                "cannot rerun candidate BOM producer without a new receipt"
+            )
+        if recorded_phases[-1] != phase:
+            raise InputContractError(
+                f"cannot rerun non-tail phase without a new receipt: {phase}"
+            )
+    expected_candidate_repository = _absolute_without_following(
+        receipt_path.parent / "candidate-m2"
+    )
+    if candidate_maven_repository is not None:
+        requested_candidate_repository = _absolute_without_following(
+            candidate_maven_repository
+        )
+        if requested_candidate_repository != expected_candidate_repository:
+            raise InputContractError(
+                "candidate Maven repository must use the receipt-bound path"
+            )
+        candidate_maven_repository = requested_candidate_repository
+        if phase == "candidate-bom-publication":
+            _empty_candidate_repository(candidate_maven_repository)
+    expected_cache_directory = _absolute_without_following(receipt_path.parent / "cache")
+    if cache_directory is not None and _absolute_without_following(
+        cache_directory
+    ) != expected_cache_directory:
+        raise InputContractError("evidence cache must use the receipt-bound path")
+    cache_directory = expected_cache_directory
     reserved_budget: Optional[float] = None
     phase_started: Optional[float] = None
     deadline: Optional[float] = None
@@ -2366,7 +2693,6 @@ def run_phase(
     assert reserved_budget is not None
     assert phase_started is not None
     assert deadline is not None
-    cache_directory = cache_directory or receipt_path.parent / "cache"
     max_workers = 1 if phase == "publication-poms" else MAX_WORKERS
     jobs_by_id = {
         index: dataclasses.replace(job, job_id=f"{phase}:{index}:{job.repository}")

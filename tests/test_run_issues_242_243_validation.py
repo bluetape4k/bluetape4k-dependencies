@@ -32,6 +32,7 @@ class ValidationRunnerTest(unittest.TestCase):
             runner.PHASES,
             (
                 "signing-buildsrc",
+                "candidate-bom-publication",
                 "timefold-graphs-baseline",
                 "timefold-graphs-candidate",
                 "consumers",
@@ -272,13 +273,39 @@ class ValidationRunnerTest(unittest.TestCase):
             artifact.mkdir(parents=True)
             pom = artifact / f"bluetape4k-dependencies-{runner.CANDIDATE_BOM_VERSION}.pom"
             module = artifact / f"bluetape4k-dependencies-{runner.CANDIDATE_BOM_VERSION}.module"
-            pom.write_text("<project/>\n", encoding="utf-8")
-            module.write_text("{}\n", encoding="utf-8")
+            pom.write_text(
+                "<project><groupId>io.github.bluetape4k</groupId>"
+                "<artifactId>bluetape4k-dependencies</artifactId>"
+                f"<version>{runner.CANDIDATE_BOM_VERSION}</version></project>\n",
+                encoding="utf-8",
+            )
+            module.write_bytes(
+                runner.canonical_json_bytes(
+                    {
+                        "component": {
+                            "group": "io.github.bluetape4k",
+                            "module": "bluetape4k-dependencies",
+                            "version": runner.CANDIDATE_BOM_VERSION,
+                        }
+                    }
+                )
+            )
 
             first = runner.candidate_artifact_manifest(repository)
             self.assertEqual(set(first["artifacts"]), {pom.name, module.name})
             self.assertEqual(len(first["sha256"]), 64)
-            module.write_text('{"changed":true}\n', encoding="utf-8")
+            module.write_bytes(
+                runner.canonical_json_bytes(
+                    {
+                        "component": {
+                            "group": "io.github.bluetape4k",
+                            "module": "bluetape4k-dependencies",
+                            "version": runner.CANDIDATE_BOM_VERSION,
+                        },
+                        "changed": True,
+                    }
+                )
+            )
             self.assertNotEqual(first["sha256"], runner.candidate_artifact_manifest(repository)["sha256"])
 
             changed = runner.candidate_artifact_manifest(repository)
@@ -291,6 +318,24 @@ class ValidationRunnerTest(unittest.TestCase):
 
             module.unlink()
             with self.assertRaisesRegex(runner.InputContractError, "candidate BOM artifact"):
+                runner.candidate_artifact_manifest(repository)
+
+    def test_candidate_artifact_manifest_rejects_malformed_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory).resolve()
+            artifact = (
+                repository
+                / "io/github/bluetape4k/bluetape4k-dependencies"
+                / runner.CANDIDATE_BOM_VERSION
+            )
+            artifact.mkdir(parents=True)
+            pom_name, module_name = runner.CANDIDATE_BOM_ARTIFACTS
+            (artifact / pom_name).write_text("<not-project>", encoding="utf-8")
+            (artifact / module_name).write_text("{}\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                runner.InputContractError, "metadata is malformed|metadata identity"
+            ):
                 runner.candidate_artifact_manifest(repository)
 
     def test_candidate_environment_is_explicit_and_not_inherited_implicitly(self) -> None:
@@ -661,6 +706,237 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertEqual(observed["mode"], 0o700)
             self.assertFalse(Path(str(observed["path"])).exists())
 
+    def test_successful_job_revalidates_source_binding_after_child_exit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            job = runner.ValidationJob(
+                repository="demo",
+                phase="signing-buildsrc",
+                cwd=root,
+                command=("./gradlew", "test"),
+                configuration="buildSrc",
+                task_set=("test",),
+                repository_head="a" * 40,
+                helper_sha256="b" * 64,
+                catalog_sha256="c" * 64,
+                bom_sha256="d" * 64,
+                jdk_version="25",
+                gradle_version="9.7.0",
+            )
+            command_result = runner.CommandResult(
+                status="pass",
+                returncode=0,
+                stdout="ok",
+                stderr="",
+                elapsed_seconds=0.1,
+                timed_out=False,
+                process_group_terminated=False,
+                termination_signal=None,
+                output_sha256="a" * 64,
+            )
+            binding_loader = mock.Mock(return_value={})
+            with (
+                mock.patch.object(runner, "run_command", return_value=command_result),
+                mock.patch.object(runner, "validate_job_binding") as validate,
+            ):
+                result = runner.execute_job(
+                    job,
+                    cache_directory=root / "cache",
+                    receipt_path=root / "receipt.json",
+                    binding_loader=binding_loader,
+                )
+
+            self.assertEqual(result.status, "pass")
+            self.assertEqual(binding_loader.call_count, 3)
+            self.assertEqual(validate.call_count, 3)
+
+    def test_candidate_producer_captures_one_immutable_manifest_snapshot(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            candidate_repository = root / "candidate-m2"
+            candidate_repository.mkdir()
+            job = runner.ValidationJob(
+                repository="bluetape4k-dependencies",
+                phase="candidate-bom-publication",
+                cwd=root,
+                command=("./gradlew", "publishToMavenLocal"),
+                configuration="candidate-bom-publication",
+                task_set=("publishToMavenLocal",),
+                repository_head="a" * 40,
+                helper_sha256="b" * 64,
+                catalog_sha256="c" * 64,
+                bom_sha256="d" * 64,
+                jdk_version="25",
+                gradle_version="9.7.0",
+                produced_maven_repository=candidate_repository,
+            )
+            command_result = runner.CommandResult(
+                status="pass",
+                returncode=0,
+                stdout="ok",
+                stderr="",
+                elapsed_seconds=0.1,
+                timed_out=False,
+                process_group_terminated=False,
+                termination_signal=None,
+                output_sha256="a" * 64,
+            )
+            manifest = {
+                "repository_path": str(candidate_repository),
+                "sha256": "e" * 64,
+            }
+            with (
+                mock.patch.object(
+                    runner,
+                    "read_cache_entry",
+                    return_value={
+                        "output": "stale cache",
+                        "output_sha256": "0" * 64,
+                        "output_path": str(root / "cache" / "stale.output"),
+                    },
+                ) as read_cache,
+                mock.patch.object(
+                    runner, "run_command", return_value=command_result
+                ) as run_command,
+                mock.patch.object(
+                    runner,
+                    "write_cache_entry",
+                    return_value={
+                        "output_sha256": "a" * 64,
+                        "output_path": str(root / "cache" / "fresh.output"),
+                    },
+                ),
+                mock.patch.object(runner, "candidate_artifact_manifest", return_value=manifest),
+            ):
+                result = runner.execute_job(
+                    job,
+                    cache_directory=root / "cache",
+                    receipt_path=root / "receipt.json",
+                )
+
+            read_cache.assert_not_called()
+            run_command.assert_called_once()
+            manifest["sha256"] = "f" * 64
+            self.assertEqual(
+                json.loads(result.candidate_artifact_manifest_bytes)["sha256"],
+                "e" * 64,
+            )
+
+    def test_receipt_update_uses_captured_producer_manifest_without_rescan(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            receipt = root / "receipt.json"
+            map_path = root / "map.json"
+            map_path.write_text("map\n", encoding="utf-8")
+            receipt.write_text(
+                json.dumps(
+                    {
+                        "repository_map": {
+                            "path": str(map_path),
+                            "sha256": hashlib.sha256(map_path.read_bytes()).hexdigest(),
+                        },
+                        "current_state": "discovered",
+                        "central": {"candidate_head": "a" * 40},
+                        "candidate_artifact_manifest": None,
+                        "validation_budget": {
+                            "total_seconds": 5400.0,
+                            "elapsed_seconds": 0.0,
+                            "remaining_seconds": 5400.0,
+                        },
+                        "phases": [],
+                        "commands": [],
+                        "failure_record": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            receipt.chmod(0o600)
+            candidate_repository = root / "candidate-m2"
+            candidate_repository.mkdir()
+
+            @contextmanager
+            def lock(path: Path):
+                yield
+
+            class StrictReceipt:
+                _receipt_lock = staticmethod(lock)
+
+                @staticmethod
+                def validate_receipt(path: Path) -> dict[str, object]:
+                    return json.loads(path.read_text(encoding="utf-8"))
+
+                write_atomic = staticmethod(runner._atomic_write)
+
+            manifest = {
+                "repository_path": str(candidate_repository),
+                "version": runner.CANDIDATE_BOM_VERSION,
+                "artifacts": {"fixture": "d" * 64},
+                "repository_files": {"fixture": "d" * 64},
+                "sha256": "e" * 64,
+            }
+            job = runner.ValidationJob(
+                repository="bluetape4k-dependencies",
+                phase="candidate-bom-publication",
+                cwd=root,
+                command=("./gradlew", "publishToMavenLocal"),
+                configuration="candidate-bom-publication",
+                task_set=("publishToMavenLocal",),
+                repository_head="a" * 40,
+                helper_sha256="b" * 64,
+                catalog_sha256="c" * 64,
+                bom_sha256="d" * 64,
+                jdk_version="25",
+                gradle_version="9.7.0",
+                job_id="candidate-bom-publication:0:bluetape4k-dependencies",
+                produced_maven_repository=candidate_repository,
+            )
+            command_result = runner.CommandResult(
+                status="pass",
+                returncode=0,
+                stdout="ok",
+                stderr="",
+                elapsed_seconds=0.1,
+                timed_out=False,
+                process_group_terminated=False,
+                termination_signal=None,
+                output_sha256="f" * 64,
+                job_id=job.job_id,
+                repository=job.repository,
+                candidate_artifact_manifest_bytes=runner.canonical_json_bytes(manifest),
+            )
+            phase = runner.PhaseResult(
+                job.phase,
+                "pass",
+                runner._phase_digest(job.phase, (command_result,), None),
+                (command_result,),
+            )
+            with (
+                mock.patch.object(runner, "_load_receipt_module", return_value=StrictReceipt),
+                mock.patch.object(
+                    runner, "git_source_tree_sha256", return_value="1" * 64
+                ),
+                mock.patch.object(
+                    runner,
+                    "candidate_artifact_manifest",
+                    side_effect=AssertionError("receipt update must not rescan artifacts"),
+                ),
+            ):
+                runner._write_receipt_update(
+                    receipt,
+                    phase,
+                    (job,),
+                    expected_receipt_sha256=hashlib.sha256(receipt.read_bytes()).hexdigest(),
+                    expected_state="discovered",
+                    phase_elapsed_seconds=0.1,
+                )
+
+            updated = json.loads(receipt.read_text(encoding="utf-8"))
+            self.assertEqual(updated["candidate_artifact_manifest"]["sha256"], "e" * 64)
+            self.assertEqual(
+                updated["candidate_artifact_manifest"]["source_tree_sha256"],
+                "1" * 64,
+            )
+
     def test_toolchain_probe_uses_one_private_home_and_deadline_path(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -751,12 +1027,38 @@ class ValidationRunnerTest(unittest.TestCase):
                                 root, deadline=time.monotonic() + 10
                             )
 
-    def test_clinic_candidate_jobs_explicitly_disable_changing_snapshot_verification(self) -> None:
-        self.assertEqual(
-            runner.candidate_arguments("clinic-appointment"),
-            ("--dependency-verification=off",),
+    def test_candidate_jobs_use_receipt_bound_bom_without_disabling_verification(self) -> None:
+        central = Path("/workspace/bluetape4k-dependencies")
+        candidate = Path("/workspace/candidate-m2")
+        common = (
+            "--init-script",
+            str(central / runner.CANDIDATE_INIT_SCRIPT_RELATIVE),
+            f"-D{runner.CANDIDATE_REPOSITORY_PROPERTY}={candidate}",
+            f"-D{runner.CANDIDATE_VERSION_PROPERTY}={runner.CANDIDATE_BOM_VERSION}",
         )
-        self.assertEqual(runner.candidate_arguments("timefold-workshop"), ())
+        self.assertEqual(
+            runner.candidate_arguments(
+                central_root=central,
+                candidate_maven_repository=candidate,
+            ),
+            common,
+        )
+        self.assertNotIn("--dependency-verification=off", common)
+
+    def test_candidate_init_script_forces_the_receipt_bound_bom(self) -> None:
+        script = (
+            SCRIPT_PATH.parents[1] / runner.CANDIDATE_INIT_SCRIPT_RELATIVE
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(
+            '"io.github.bluetape4k",\n                "bluetape4k-dependencies",',
+            script,
+        )
+        self.assertIn("includeVersion(", script)
+        self.assertIn("repositories.exclusiveContent", script)
+        self.assertIn('configuration.name == "testImplementation"', script)
+        self.assertIn("project.dependencies.enforcedPlatform(candidateBom)", script)
+        self.assertIn("details.useVersion(candidateBomVersion)", script)
 
     def test_consumer_jobs_bind_canonical_helper_without_generated_copy(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -917,6 +1219,88 @@ class ValidationRunnerTest(unittest.TestCase):
 
             self.assertEqual(events, ["reserve"])
 
+    def test_run_phase_rejects_non_tail_rerun_and_unbound_output_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            map_path = root / "map.json"
+            receipt_path = root / "receipt.json"
+            map_path.write_text("{}\n", encoding="utf-8")
+            receipt_path.write_text("{}\n", encoding="utf-8")
+            repository_map: dict[str, object] = {}
+
+            with (
+                mock.patch.object(
+                    runner, "load_strict_repository_map", return_value=repository_map
+                ),
+                mock.patch.object(
+                    runner,
+                    "load_local_receipt",
+                    return_value={
+                        "current_state": "discovered",
+                        "phases": [
+                            {"name": "signing-buildsrc"},
+                            {"name": "consumers"},
+                        ],
+                    },
+                ),
+                mock.patch.object(runner, "sha256_file", return_value="a" * 64),
+                self.assertRaisesRegex(runner.InputContractError, "non-tail phase"),
+            ):
+                runner.run_phase(
+                    "signing-buildsrc",
+                    repository_map_path=map_path,
+                    receipt_path=receipt_path,
+                    dry_run=True,
+                )
+
+            with (
+                mock.patch.object(
+                    runner, "load_strict_repository_map", return_value=repository_map
+                ),
+                mock.patch.object(
+                    runner,
+                    "load_local_receipt",
+                    return_value={
+                        "current_state": "discovered",
+                        "phases": [{"name": "candidate-bom-publication"}],
+                    },
+                ),
+                mock.patch.object(runner, "sha256_file", return_value="a" * 64),
+                self.assertRaisesRegex(
+                    runner.InputContractError, "producer without a new receipt"
+                ),
+            ):
+                runner.run_phase(
+                    "candidate-bom-publication",
+                    repository_map_path=map_path,
+                    receipt_path=receipt_path,
+                    candidate_maven_repository=root / "candidate-m2",
+                    dry_run=True,
+                )
+
+            empty_receipt = {"current_state": "discovered", "phases": []}
+            for keyword, value, message in (
+                ("candidate_maven_repository", root / "other-m2", "receipt-bound"),
+                ("cache_directory", root / "other-cache", "receipt-bound"),
+            ):
+                with (
+                    mock.patch.object(
+                        runner, "load_strict_repository_map", return_value=repository_map
+                    ),
+                    mock.patch.object(
+                        runner, "load_local_receipt", return_value=empty_receipt
+                    ),
+                    mock.patch.object(runner, "sha256_file", return_value="a" * 64),
+                    self.assertRaisesRegex(runner.InputContractError, message),
+                ):
+                    runner.run_phase(
+                        "signing-buildsrc",
+                        repository_map_path=map_path,
+                        receipt_path=receipt_path,
+                        dry_run=True,
+                        **{keyword: value},
+                    )
+
     def test_receipt_update_is_locked_strictly_validated_and_compare_and_swap_bound(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -924,6 +1308,8 @@ class ValidationRunnerTest(unittest.TestCase):
             initial = {
                 "repository_map": {"path": str(root / "map.json"), "sha256": "a" * 64},
                 "current_state": "discovered",
+                "central": {"candidate_head": "a" * 40},
+                "candidate_artifact_manifest": None,
                 "validation_budget": {
                     "total_seconds": 5400,
                     "elapsed_seconds": 0.0,
@@ -939,6 +1325,32 @@ class ValidationRunnerTest(unittest.TestCase):
             ).hexdigest()
             receipt.write_text(json.dumps(initial), encoding="utf-8")
             receipt.chmod(0o600)
+            candidate_repository = root / "candidate-m2"
+            artifact = (
+                candidate_repository
+                / "io/github/bluetape4k/bluetape4k-dependencies"
+                / runner.CANDIDATE_BOM_VERSION
+            )
+            artifact.mkdir(parents=True)
+            pom_name, module_name = runner.CANDIDATE_BOM_ARTIFACTS
+            (artifact / pom_name).write_text(
+                "<project><groupId>io.github.bluetape4k</groupId>"
+                "<artifactId>bluetape4k-dependencies</artifactId>"
+                f"<version>{runner.CANDIDATE_BOM_VERSION}</version></project>\n",
+                encoding="utf-8",
+            )
+            (artifact / module_name).write_bytes(
+                runner.canonical_json_bytes(
+                    {
+                        "component": {
+                            "group": "io.github.bluetape4k",
+                            "module": "bluetape4k-dependencies",
+                            "version": runner.CANDIDATE_BOM_VERSION,
+                        }
+                    }
+                )
+            )
+            artifact_digest = runner.candidate_artifact_manifest(candidate_repository)["sha256"]
             calls: list[str] = []
 
             @contextmanager
@@ -970,7 +1382,6 @@ class ValidationRunnerTest(unittest.TestCase):
                 bom_sha256="d" * 64,
                 jdk_version="jdk",
                 gradle_version="gradle",
-                candidate_maven_repository=root,
             )
             result = runner.CommandResult(
                 status="pass",
@@ -1007,12 +1418,6 @@ class ValidationRunnerTest(unittest.TestCase):
                 self.assertGreaterEqual(calls.count("validate"), 2)
                 self.assertEqual(calls[0], "lock-enter")
                 updated = json.loads(receipt.read_text(encoding="utf-8"))
-                artifact_phase = next(
-                    item
-                    for item in updated["phases"]
-                    if item["name"] == "candidate-bom-artifacts"
-                )
-                self.assertEqual(artifact_phase["output_sha256"], "d" * 64)
                 command = updated["commands"][0]
                 self.assertEqual(command["phase"], "signing-buildsrc")
                 self.assertEqual(command["repository_head"], "a" * 40)
@@ -1020,7 +1425,7 @@ class ValidationRunnerTest(unittest.TestCase):
                 self.assertEqual(command["catalog_sha256"], "c" * 64)
                 self.assertEqual(command["bom_sha256"], "d" * 64)
                 self.assertEqual(command["task_set"], ["test"])
-                self.assertEqual(command["override_disposition"], "candidate")
+                self.assertEqual(command["override_disposition"], "baseline")
                 self.assertEqual(command["arguments"], [])
                 self.assertEqual(command["gradle_home_policy"], "ephemeral-0700")
                 self.assertRegex(command["input_sha256"], r"^[0-9a-f]{64}$")
@@ -1062,12 +1467,96 @@ class ValidationRunnerTest(unittest.TestCase):
                     phase_elapsed_seconds=0.01,
                 )
                 failed_document = json.loads(receipt.read_text(encoding="utf-8"))
-                artifact_phase = next(
-                    item
-                    for item in failed_document["phases"]
-                    if item["name"] == "candidate-bom-artifacts"
+                self.assertEqual(failed_document["current_state"], "blocked")
+
+    def test_receipt_update_records_actual_elapsed_time_when_budget_is_exceeded(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            receipt = root / "receipt.json"
+            receipt.write_text(
+                json.dumps(
+                    {
+                        "repository_map": {
+                            "path": str(root / "map.json"),
+                            "sha256": "a" * 64,
+                        },
+                        "current_state": "discovered",
+                        "central": {"candidate_head": "a" * 40},
+                        "candidate_artifact_manifest": None,
+                        "validation_budget": {
+                            "total_seconds": 10.0,
+                            "elapsed_seconds": 10.0,
+                            "remaining_seconds": 0.0,
+                        },
+                        "phases": [],
+                        "commands": [],
+                        "failure_record": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            receipt.chmod(0o600)
+            (root / "map.json").write_text("map\n", encoding="utf-8")
+
+            @contextmanager
+            def lock(path: Path):
+                yield
+
+            class StrictReceipt:
+                _receipt_lock = staticmethod(lock)
+
+                @staticmethod
+                def validate_receipt(path: Path) -> dict[str, object]:
+                    return json.loads(path.read_text(encoding="utf-8"))
+
+                write_atomic = staticmethod(runner._atomic_write)
+
+            job = runner.ValidationJob(
+                repository="bluetape4k-dependencies",
+                phase="signing-buildsrc",
+                cwd=root,
+                command=("echo", "ok"),
+                configuration="buildSrc",
+                task_set=("test",),
+                repository_head="a" * 40,
+                helper_sha256="b" * 64,
+                catalog_sha256="c" * 64,
+                bom_sha256="d" * 64,
+                jdk_version="jdk",
+                gradle_version="gradle",
+            )
+            command_result = runner.CommandResult(
+                status="pass",
+                returncode=0,
+                stdout="",
+                stderr="",
+                elapsed_seconds=12.5,
+                timed_out=False,
+                process_group_terminated=False,
+                termination_signal=None,
+                output_sha256="e" * 64,
+            )
+            phase = runner.PhaseResult(
+                "signing-buildsrc", "pass", "f" * 64, (command_result,)
+            )
+            with mock.patch.object(runner, "_load_receipt_module", return_value=StrictReceipt):
+                runner._write_receipt_update(
+                    receipt,
+                    phase,
+                    (job,),
+                    expected_receipt_sha256=hashlib.sha256(receipt.read_bytes()).hexdigest(),
+                    expected_state="discovered",
+                    phase_elapsed_seconds=12.5,
+                    reserved_seconds=10.0,
                 )
-                self.assertEqual(artifact_phase["result"], "fail")
+
+            updated = json.loads(receipt.read_text(encoding="utf-8"))
+            recorded_phase = updated["phases"][0]
+            self.assertEqual(recorded_phase["result"], "blocked")
+            self.assertEqual(recorded_phase["elapsed_seconds"], 12.5)
+            self.assertEqual(recorded_phase["reserved_seconds"], 10.0)
+            self.assertEqual(updated["current_state"], "blocked")
+            self.assertIn("budget exceeded", updated["failure_record"][-1]["reason"])
 
     def test_job_binding_rechecks_git_identity_clean_state_and_all_input_digests(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -41,7 +41,10 @@ Exposed가 후보에서도 Timefold core `2.4.0`을 선택하는 사실과 독�
 
 signing governance는 9개 publisher가 같은 generated helper를 사용하고, local receipt가
 실제 canonical source digest, 전체 validation budget, candidate Maven repository 전체
-manifest를 검증하도록 강화됐다.
+manifest를 검증하도록 강화됐다. terminal receipt의 SHA-256 문자열만 확인해서는 runner
+실행을 증명할 수 없다. immutable input에서 cache key를 다시 계산하고 실제 `0600` output,
+candidate POM/module, repository tree를 재해시하며 phase job ID와 wall-clock budget까지
+명령 coverage에 결속해야 합성 receipt를 거부할 수 있다.
 
 ## 검증
 

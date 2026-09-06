@@ -64,6 +64,14 @@ class Issues242243ReceiptTest(unittest.TestCase):
             source = root / receipt.CANONICAL_SOURCE_RELATIVE
             source.parent.mkdir(parents=True)
             source.write_text("canonical signing helper\n", encoding="utf-8")
+            (root / "build.gradle.kts").write_text(
+                "plugins { `java-platform` }\n", encoding="utf-8"
+            )
+            init_script = root / receipt.CANDIDATE_INIT_SCRIPT_RELATIVE
+            init_script.parent.mkdir(parents=True, exist_ok=True)
+            init_script.write_bytes(
+                (RUNNER_PATH.parents[1] / runner.CANDIDATE_INIT_SCRIPT_RELATIVE).read_bytes()
+            )
         if name in receipt.SIGNING_NAMES:
             target = root / receipt.GENERATED_SIGNING_TARGET_RELATIVE
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -192,7 +200,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "output_sha256": "c" * 64,
         }
         document = {
-            "schema_version": 1,
+            "schema_version": receipt.SCHEMA_VERSION,
             "issues": [242, 243],
             "current_state": "discovered",
             "validation_budget": {
@@ -209,10 +217,21 @@ class Issues242243ReceiptTest(unittest.TestCase):
                 "state": "discovered",
             },
             "canonical_signing_source": {"path": str(source_path.resolve()), "sha256": source_digest},
+            "candidate_artifact_manifest": None,
+            "evidence_cache_root": None,
             "repositories": repository_receipts,
             "consumers": consumers,
             "commands": [command],
-            "phases": [{"name": "discover", "result": "pass", "output_sha256": "d" * 64}],
+            "phases": [
+                {
+                    "name": "discover",
+                    "result": "pass",
+                    "output_sha256": "d" * 64,
+                    "elapsed_seconds": 0.0,
+                    "reserved_seconds": 0.0,
+                    "job_ids": [],
+                }
+            ],
             "failure_record": [],
             "rollback_record": [],
             "evidence_commit": None,
@@ -222,15 +241,53 @@ class Issues242243ReceiptTest(unittest.TestCase):
         return workspace, receipt_path, document
 
     def make_adoptable(self, document: dict[str, object]) -> None:
-        phases = [
-            {
-                "name": name,
-                "result": "pass",
-                "output_sha256": hashlib.sha256(name.encode()).hexdigest(),
-            }
-            for name in sorted(receipt.REQUIRED_ADOPTION_PHASES)
-        ]
+        workspace = Path(str(document["repository_map"]["path"])).parents[2]
+        cache_directory = workspace / "build/issues-242-243/cache"
+        cache_directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(cache_directory, 0o700)
+        candidate_repository = workspace / "build/issues-242-243/candidate-m2"
+        artifact_directory = (
+            candidate_repository
+            / "io/github/bluetape4k/bluetape4k-dependencies"
+            / runner.CANDIDATE_BOM_VERSION
+        )
+        artifact_directory.mkdir(parents=True, exist_ok=True)
+        for name, payload in (
+            (
+                f"bluetape4k-dependencies-{runner.CANDIDATE_BOM_VERSION}.pom",
+                (
+                    "<project><groupId>io.github.bluetape4k</groupId>"
+                    "<artifactId>bluetape4k-dependencies</artifactId>"
+                    f"<version>{runner.CANDIDATE_BOM_VERSION}</version></project>\n"
+                ).encode(),
+            ),
+            (
+                f"bluetape4k-dependencies-{runner.CANDIDATE_BOM_VERSION}.module",
+                runner.canonical_json_bytes(
+                    {
+                        "component": {
+                            "group": "io.github.bluetape4k",
+                            "module": "bluetape4k-dependencies",
+                            "version": runner.CANDIDATE_BOM_VERSION,
+                        }
+                    }
+                ),
+            ),
+        ):
+            (artifact_directory / name).write_bytes(payload)
+        artifact_manifest = runner.candidate_artifact_manifest(candidate_repository)
+        central = next(
+            item for item in document["repositories"] if item["name"] == receipt.CENTRAL_NAME
+        )
+        catalog_path = Path(str(central["candidate_worktree"])) / "gradle/libs.versions.toml"
+        catalog_sha256 = hashlib.sha256(catalog_path.read_bytes()).hexdigest()
+        artifact_manifest["central_head"] = document["central"]["candidate_head"]
+        artifact_manifest["catalog_sha256"] = catalog_sha256
+        document["candidate_artifact_manifest"] = artifact_manifest
+
         commands: list[dict[str, object]] = []
+        results_by_phase: dict[str, list[runner.CommandResult]] = {}
+        job_index = 0
 
         def add_command(
             repository: str,
@@ -240,8 +297,11 @@ class Issues242243ReceiptTest(unittest.TestCase):
             selected_version: str | None = None,
             override_disposition: str = "baseline",
         ) -> None:
+            nonlocal job_index
             if phase == "signing-buildsrc":
                 task_set = ["compileKotlin", "test"]
+            elif phase == "candidate-bom-publication":
+                task_set = ["publishBluetapeDependenciesPublicationToMavenLocal"]
             elif phase == "consumers":
                 task_set = receipt.ADOPTION_CONSUMER_TASKS[repository]
             elif phase == "publication-poms":
@@ -251,9 +311,25 @@ class Issues242243ReceiptTest(unittest.TestCase):
             else:
                 task_set = ["dependencyInsight"]
             arguments: list[str] = []
+            if phase == "candidate-bom-publication":
+                arguments.extend(
+                    [
+                        f"-Dmaven.repo.local={candidate_repository}",
+                        f"-PbaseVersion={runner.CANDIDATE_BOM_VERSION}",
+                        "-PsnapshotVersion=",
+                    ]
+                )
+            elif phase in {"timefold-graphs-candidate", "consumers"}:
+                central_root = Path(str(central["candidate_worktree"]))
+                arguments.extend(
+                    [
+                        "--init-script",
+                        str(central_root / receipt.CANDIDATE_INIT_SCRIPT_RELATIVE),
+                        f"-D{receipt.CANDIDATE_REPOSITORY_PROPERTY}={candidate_repository}",
+                        f"-D{receipt.CANDIDATE_VERSION_PROPERTY}={runner.CANDIDATE_BOM_VERSION}",
+                    ]
+                )
             if phase.startswith("timefold-graphs-"):
-                if phase == "timefold-graphs-candidate" and repository == "clinic-appointment":
-                    arguments.append("--dependency-verification=off")
                 arguments.extend(
                     [
                         "--configuration",
@@ -262,29 +338,73 @@ class Issues242243ReceiptTest(unittest.TestCase):
                         str(coordinate),
                     ]
                 )
-            elif phase == "consumers" and repository == "clinic-appointment":
-                arguments.append("--dependency-verification=off")
             job = runner.ValidationJob(
                 repository=repository,
                 phase=phase,
                 cwd=Path("/fixture"),
                 command=("./gradlew", *task_set, *arguments),
-                configuration="testRuntimeClasspath",
+                configuration=(
+                    "candidate-bom-publication"
+                    if phase == "candidate-bom-publication"
+                    else "testRuntimeClasspath"
+                ),
                 task_set=tuple(task_set),
-                repository_head="a" * 40,
-                helper_sha256="b" * 64,
-                catalog_sha256="c" * 64,
-                bom_sha256="d" * 64,
+                repository_head=(
+                    str(document["central"]["candidate_head"])
+                    if phase == "candidate-bom-publication"
+                    else "a" * 40
+                ),
+                helper_sha256=(
+                    hashlib.sha256(
+                        (
+                            Path(str(central["candidate_worktree"]))
+                            / (
+                                receipt.CANDIDATE_INIT_SCRIPT_RELATIVE
+                                if phase in {"timefold-graphs-candidate", "consumers"}
+                                else receipt.GENERATED_SIGNING_TARGET_RELATIVE
+                            )
+                        ).read_bytes()
+                    ).hexdigest()
+                    if phase
+                    in {
+                        "candidate-bom-publication",
+                        "timefold-graphs-candidate",
+                        "consumers",
+                    }
+                    else "b" * 64
+                ),
+                catalog_sha256=catalog_sha256,
+                bom_sha256=(
+                    hashlib.sha256(
+                        (
+                            Path(str(central["candidate_worktree"]))
+                            / "build.gradle.kts"
+                        ).read_bytes()
+                    ).hexdigest()
+                    if phase == "candidate-bom-publication"
+                    else
+                    str(artifact_manifest["sha256"])
+                    if override_disposition == "candidate"
+                    else "d" * 64
+                ),
                 jdk_version="25",
                 gradle_version="9.7.0",
                 arguments=tuple(arguments),
                 candidate_maven_repository=(
-                    Path("/candidate")
+                    candidate_repository
                     if override_disposition == "candidate"
+                    and phase != "candidate-bom-publication"
+                    else None
+                ),
+                produced_maven_repository=(
+                    candidate_repository
+                    if phase == "candidate-bom-publication"
                     else None
                 ),
                 coordinate=coordinate or "",
+                job_id=f"{phase}:{job_index}:{repository}",
             )
+            job_index += 1
             output = ""
             if coordinate:
                 output = (
@@ -292,6 +412,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
                     "  Selection reasons:\n"
                     "      - selected by immutable fixture\n"
                 )
+            output_bytes = output.encode("utf-8")
+            output_sha256 = hashlib.sha256(output_bytes).hexdigest()
+            cache_output_path = cache_directory / f"{job.cache_key}.output"
+            runner._atomic_write(cache_output_path, output_bytes)
             result = runner.CommandResult(
                 status="pass",
                 returncode=0,
@@ -301,14 +425,30 @@ class Issues242243ReceiptTest(unittest.TestCase):
                 timed_out=False,
                 process_group_terminated=False,
                 termination_signal=None,
-                output_sha256=hashlib.sha256(
-                    f"{phase}:{repository}:{coordinate}".encode()
-                ).hexdigest(),
+                output_sha256=output_sha256,
+                job_id=job.job_id,
+                repository=repository,
+                cache_key=job.cache_key,
+                cache_output_path=str(cache_output_path),
             )
             commands.append(runner._bound_command_record(job, result))
+            results_by_phase.setdefault(phase, []).append(result)
 
         for repository in receipt.SIGNING_NAMES:
             add_command(repository, "signing-buildsrc")
+        add_command(
+            receipt.CENTRAL_NAME,
+            "candidate-bom-publication",
+            override_disposition="candidate",
+        )
+        producer_record = commands[-1]
+        artifact_manifest["source_tree_sha256"] = runner.git_source_tree_sha256(
+            Path(str(central["candidate_worktree"])),
+            str(document["central"]["candidate_head"]),
+        )
+        artifact_manifest["producer_job_id"] = producer_record["job_id"]
+        artifact_manifest["producer_input_sha256"] = producer_record["input_sha256"]
+        artifact_manifest["producer_output_sha256"] = producer_record["output_sha256"]
         for phase, selected, disposition in (
             ("timefold-graphs-baseline", "2.4.0", "baseline"),
             ("timefold-graphs-candidate", "2.6.0", "candidate"),
@@ -325,6 +465,58 @@ class Issues242243ReceiptTest(unittest.TestCase):
         for repository in receipt.ADOPTION_GRAPH_COORDINATES:
             add_command(repository, "consumers", override_disposition="candidate")
         add_command("publication-poms", "publication-poms")
+        phases = [
+            {
+                "name": "discover",
+                "result": "pass",
+                "output_sha256": "d" * 64,
+                "elapsed_seconds": 0.0,
+                "reserved_seconds": 0.0,
+                "job_ids": [],
+            }
+        ]
+        remaining = float(receipt.TOTAL_VALIDATION_BUDGET_SECONDS)
+        elapsed_total = 0.0
+        for phase_name in (
+            "signing-buildsrc",
+            "candidate-bom-publication",
+            "timefold-graphs-baseline",
+            "timefold-graphs-candidate",
+            "consumers",
+            "publication-poms",
+        ):
+            phase_results = results_by_phase[phase_name]
+            elapsed = sum(item.elapsed_seconds for item in phase_results)
+            phases.append(
+                {
+                    "name": phase_name,
+                    "result": "pass",
+                    "output_sha256": runner._phase_digest(
+                        phase_name, phase_results, None
+                    ),
+                    "elapsed_seconds": elapsed,
+                    "reserved_seconds": remaining,
+                    "job_ids": [item.job_id for item in phase_results],
+                }
+            )
+            remaining -= elapsed
+            elapsed_total += elapsed
+        phases.append(
+            {
+                "name": "candidate-bom-artifacts",
+                "result": "pass",
+                "output_sha256": artifact_manifest["sha256"],
+                "elapsed_seconds": 0.0,
+                "reserved_seconds": 0.0,
+                "job_ids": [],
+            }
+        )
+        document["validation_budget"] = {
+            "total_seconds": receipt.TOTAL_VALIDATION_BUDGET_SECONDS,
+            "elapsed_seconds": elapsed_total,
+            "remaining_seconds": remaining,
+        }
+        document["evidence_cache_root"] = str(cache_directory)
         document["phases"] = phases
         document["commands"] = commands
         for consumer in document["consumers"]:
@@ -382,6 +574,12 @@ class Issues242243ReceiptTest(unittest.TestCase):
             )
         finally:
             index.unlink(missing_ok=True)
+
+    def mark_validated(self, document: dict[str, object]) -> None:
+        for item in document["repositories"] + document["consumers"]:
+            item["state"] = "validated"
+        document["central"]["state"] = "validated"
+        document["current_state"] = "validated"
 
     def test_rejects_missing_repository(self) -> None:
         workspace, path, document = self.make_fixture()
@@ -449,6 +647,139 @@ class Issues242243ReceiptTest(unittest.TestCase):
         self.assertTrue(all(item["task_set"] == ["compileKotlin", "test"] for item in signing))
         self.assertTrue(all(item["arguments"] == [] for item in signing))
 
+    def test_validated_receipt_rehashes_cache_outputs_and_candidate_repository(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        receipt.validate_receipt(path)
+
+        cache_output = Path(document["commands"][0]["cache_output_path"])
+        cache_output.write_bytes(cache_output.read_bytes() + b"tampered\n")
+        with self.assertRaisesRegex(receipt.ReceiptError, "cache output SHA-256"):
+            receipt.validate_receipt(path)
+
+        self.make_adoptable(document)
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        artifact = next(
+            Path(document["candidate_artifact_manifest"]["repository_path"]).rglob("*.pom")
+        )
+        artifact.write_bytes(artifact.read_bytes() + b"tampered\n")
+        with self.assertRaisesRegex(receipt.ReceiptError, "repository file manifest"):
+            receipt.validate_receipt(path)
+
+    def test_terminal_receipt_rejects_synthetic_cache_and_budget_job_bindings(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        document["commands"][0]["cache_output_path"] = "/missing/synthetic.output"
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "cache output"):
+            receipt.validate_receipt(path)
+
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        original_output = Path(document["commands"][0]["cache_output_path"])
+        sibling_cache = original_output.parent.parent / "unbound-cache"
+        sibling_cache.mkdir()
+        sibling_output = sibling_cache / original_output.name
+        sibling_output.write_bytes(original_output.read_bytes())
+        document["commands"][0]["cache_output_path"] = str(sibling_output)
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "receipt cache root"):
+            receipt.validate_receipt(path)
+
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        phase = next(
+            item for item in document["phases"] if item["name"] == "signing-buildsrc"
+        )
+        phase["reserved_seconds"] -= 1.0
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "budget reservation"):
+            receipt.validate_receipt(path)
+
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        phase = next(
+            item for item in document["phases"] if item["name"] == "signing-buildsrc"
+        )
+        phase["job_ids"] = phase["job_ids"][1:]
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "job IDs"):
+            receipt.validate_receipt(path)
+
+    def test_terminal_receipt_rejects_candidate_producer_provenance_tampering(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        document["candidate_artifact_manifest"]["source_tree_sha256"] = "0" * 64
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "source tree SHA-256"):
+            receipt.validate_receipt(path)
+
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        document["candidate_artifact_manifest"]["producer_input_sha256"] = "0" * 64
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "producer provenance"):
+            receipt.validate_receipt(path)
+
+    def test_terminal_receipt_binds_candidate_commands_to_artifact_manifest(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        command = next(
+            item
+            for item in document["commands"]
+            if item["phase"] == "timefold-graphs-candidate"
+        )
+        command["bom_sha256"] = "0" * 64
+        command["cache_key"] = runner.cache_key(
+            repository=command["repository"],
+            repository_head=command["repository_head"],
+            helper_sha256=command["helper_sha256"],
+            catalog_sha256=command["catalog_sha256"],
+            bom_sha256=command["bom_sha256"],
+            task_set=command["task_set"],
+            configuration=command["configuration"],
+            jdk_version=command["jdk"],
+            gradle_version=command["gradle"],
+            arguments=command["arguments"],
+        )
+        previous_output = Path(command["cache_output_path"])
+        rebound_output = previous_output.with_name(f'{command["cache_key"]}.output')
+        rebound_output.write_bytes(previous_output.read_bytes())
+        os.chmod(rebound_output, 0o600)
+        command["cache_output_path"] = str(rebound_output)
+        immutable_input = {
+            "schema_version": 1,
+            "repository": command["repository"],
+            "phase": command["phase"],
+            "command": command["command"],
+            "repository_head": command["repository_head"],
+            "helper_sha256": command["helper_sha256"],
+            "catalog_sha256": command["catalog_sha256"],
+            "bom_sha256": command["bom_sha256"],
+            "task_set": command["task_set"],
+            "configuration": command["configuration"],
+            "jdk": command["jdk"],
+            "gradle": command["gradle"],
+            "coordinate": command["coordinate"],
+            "override_disposition": command["override_disposition"],
+            "arguments": command["arguments"],
+            "gradle_home_policy": command["gradle_home_policy"],
+        }
+        command["input_sha256"] = receipt.sha256_bytes(
+            receipt.canonical_json_bytes(immutable_input)
+        )
+        path.write_bytes(receipt.canonical_json_bytes(document))
+
+        with self.assertRaisesRegex(
+            receipt.ReceiptError, "candidate consumer injection provenance"
+        ):
+            receipt.validate_receipt(path)
+
     def test_validated_state_requires_complete_terminal_evidence(self) -> None:
         workspace, path, document = self.make_fixture()
         for item in document["repositories"] + document["consumers"]:
@@ -472,11 +803,11 @@ class Issues242243ReceiptTest(unittest.TestCase):
 
     def test_rejects_malformed_schema_and_unknown_field(self) -> None:
         workspace, path, document = self.make_fixture()
-        document["schema_version"] = 2
+        document["schema_version"] = 1
         path.write_bytes(receipt.canonical_json_bytes(document))
         with self.assertRaisesRegex(RuntimeError, "schema"):
             receipt.validate_receipt(path)
-        document["schema_version"] = 1
+        document["schema_version"] = receipt.SCHEMA_VERSION
         document["unexpected"] = True
         path.write_bytes(receipt.canonical_json_bytes(document))
         with self.assertRaisesRegex(RuntimeError, "fields"):
@@ -718,6 +1049,9 @@ class Issues242243ReceiptTest(unittest.TestCase):
                 "name": "timefold-graphs-candidate",
                 "result": "pass",
                 "output_sha256": "e" * 64,
+                "elapsed_seconds": 0.0,
+                "reserved_seconds": 0.0,
+                "job_ids": [],
             }
         )
         path.write_bytes(receipt.canonical_json_bytes(document))

@@ -325,6 +325,9 @@ CI는 branch/default HEAD를 임의로 clone하지 않고 manifest의 commit을 
       "gradle-home-policy": "ephemeral-0700",
       "elapsed-seconds": 0,
       "cache": "isolated|shared-read",
+      "job-id": "phase:index:repository",
+      "cache-key": "...",
+      "cache-output-path": "/absolute/private/cache/<key>.output",
       "result": "pass|fail|blocked",
       "output-sha256": "..."
     }
@@ -339,7 +342,23 @@ CI는 branch/default HEAD를 임의로 clone하지 않고 manifest의 commit을 
 candidate artifact phase가 모두 통과한 경우에만 성립한다. `blocked`가 하나라도 있거나
 `validated`보다 낮은 target이 있으면 adoption은 실패한다. 각 Gradle command는 매 실행마다
 새 `0700` 임시 `GRADLE_USER_HOME`을 사용하며 이 정책도 immutable command input digest에
-포함한다.
+포함한다. schema v2 terminal 검증은 receipt와 같은 디렉터리의 `cache/`만 허용하고,
+각 cache key를 immutable input에서 다시 계산한 뒤 `0600` cache output을 재해시한다.
+candidate BOM은 receipt와 같은 디렉터리의 빈 `candidate-m2/`에
+`candidate-bom-publication` phase가 직접 게시한다. candidate manifest는 exact
+POM/module allowlist와 의미상 좌표, 전체 Maven repository tree, central candidate HEAD,
+catalog SHA-256, tracked source tree SHA-256, producer job/input/output digest를 실제 파일과
+command record에서 다시 계산한다. 따라서 외부에서 준비한 Maven repository나 source와
+인과 관계가 없는 artifact digest는 승격 증거로 사용할 수 없다. 성공한 child process가
+종료된 직후에도 repository HEAD, clean state와 input digest를 다시 확인하므로 실행 도중
+변경된 source가 사전 검증한 HEAD의 산출물로 기록되지 않는다. 각 phase는 ordered job ID,
+wall-clock elapsed, 실행 전 예약 budget을 기록하며 terminal validator가 command coverage 및
+전체 90분 budget과의 결속을 재계산한다. 예약 시간을 넘긴 phase는 실제 경과시간을 보존한 채
+`blocked`로 전이하고, 실패한 repository와 전체 receipt도 함께 `blocked`가 된다. artifact
+tree를 복원할 수 없는 scalar stdout cache는 producer job에 사용하지 않는다. 기존 candidate
+증거를 자동 삭제하지 않기 위해 `candidate-bom-publication` 재실행은 새 receipt에서 시작해야
+하며, 그 외 완료 phase는 마지막 phase만 재실행할 수 있다. 중간 phase 재실행도 새 receipt에서
+시작해야 한다.
 
 `task-set`에는 실행 task만 기록하고 `--configuration`, `--dependency`와 candidate-only
 option은 순서가 보존되는 `arguments`에 별도로 기록한다. signing command coverage는 canonical
@@ -395,9 +414,21 @@ Timefold override를 제거한 graph와 기존 override graph를 비교한다.
 local candidate BOM은 `2.1.0-issue-242.local`로 고정하고 전용 임시
 `GRADLE_USER_HOME`과 Maven repository를 사용한다. 소비자는 candidate repository를
 첫 번째로 조회하고 `--refresh-dependencies`를 사용한다. resolved POM/JAR의
-coordinate와 SHA-256이 candidate output과 같아야 한다. 검증 후 임시 repository는
-receipt digest를 남긴 다음 제거한다. 이 local candidate 판정과 실제 published
+coordinate와 SHA-256이 candidate output과 같아야 한다. candidate repository는 terminal
+receipt가 실제 파일을 재검증할 수 있도록 유지하고 명시적 정리 단계에서만 제거한다. 이 local
+candidate 판정과 실제 published
 stable BOM 경로 판정은 별도 필드로 기록한다.
+
+candidate graph와 consumer phase는 중앙의 Gradle init script를 exact digest로 고정하고,
+receipt-bound Maven repository와 candidate BOM version을 system property로 전달한다. init
+script는 각 `testRuntimeClasspath`가 상속하는 `testImplementation`에 local candidate BOM을
+`enforcedPlatform`으로 추가하고 candidate repository를 settings/project resolution의
+exclusive content source로 등록한다. 이 phase의 `helper_sha256`는 signing source가 아니라
+명령 동작을 바꾸는 phase helper인 init script의 digest를 뜻한다.
+consumer가 자체 catalog나 dependency-management plugin으로 stable BOM 버전을 고정하더라도
+candidate BOM 좌표에 대한 resolution rule은 receipt-bound version을 우선한다.
+미사용 environment variable이나
+stable Central resolution만으로 candidate phase를 통과시키지 않는다.
 
 Timefold graph ledger는 네 좌표를 반드시 포함한다.
 
@@ -408,9 +439,11 @@ Timefold graph ledger는 네 좌표를 반드시 포함한다.
 | `timefold-solver` | `ai.timefold.solver:timefold-solver-jackson` | 실제 Jackson consumer runtime | candidate `2.6.0` 선택 |
 | `timefold-solver` | `ai.timefold.solver:timefold-solver-spring-boot-starter` | 실제 starter consumer runtime | candidate `2.6.0` 선택 |
 
-범용 검증 runner는 기존 `scripts/verify-latest-stable-resolved-graphs.py`의 observation
-parser와 ledger serializer를 재사용하되, 전체 latest-stable delta를 다시 resolve하지
-않고 Timefold 네 좌표와 실제 consumer configuration만 실행한다. 각 consumer receipt가
+범용 검증 runner는 `catalog_candidate.py`의 repository inventory와 공통 canonical JSON
+계약을 재사용한다. 기존 `scripts/verify-latest-stable-resolved-graphs.py`는 임시 Gradle
+project의 전용 marker를 파싱하고 전체 latest-stable delta ledger를 직렬화하므로, 실제
+consumer의 `dependencyInsight` 출력에는 적용하지 않는다. 이 runner는 Timefold 네 좌표와
+실제 consumer configuration에 한정된 parser와 receipt serializer를 사용한다. 각 consumer receipt가
 catalog ref/source/checksum, BOM coordinate, configuration, before/after, selection
 reason과 local override 상태를 참조하게 한다. clinic은
 runtime graph에 `2.4.0` BOM이 남거나 direct override 없이 candidate `2.6.0`을
