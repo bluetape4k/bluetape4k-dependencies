@@ -24,6 +24,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from pathlib import Path
@@ -108,11 +109,37 @@ PRIVATE_ARMOR_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?im)(\b(?:password|passwd|secret|token|credential|access[_-]?key|"
-    r"private[_-]?key|signing[_-]?key)\b\s*[=:]\s*)([^\r\n]+)"
+    r"(?im)(\b(?:[A-Za-z_][A-Za-z0-9-]*_)?(?:password|passwd|secret|token|"
+    r"credential|access[_-]?key|private[_-]?key|api[_-]?key|signing[_-]?key|key)"
+    r"\b\s*[=:]\s*)([^\r\n]+)"
 )
 SECRET_URI_RE = re.compile(r"(?i)(://[^\s:/]+:)[^\s@]+(@)")
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
+SECRET_NAME_RE = re.compile(
+    r"(?:password|passwd|token|secret|credential|private[_-]?key|access[_-]?key|"
+    r"api[_-]?key|signing[_-]?key|key)$",
+    re.IGNORECASE,
+)
+SECRET_OPTION_RE = re.compile(
+    r"^-{1,2}(?:password|passwd|token|secret|credential|access[_-]?key|"
+    r"private[_-]?key|api[_-]?key|signing[_-]?key|key)$",
+    re.IGNORECASE,
+)
+SECRET_ASSIGNMENT_ARG_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*)(=)(.*)$")
+SAFE_ENVIRONMENT_KEYS = frozenset(
+    {
+        "PATH",
+        "HOME",
+        "JAVA_HOME",
+        "LANG",
+        "LC_ALL",
+        "TMPDIR",
+        "GRADLE_USER_HOME",
+        "USER",
+        "LOGNAME",
+        "TERM",
+    }
+)
 
 
 class ValidationFailure(RuntimeError):
@@ -138,9 +165,12 @@ class CommandResult:
     process_group_terminated: bool
     termination_signal: Optional[str]
     output_sha256: str
-    diagnostics: str
+    diagnostics: str = ""
     failure_artifact: Optional[Path] = None
     cached: bool = False
+    job_id: str = ""
+    repository: str = ""
+    cancelled: bool = False
 
 
 @dataclasses.dataclass(frozen=True)
@@ -157,6 +187,9 @@ class ValidationJob:
     bom_sha256: str
     jdk_version: str
     gradle_version: str
+    repository_origin: str = ""
+    repository_branch: str = ""
+    job_id: str = ""
 
     @property
     def cache_key(self) -> str:
@@ -180,6 +213,17 @@ class PhaseResult:
     output_sha256: str
     jobs: tuple[CommandResult, ...]
     failure: Optional[str] = None
+
+
+@dataclasses.dataclass(frozen=True)
+class SchedulerResult:
+    """Results keyed by scheduler item, including blocked queue entries."""
+
+    results: dict[Any, Any]
+    errors: dict[Any, str]
+    submitted: tuple[Any, ...]
+    cancelled: tuple[Any, ...]
+    first_failure: Optional[Any]
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -216,7 +260,11 @@ def _regular_file(path: Path, description: str, *, require_secure_mode: bool = F
 
 
 def _canonical_existing_file(path: Path, description: str) -> Path:
-    if not path.is_absolute() or path.resolve() != path:
+    if not path.is_absolute():
+        raise InputContractError(f"{description} must be absolute and canonical: {path}")
+    path = _absolute_without_following(path)
+    _reject_symlink_components(path)
+    if path.resolve() != path:
         raise InputContractError(f"{description} must be absolute and canonical: {path}")
     _regular_file(path, description)
     return path
@@ -250,6 +298,29 @@ def _reject_symlink_components(path: Path) -> None:
             break
         if stat.S_ISLNK(metadata.st_mode):
             raise InputContractError(f"path contains a symlink: {path}")
+
+
+def _canonical_input_path(path: Path, description: str) -> Path:
+    """Validate a caller path lexically before any canonical resolution."""
+
+    if not path.is_absolute():
+        raise InputContractError(f"{description} must be absolute and canonical: {path}")
+    lexical = _absolute_without_following(path)
+    _reject_symlink_components(lexical)
+    if lexical.resolve() != lexical:
+        raise InputContractError(f"{description} must be absolute and canonical: {lexical}")
+    _regular_file(lexical, description)
+    return lexical
+
+
+def _canonical_directory(path: Path, description: str) -> Path:
+    if not path.is_absolute():
+        raise InputContractError(f"{description} must be absolute and canonical: {path}")
+    lexical = _absolute_without_following(path)
+    _reject_symlink_components(lexical)
+    if lexical.resolve() != lexical or not lexical.is_dir() or lexical.is_symlink():
+        raise InputContractError(f"{description} must be a canonical directory: {lexical}")
+    return lexical
 
 
 def _validate_sha256(value: str, description: str) -> str:
@@ -378,10 +449,15 @@ def read_cache_entry(cache_directory: Path, key: str) -> Optional[dict[str, Any]
         output = output_path.read_bytes()
     except OSError:
         return None
+    output_text = output.decode("utf-8", errors="replace")
+    if redact_output(output_text) != output_text:
+        # Never promote an old or externally-written cache entry containing
+        # material that the runner would redact into a trusted cache hit.
+        return None
     return {
         **document,
         "output_path": str(output_path),
-        "output": output.decode("utf-8", errors="replace"),
+        "output": output_text,
     }
 
 
@@ -395,9 +471,10 @@ def write_cache_entry(
     if not SHA256_RE.fullmatch(key):
         raise InputContractError("invalid evidence cache key")
     cache_directory = _safe_cache_directory(cache_directory)
+    safe_output = redact_output(output).encode("utf-8")
     output_path = cache_directory / f"{key}.output"
-    digest = sha256_bytes(output)
-    _atomic_write(output_path, output)
+    digest = sha256_bytes(safe_output)
+    _atomic_write(output_path, safe_output)
     document: dict[str, Any] = {
         "schema_version": 1,
         "status": "pass",
@@ -408,7 +485,10 @@ def write_cache_entry(
     if metadata:
         for field, value in metadata.items():
             if field not in document:
-                document[field] = value
+                field_text = str(field)
+                if SECRET_NAME_RE.search(field_text):
+                    continue
+                document[field] = _redact_value(value)
     _atomic_write(cache_directory / f"{key}.json", canonical_json_bytes(document))
     hit = read_cache_entry(cache_directory, key)
     if hit is None:
@@ -429,6 +509,68 @@ def redact_output(value: Any) -> str:
     text = ANSI_RE.sub("", text)
     text = CONTROL_RE.sub("", text)
     return text
+
+
+def _redact_value(value: Any) -> Any:
+    if isinstance(value, (bytes, str)):
+        return redact_output(value)
+    if isinstance(value, Mapping):
+        return {
+            str(key): _redact_value(nested)
+            for key, nested in value.items()
+            if not SECRET_NAME_RE.search(str(key))
+        }
+    if isinstance(value, list):
+        return [_redact_value(nested) for nested in value]
+    if isinstance(value, tuple):
+        return [_redact_value(nested) for nested in value]
+    return value
+
+
+def sanitized_environment(source: Optional[Mapping[str, str]] = None) -> dict[str, str]:
+    """Return the narrow child environment allowlist, excluding secret names."""
+
+    values = os.environ if source is None else source
+    return {
+        str(key): str(value)
+        for key, value in values.items()
+        if str(key) in SAFE_ENVIRONMENT_KEYS and SECRET_NAME_RE.search(str(key)) is None
+    }
+
+
+def redact_command(command: Sequence[str]) -> tuple[str, ...]:
+    """Redact secret assignments and option values without changing argv shape."""
+
+    redacted: list[str] = []
+    redact_next = False
+    for raw_value in command:
+        value = str(raw_value)
+        if redact_next:
+            redacted.append("<redacted>")
+            redact_next = False
+            continue
+        assignment = SECRET_ASSIGNMENT_ARG_RE.fullmatch(value)
+        if assignment is not None and SECRET_NAME_RE.search(assignment.group(1)):
+            redacted.append(f"{assignment.group(1)}=<redacted>")
+            continue
+        option_assignment = re.match(r"^(-{1,2}[^=]+)=(.*)$", value)
+        if option_assignment is not None and SECRET_OPTION_RE.fullmatch(option_assignment.group(1)):
+            redacted.append(f"{option_assignment.group(1)}=<redacted>")
+            continue
+        short_property = re.match(r"^(-P[^=]*(?:password|passwd|token|secret|key))=(.*)$", value, re.IGNORECASE)
+        if short_property is not None:
+            redacted.append(f"{short_property.group(1)}=<redacted>")
+            continue
+        if SECRET_OPTION_RE.fullmatch(value):
+            redacted.append(value)
+            redact_next = True
+            continue
+        redacted.append(redact_output(value))
+    if redact_next:
+        # A missing option value is still represented by the original argv;
+        # there is no value to disclose or replace.
+        return tuple(redacted)
+    return tuple(redacted)
 
 
 def bounded_diagnostics(value: Any, max_lines: int = MAX_DIAGNOSTIC_LINES) -> str:
@@ -466,6 +608,7 @@ def run_command(
     environment: Mapping[str, str],
     timeout_seconds: float,
     failure_artifact: Optional[Path] = None,
+    cancel_event: Optional[threading.Event] = None,
 ) -> CommandResult:
     """Run one command in a new process group with bounded termination."""
 
@@ -473,33 +616,62 @@ def run_command(
         raise InputContractError("validation command must not be empty")
     if timeout_seconds <= 0:
         raise InputContractError("validation timeout must be positive")
-    cwd = cwd.resolve()
-    if not cwd.is_dir() or cwd.is_symlink():
-        raise InputContractError(f"validation cwd is not a regular directory: {cwd}")
+    cwd = _canonical_directory(cwd, "validation cwd")
     started = time.monotonic()
     process: Optional[subprocess.Popen[bytes]] = None
     timed_out = False
     group_terminated = False
     termination_signal: Optional[str] = None
+    cancelled = False
     stdout = b""
     stderr = b""
     launch_error: Optional[str] = None
     try:
+        if cancel_event is not None and cancel_event.is_set():
+            ended = time.monotonic()
+            text = "validation command cancelled before launch"
+            digest = sha256_bytes(text.encode("utf-8"))
+            return CommandResult(
+                status="blocked",
+                returncode=None,
+                stdout="",
+                stderr="",
+                elapsed_seconds=ended - started,
+                timed_out=False,
+                process_group_terminated=False,
+                termination_signal=None,
+                output_sha256=digest,
+                diagnostics=text,
+                cancelled=True,
+            )
         process = subprocess.Popen(
             [str(value) for value in command],
             cwd=str(cwd),
-            env={str(key): str(value) for key, value in environment.items()},
+            env=sanitized_environment(environment),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             start_new_session=True,
         )
-        try:
-            stdout, stderr = process.communicate(timeout=timeout_seconds)
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            group_terminated = True
-            termination_signal = _terminate_process_group(process)
-            stdout, stderr = process.communicate()
+        deadline = time.monotonic() + timeout_seconds
+        while True:
+            if cancel_event is not None and cancel_event.is_set():
+                cancelled = True
+                group_terminated = True
+                termination_signal = _terminate_process_group(process)
+                stdout, stderr = process.communicate()
+                break
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                timed_out = True
+                group_terminated = True
+                termination_signal = _terminate_process_group(process)
+                stdout, stderr = process.communicate()
+                break
+            try:
+                stdout, stderr = process.communicate(timeout=min(0.2, remaining))
+                break
+            except subprocess.TimeoutExpired:
+                continue
     except OSError as exc:
         launch_error = f"cannot launch validation command: {exc.__class__.__name__}"
     ended = time.monotonic()
@@ -509,10 +681,19 @@ def run_command(
     redacted = redact_output(raw_output)
     output_digest = sha256_bytes(redacted.encode("utf-8"))
     returncode = None if process is None else process.returncode
-    status = "pass" if process is not None and returncode == 0 and not timed_out else "fail"
+    status = (
+        "blocked"
+        if cancelled
+        else "pass"
+        if process is not None and returncode == 0 and not timed_out
+        else "fail"
+    )
     artifact: Optional[Path] = None
     if status != "pass" and failure_artifact is not None:
-        artifact = failure_artifact.resolve()
+        artifact = _absolute_without_following(failure_artifact)
+        _reject_symlink_components(artifact.parent)
+        if artifact.is_symlink():
+            raise InputContractError(f"failure artifact must not be a symlink: {artifact}")
         payload = redacted.encode("utf-8")
         if len(payload) > MAX_FAILURE_ARTIFACT_BYTES:
             payload = payload[-MAX_FAILURE_ARTIFACT_BYTES:]
@@ -529,6 +710,7 @@ def run_command(
         output_sha256=output_digest,
         diagnostics=bounded_diagnostics(redacted),
         failure_artifact=artifact,
+        cancelled=cancelled,
     )
 
 
@@ -537,23 +719,54 @@ def run_bounded_jobs(
     worker: Callable[[Any], Any],
     *,
     max_workers: int,
-) -> dict[Any, Any]:
-    """Run at most ``max_workers`` jobs and never submit after first failure."""
+    failure_predicate: Optional[Callable[[Any], bool]] = None,
+    collect_failures: bool = False,
+    cancel_event: Optional[threading.Event] = None,
+) -> Any:
+    """Run bounded jobs while preserving item/result identity on cancellation."""
 
     if max_workers <= 0:
         raise InputContractError("max_workers must be positive")
-    pending = iter(items)
+    all_items = tuple(items)
+    item_order = {item: index for index, item in enumerate(all_items)}
+    pending = iter(all_items)
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
     futures: dict[concurrent.futures.Future[Any], Any] = {}
     results: dict[Any, Any] = {}
+    errors: dict[Any, str] = {}
+    submitted: list[Any] = []
+    cancelled: set[Any] = set()
+    first_failure: Optional[Any] = None
+    first_exception: Optional[BaseException] = None
+    internal_cancel = cancel_event or threading.Event()
+    stopped = False
 
     def submit_next() -> bool:
+        nonlocal stopped
+        if stopped or internal_cancel.is_set():
+            return False
         try:
             item = next(pending)
         except StopIteration:
             return False
         futures[executor.submit(worker, item)] = item
+        submitted.append(item)
         return True
+
+    def ordered(items_to_order: Iterable[Any]) -> list[Any]:
+        return sorted(items_to_order, key=lambda item: item_order[item])
+
+    def mark_failure(item: Any, result: Any = None, error: Optional[BaseException] = None) -> None:
+        nonlocal first_failure, first_exception, stopped
+        if first_failure is None or item_order[item] < item_order[first_failure]:
+            first_failure = item
+            first_exception = error
+        stopped = True
+        internal_cancel.set()
+        if error is not None:
+            errors[item] = redact_output(f"{error.__class__.__name__}: {error}")
+        elif result is not None:
+            results[item] = result
 
     try:
         for _ in range(max_workers):
@@ -563,30 +776,67 @@ def run_bounded_jobs(
             done, _ = concurrent.futures.wait(
                 tuple(futures), return_when=concurrent.futures.FIRST_COMPLETED
             )
-            completed: list[tuple[Any, Any]] = []
-            failure: Optional[BaseException] = None
-            for future in done:
+            for future in sorted(done, key=lambda value: item_order[futures[value]]):
                 item = futures.pop(future)
+                if future.cancelled():
+                    cancelled.add(item)
+                    continue
                 try:
-                    completed.append((item, future.result()))
-                except Exception as exc:  # noqa: BLE001 - cancel siblings on any worker failure
-                    failure = exc
-            if failure is not None:
-                for future in futures:
-                    future.cancel()
-                executor.shutdown(wait=True, cancel_futures=True)
-                raise failure
-            for item, result in completed:
+                    result = future.result()
+                except Exception as exc:  # noqa: BLE001 - collect and cancel siblings
+                    mark_failure(item, error=exc)
+                    continue
                 results[item] = result
-            for _ in completed:
+                if failure_predicate is not None and failure_predicate(result):
+                    mark_failure(item, result=result)
+            if stopped or internal_cancel.is_set():
+                # Every submitted child is considered in-flight, even if its
+                # executor worker has not switched to it yet.  Leave it in the
+                # pool so a sibling failure is observed as a second result;
+                # process workers receive the shared event and terminate
+                # cooperatively.  Only never-submitted queue entries become
+                # blocked below.
+                if futures:
+                    done, _ = concurrent.futures.wait(tuple(futures))
+                    for future in sorted(done, key=lambda value: item_order[futures[value]]):
+                        item = futures.pop(future)
+                        if future.cancelled():
+                            cancelled.add(item)
+                            continue
+                        try:
+                            results[item] = future.result()
+                        except Exception as exc:  # noqa: BLE001 - receipt needs mapping
+                            errors[item] = redact_output(f"{exc.__class__.__name__}: {exc}")
+                cancelled.update(item for item in all_items if item not in submitted)
+                break
+            for _ in done:
                 submit_next()
+        executor.shutdown(wait=True, cancel_futures=True)
     except BaseException:
-        for future in futures:
-            future.cancel()
+        for future, item in list(futures.items()):
+            if future.cancel():
+                cancelled.add(item)
+        internal_cancel.set()
         executor.shutdown(wait=True, cancel_futures=True)
         raise
-    executor.shutdown(wait=True)
-    return results
+
+    if not collect_failures:
+        if first_exception is not None:
+            raise first_exception
+        if first_failure is not None:
+            failed_result = results.get(first_failure)
+            detail = f"bounded job failed: {first_failure}"
+            if failed_result is not None and failed_result.diagnostics:
+                detail += f": {failed_result.diagnostics}"
+            raise ValidationFailure(detail, failed_result)
+        return results
+    return SchedulerResult(
+        results=results,
+        errors=errors,
+        submitted=tuple(submitted),
+        cancelled=tuple(ordered(cancelled)),
+        first_failure=first_failure,
+    )
 
 
 def _load_receipt_module() -> Any:
@@ -788,6 +1038,8 @@ def _make_job(
     arguments: Sequence[str] = (),
     max_workers: Optional[int] = None,
     refresh_dependencies: bool = False,
+    repository_origin: str = "",
+    repository_branch: str = "",
 ) -> ValidationJob:
     helper, catalog, bom = _job_digests(root, central_root)
     jdk, gradle = detect_toolchain(root)
@@ -811,27 +1063,93 @@ def _make_job(
         bom_sha256=bom,
         jdk_version=jdk,
         gradle_version=gradle,
+        repository_origin=repository_origin,
+        repository_branch=repository_branch,
     )
 
 
-def _consumer_root_from_receipt(
-    receipt: Mapping[str, Any], name: str, requested_root: Optional[Path]
-) -> tuple[Path, str]:
+def validate_job_binding(
+    job: ValidationJob, bindings: Mapping[str, Mapping[str, Any]]
+) -> None:
+    """Revalidate map identity, clean state, and every cache input digest."""
+
+    binding = bindings.get(job.repository)
+    if binding is None and job.repository == "publication-poms":
+        binding = bindings.get("bluetape4k-dependencies")
+    if not isinstance(binding, Mapping):
+        raise InputContractError(f"missing repository binding for job: {job.repository}")
+    root_value = binding.get("candidate_worktree")
+    if not isinstance(root_value, str):
+        raise InputContractError(f"repository worktree binding is invalid: {job.repository}")
+    root = _canonical_directory(Path(root_value), f"repository worktree for {job.repository}")
+    job_root = _canonical_directory(job.cwd, f"job cwd for {job.repository}")
+    if root != job_root:
+        raise InputContractError(f"repository worktree mismatch: {job.repository}")
+    expected_head = binding.get("candidate_head")
+    if expected_head != job.repository_head:
+        raise InputContractError(f"repository HEAD mismatch: {job.repository}")
+    expected_origin = binding.get("origin")
+    if job.repository_origin and expected_origin != job.repository_origin:
+        raise InputContractError(f"repository origin mismatch: {job.repository}")
+    expected_branch = binding.get("candidate_branch")
+    if job.repository_branch and expected_branch != job.repository_branch:
+        raise InputContractError(f"repository branch mismatch: {job.repository}")
+    if binding.get("clean", True) is not True or binding.get("exact_head", True) is not True:
+        raise InputContractError(f"repository map is not clean exact-head: {job.repository}")
+    if _git(root, "remote", "get-url", "origin") != expected_origin:
+        raise InputContractError(f"repository origin changed: {job.repository}")
+    if _git(root, "branch", "--show-current") != expected_branch:
+        raise InputContractError(f"repository branch changed: {job.repository}")
+    if _git(root, "rev-parse", "HEAD") != expected_head:
+        raise InputContractError(f"repository HEAD changed: {job.repository}")
+    if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
+        raise InputContractError(f"repository became dirty: {job.repository}")
+
+    helper_relative = (
+        CANONICAL_HELPER_RELATIVE
+        if job.phase == "publication-poms"
+        else GENERATED_HELPER_RELATIVE
+    )
+    central_binding = bindings.get("bluetape4k-dependencies", binding)
+    central_value = central_binding.get("candidate_worktree")
+    if not isinstance(central_value, str):
+        raise InputContractError("central repository binding is invalid")
+    central_root = _canonical_directory(Path(central_value), "central repository worktree")
+    helper_digest = _digest_required(root / helper_relative, "job signing helper")
+    catalog_digest = _digest_required(root / "gradle" / "libs.versions.toml", "job catalog")
+    bom_digest = _digest_required(central_root / "build.gradle.kts", "job BOM")
+    for actual, expected, label in (
+        (helper_digest, job.helper_sha256, "helper"),
+        (catalog_digest, job.catalog_sha256, "catalog"),
+        (bom_digest, job.bom_sha256, "BOM"),
+    ):
+        if actual != expected:
+            raise InputContractError(f"{label} digest changed: {job.repository}")
+
+
+def _consumer_entry(receipt: Mapping[str, Any], name: str) -> Mapping[str, Any]:
     consumers = receipt.get("consumers")
     if not isinstance(consumers, list):
         raise InputContractError("local receipt has no consumer entries")
     item = next((value for value in consumers if isinstance(value, Mapping) and value.get("name") == name), None)
     if not isinstance(item, Mapping):
         raise InputContractError(f"local receipt is missing consumer: {name}")
+    return item
+
+
+def _consumer_root_from_receipt(
+    receipt: Mapping[str, Any], name: str, requested_root: Optional[Path]
+) -> tuple[Path, str]:
+    item = _consumer_entry(receipt, name)
     value = item.get("candidate_worktree")
     head = item.get("candidate_head")
     if not isinstance(value, str) or not isinstance(head, str):
         raise InputContractError(f"consumer receipt binding is incomplete: {name}")
-    root = Path(value).resolve()
-    if requested_root is not None and root != requested_root.resolve():
+    root = _canonical_directory(Path(value), f"consumer worktree for {name}")
+    if requested_root is not None and root != _canonical_directory(
+        requested_root, f"requested consumer worktree for {name}"
+    ):
         raise InputContractError(f"consumer root does not match receipt: {name}")
-    if not root.is_dir() or root.is_symlink():
-        raise InputContractError(f"consumer worktree is unavailable: {name}")
     if _git(root, "rev-parse", "HEAD") != head:
         raise InputContractError(f"consumer HEAD mismatch: {name}")
     if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
@@ -845,6 +1163,8 @@ def _make_timefold_graph_jobs(
     root: Path,
     repository_head: str,
     central_root: Path,
+    repository_origin: str = "",
+    repository_branch: str = "",
 ) -> tuple[ValidationJob, ...]:
     jobs: list[ValidationJob] = []
     for coordinate in TIMEFOLD_COORDINATES:
@@ -864,6 +1184,8 @@ def _make_timefold_graph_jobs(
                 repository_head=repository_head,
                 central_root=central_root,
                 refresh_dependencies=True,
+                repository_origin=repository_origin,
+                repository_branch=repository_branch,
             )
         )
     return tuple(jobs)
@@ -898,12 +1220,17 @@ def build_phase_jobs(
                 repository_head=str(entries[name]["candidate_head"]),
                 central_root=central_root,
                 max_workers=MAX_WORKERS,
+                repository_origin=str(entries[name]["origin"]),
+                repository_branch=str(entries[name]["candidate_branch"]),
             )
             for name in names
         )
 
     consumer_roots: dict[str, tuple[Path, str]] = {}
+    consumer_bindings: dict[str, Mapping[str, Any]] = {}
     if phase in {"timefold-graphs-baseline", "consumers"}:
+        consumer_bindings["timefold-workshop"] = _consumer_entry(receipt, "timefold-workshop")
+        consumer_bindings["clinic-appointment"] = _consumer_entry(receipt, "clinic-appointment")
         consumer_roots["timefold-workshop"] = _consumer_root_from_receipt(
             receipt, "timefold-workshop", workshop_root
         )
@@ -919,6 +1246,8 @@ def build_phase_jobs(
                 root=Path(exposed["candidate_worktree"]),
                 repository_head=str(exposed["candidate_head"]),
                 central_root=central_root,
+                repository_origin=str(exposed["origin"]),
+                repository_branch=str(exposed["candidate_branch"]),
             )
         )
         for name in ("timefold-workshop", "clinic-appointment"):
@@ -929,6 +1258,8 @@ def build_phase_jobs(
                     root=root,
                     repository_head=head,
                     central_root=central_root,
+                    repository_origin=str(consumer_bindings[name]["origin"]),
+                    repository_branch=str(consumer_bindings[name]["candidate_branch"]),
                 )
             )
         return tuple(jobs)
@@ -944,6 +1275,8 @@ def build_phase_jobs(
                 configuration="consumer-tests",
                 repository_head=str(exposed["candidate_head"]),
                 central_root=central_root,
+                repository_origin=str(exposed["origin"]),
+                repository_branch=str(exposed["candidate_branch"]),
             )
         )
         for name in ("timefold-workshop", "clinic-appointment"):
@@ -957,6 +1290,8 @@ def build_phase_jobs(
                     configuration="consumer-tests",
                     repository_head=head,
                     central_root=central_root,
+                    repository_origin=str(consumer_bindings[name]["origin"]),
+                    repository_branch=str(consumer_bindings[name]["candidate_branch"]),
                 )
             )
         return tuple(jobs)
@@ -985,6 +1320,8 @@ def build_phase_jobs(
                 bom_sha256=_digest_required(central_root / "build.gradle.kts", "central BOM build"),
                 jdk_version="publication-pom-gate",
                 gradle_version="publication-pom-gate",
+                repository_origin=str(entries["bluetape4k-dependencies"]["origin"]),
+                repository_branch=str(entries["bluetape4k-dependencies"]["candidate_branch"]),
             ),
         )
     raise InputContractError(f"unsupported validation phase: {phase}")
@@ -1000,18 +1337,59 @@ def _failure_artifact_for(receipt_path: Path, job: ValidationJob) -> Path:
 
 
 def _job_environment() -> dict[str, str]:
-    environment = {str(key): str(value) for key, value in os.environ.items()}
-    # Never pass Gradle init scripts or arbitrary JVM command-line injection
-    # into a governance validation child.
-    environment.pop("GRADLE_OPTS", None)
-    environment.pop("JAVA_TOOL_OPTIONS", None)
-    environment.pop("_JAVA_OPTIONS", None)
-    return environment
+    return sanitized_environment(os.environ)
 
 
-def execute_job(job: ValidationJob, *, cache_directory: Path, receipt_path: Path) -> CommandResult:
+def _load_job_bindings(repository_map_path: Path, receipt_path: Path) -> dict[str, dict[str, Any]]:
+    latest_map = load_strict_repository_map(repository_map_path)
+    latest_receipt = load_local_receipt(receipt_path, repository_map_path)
+    bindings = _entry_by_name(latest_map)
+    consumers = latest_receipt.get("consumers")
+    if not isinstance(consumers, list):
+        raise InputContractError("local receipt has no consumer bindings")
+    for item in consumers:
+        if isinstance(item, Mapping) and isinstance(item.get("name"), str):
+            bindings[str(item["name"])] = dict(item)
+    return bindings
+
+
+def _bound_result(job: ValidationJob, status: str, reason: str) -> CommandResult:
+    safe_reason = redact_output(reason)
+    return CommandResult(
+        status=status,
+        returncode=None,
+        stdout="",
+        stderr="",
+        elapsed_seconds=0.0,
+        timed_out=False,
+        process_group_terminated=False,
+        termination_signal=None,
+        output_sha256=sha256_bytes(safe_reason.encode("utf-8")),
+        diagnostics=bounded_diagnostics(safe_reason),
+        job_id=job.job_id,
+        repository=job.repository,
+        cancelled=status == "blocked",
+    )
+
+
+def execute_job(
+    job: ValidationJob,
+    *,
+    cache_directory: Path,
+    receipt_path: Path,
+    binding_loader: Optional[Callable[[], Mapping[str, Mapping[str, Any]]]] = None,
+    cancel_event: Optional[threading.Event] = None,
+) -> CommandResult:
+    def revalidate() -> None:
+        if binding_loader is not None:
+            validate_job_binding(job, binding_loader())
+
+    # Revalidate immediately before reading a cache and again before trusting a
+    # hit or launching a child.  This closes the TOCTOU window around every job.
+    revalidate()
     hit = read_cache_entry(cache_directory, job.cache_key)
     if hit is not None:
+        revalidate()
         output = str(hit.get("output", ""))
         return CommandResult(
             status="pass",
@@ -1025,7 +1403,10 @@ def execute_job(job: ValidationJob, *, cache_directory: Path, receipt_path: Path
             output_sha256=str(hit["output_sha256"]),
             diagnostics=bounded_diagnostics(output),
             cached=True,
+            job_id=job.job_id,
+            repository=job.repository,
         )
+    revalidate()
     timeout = (
         PUBLICATION_POMS_TIMEOUT_SECONDS
         if job.phase == "publication-poms"
@@ -1037,7 +1418,9 @@ def execute_job(job: ValidationJob, *, cache_directory: Path, receipt_path: Path
         environment=_job_environment(),
         timeout_seconds=timeout,
         failure_artifact=_failure_artifact_for(receipt_path, job),
+        cancel_event=cancel_event,
     )
+    result = dataclasses.replace(result, job_id=job.job_id, repository=job.repository)
     if result.status == "pass":
         output = (result.stdout + ("\n" if result.stdout and result.stderr else "") + result.stderr).encode("utf-8")
         write_cache_entry(
@@ -1053,16 +1436,21 @@ def execute_job(job: ValidationJob, *, cache_directory: Path, receipt_path: Path
     return result
 
 
-def _worker(job: ValidationJob, *, cache_directory: Path, receipt_path: Path) -> CommandResult:
-    result = execute_job(job, cache_directory=cache_directory, receipt_path=receipt_path)
-    if result.status != "pass":
-        detail = f"{job.repository} {job.phase} failed"
-        if result.timed_out:
-            detail += " (timeout)"
-        if result.diagnostics:
-            detail += f": {result.diagnostics}"
-        raise ValidationFailure(detail, result)
-    return result
+def _worker(
+    job: ValidationJob,
+    *,
+    cache_directory: Path,
+    receipt_path: Path,
+    binding_loader: Optional[Callable[[], Mapping[str, Mapping[str, Any]]]] = None,
+    cancel_event: Optional[threading.Event] = None,
+) -> CommandResult:
+    return execute_job(
+        job,
+        cache_directory=cache_directory,
+        receipt_path=receipt_path,
+        binding_loader=binding_loader,
+        cancel_event=cancel_event,
+    )
 
 
 def _phase_digest(phase: str, results: Sequence[CommandResult], failure: Optional[str]) -> str:
@@ -1074,6 +1462,9 @@ def _phase_digest(phase: str, results: Sequence[CommandResult], failure: Optiona
                 "status": result.status,
                 "output_sha256": result.output_sha256,
                 "cached": result.cached,
+                "job_id": result.job_id,
+                "repository": result.repository,
+                "cancelled": result.cancelled,
             }
             for result in results
         ],
@@ -1082,54 +1473,111 @@ def _phase_digest(phase: str, results: Sequence[CommandResult], failure: Optiona
     return sha256_bytes(canonical_json_bytes(payload))
 
 
-def _write_receipt_update(path: Path, result: PhaseResult, jobs: Sequence[ValidationJob]) -> None:
-    try:
-        document = json.loads(path.read_bytes().decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise InputContractError("cannot read local receipt for update") from exc
-    if not isinstance(document, dict):
-        raise InputContractError("local receipt must be an object")
-    phases = document.setdefault("phases", [])
-    if not isinstance(phases, list):
-        raise InputContractError("local receipt phases must be an array")
-    phases[:] = [item for item in phases if not isinstance(item, Mapping) or item.get("name") != result.phase]
-    phases.append(
-        {
-            "name": result.phase,
-            "result": result.status,
-            "output_sha256": result.output_sha256,
-        }
-    )
-    commands = document.setdefault("commands", [])
-    if not isinstance(commands, list):
-        raise InputContractError("local receipt commands must be an array")
-    for job, command_result in zip(jobs, result.jobs):
-        commands.append(
+def _write_receipt_update(
+    path: Path,
+    result: PhaseResult,
+    jobs: Sequence[ValidationJob],
+    *,
+    expected_receipt_sha256: Optional[str] = None,
+    expected_state: Optional[str] = None,
+) -> None:
+    """CAS-update a receipt under its strict validator's lock."""
+
+    if len(jobs) != len(result.jobs):
+        raise InputContractError("receipt command/result mapping is incomplete")
+    path = _canonical_existing_file(path, "local receipt")
+    if expected_receipt_sha256 is not None:
+        _validate_sha256(expected_receipt_sha256, "expected receipt")
+    receipt_module = _load_receipt_module()
+    lock = getattr(receipt_module, "_receipt_lock", None)
+    validate = getattr(receipt_module, "validate_receipt", None)
+    write_atomic = getattr(receipt_module, "write_atomic", None)
+    if not callable(lock) or not callable(validate) or not callable(write_atomic):
+        raise InputContractError("strict receipt module lacks lock/validate/write helpers")
+    with lock(path):
+        # Recheck the target after acquiring the module lock so a replacement
+        # between the preflight and lock acquisition cannot be followed.
+        path = _canonical_existing_file(path, "local receipt")
+        try:
+            original_bytes = path.read_bytes()
+            current_digest = sha256_bytes(original_bytes)
+            raw_document = json.loads(original_bytes.decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise InputContractError("cannot read local receipt for update") from exc
+        if expected_receipt_sha256 is not None and current_digest != expected_receipt_sha256:
+            raise InputContractError("stale receipt digest for update")
+        if not isinstance(raw_document, Mapping):
+            raise InputContractError("local receipt must be an object")
+        current_state = raw_document.get("current_state")
+        if expected_state is not None and current_state != expected_state:
+            raise InputContractError("stale receipt state for update")
+        try:
+            validated = validate(path)
+        except Exception as exc:
+            raise InputContractError(f"latest receipt validation failed: {exc}") from exc
+        if not isinstance(validated, Mapping):
+            raise InputContractError("strict receipt validator returned an invalid document")
+        document = json.loads(json.dumps(dict(validated)))
+        phases = document.setdefault("phases", [])
+        if not isinstance(phases, list):
+            raise InputContractError("local receipt phases must be an array")
+        phases[:] = [
+            item for item in phases if not isinstance(item, Mapping) or item.get("name") != result.phase
+        ]
+        phases.append(
             {
-                "repository": job.repository,
-                "command": " ".join(redact_output(value) for value in job.command),
-                "jdk": job.jdk_version,
-                "gradle": job.gradle_version,
-                "configuration": job.configuration,
-                "elapsed_seconds": command_result.elapsed_seconds,
-                "cache": "shared-read" if command_result.cached else "isolated",
-                "result": command_result.status,
-                "output_sha256": command_result.output_sha256,
-            }
-        )
-    if result.status != "pass":
-        failures = document.setdefault("failure_record", [])
-        if not isinstance(failures, list):
-            raise InputContractError("local receipt failure_record must be an array")
-        failures.append(
-            {
-                "repository": jobs[0].repository if jobs else "runner",
-                "phase": result.phase,
-                "reason": "bounded validation phase failed",
+                "name": result.phase,
+                "result": result.status,
                 "output_sha256": result.output_sha256,
             }
         )
-    _atomic_write(path, canonical_json_bytes(document))
+        commands = document.setdefault("commands", [])
+        if not isinstance(commands, list):
+            raise InputContractError("local receipt commands must be an array")
+        for job, command_result in zip(jobs, result.jobs):
+            commands.append(
+                {
+                    "repository": job.repository,
+                    "command": " ".join(redact_command(job.command)),
+                    "jdk": job.jdk_version,
+                    "gradle": job.gradle_version,
+                    "configuration": job.configuration,
+                    "elapsed_seconds": command_result.elapsed_seconds,
+                    "cache": "shared-read" if command_result.cached else "isolated",
+                    "result": command_result.status,
+                    "output_sha256": command_result.output_sha256,
+                }
+            )
+        failures = document.setdefault("failure_record", [])
+        if not isinstance(failures, list):
+            raise InputContractError("local receipt failure_record must be an array")
+        for job, command_result in zip(jobs, result.jobs):
+            if command_result.status != "pass":
+                failures.append(
+                    {
+                        "repository": job.repository,
+                        "phase": result.phase,
+                        "reason": bounded_diagnostics(
+                            command_result.diagnostics or "bounded validation phase failed", 1
+                        ),
+                        "output_sha256": command_result.output_sha256,
+                    }
+                )
+        _reject_secret_content(document)
+        payload = canonical_json_bytes(document)
+        try:
+            write_atomic(path, payload)
+            readback = validate(path)
+        except Exception as exc:
+            try:
+                write_atomic(path, original_bytes)
+            except Exception as restore_exc:  # noqa: BLE001 - preserve primary failure
+                raise InputContractError(
+                    f"receipt update validation failed and restore failed: {restore_exc}"
+                ) from exc
+            raise InputContractError(f"receipt update read-back validation failed: {exc}") from exc
+        if not isinstance(readback, Mapping):
+            raise InputContractError("strict receipt read-back is invalid")
 
 
 def run_phase(
@@ -1143,10 +1591,15 @@ def run_phase(
     repositories: Optional[Sequence[str]] = None,
     dry_run: bool = False,
 ) -> PhaseResult:
-    repository_map_path = repository_map_path.resolve()
-    receipt_path = receipt_path.resolve()
+    # Reject lexical parent/component symlinks before any canonical resolution.
+    repository_map_path = _canonical_input_path(repository_map_path, "repository map")
+    receipt_path = _canonical_input_path(receipt_path, "local receipt")
     repository_map = load_strict_repository_map(repository_map_path)
     receipt = load_local_receipt(receipt_path, repository_map_path)
+    expected_receipt_sha256 = sha256_file(receipt_path)
+    expected_state = receipt.get("current_state")
+    if not isinstance(expected_state, str) or not expected_state:
+        raise InputContractError("local receipt current_state is invalid")
     jobs = build_phase_jobs(
         phase,
         repository_map,
@@ -1160,28 +1613,66 @@ def run_phase(
         return PhaseResult(phase, "pass", digest, ())
     cache_directory = cache_directory or receipt_path.parent / "cache"
     max_workers = 1 if phase == "publication-poms" else MAX_WORKERS
-    jobs_by_id = {index: job for index, job in enumerate(jobs)}
-    results: list[CommandResult] = []
+    jobs_by_id = {
+        index: dataclasses.replace(job, job_id=f"{phase}:{index}:{job.repository}")
+        for index, job in enumerate(jobs)
+    }
+    cancel_event = threading.Event()
+    binding_loader = lambda: _load_job_bindings(repository_map_path, receipt_path)
+    result_by_id: dict[int, CommandResult] = {}
     failure: Optional[str] = None
-    try:
-        outcome = run_bounded_jobs(
-            tuple(jobs_by_id),
-            lambda index: _worker(
-                jobs_by_id[index], cache_directory=cache_directory, receipt_path=receipt_path
-            ),
-            max_workers=max_workers,
+    outcome = run_bounded_jobs(
+        tuple(jobs_by_id),
+        lambda index: _worker(
+            jobs_by_id[index],
+            cache_directory=cache_directory,
+            receipt_path=receipt_path,
+            binding_loader=binding_loader,
+            cancel_event=cancel_event,
+        ),
+        max_workers=max_workers,
+        failure_predicate=lambda result: getattr(result, "status", "fail") != "pass",
+        collect_failures=True,
+        cancel_event=cancel_event,
+    )
+    for index, result in outcome.results.items():
+        result_by_id[index] = result
+    for index, detail in outcome.errors.items():
+        result_by_id[index] = _bound_result(jobs_by_id[index], "fail", detail)
+    for index in outcome.cancelled:
+        result_by_id.setdefault(
+            index,
+            _bound_result(jobs_by_id[index], "blocked", "cancelled before submission"),
         )
-        results = [outcome[index] for index in sorted(outcome)]
-    except ValidationFailure as exc:
-        failure = redact_output(str(exc))
-        if exc.result is not None:
-            results.append(exc.result)
-    except Exception as exc:  # noqa: BLE001 - preserve bounded failure in the local receipt
-        failure = redact_output(f"runner failure: {exc.__class__.__name__}: {exc}")
-    status = "pass" if failure is None and len(results) == len(jobs) else "fail"
+    for index, job in jobs_by_id.items():
+        result_by_id.setdefault(
+            index,
+            _bound_result(job, "blocked", "job result was not observed"),
+        )
+    results = [result_by_id[index] for index in sorted(jobs_by_id)]
+    if outcome.first_failure is not None:
+        first_result = result_by_id.get(outcome.first_failure)
+        failure = f"first failed job: {jobs_by_id[outcome.first_failure].job_id}"
+        if first_result is not None and first_result.diagnostics:
+            failure += f": {first_result.diagnostics}"
+    elif outcome.errors:
+        failure = "runner job error: " + "; ".join(outcome.errors.values())
+    status = (
+        "fail"
+        if any(result.status == "fail" for result in results)
+        else "blocked"
+        if any(result.status == "blocked" for result in results)
+        else "pass"
+    )
     output_digest = _phase_digest(phase, results, failure)
     phase_result = PhaseResult(phase, status, output_digest, tuple(results), failure)
-    _write_receipt_update(receipt_path, phase_result, jobs[: len(results)])
+    _write_receipt_update(
+        receipt_path,
+        phase_result,
+        tuple(jobs_by_id[index] for index in sorted(jobs_by_id)),
+        expected_receipt_sha256=expected_receipt_sha256,
+        expected_state=expected_state,
+    )
     return phase_result
 
 
