@@ -388,6 +388,11 @@ class Issues242243ReceiptTest(unittest.TestCase):
         link.symlink_to(target)
         with self.assertRaisesRegex(RuntimeError, "symlink"):
             receipt.write_atomic(link, b"nope")
+        linked_parent = workspace / "linked-parent"
+        linked_parent.symlink_to(workspace / "real-parent", target_is_directory=True)
+        (workspace / "real-parent").mkdir()
+        with self.assertRaisesRegex(RuntimeError, "symlink|canonical"):
+            receipt.write_atomic(linked_parent / "receipt.json", b"nope")
         path.write_bytes(receipt.canonical_json_bytes(document))
         before = path.read_bytes()
         with self.assertRaisesRegex(RuntimeError, "stale"):
@@ -415,6 +420,47 @@ class Issues242243ReceiptTest(unittest.TestCase):
         self.assertEqual(updated["central"]["state"], "prepared")
         self.assertEqual(updated["repositories"][0]["state"], "prepared")
         self.assertEqual(updated["current_state"], "prepared")
+
+    def test_last_adopted_transition_derives_prospective_evidence_metadata(self) -> None:
+        workspace, path, document = self.make_fixture()
+        for item in document["repositories"] + document["consumers"]:
+            item["state"] = "adopted"
+        document["repositories"][0]["state"] = "validated"
+        document["central"]["state"] = "validated"
+        document["current_state"] = "validated"
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        central_root = Path(document["repositories"][0]["candidate_worktree"])
+        content = b"prospective adopted receipt\n"
+        prospective = self.make_prospective_commit(
+            central_root, document["central"]["candidate_head"], content
+        )
+        updated = receipt.transition_receipt(
+            path,
+            repository=receipt.CENTRAL_NAME,
+            from_state="validated",
+            to_state="adopted",
+            expected_head=document["central"]["candidate_head"],
+            expected_signing_sha256=document["repositories"][0]["signing_sha256"],
+            evidence_commit=prospective,
+        )
+        self.assertEqual(updated["current_state"], "adopted")
+        self.assertEqual(updated["evidence_commit"]["parent"], document["central"]["candidate_head"])
+        self.assertEqual(updated["evidence_commit"]["path"], receipt.EVIDENCE_RECEIPT_PATH)
+        self.assertEqual(
+            updated["evidence_commit"]["bytes_sha256"],
+            hashlib.sha256(content).hexdigest(),
+        )
+
+    def test_repository_ref_manifest_has_exact_pending_envelope(self) -> None:
+        manifest_path = SCRIPT_PATH.parents[1] / "config/publishing-signing-repository-refs.json"
+        manifest = __import__("json").loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["schema-version"], 1)
+        self.assertEqual(manifest["canonical-source"]["status"], "pending")
+        self.assertIsNone(manifest["canonical-source"]["sha256"])
+        self.assertEqual(set(manifest["repositories"]), set(receipt.SIGNING_NAMES))
+        self.assertNotIn("bluetape4k-experimental", manifest["repositories"])
+        self.assertNotIn("timefold-workshop", manifest["repositories"])
+        self.assertNotIn("clinic-appointment", manifest["repositories"])
 
     def test_cli_exposes_validate_and_transition_modes(self) -> None:
         result = subprocess.run(

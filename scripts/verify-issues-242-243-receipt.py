@@ -725,7 +725,9 @@ def write_atomic(path: Path, payload: bytes) -> None:
     if not isinstance(payload, bytes):
         raise TypeError("atomic payload must be bytes")
     path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    parent = _canonical_path(path.parent, "atomic target parent")
+    if path != parent / path.name:
+        raise ReceiptError("atomic target path must be canonical")
     if path.exists() or path.is_symlink():
         try:
             mode = path.lstat().st_mode
@@ -740,7 +742,7 @@ def write_atomic(path: Path, payload: bytes) -> None:
     else:
         old_bytes = None
         old_mode = 0o600
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=parent)
     temporary = Path(temporary_name)
     replaced = False
     try:
@@ -750,6 +752,10 @@ def write_atomic(path: Path, payload: bytes) -> None:
             output.flush()
             os.fsync(output.fileno())
         os.chmod(temporary, old_mode)
+        if _canonical_path(path.parent, "atomic target parent") != parent:
+            raise ReceiptError("atomic target parent changed before replacement")
+        if path.is_symlink():
+            raise ReceiptError("atomic target must not be a symlink")
         os.replace(temporary, path)
         replaced = True
         directory_fd = os.open(path.parent, os.O_RDONLY)
@@ -832,13 +838,32 @@ def transition_receipt(
                     "output_sha256": sha256_bytes(b"blocked"),
                 }
             )
-        if to_state == "adopted":
-            # The prospective commit is checked before bytes are replaced.  The
-            # receipt still carries no self-referential commit SHA.
-            updated["evidence_commit"] = current.get("evidence_commit")
+        if to_state == "adopted" and updated["current_state"] == "adopted":
             if evidence_commit is None:
-                raise ReceiptError("adopted transition requires evidence commit")
-            updated["evidence_commit"] = updated.get("evidence_commit")
+                raise ReceiptError("final adopted transition requires evidence commit")
+            central_root = Path(updated["repositories"][0]["candidate_worktree"])
+            parent = updated["central"]["candidate_head"]
+            commit = _require_commit(evidence_commit, "evidence")
+            if _git_commit_parents(central_root, commit) != [parent]:
+                raise ReceiptError("evidence commit must have exactly the validated parent")
+            changed = _git(
+                central_root,
+                "diff-tree",
+                "--no-commit-id",
+                "--name-only",
+                "-r",
+                commit,
+            ).splitlines()
+            if changed != [EVIDENCE_RECEIPT_PATH]:
+                raise ReceiptError("evidence commit path is not the sole allowlisted receipt")
+            evidence_bytes = _git_bytes(
+                central_root, "show", f"{commit}:{EVIDENCE_RECEIPT_PATH}"
+            )
+            updated["evidence_commit"] = {
+                "parent": parent,
+                "path": EVIDENCE_RECEIPT_PATH,
+                "bytes_sha256": sha256_bytes(evidence_bytes),
+            }
         _validate_receipt_document(path, updated, evidence_commit=evidence_commit)
         write_atomic(path, canonical_json_bytes(updated))
         return validate_receipt(path, evidence_commit=evidence_commit)
