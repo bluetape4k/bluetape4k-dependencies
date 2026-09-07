@@ -205,6 +205,16 @@ def _collapse_secret_identifier(value: str) -> tuple[str, bool]:
     return "".join(parts), False
 
 
+def _is_safe_secret_like_name(collapsed: str) -> bool:
+    if collapsed in SAFE_SECRET_LIKE_NAMES:
+        return True
+    if "sessionfactory" not in collapsed:
+        return False
+    remainder = collapsed.replace("sessionfactory", "")
+    secret_names = (SECRET_NAME_PARTS - {"session"}) | SECRET_COMPOUND_NAMES
+    return not any(name in remainder for name in secret_names)
+
+
 def is_secret_name(value: str) -> bool:
     """Classify normalized snake, kebab, camel, encoded, and compound names."""
     if len(value) > MAX_SECRET_IDENTIFIER_CHARS:
@@ -213,7 +223,7 @@ def is_secret_name(value: str) -> bool:
     if is_ambiguous:
         return True
     secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
-    if collapsed in SAFE_SECRET_LIKE_NAMES:
+    if _is_safe_secret_like_name(collapsed):
         return False
     return any(name in collapsed for name in secret_names)
 
@@ -247,8 +257,13 @@ def _has_obfuscated_secret_syntax(value: str) -> bool:
     if len(value) > MAX_REDACTION_SCAN_CHARS:
         return True
     normalized, changed = _decode_obfuscated_text(value)
+    has_remaining_obfuscation = (
+        urllib.parse.unquote_plus(unicodedata.normalize("NFKC", normalized))
+        != normalized
+    )
     return changed and (
-        _contains_secret_assignment(normalized)
+        has_remaining_obfuscation
+        or _contains_secret_assignment(normalized)
         or AUTHORIZATION_RE.search(normalized) is not None
         or COOKIE_RE.search(normalized) is not None
         or _contains_line_break_secret_candidate(normalized)
@@ -262,6 +277,8 @@ def _contains_line_break_secret_candidate(value: str) -> bool:
     ):
         return True
     for match in LINE_BREAK_IDENTIFIER_RE.finditer(value):
+        if len(match.group(1)) > MAX_SECRET_IDENTIFIER_CHARS:
+            return True
         fragments = tuple(
             fragment
             for fragment in re.split(r"[ \t\r\n]+", match.group(1))
@@ -271,15 +288,24 @@ def _contains_line_break_secret_candidate(value: str) -> bool:
             is_secret_name(fragment) or _is_sensitive_header_name(fragment)
             for fragment in fragments
         )
+        identifier = "".join(fragments)
+        identifier_collapsed, identifier_is_ambiguous = _collapse_secret_identifier(
+            identifier
+        )
+        if not identifier_is_ambiguous and _is_safe_secret_like_name(
+            identifier_collapsed
+        ):
+            continue
         if len(fragments) == 1 and fragment_is_sensitive[0]:
             return True
-        if any(fragment_is_sensitive):
+        if any(fragment_is_sensitive[:-1]):
+            return True
+        if fragment_is_sensitive[-1]:
             continue
-        identifier = "".join(fragments)
         final_fragment, final_is_ambiguous = _collapse_secret_identifier(
             fragments[-1]
         )
-        if not final_is_ambiguous and final_fragment in SAFE_SECRET_LIKE_NAMES:
+        if not final_is_ambiguous and _is_safe_secret_like_name(final_fragment):
             continue
         if is_secret_name(identifier) or _is_sensitive_header_name(identifier):
             return True

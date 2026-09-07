@@ -227,6 +227,7 @@ class CatalogCandidateTest(unittest.TestCase):
             ("fatal:to\nken=punctuation-boundary-secret", "punctuation-boundary-secret"),
             ("fatal: to\n\nken=multi-line-secret", "multi-line-secret"),
             ("fatal: to\nk\nen=fragmented-secret", "fragmented-secret"),
+            ("fatal: token\nsuffix=fragmented-suffix-secret", "fragmented-suffix-secret"),
             ("fatal: token=\nvalue-line-secret", "value-line-secret"),
             ("fatal: token:\r\ncolon-value-secret", "colon-value-secret"),
             ("Cookie: session=cookie-secret", "cookie-secret"),
@@ -242,13 +243,26 @@ class CatalogCandidateTest(unittest.TestCase):
             ),
             ("token%3Dencoded-delimiter-secret", "encoded-delimiter-secret"),
             (
+                "token%252525253Ddeep-encoded-delimiter-secret",
+                "deep-encoded-delimiter-secret",
+            ),
+            (
                 "token%EF%BC%9Dfullwidth-encoded-delimiter-secret",
                 "fullwidth-encoded-delimiter-secret",
             ),
             ("Cook\nie: opaque-split-cookie", "opaque-split-cookie"),
+            ("Cookie\nHeader: opaque-cookie-header", "opaque-cookie-header"),
             (
                 "Authoriz\nation: Basic split-authorization-secret",
                 "split-authorization-secret",
+            ),
+            (
+                "Authorization\nHeader: Basic authorization-header-secret",
+                "authorization-header-secret",
+            ),
+            (
+                "Authoriz%2525252561tion: Basic deep-header-secret",
+                "deep-header-secret",
             ),
         )
         for stderr, secret in cases:
@@ -285,6 +299,10 @@ class CatalogCandidateTest(unittest.TestCase):
             ),
             "<redacted>",
         )
+
+    def test_oversized_multiline_identifier_fails_closed(self) -> None:
+        diagnostic = ("x\n" * 300) + "field=sentinel"
+        self.assertEqual(candidate.redact_diagnostic(diagnostic), "<redacted>")
 
     def test_secret_name_classifier_bounds_ambiguous_identifiers(self) -> None:
         self.assertTrue(candidate.is_secret_name("field_" * 100))
@@ -374,6 +392,10 @@ class CatalogCandidateTest(unittest.TestCase):
             "ｍｙ＿ｍｏｎｋｅｙ=guava\n"
             "secretary=alice\n"
             "sessionFactory=default\n"
+            "mySessionFactory=default\n"
+            "sessionFactoryBean=default\n"
+            "hibernate.sessionFactory=default\n"
+            "token\nizer=fast\n"
             "tokenizer=fast\n"
             "text：punctuation\n"
             "https://example.invalid/?mode=safe"

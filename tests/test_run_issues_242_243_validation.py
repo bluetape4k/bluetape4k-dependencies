@@ -2046,7 +2046,9 @@ class ValidationRunnerTest(unittest.TestCase):
                 b"MY_SECRET_ACCESS_KEY=sentinel-my-secret\n"
                 b"SERVICE_KEY=secret-key\n"
                 b"Cookie: session=sentinel-cookie-cache\n"
-                b"session=sentinel-session-cache\n",
+                b"session=sentinel-session-cache\n"
+                b"TOKEN%252525253Dsentinel-deep-cache\n"
+                b"token\nsuffix=sentinel-fragment-cache\n",
                 metadata={
                     "accessToken": "sentinel-meta-camel",
                     "my_apikey": "sentinel-meta-compound",
@@ -2078,6 +2080,8 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-my-secret", output["output"])
             self.assertNotIn("sentinel-cookie-cache", output["output"])
             self.assertNotIn("sentinel-session-cache", output["output"])
+            self.assertNotIn("sentinel-deep-cache", output["output"])
+            self.assertNotIn("sentinel-fragment-cache", output["output"])
             cache_text = (cache / f"{key}.json").read_text(encoding="utf-8")
             self.assertNotIn("sentinel-meta-camel", cache_text)
             self.assertNotIn("sentinel-meta-compound", cache_text)
