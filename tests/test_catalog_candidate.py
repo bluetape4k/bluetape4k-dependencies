@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest import mock
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "catalog_candidate.py"
 SPEC = importlib.util.spec_from_file_location("catalog_candidate", SCRIPT_PATH)
@@ -19,6 +20,471 @@ SPEC.loader.exec_module(candidate)
 
 
 class CatalogCandidateTest(unittest.TestCase):
+    def test_git_failure_preserves_only_redacted_diagnostics(self) -> None:
+        cases = (
+            (
+                "fatal: https://x-access-token:url-secret@github.com/example/repo.git",
+                "url-secret",
+            ),
+            ("fatal: Authorization: Bearer bearer-secret", "bearer-secret"),
+            ("fatal: authorization=Basic basic-secret", "basic-secret"),
+            ("fatal: token=token-secret", "token-secret"),
+            ("fatal: password: password-secret", "password-secret"),
+            ("fatal: access_token=access-token-secret", "access-token-secret"),
+            ("fatal: client-secret: client-secret-value", "client-secret-value"),
+            ("fatal: api_key=api-key-secret", "api-key-secret"),
+            ("fatal: accessToken=camel-access-secret", "camel-access-secret"),
+            ("fatal: clientSecret: camel-client-secret", "camel-client-secret"),
+            ("fatal: apiKey=camel-api-secret", "camel-api-secret"),
+            ("fatal: apikey=compound-api-secret", "compound-api-secret"),
+            ("fatal: privatekey=compound-private-secret", "compound-private-secret"),
+            ("fatal: signingkey=compound-signing-secret", "compound-signing-secret"),
+            ("fatal: accesskey=compound-access-secret", "compound-access-secret"),
+            (
+                "fatal: secretaccesskey=compound-secret-access",
+                "compound-secret-access",
+            ),
+            ("fatal: my_apikey=namespaced-api", "namespaced-api"),
+            ("fatal: service-privatekey=namespaced-private", "namespaced-private"),
+            (
+                "fatal: aws_secretaccesskey=namespaced-secret-access",
+                "namespaced-secret-access",
+            ),
+            ("fatal: build_signingkey=namespaced-signing", "namespaced-signing"),
+            (
+                "fatal: https://example.invalid/repo?access_token=query-secret",
+                "query-secret",
+            ),
+            (
+                "fatal: https://example.invalid/repo?accessToken=camel-query-secret",
+                "camel-query-secret",
+            ),
+            (
+                "fatal: https://example.invalid/repo?access%54oken=encoded-key-secret",
+                "encoded-key-secret",
+            ),
+            (
+                "fatal: https://example.invalid/repo?apikey=compound-query-api",
+                "compound-query-api",
+            ),
+            (
+                "fatal: https://example.invalid/repo?clientsecret=compound-query-client",
+                "compound-query-client",
+            ),
+            (
+                "fatal: https://example.invalid/repo?my_clientsecret=namespaced-query-client",
+                "namespaced-query-client",
+            ),
+            (
+                "fatal: https://example.invalid/repo?oauth_accesskeyid=namespaced-query-access",
+                "namespaced-query-access",
+            ),
+            ("prefix Authorization: Basic embedded-secret", "embedded-secret"),
+            (
+                "fatal: https://token-only-secret@example.invalid/repo.git",
+                "token-only-secret",
+            ),
+            (
+                "fatal: https://user%3Aencoded-secret@example.invalid/repo.git",
+                "encoded-secret",
+            ),
+            ("fatal: password: |\n  folded-secret", "folded-secret"),
+            (
+                "warning: retrying\nfatal: Authorization: Bearer multiline-secret",
+                "multiline-secret",
+            ),
+            (
+                "fatal: access%5Ftoken=encoded-assignment-secret",
+                "encoded-assignment-secret",
+            ),
+            (
+                "fatal: access%54oken=encoded-camel-assignment-secret",
+                "encoded-camel-assignment-secret",
+            ),
+            ("fatal: to%00ken=encoded-control-secret", "encoded-control-secret"),
+            (
+                "fatal: to%E2%80%8Bken=encoded-format-secret",
+                "encoded-format-secret",
+            ),
+            (
+                "fatal: to%1B%5B31mken=encoded-ansi-secret",
+                "encoded-ansi-secret",
+            ),
+            (
+                "fatal: access%255Ftoken=nested-encoded-secret",
+                "nested-encoded-secret",
+            ),
+            ("fatal: to+ken=plus-encoded-secret", "plus-encoded-secret"),
+            ("fatal: to%u006ben=residual-percent-secret", "residual-percent-secret"),
+            ("fatal: ｔｏｋｅｎ=fullwidth-token-secret", "fullwidth-token-secret"),
+            ("fatal: ａｐｉｋｅｙ=fullwidth-api-secret", "fullwidth-api-secret"),
+            (
+                "fatal: to%EF%BC%8500ken=encoded-fullwidth-percent-secret",
+                "encoded-fullwidth-percent-secret",
+            ),
+            (
+                "fatal: to％00ken=raw-fullwidth-percent-secret",
+                "raw-fullwidth-percent-secret",
+            ),
+            (
+                "fatal: to%2500ken=nested-control-secret",
+                "nested-control-secret",
+            ),
+            (
+                "fatal: to%25E2%2580%258Bken=nested-format-secret",
+                "nested-format-secret",
+            ),
+            ("fatal: to%09ken=encoded-tab-secret", "encoded-tab-secret"),
+            ("fatal: to%0Aken=encoded-lf-secret", "encoded-lf-secret"),
+            ("fatal: to%0Dken=encoded-cr-secret", "encoded-cr-secret"),
+            ("fatal: to%C2%85ken=encoded-c1-secret", "encoded-c1-secret"),
+            (
+                "fatal: to%E2%80%A8ken=encoded-line-separator-secret",
+                "encoded-line-separator-secret",
+            ),
+            ("fatal: to\x85ken=raw-c1-secret", "raw-c1-secret"),
+            ("fatal: to\u2028ken=raw-line-separator-secret", "raw-line-separator-secret"),
+            ("fatal: to\u2029ken=raw-paragraph-separator-secret", "raw-paragraph-separator-secret"),
+            ("fatal: to\u00a0ken=raw-nbsp-secret", "raw-nbsp-secret"),
+            ("fatal: to\tken=raw-tab-secret", "raw-tab-secret"),
+            ("fatal: to\u009b31mken=c1-csi-secret", "c1-csi-secret"),
+            (
+                "fatal: to\u009dtitle\u009cken=c1-osc-secret",
+                "c1-osc-secret",
+            ),
+            (
+                "fatal: to\x1bPtitle\x1b\\ken=dcs-secret",
+                "dcs-secret",
+            ),
+            (
+                "fatal: my_to%09ken=namespaced-encoded-tab-secret",
+                "namespaced-encoded-tab-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?to%E2%80%8Bken=encoded-query-secret",
+                "encoded-query-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?to%09ken=encoded-tab-query-secret",
+                "encoded-tab-query-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?to+ken=plus-query-secret",
+                "plus-query-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?ｔｏｋｅｎ=fullwidth-query-secret",
+                "fullwidth-query-secret",
+            ),
+            ("fatal: myapikey=compound-prefix-secret", "compound-prefix-secret"),
+            ("fatal: apikeyfoo=compound-suffix-secret", "compound-suffix-secret"),
+            (
+                "fatal: secretaccesskeyid=compound-nested-secret",
+                "compound-nested-secret",
+            ),
+            ("fatal: myprivatekey=compound-private-secret", "compound-private-secret"),
+            (
+                "fatal: access\x1b[31mToken=ansi-assignment-secret",
+                "ansi-assignment-secret",
+            ),
+            (
+                "fatal: to\x00ken=control-assignment-secret",
+                "control-assignment-secret",
+            ),
+            (
+                "fatal: access\u200bToken=format-assignment-secret",
+                "format-assignment-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?access\x1b[31mToken=ansi-query-secret",
+                "ansi-query-secret",
+            ),
+            (
+                "-----BEGIN PGP PRIVATE\x1b[31m KEY BLOCK-----\n"
+                "ansi-private-body\n"
+                "-----END PGP PRIVATE KEY BLOCK-----",
+                "ansi-private-body",
+            ),
+            (
+                "-----BEGIN PGP PRIVATE KEY BLOCK-----\ntruncated-private-body",
+                "truncated-private-body",
+            ),
+            ("fatal: token＝unicode-equals-secret", "unicode-equals-secret"),
+            ("fatal: token：unicode-colon-secret", "unicode-colon-secret"),
+            (
+                "fatal: https://x.invalid/?token＝unicode-query-secret",
+                "unicode-query-secret",
+            ),
+            ("fatal: token\r\n=crlf-delimiter-secret", "crlf-delimiter-secret"),
+            ("fatal: to\nken=cross-line-secret", "cross-line-secret"),
+            ("fatal: mytoken=contiguous-token-secret", "contiguous-token-secret"),
+            (
+                "fatal: tokenvalue=contiguous-token-prefix-secret",
+                "contiguous-token-prefix-secret",
+            ),
+            ("fatal: mysecret=contiguous-secret-secret", "contiguous-secret-secret"),
+            ("fatal: mykey=contiguous-key-secret", "contiguous-key-secret"),
+            ("fatal:to\nken=punctuation-boundary-secret", "punctuation-boundary-secret"),
+            ("fatal: to\n\nken=multi-line-secret", "multi-line-secret"),
+            ("fatal: to\nk\nen=fragmented-secret", "fragmented-secret"),
+            ("fatal: token\nsuffix=fragmented-suffix-secret", "fragmented-suffix-secret"),
+            ("fatal: token=\nvalue-line-secret", "value-line-secret"),
+            ("fatal: token:\r\ncolon-value-secret", "colon-value-secret"),
+            ("Cookie: session=cookie-secret", "cookie-secret"),
+            ("Set-Cookie: session=set-cookie-secret", "set-cookie-secret"),
+            ("fatal: session=session-secret", "session-secret"),
+            (
+                "fatal: sessionFactorySession=session-factory-session-secret",
+                "session-factory-session-secret",
+            ),
+            (
+                "fatal: myAuthorization=namespaced-authorization",
+                "namespaced-authorization",
+            ),
+            (
+                "fatal: authorizationHeader=authorization-header",
+                "authorization-header",
+            ),
+            ("fatal: proxyAuthorization=proxy-authorization", "proxy-authorization"),
+            ("fatal: cookieHeader=cookie-header", "cookie-header"),
+            ("fatal: setCookieHeader=set-cookie-header", "set-cookie-header"),
+            (
+                "Authorization: Bear\r\n er folded-authorization-secret",
+                "folded-authorization-secret",
+            ),
+            (
+                "MyCookie: opaque\n continuation-cookie-secret",
+                "continuation-cookie-secret",
+            ),
+            (
+                "Ａuthorization: Basic fullwidth-header-secret",
+                "fullwidth-header-secret",
+            ),
+            (
+                "Authoriz%61tion: Bearer encoded-header-secret",
+                "encoded-header-secret",
+            ),
+            ("token%3Dencoded-delimiter-secret", "encoded-delimiter-secret"),
+            (
+                "token%252525253Ddeep-encoded-delimiter-secret",
+                "deep-encoded-delimiter-secret",
+            ),
+            (
+                "token%EF%BC%9Dfullwidth-encoded-delimiter-secret",
+                "fullwidth-encoded-delimiter-secret",
+            ),
+            ("Cook\nie: opaque-split-cookie", "opaque-split-cookie"),
+            ("Cookie\nHeader: opaque-cookie-header", "opaque-cookie-header"),
+            (
+                "Authoriz\nation: Basic split-authorization-secret",
+                "split-authorization-secret",
+            ),
+            (
+                "Authorization\nHeader: Basic authorization-header-secret",
+                "authorization-header-secret",
+            ),
+            (
+                "Authoriz%2525252561tion: Basic deep-header-secret",
+                "deep-header-secret",
+            ),
+        )
+        for stderr, secret in cases:
+            with self.subTest(stderr=stderr):
+                failure = subprocess.CalledProcessError(
+                    128,
+                    ["git", "rev-parse", "missing"],
+                    stderr=stderr,
+                )
+                with mock.patch.object(
+                    candidate, "run_bounded_capture", side_effect=failure
+                ):
+                    with self.assertRaisesRegex(
+                        RuntimeError,
+                        r"git rev-parse failed.*<redacted(?:-private-key)?>",
+                    ) as raised:
+                        candidate._git(Path("/tmp/example"), "rev-parse", "missing")
+
+                self.assertNotIn(secret, str(raised.exception))
+
+    def test_invalid_utf8_and_raw_c1_bytes_fail_closed(self) -> None:
+        for raw in (
+            b"before to\x9b31mken=raw-csi-secret after",
+            b"before to\x9dtitle\x9cken=raw-osc-secret after",
+            b"before to\xffken=invalid-utf8-secret after",
+        ):
+            with self.subTest(raw=raw):
+                self.assertEqual(candidate.redact_diagnostic(raw), "<redacted>")
+
+    def test_oversized_diagnostic_fails_closed(self) -> None:
+        self.assertEqual(
+            candidate.redact_diagnostic(
+                "x" * (candidate.MAX_REDACTION_SCAN_CHARS + 1)
+            ),
+            "<redacted>",
+        )
+
+    def test_oversized_multiline_identifier_fails_closed(self) -> None:
+        diagnostic = ("x\n" * 300) + "field=sentinel"
+        self.assertEqual(candidate.redact_diagnostic(diagnostic), "<redacted>")
+
+    def test_secret_name_classifier_bounds_ambiguous_identifiers(self) -> None:
+        self.assertTrue(candidate.is_secret_name("field_" * 100))
+        for safe in (
+            "credentialing",
+            "hockey",
+            "keyboard",
+            "monkey",
+            "my_monkey",
+            "passwordless",
+            "secretariat",
+            "tokenization",
+        ):
+            with self.subTest(safe=safe):
+                self.assertFalse(candidate.is_secret_name(safe))
+
+    def test_bounded_capture_rejects_unbounded_helper_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(
+            RuntimeError, "output limit exceeded"
+        ):
+            candidate.run_bounded_capture(
+                [
+                    sys.executable,
+                    "-c",
+                    "import os; chunk=b'x'*4096\nwhile True: os.write(1, chunk)",
+                ],
+                cwd=Path(directory).resolve(),
+                max_output_bytes=4096,
+                timeout_seconds=3,
+            )
+
+    def test_file_manifest_enforces_aggregate_resource_limits(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "first.bin").write_bytes(b"ab")
+            (root / "second.bin").write_bytes(b"cd")
+            with self.assertRaisesRegex(RuntimeError, "file count limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_files=1
+                )
+            with self.assertRaisesRegex(RuntimeError, "per-file limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_file_bytes=1
+                )
+            with self.assertRaisesRegex(RuntimeError, "total byte limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_total_bytes=3
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            for index in range(3):
+                (root / f"empty-{index}").mkdir()
+            with self.assertRaisesRegex(RuntimeError, "entry count limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_files=1
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "first" / "second").mkdir(parents=True)
+            with self.assertRaisesRegex(RuntimeError, "depth limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_depth=1
+                )
+
+    def test_bounded_capture_rejects_descendant_processes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(
+            RuntimeError, "left processes in its assigned group"
+        ):
+            candidate.run_bounded_capture(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import subprocess, sys; "
+                        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'], "
+                        "stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)"
+                    ),
+                ],
+                cwd=Path(directory).resolve(),
+                timeout_seconds=3,
+            )
+
+    def test_bounded_capture_drains_stdin_and_stdout_without_deadlock(self) -> None:
+        payload = b"x" * (1024 * 1024)
+        with tempfile.TemporaryDirectory() as directory:
+            completed = candidate.run_bounded_capture(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import sys; "
+                        "sys.stdout.buffer.write(b'y' * (1024 * 1024)); "
+                        "sys.stdout.buffer.flush(); "
+                        "data = sys.stdin.buffer.read(); "
+                        "sys.stderr.write(str(len(data)))"
+                    ),
+                ],
+                cwd=Path(directory).resolve(),
+                input_bytes=payload,
+                max_output_bytes=2 * 1024 * 1024,
+                timeout_seconds=3,
+            )
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(len(completed.stdout), len(payload))
+        self.assertEqual(completed.stderr, str(len(payload)).encode())
+
+    def test_redactor_preserves_non_secret_assignments_and_query_values(self) -> None:
+        diagnostic = (
+            "status=healthy\n"
+            "monkey: banana\n"
+            "hockey=ice\n"
+            "tokenization=enabled\n"
+            "passwordless=true\n"
+            "secretariat=office\n"
+            "keyboard=qwerty\n"
+            "keynote=meeting\n"
+            "my_monkey=banana\n"
+            "my%2520monkey=plantain\n"
+            "my+monkey=papaya\n"
+            "ｍｙ＿ｍｏｎｋｅｙ=guava\n"
+            "secretary=alice\n"
+            "sessionFactory=default\n"
+            "mySessionFactory=default\n"
+            "sessionFactoryBean=default\n"
+            "hibernate.sessionFactory=default\n"
+            "token\nizer=fast\n"
+            "tokenizer=fast\n"
+            "text：punctuation\n"
+            "https://example.invalid/?mode=safe"
+        )
+        self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)
+        self.assertEqual(
+            candidate.redact_diagnostic("mon\u2028key=unicode-safe"),
+            "monkey=unicode-safe",
+        )
+
+    def test_origin_mismatch_reports_only_a_safe_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root, _, head = self.make_repository(Path(tmp), "central")
+            origin = "https://origin-user:origin-secret@example.invalid/repo.git"
+            subprocess.run(
+                ["git", "-C", str(root), "remote", "set-url", "origin", origin],
+                check=True,
+            )
+
+            with self.assertRaisesRegex(RuntimeError, r"origin mismatch.*sha256=") as raised:
+                candidate.inspect_repository_for_map(
+                    candidate.REPOSITORY_NAMES["central"], root, head
+                )
+
+            message = str(raised.exception)
+            self.assertNotIn("origin-user", message)
+            self.assertNotIn("origin-secret", message)
+            safe_origin = candidate.redact_diagnostic(origin)
+            self.assertIn(hashlib.sha256(safe_origin.encode()).hexdigest()[:12], message)
+            self.assertNotIn(hashlib.sha256(origin.encode()).hexdigest()[:12], message)
+
     def make_repository(self, workspace: Path, key: str) -> tuple[Path, str, str]:
         name = candidate.REPOSITORY_NAMES[key]
         root = workspace / name
@@ -56,6 +522,17 @@ class CatalogCandidateTest(unittest.TestCase):
         head = subprocess.check_output(
             ["git", "-C", str(root), "rev-parse", "HEAD"], text=True
         ).strip()
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "update-ref",
+                "refs/remotes/origin/develop",
+                head,
+            ],
+            check=True,
+        )
         return root, origin, head
 
     def make_map(self, workspace: Path) -> tuple[Path, dict[str, object]]:
@@ -137,6 +614,264 @@ class CatalogCandidateTest(unittest.TestCase):
                     lock["catalogs"][item.key]["sha256"],
                     hashlib.sha256(item.catalog.read_bytes()).hexdigest(),
                 )
+
+    def test_base_sha_must_be_the_origin_develop_fork_point(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_map(workspace)
+            projects = Path(document["repositories"]["projects"]["root"])
+            stale_base = str(document["repositories"]["projects"]["base_sha"])
+            (projects / "gradle/libs.versions.toml").write_text(
+                '[versions]\ndemo = "2.0.0"\n', encoding="utf-8"
+            )
+            subprocess.run(
+                ["git", "-C", str(projects), "add", "gradle/libs.versions.toml"],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            advanced = subprocess.check_output(
+                ["git", "-C", str(projects), "rev-parse", "HEAD"], text=True
+            ).strip()
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "update-ref",
+                    "refs/remotes/origin/develop",
+                    advanced,
+                ],
+                check=True,
+            )
+            document["repositories"]["projects"]["expected_head"] = advanced
+            document["repositories"]["projects"]["base_sha"] = stale_base
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            with self.assertRaisesRegex(RuntimeError, "fork point"):
+                candidate.load_repository_map_v1(path, workspace)
+
+    def test_map_producer_round_trips_a_diverged_exact_head(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_map(workspace)
+            projects = Path(document["repositories"]["projects"]["root"])
+            fork_point = str(document["repositories"]["projects"]["base_sha"])
+
+            subprocess.run(
+                ["git", "-C", str(projects), "checkout", "-b", "develop"],
+                check=True,
+                capture_output=True,
+            )
+            (projects / "develop.txt").write_text("develop\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(projects), "add", "develop.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance develop",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            develop_head = subprocess.check_output(
+                ["git", "-C", str(projects), "rev-parse", "HEAD"], text=True
+            ).strip()
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "update-ref",
+                    "refs/remotes/origin/develop",
+                    develop_head,
+                ],
+                check=True,
+            )
+
+            subprocess.run(
+                ["git", "-C", str(projects), "checkout", "candidate"],
+                check=True,
+                capture_output=True,
+            )
+            (projects / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(projects), "add", "candidate.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance candidate",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            candidate_head = subprocess.check_output(
+                ["git", "-C", str(projects), "rev-parse", "HEAD"], text=True
+            ).strip()
+
+            document["repositories"]["projects"] = (
+                candidate.inspect_repository_for_map(
+                    "bluetape4k-projects", projects, candidate_head
+                )
+            )
+            path.write_text(json.dumps(document), encoding="utf-8")
+            loaded = candidate.load_repository_map_v1(path, workspace)
+
+            projects_entry = next(item for item in loaded if item.key == "projects")
+            self.assertEqual(projects_entry.base_sha, fork_point)
+            self.assertEqual(projects_entry.expected_head, candidate_head)
+
+    def test_map_producer_accepts_single_branch_candidate_after_develop_fetch(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            source, _, fork_point = self.make_repository(workspace, "projects")
+            subprocess.run(
+                ["git", "-C", str(source), "checkout", "-b", "develop"],
+                check=True,
+                capture_output=True,
+            )
+            (source / "develop.txt").write_text("develop\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(source), "add", "develop.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(source),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance develop",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(source), "checkout", "candidate"],
+                check=True,
+                capture_output=True,
+            )
+            (source / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(source), "add", "candidate.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(source),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance candidate",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            candidate_head = subprocess.check_output(
+                ["git", "-C", str(source), "rev-parse", "HEAD"], text=True
+            ).strip()
+
+            bare = workspace / "projects-remote.git"
+            clone = workspace / "single-branch-projects"
+            subprocess.run(
+                ["git", "clone", "--bare", str(source), str(bare)],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--filter=blob:none",
+                    "--branch",
+                    "candidate",
+                    "--single-branch",
+                    f"file://{bare}",
+                    str(clone),
+                ],
+                check=True,
+                capture_output=True,
+            )
+            missing_develop = subprocess.run(
+                ["git", "-C", str(clone), "rev-parse", "origin/develop"],
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(missing_develop.returncode, 0)
+
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(clone),
+                    "fetch",
+                    "--no-tags",
+                    "--filter=blob:none",
+                    "origin",
+                    "develop:refs/remotes/origin/develop",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(clone),
+                    "remote",
+                    "set-url",
+                    "origin",
+                    "git@github.com:bluetape4k/bluetape4k-projects.git",
+                ],
+                check=True,
+            )
+
+            entry = candidate.inspect_repository_for_map(
+                "bluetape4k-projects", clone, candidate_head
+            )
+            self.assertEqual(entry["base_sha"], fork_point)
 
     def test_manifest_verify_revalidates_every_bound_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

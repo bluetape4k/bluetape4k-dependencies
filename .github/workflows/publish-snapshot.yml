@@ -64,7 +64,7 @@ jobs:
                    >/dev/null 2>"$branch_error"; then
                 clone_args+=(--branch "$candidate_branch" --single-branch)
               elif grep -Fq "(HTTP 404)" "$branch_error"; then
-                : # The repository has no snapshot-candidate branch; use develop.
+                clone_args+=(--branch develop --single-branch)
               else
                 sed 's/^/snapshot candidate lookup failed: /' "$branch_error" >&2
                 exit 1

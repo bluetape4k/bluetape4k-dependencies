@@ -1,0 +1,55 @@
+import org.gradle.api.GradleException
+import org.gradle.api.artifacts.dsl.RepositoryHandler
+
+def candidateRepositoryPath = System.getProperty("issues242243CandidateMavenRepo")
+if (!candidateRepositoryPath) {
+    throw new GradleException("issues242243CandidateMavenRepo system property is required")
+}
+def candidateBomVersion = System.getProperty("issues242243CandidateBomVersion")
+if (!candidateBomVersion) {
+    throw new GradleException("issues242243CandidateBomVersion system property is required")
+}
+def candidateRepositoryUri = new File(candidateRepositoryPath).toURI()
+def candidateBom = "io.github.bluetape4k:bluetape4k-dependencies:${candidateBomVersion}"
+
+def addCandidateRepository = { RepositoryHandler repositories ->
+    def candidateRepository = repositories.maven {
+        name = "issues242243Candidate"
+        url = candidateRepositoryUri
+    }
+    repositories.exclusiveContent {
+        forRepositories(candidateRepository)
+        filter {
+            includeVersion(
+                "io.github.bluetape4k",
+                "bluetape4k-dependencies",
+                candidateBomVersion,
+            )
+        }
+    }
+}
+
+gradle.settingsEvaluated { settings ->
+    addCandidateRepository(settings.dependencyResolutionManagement.repositories)
+}
+
+gradle.beforeProject { project ->
+    addCandidateRepository(project.repositories)
+    project.configurations.configureEach { configuration ->
+        configuration.resolutionStrategy.eachDependency { details ->
+            if (
+                details.requested.group == "io.github.bluetape4k" &&
+                    details.requested.name == "bluetape4k-dependencies"
+            ) {
+                details.useVersion(candidateBomVersion)
+                details.because("issues #242/#243 validation must resolve the receipt-bound candidate BOM")
+            }
+        }
+        if (configuration.name == "testImplementation") {
+            project.dependencies.add(
+                configuration.name,
+                project.dependencies.enforcedPlatform(candidateBom),
+            )
+        }
+    }
+}

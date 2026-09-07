@@ -9,6 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "audit-latest-stable.py"
 LEDGER = REPO_ROOT / "config" / "central-catalog-version-deltas.json"
 AUTHORITY_LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
+TIMEFOLD_ROLLOUT = "2026-09-06-issue-242-timefold-2.6.0"
 
 
 def load_script():
@@ -21,6 +22,18 @@ def load_script():
 
 
 class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
+    def test_blocked_timefold_rollout_does_not_claim_verified_deltas(self) -> None:
+        document = json.loads(LEDGER.read_text(encoding="utf-8"))
+        rollout_names = {
+            item["rollout"] for item in document["subsequent-rollouts"]
+        }
+
+        self.assertNotIn(
+            TIMEFOLD_ROLLOUT,
+            rollout_names,
+            "A blocked candidate must not be recorded as a verified rollout",
+        )
+
     def test_upsert_catalog_rollout_preserves_history(self) -> None:
         module = load_script()
         document = {

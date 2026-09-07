@@ -1,0 +1,34 @@
+{
+  "schema-version": 1,
+  "canonical-source": {
+    "path": "config/publishing-signing/PublishingSigningKeySupport.kt",
+    "sha256": "22fa0667bef66fb35946a64c7c72ef411b73764693db837e6ad12b4e26cdd0be",
+    "status": "prepared"
+  },
+  "repositories": {
+    "bluetape4k-aws": {
+      "commit": "223060e7bc8809d6c465691c25ab352e1e606912"
+    },
+    "bluetape4k-exposed": {
+      "commit": "d742a12993345f84291f47e9b638fa9f78898b78"
+    },
+    "bluetape4k-graph": {
+      "commit": "062d0ecc718705893595a760552936d2372ea739"
+    },
+    "bluetape4k-image": {
+      "commit": "19479441a25a6bdc074726f3fa6d49f5a4cb724a"
+    },
+    "bluetape4k-javers": {
+      "commit": "710c855ff4fc8351fc3cdcb7b36fddd6c0683883"
+    },
+    "bluetape4k-leader": {
+      "commit": "092af2f31099fd0238a487a5aa1b97154c7fb1dc"
+    },
+    "bluetape4k-projects": {
+      "commit": "bb392ee9bc550db25a3718c9af77a013d4477e46"
+    },
+    "bluetape4k-text": {
+      "commit": "6732ad6e65ce1644c53419bb2bb74d3aa2b39a43"
+    }
+  }
+}

@@ -249,6 +249,96 @@ class VerifyPublicationPomsTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn(result.termination_signal, ("SIGTERM", "SIGKILL"))
 
+    def test_bounded_command_rejects_aggregate_output_over_limit(self) -> None:
+        result = verify.run_bounded_command(
+            (sys.executable, "-c", "print('x' * 1024)"),
+            cwd=Path.cwd(),
+            environment={"PATH": os.environ.get("PATH", "")},
+            timeout_seconds=1,
+            max_output_bytes=16,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("output limit", result.stderr)
+
+    def test_ordinary_gradle_and_maven_paths_use_bounded_capture(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            gradlew = root / "gradlew"
+            gradlew.write_text("#!/bin/sh\n", encoding="utf-8")
+            pom_path = root / "pom.xml"
+            pom_path.write_text(pom("bounded"), encoding="utf-8")
+            settings = root / "settings.xml"
+            settings.write_text("<settings/>", encoding="utf-8")
+            result = verify.CommandResult(0, "", "", False, None)
+            with mock.patch.object(
+                verify, "run_bounded_command", return_value=result
+            ) as bounded:
+                verify.generate_poms(
+                    "bluetape4k-dependencies",
+                    root,
+                    verify.PUBLISHERS["bluetape4k-dependencies"],
+                    Path("/workspace/catalog.toml"),
+                )
+                verify.validate_maven_models(
+                    [pom_path], settings=settings, maven_command="mvn"
+                )
+
+        self.assertEqual(bounded.call_count, 2)
+        self.assertEqual(
+            bounded.call_args_list[0].kwargs["timeout_seconds"],
+            verify.PUBLICATION_PUBLISHER_TIMEOUT_SECONDS,
+        )
+        self.assertEqual(
+            bounded.call_args_list[1].kwargs["timeout_seconds"],
+            verify.PUBLICATION_MAVEN_TIMEOUT_SECONDS,
+        )
+
+    def test_repository_map_digest_assertion_is_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "repository-map.json"
+            path.write_bytes(b"{}\n")
+            digest = verify.CATALOG_CANDIDATE.sha256_bytes(path.read_bytes())
+            verify.validate_repository_map_digest(path, digest)
+            with self.assertRaisesRegex(RuntimeError, "mismatch"):
+                verify.validate_repository_map_digest(path, "0" * 64)
+
+    def test_repository_binding_is_revalidated_before_and_after_failure(self) -> None:
+        events: list[str] = []
+
+        def revalidate() -> None:
+            events.append("validate")
+
+        def fail() -> None:
+            events.append("action")
+            raise RuntimeError("generation failed")
+
+        with self.assertRaisesRegex(RuntimeError, "generation failed"):
+            verify.with_binding_revalidation(revalidate, fail)
+        self.assertEqual(events, ["validate", "action", "validate"])
+
+    def test_repository_binding_rejects_head_drift(self) -> None:
+        root = Path("/workspace/bluetape4k-projects")
+        expected = {
+            "bluetape4k-projects": verify.RepositoryBinding(
+                root, "1" * 40, "git@github.com:bluetape4k/bluetape4k-projects.git"
+            )
+        }
+        changed = {
+            "bluetape4k-projects": verify.RepositoryBinding(
+                root, "2" * 40, "git@github.com:bluetape4k/bluetape4k-projects.git"
+            )
+        }
+
+        with mock.patch.object(
+            verify, "capture_repository_bindings", return_value=changed
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "binding changed.*bluetape4k-projects"
+            ):
+                verify.validate_repository_bindings(
+                    {"bluetape4k-projects": root}, expected
+                )
+
     def test_inventory_rejects_managed_or_workflow_publisher_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp)

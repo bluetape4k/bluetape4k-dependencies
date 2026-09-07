@@ -1,0 +1,4 @@
+# Synthetic armor fixture before it was split into non-matching literals.
+9dd308248bbec74e62e0975c40b78457aea56474:buildSrc/src/test/kotlin/PublishingSigningSupportTest.kt:private-key:11
+# Redaction regression fixture before it was split into non-matching literals.
+33cac0ce82267158db7fe9262d3025cc9b44ddd2:tests/test_run_issues_242_243_validation.py:private-key:150

@@ -139,6 +139,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             clone_step,
         )
         self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
+        self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
         self.assertIn("snapshot candidate lookup failed", clone_step)
         self.assertIn("exit 1", clone_step)
 
@@ -177,6 +178,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         )
         self.assertIn('--branch "$candidate_branch" --single-branch', clone_step)
         self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
+        self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
         self.assertIn("snapshot candidate lookup failed", clone_step)
 
         fixture_step = workflow.split(
@@ -227,6 +229,10 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("if: ${{ github.event_name != 'push' }}", job)
         self.assertIn("scripts/verify-publication-poms.py --print-default-repositories", job)
         self.assertIn("scripts/verify-publication-poms.py --workspace .. --summary", job)
+        self.assertIn("config/publishing-signing-repository-refs.json", job)
+        self.assertIn('fetch --no-tags --filter=blob:none origin "$expected_sha"', job)
+        self.assertIn('rev-parse --verify "${expected_sha}^{commit}"', job)
+        self.assertNotIn("--depth 1", job)
         self.assertIn("uses: actions/setup-java@v6", job)
         self.assertIn("uses: gradle/actions/setup-gradle@v6", job)
 
@@ -237,6 +243,142 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             'if [[ "$EVENT_NAME" != "push" && "$PUBLICATION_POM_RESULT" != "success" ]]; then',
             status_job,
         )
+
+    def test_ci_runs_issue_242_243_python_contract_tests_and_sync_check(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        script_step = workflow.split(
+            "      - name: Verify catalog scripts\n", 1
+        )[1].split("      - name:", 1)[0]
+
+        for test_name in (
+            "tests/test_sync_publishing_signing_support.py",
+            "tests/test_run_issues_242_243_validation.py",
+            "tests/test_publishing_signing_smoke.py",
+            "tests/test_ci_catalog_governance.py",
+        ):
+            self.assertIn(test_name, script_step)
+        self.assertIn("--check --summary", script_step)
+        self.assertIn("scripts/sync-publishing-signing-support.py", workflow)
+
+    def test_ci_clones_signing_refs_and_builds_a_strict_repository_map(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        clone_step = workflow.split(
+            "      - name: Clone managed repositories for catalog script checks\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("config/publishing-signing-repository-refs.json", clone_step)
+        self.assertIn("fetch --no-tags --filter=blob:none origin", clone_step)
+        self.assertIn("clone_args=(--depth 1)", clone_step)
+        self.assertIn("clone_args=(--filter=blob:none --no-checkout)", clone_step)
+        self.assertIn(
+            'clone_args=(--filter=blob:none --branch "$candidate_branch" --single-branch)',
+            clone_step,
+        )
+        self.assertIn("selected_candidate_branch=true", clone_step)
+        self.assertIn('origin "develop:refs/remotes/origin/develop"', clone_step)
+        self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
+        self.assertIn('checkout -B "issues-242-243-', clone_step)
+        self.assertIn("remote get-url origin", clone_step)
+        self.assertIn("rev-parse --verify", clone_step)
+        self.assertIn("rev-parse HEAD", clone_step)
+        self.assertIn("status --porcelain=v1 --untracked-files=all", clone_step)
+        self.assertIn("remote set-url origin", clone_step)
+        self.assertIn(
+            'test "$(git -C "../${repo}" remote get-url origin)" =',
+            clone_step,
+        )
+
+        map_step = workflow.split(
+            "      - name: Build exact catalog repository map\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("inspect_repository_for_map", map_step)
+        self.assertIn("issues-242-243-repository-map.json", map_step)
+
+        candidate_source = (
+            REPO_ROOT / "scripts" / "catalog_candidate.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn('"remote", "get-url", "origin"', candidate_source)
+        self.assertIn('"merge-base", head, develop_head', candidate_source)
+        self.assertIn(
+            '"status", "--porcelain=v1", "--untracked-files=all"',
+            candidate_source,
+        )
+
+        recheck_step = workflow.split(
+            "      - name: Recheck exact signing refs before sync\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("config/publishing-signing-repository-refs.json", recheck_step)
+        self.assertIn("rev-parse HEAD", recheck_step)
+        self.assertIn("status --porcelain=v1 --untracked-files=all", recheck_step)
+
+        central_step = workflow.split(
+            "      - name: Verify all generated signing copies\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertNotIn("if:", central_step)
+        self.assertIn(
+            '--repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json"',
+            central_step,
+        )
+        self.assertIn("python3 scripts/sync-publishing-signing-support.py", central_step)
+        self.assertNotIn("--repo ", central_step)
+        self.assertNotIn("Verify PR central generated signing copy", workflow)
+        self.assertIn("catalog_candidate.REPOSITORY_KEYS", map_step)
+        compile_step = workflow.split(
+            "      - name: Compile generated signing helpers\n", 1
+        )[1].split("      - name:", 1)[0]
+        setup_java = workflow.index("      - uses: actions/setup-java@v6.0.0")
+        setup_gradle = workflow.index("      - uses: gradle/actions/setup-gradle@v6.3.0")
+        compile_helpers = workflow.index("      - name: Compile generated signing helpers")
+        self.assertLess(setup_java, compile_helpers)
+        self.assertLess(setup_gradle, compile_helpers)
+        self.assertIn("ThreadPoolExecutor(max_workers=2)", compile_step)
+        self.assertIn("catalog_candidate.SIGNING_REPOSITORIES", compile_step)
+        self.assertIn("runner.sanitized_environment", compile_step)
+        self.assertIn("runner.require_disposable_hosted_environment", compile_step)
+        self.assertIn("runner.run_command", compile_step)
+        self.assertNotIn("subprocess.run", compile_step)
+        self.assertIn('Path(os.environ["RUNNER_TEMP"])', compile_step)
+        self.assertIn('environment["GRADLE_USER_HOME"]', compile_step)
+        self.assertIn("os.chmod(gradle_home, 0o700)", compile_step)
+        self.assertIn("timeout_seconds=600", compile_step)
+        self.assertIn('"-p",', compile_step)
+        self.assertIn('"PublishingSigningSupportTest",', compile_step)
+        self.assertIn('"--tests",', compile_step)
+        self.assertIn('"buildSrc",', compile_step)
+        self.assertIn('"compileKotlin",', compile_step)
+        self.assertIn('"test",', compile_step)
+
+    def test_ci_does_not_reclone_signing_siblings_for_a_pr_central_check(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        check_step = workflow.split(
+            "      - name: Verify all generated signing copies\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertNotIn("if:", check_step)
+        self.assertIn("python3 scripts/sync-publishing-signing-support.py", check_step)
+        self.assertNotIn("--repo ", check_step)
+        self.assertNotIn("gh repo clone", check_step)
+        self.assertNotIn("Verify PR central generated signing copy", workflow)
+
+    def test_release_diagnostic_matches_transport_classes_without_secret_output(self) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "release.yml"
+        ).read_text(encoding="utf-8")
+        diagnostic = workflow.split("      - name: Diagnose signing inputs\n", 1)[1].split(
+            "      - name:", 1
+        )[0]
+        for classification in (
+            "raw_armor",
+            "escaped_newline",
+            "base64_armor",
+            "base64_nonarmor",
+            "invalid_base64",
+        ):
+            self.assertIn(classification, diagnostic)
+        self.assertIn("validate=True", diagnostic)
+        self.assertIn('replace("\\\\n", "\\n")', diagnostic)
+        self.assertNotIn("sentinel", diagnostic.lower())
+        self.assertNotIn("private-key-body", diagnostic.lower())
+        self.assertNotIn("print(normalized_key", diagnostic)
+        self.assertNotIn("print(decoded", diagnostic)
 
 
 if __name__ == "__main__":
