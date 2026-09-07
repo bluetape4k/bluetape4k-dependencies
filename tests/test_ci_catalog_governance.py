@@ -229,6 +229,10 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("if: ${{ github.event_name != 'push' }}", job)
         self.assertIn("scripts/verify-publication-poms.py --print-default-repositories", job)
         self.assertIn("scripts/verify-publication-poms.py --workspace .. --summary", job)
+        self.assertIn("config/publishing-signing-repository-refs.json", job)
+        self.assertIn('fetch --no-tags --filter=blob:none origin "$expected_sha"', job)
+        self.assertIn('rev-parse --verify "${expected_sha}^{commit}"', job)
+        self.assertNotIn("--depth 1", job)
         self.assertIn("uses: actions/setup-java@v6", job)
         self.assertIn("uses: gradle/actions/setup-gradle@v6", job)
 

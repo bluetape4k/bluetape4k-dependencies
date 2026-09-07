@@ -655,10 +655,11 @@ BOUND_COMMAND_FIELDS = LEGACY_COMMAND_FIELDS | {
     "cache_key",
     "cache_output_path",
 }
+COMPOSITE_BOUND_COMMAND_FIELDS = BOUND_COMMAND_FIELDS | {"repository_map_sha256"}
 
 
 def _bound_command_input(item: Mapping[str, Any]) -> dict[str, Any]:
-    return {
+    result = {
         "schema_version": 1,
         "repository": item["repository"],
         "phase": item["phase"],
@@ -676,6 +677,9 @@ def _bound_command_input(item: Mapping[str, Any]) -> dict[str, Any]:
         "arguments": item["arguments"],
         "gradle_home_policy": item["gradle_home_policy"],
     }
+    if "repository_map_sha256" in item:
+        result["repository_map_sha256"] = item["repository_map_sha256"]
+    return result
 
 
 def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
@@ -685,6 +689,7 @@ def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
         if not isinstance(command, Mapping) or frozenset(command) not in {
             frozenset(LEGACY_COMMAND_FIELDS),
             frozenset(BOUND_COMMAND_FIELDS),
+            frozenset(COMPOSITE_BOUND_COMMAND_FIELDS),
         }:
             raise ReceiptError("command fields are invalid")
         item = command
@@ -697,7 +702,10 @@ def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
         if item["result"] not in {"pass", "fail", "blocked"}:
             raise ReceiptError("command result is invalid")
         _require_sha256(item["output_sha256"], "command output")
-        if set(item) == BOUND_COMMAND_FIELDS:
+        if frozenset(item) in {
+            frozenset(BOUND_COMMAND_FIELDS),
+            frozenset(COMPOSITE_BOUND_COMMAND_FIELDS),
+        }:
             _require_nonempty_string(item["phase"], "command phase")
             _require_nonempty_string(item["job_id"], "command job ID")
             _require_commit(item["repository_head"], "command repository HEAD")
@@ -718,6 +726,16 @@ def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
                 raise ReceiptError("command arguments are invalid")
             if item["gradle_home_policy"] != "ephemeral-0700":
                 raise ReceiptError("command Gradle home policy is invalid")
+            if "repository_map_sha256" in item:
+                _require_sha256(
+                    item["repository_map_sha256"], "command repository map"
+                )
+                if item["phase"] != "publication-poms":
+                    raise ReceiptError(
+                        "only publication command accepts repository map provenance"
+                    )
+            elif item["phase"] == "publication-poms":
+                raise ReceiptError("publication command lacks repository map provenance")
             coordinate = item["coordinate"]
             selected = item["selected_version"]
             reason = item["selection_reason"]
@@ -751,6 +769,15 @@ def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
                             "gradle_version": item["gradle"],
                             "arguments": item["arguments"],
                             "gradle_home_policy": item["gradle_home_policy"],
+                            **(
+                                {
+                                    "repository_map_sha256": item[
+                                        "repository_map_sha256"
+                                    ]
+                                }
+                                if "repository_map_sha256" in item
+                                else {}
+                            ),
                         }
                     )
                 )
@@ -958,7 +985,14 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
     )
 
     commands = document["commands"]
-    if not commands or any(set(item) != BOUND_COMMAND_FIELDS for item in commands):
+    if not commands or any(
+        frozenset(item)
+        not in {
+            frozenset(BOUND_COMMAND_FIELDS),
+            frozenset(COMPOSITE_BOUND_COMMAND_FIELDS),
+        }
+        for item in commands
+    ):
         raise ReceiptError(f"{state} receipt requires immutable command evidence")
     if any(item["result"] != "pass" for item in commands):
         raise ReceiptError(f"{state} receipt requires every command to pass")
@@ -1161,6 +1195,10 @@ def _validate_terminal_evidence(document: Mapping[str, Any]) -> None:
         raise ReceiptError("adopted receipt publication task coverage is incomplete")
     if publication_commands[0]["arguments"]:
         raise ReceiptError("adopted receipt publication command arguments are invalid")
+    if publication_commands[0].get("repository_map_sha256") != document[
+        "repository_map"
+    ]["sha256"]:
+        raise ReceiptError("adopted publication repository map provenance mismatch")
 
 
 def _validate_records(value: Any, description: str) -> None:

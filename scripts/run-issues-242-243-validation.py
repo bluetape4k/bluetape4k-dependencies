@@ -310,6 +310,7 @@ class ValidationJob:
     produced_maven_repository: Optional[Path] = None
     candidate_catalog_path: Optional[Path] = None
     coordinate: str = ""
+    repository_map_sha256: str = ""
 
     @property
     def cache_key(self) -> str:
@@ -324,6 +325,7 @@ class ValidationJob:
             jdk_version=self.jdk_version,
             gradle_version=self.gradle_version,
             arguments=self.arguments,
+            repository_map_sha256=self.repository_map_sha256,
         )
 
 
@@ -544,6 +546,7 @@ def cache_key(
     jdk_version: str,
     gradle_version: str,
     arguments: Sequence[str] = (),
+    repository_map_sha256: str = "",
 ) -> str:
     """Return the canonical exact-input evidence cache key."""
 
@@ -574,6 +577,10 @@ def cache_key(
         "arguments": list(arguments),
         "gradle_home_policy": GRADLE_HOME_POLICY,
     }
+    if repository_map_sha256:
+        payload["repository_map_sha256"] = _validate_sha256(
+            repository_map_sha256, "repository map"
+        )
     return sha256_bytes(canonical_json_bytes(payload))
 
 
@@ -1390,7 +1397,11 @@ def should_refresh_graph_dependencies(phase: str) -> bool:
 
 
 def publication_pom_command(
-    *, central_root: Path, workspace: Path, repository_map: Path
+    *,
+    central_root: Path,
+    workspace: Path,
+    repository_map: Path,
+    repository_map_sha256: str,
 ) -> tuple[str, ...]:
     script = central_root / "scripts" / "verify-publication-poms.py"
     return (
@@ -1400,6 +1411,8 @@ def publication_pom_command(
         str(workspace.resolve()),
         "--repository-map",
         str(repository_map.resolve()),
+        "--repository-map-sha256",
+        _validate_sha256(repository_map_sha256, "repository map"),
         "--summary",
     )
 
@@ -1632,6 +1645,13 @@ def validate_job_binding(
     expected_branch = binding.get("candidate_branch")
     if job.repository_branch and expected_branch != job.repository_branch:
         raise InputContractError(f"repository branch mismatch: {job.repository}")
+    if job.repository_map_sha256:
+        map_binding = bindings.get("__repository_map__")
+        if (
+            not isinstance(map_binding, Mapping)
+            or map_binding.get("sha256") != job.repository_map_sha256
+        ):
+            raise InputContractError("repository map digest changed")
     if binding.get("clean", True) is not True or binding.get("exact_head", True) is not True:
         raise InputContractError(f"repository map is not clean exact-head: {job.repository}")
     if _git(root, "remote", "get-url", "origin") != expected_origin:
@@ -2020,6 +2040,11 @@ def build_phase_jobs(
     if phase == "publication-poms":
         if selected:
             raise InputContractError("publication-poms does not accept repository selection")
+        repository_map_source = _canonical_existing_file(
+            Path(str(receipt["repository_map"]["path"])),
+            "receipt repository map",
+        )
+        repository_map_sha256 = sha256_file(repository_map_source)
         return (
             ValidationJob(
                 repository="publication-poms",
@@ -2028,7 +2053,8 @@ def build_phase_jobs(
                 command=publication_pom_command(
                     central_root=central_root,
                     workspace=Path(str(repository_map["workspace_root"])),
-                    repository_map=Path(str(receipt["repository_map"]["path"])),
+                    repository_map=repository_map_source,
+                    repository_map_sha256=repository_map_sha256,
                 ),
                 configuration="strict-non-candidate-map",
                 task_set=("verify-publication-poms.py",),
@@ -2044,6 +2070,7 @@ def build_phase_jobs(
                 gradle_version="publication-pom-gate",
                 repository_origin=str(entries["bluetape4k-dependencies"]["origin"]),
                 repository_branch=str(entries["bluetape4k-dependencies"]["candidate_branch"]),
+                repository_map_sha256=repository_map_sha256,
             ),
         )
     raise InputContractError(f"unsupported validation phase: {phase}")
@@ -2077,6 +2104,7 @@ def _load_job_bindings(
     latest_map = load_strict_repository_map(repository_map_path)
     latest_receipt = load_local_receipt(receipt_path, repository_map_path)
     bindings = _entry_by_name(latest_map)
+    bindings["__repository_map__"] = {"sha256": sha256_file(repository_map_path)}
     consumers = latest_receipt.get("consumers")
     if not isinstance(consumers, list):
         raise InputContractError("local receipt has no consumer bindings")
@@ -2309,7 +2337,9 @@ def _bound_command_record(
         "arguments": list(job.arguments),
         "gradle_home_policy": GRADLE_HOME_POLICY,
     }
-    return {
+    if job.repository_map_sha256:
+        immutable_input["repository_map_sha256"] = job.repository_map_sha256
+    record = {
         "repository": job.repository,
         "phase": job.phase,
         "command": command,
@@ -2336,6 +2366,9 @@ def _bound_command_record(
         "gradle_home_policy": GRADLE_HOME_POLICY,
         "input_sha256": sha256_bytes(canonical_json_bytes(immutable_input)),
     }
+    if job.repository_map_sha256:
+        record["repository_map_sha256"] = job.repository_map_sha256
+    return record
 
 
 def _update_consumer_graphs(

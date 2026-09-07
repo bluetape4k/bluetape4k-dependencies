@@ -615,6 +615,11 @@ class Issues242243ReceiptTest(unittest.TestCase):
                 ),
                 coordinate=coordinate or "",
                 job_id=f"{phase}:{job_index}:{repository}",
+                repository_map_sha256=(
+                    str(document["repository_map"]["sha256"])
+                    if phase == "publication-poms"
+                    else ""
+                ),
             )
             job_index += 1
             output = ""

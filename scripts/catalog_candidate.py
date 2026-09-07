@@ -18,6 +18,7 @@ import tempfile
 import time
 import unicodedata
 import urllib.parse
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -545,6 +546,7 @@ def run_bounded_capture(
     command: list[str],
     *,
     cwd: Path,
+    environment: Mapping[str, str] | None = None,
     input_bytes: bytes | None = None,
     max_output_bytes: int = MAX_GIT_CAPTURE_BYTES,
     timeout_seconds: float = GIT_CAPTURE_TIMEOUT_SECONDS,
@@ -563,6 +565,7 @@ def run_bounded_capture(
     process = subprocess.Popen(
         command,
         cwd=str(cwd),
+        env=None if environment is None else dict(environment),
         stdin=subprocess.PIPE if input_bytes is not None else subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,

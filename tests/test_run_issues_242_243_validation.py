@@ -466,6 +466,16 @@ class ValidationRunnerTest(unittest.TestCase):
             "arguments": ("--dependency", "demo:artifact"),
         }
         self.assertNotEqual(first, runner.cache_key(**changed_arguments))
+        map_bound = {
+            **changed_tasks,
+            "task_set": ("test", "compileKotlin"),
+            "repository_map_sha256": "3" * 64,
+        }
+        self.assertNotEqual(first, runner.cache_key(**map_bound))
+        self.assertNotEqual(
+            runner.cache_key(**map_bound),
+            runner.cache_key(**{**map_bound, "repository_map_sha256": "4" * 64}),
+        )
 
     def test_cache_hit_requires_success_and_readback_digest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -1295,11 +1305,14 @@ class ValidationRunnerTest(unittest.TestCase):
             central_root=Path("/workspace/bluetape4k-dependencies"),
             workspace=Path("/workspace"),
             repository_map=Path("/workspace/repository-map.json"),
+            repository_map_sha256="a" * 64,
         )
         self.assertEqual(command[0], sys.executable)
         self.assertIn("scripts/verify-publication-poms.py", " ".join(command))
         self.assertIn("--repository-map", command)
         self.assertIn(str(Path("/workspace/repository-map.json")), command)
+        self.assertIn("--repository-map-sha256", command)
+        self.assertIn("a" * 64, command)
         self.assertIn("--summary", command)
         self.assertNotIn("timefold-workshop", command)
         self.assertNotIn("clinic-appointment", command)
@@ -1995,6 +2008,26 @@ class ValidationRunnerTest(unittest.TestCase):
                 }[args],
             ):
                 runner.validate_job_binding(job, {"demo": binding})
+                map_bound_job = runner.dataclasses.replace(
+                    job, repository_map_sha256="c" * 64
+                )
+                runner.validate_job_binding(
+                    map_bound_job,
+                    {
+                        "demo": binding,
+                        "__repository_map__": {"sha256": "c" * 64},
+                    },
+                )
+                with self.assertRaisesRegex(
+                    runner.InputContractError, "repository map digest"
+                ):
+                    runner.validate_job_binding(
+                        map_bound_job,
+                        {
+                            "demo": binding,
+                            "__repository_map__": {"sha256": "d" * 64},
+                        },
+                    )
             bad_binding = dict(binding, candidate_head="b" * 40)
             with self.assertRaisesRegex(
                 runner.InputContractError, "HEAD"

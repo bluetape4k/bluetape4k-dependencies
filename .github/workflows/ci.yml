@@ -370,9 +370,46 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t repos < <(scripts/verify-publication-poms.py --print-default-repositories)
-          for repo in "${repos[@]}"; do
-            gh repo clone "bluetape4k/${repo}" "../${repo}" -- --depth 1
-          done
+          python3 - "${repos[@]}" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          expected = set(sys.argv[1:])
+          document = json.loads(
+              Path("config/publishing-signing-repository-refs.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          actual = set(document["repositories"])
+          if actual != expected:
+              raise SystemExit(
+                  "publication publisher ref inventory mismatch: "
+                  f"missing={sorted(expected - actual)} extra={sorted(actual - expected)}"
+              )
+          PY
+          while IFS=$'\t' read -r repo expected_sha; do
+            gh repo clone "bluetape4k/${repo}" "../${repo}" -- \
+              --filter=blob:none --no-checkout
+            git -C "../${repo}" fetch --no-tags --filter=blob:none origin "$expected_sha"
+            git -C "../${repo}" checkout --detach "$expected_sha"
+            peeled_sha=$(git -C "../${repo}" rev-parse --verify "${expected_sha}^{commit}")
+            test "$peeled_sha" = "$expected_sha"
+            test "$(git -C "../${repo}" rev-parse HEAD)" = "$expected_sha"
+            test -z "$(git -C "../${repo}" status --porcelain=v1 --untracked-files=all)"
+          done < <(python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          document = json.loads(
+              Path("config/publishing-signing-repository-refs.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          for repository, value in sorted(document["repositories"].items()):
+              print(f"{repository}\t{value['commit']}")
+          PY
+          )
       - uses: actions/setup-java@v6.0.0
         with:
           java-version: ${{ env.JAVA_VERSION }}

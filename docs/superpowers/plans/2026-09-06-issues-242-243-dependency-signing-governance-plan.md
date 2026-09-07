@@ -651,8 +651,15 @@ python3 scripts/verify-issues-242-243-receipt.py \
 
 runner의 `publication-poms` phase는 `scripts/verify-publication-poms.py --workspace
 /Users/debop/work/bluetape4k --repository-map "$PWD/build/issues-242-243/repository-map.json"
---summary` argv를 정확히 구성한다. 다음 명령을 실행하면 runner가 전체 child process에 `timeout=1800`을
+--repository-map-sha256 <exact-sha256> --summary` argv를 정확히 구성한다. 이 digest는
+immutable command input, evidence cache key와 terminal receipt에 함께 결속한다. 내부 9개
+Gradle publisher와 Maven 실행도 공통 bounded capture를 재사용해 각 timeout과 stdout/stderr
+합계 4 MiB 상한을 적용한다. 다음 명령을 실행하면 runner가 전체 child process에 `timeout=1800`을
 적용하고 timeout 시 process group을 종료한 뒤 redacted first-failure log를 보존한다.
+helper는 각 publisher 명령 직전과 성공·실패 직후에 repository-map digest와 중앙 + 8개
+publisher의 `HEAD`, `origin`, clean 상태가 시작 시 binding과 같은지 검사한다. hosted CI의
+publication job도 `config/publishing-signing-repository-refs.json`의 exact SHA만 fetch/checkout한
+뒤 같은 helper를 실행하며 default-branch shallow clone을 허용하지 않는다.
 
 ```bash
 python3 scripts/run-issues-242-243-validation.py \

@@ -15,14 +15,13 @@ import dataclasses
 import importlib.util
 import os
 import shutil
-import signal
-import subprocess
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
 from types import ModuleType
+from typing import TypeVar
 
 
 @dataclasses.dataclass(frozen=True)
@@ -55,6 +54,13 @@ class CommandResult:
     termination_signal: str | None
 
 
+@dataclasses.dataclass(frozen=True)
+class RepositoryBinding:
+    root: Path
+    head: str
+    origin: str
+
+
 PUBLISHERS = {
     "bluetape4k-dependencies": Publisher(("generatePomFileForBluetapeDependenciesPublication",)),
     "bluetape4k-projects": Publisher(("generatePomFileForBluetape4kPublication",)),
@@ -80,8 +86,21 @@ CANDIDATE_PUBLISHERS = tuple(
 CANDIDATE_MAX_WORKERS = 2
 CANDIDATE_PUBLISHER_TIMEOUT_SECONDS = 25 * 60
 CANDIDATE_MAVEN_TIMEOUT_SECONDS = 20 * 60
+PUBLICATION_PUBLISHER_TIMEOUT_SECONDS = CANDIDATE_PUBLISHER_TIMEOUT_SECONDS
+PUBLICATION_MAVEN_TIMEOUT_SECONDS = CANDIDATE_MAVEN_TIMEOUT_SECONDS
+MAX_PUBLICATION_COMMAND_OUTPUT_BYTES = 4 * 1024 * 1024
+RESULT = TypeVar("RESULT")
 SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SETTINGS = SCRIPT_ROOT / "config" / "publication-pom-maven-settings.xml"
+CATALOG_CANDIDATE_PATH = SCRIPT_ROOT / "scripts" / "catalog_candidate.py"
+CATALOG_CANDIDATE_SPEC = importlib.util.spec_from_file_location(
+    "publication_pom_catalog_candidate", CATALOG_CANDIDATE_PATH
+)
+if CATALOG_CANDIDATE_SPEC is None or CATALOG_CANDIDATE_SPEC.loader is None:
+    raise RuntimeError("cannot load bounded command helper")
+CATALOG_CANDIDATE = importlib.util.module_from_spec(CATALOG_CANDIDATE_SPEC)
+sys.modules.setdefault(CATALOG_CANDIDATE_SPEC.name, CATALOG_CANDIDATE)
+CATALOG_CANDIDATE_SPEC.loader.exec_module(CATALOG_CANDIDATE)
 
 
 def validate_candidate_options(
@@ -267,48 +286,35 @@ def run_bounded_command(
     cwd: Path,
     environment: Mapping[str, str],
     timeout_seconds: float,
+    max_output_bytes: int = MAX_PUBLICATION_COMMAND_OUTPUT_BYTES,
     terminate_grace_seconds: float = 5,
     drain_seconds: float = 30,
 ) -> CommandResult:
-    process = subprocess.Popen(
-        command,
-        cwd=cwd,
-        env=dict(environment),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        start_new_session=True,
-    )
+    del terminate_grace_seconds, drain_seconds
     try:
-        stdout, stderr = process.communicate(timeout=timeout_seconds)
-        return CommandResult(process.returncode, stdout, stderr, False, None)
-    except subprocess.TimeoutExpired:
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            pass
-        try:
-            stdout, stderr = process.communicate(timeout=terminate_grace_seconds)
-            termination_signal = "SIGTERM"
-        except subprocess.TimeoutExpired:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            try:
-                stdout, stderr = process.communicate(timeout=drain_seconds)
-            except subprocess.TimeoutExpired as exc:
-                raise RuntimeError(
-                    "publisher process group did not drain after SIGKILL"
-                ) from exc
-            termination_signal = "SIGKILL"
-        return CommandResult(
-            process.returncode,
-            stdout,
-            stderr,
-            True,
-            termination_signal,
+        completed = CATALOG_CANDIDATE.run_bounded_capture(
+            list(command),
+            cwd=cwd,
+            environment=environment,
+            max_output_bytes=max_output_bytes,
+            timeout_seconds=timeout_seconds,
         )
+    except RuntimeError as exc:
+        detail = str(exc)
+        return CommandResult(
+            124 if "timed out" in detail else 1,
+            "",
+            detail,
+            "timed out" in detail,
+            "SIGKILL",
+        )
+    return CommandResult(
+        completed.returncode,
+        completed.stdout.decode("utf-8", errors="replace"),
+        completed.stderr.decode("utf-8", errors="replace"),
+        False,
+        None,
+    )
 
 
 def run_bounded_jobs(
@@ -355,6 +361,18 @@ def run_bounded_jobs(
     return results
 
 
+def with_binding_revalidation(
+    revalidate: Callable[[], None], action: Callable[[], RESULT]
+) -> RESULT:
+    """Revalidate immutable inputs immediately around one publisher action."""
+
+    revalidate()
+    try:
+        return action()
+    finally:
+        revalidate()
+
+
 def generate_poms(
     repository: str,
     repository_root: Path,
@@ -371,29 +389,16 @@ def generate_poms(
     environment = generation_environment(
         os.environ, central_catalog, candidate=offline
     )
-    if offline:
-        result = run_bounded_command(
-            command,
-            cwd=repository_root,
-            environment=environment,
-            timeout_seconds=CANDIDATE_PUBLISHER_TIMEOUT_SECONDS,
-        )
-    else:
-        completed = subprocess.run(
-            command,
-            cwd=repository_root,
-            env=environment,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-        result = CommandResult(
-            completed.returncode,
-            completed.stdout,
-            completed.stderr,
-            False,
-            None,
-        )
+    result = run_bounded_command(
+        command,
+        cwd=repository_root,
+        environment=environment,
+        timeout_seconds=(
+            CANDIDATE_PUBLISHER_TIMEOUT_SECONDS
+            if offline
+            else PUBLICATION_PUBLISHER_TIMEOUT_SECONDS
+        ),
+    )
     if result.returncode != 0:
         output = (result.stdout + result.stderr).splitlines()
         diagnostics = "\n".join(output[-80:])
@@ -470,27 +475,18 @@ def validate_maven_models(
             offline=offline,
         )
         try:
-            if offline:
-                result = run_bounded_command(
-                    command,
-                    cwd=reactor,
-                    environment=candidate_environment(os.environ),
-                    timeout_seconds=CANDIDATE_MAVEN_TIMEOUT_SECONDS,
-                )
-            else:
-                completed = subprocess.run(
-                    command,
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                )
-                result = CommandResult(
-                    completed.returncode,
-                    completed.stdout,
-                    completed.stderr,
-                    False,
-                    None,
-                )
+            result = run_bounded_command(
+                command,
+                cwd=reactor,
+                environment=(
+                    candidate_environment(os.environ) if offline else os.environ
+                ),
+                timeout_seconds=(
+                    CANDIDATE_MAVEN_TIMEOUT_SECONDS
+                    if offline
+                    else PUBLICATION_MAVEN_TIMEOUT_SECONDS
+                ),
+            )
         except OSError as exc:
             raise RuntimeError(f"Maven executable not found: {maven_command}") from exc
         if result.returncode != 0:
@@ -629,6 +625,82 @@ def resolve_repository_roots(
     return {repository: roots[repository] for repository in repositories}
 
 
+def bounded_git(root: Path, *arguments: str) -> str:
+    try:
+        completed = CATALOG_CANDIDATE.run_bounded_capture(
+            ["git", "-C", str(root), *arguments],
+            cwd=root,
+        )
+    except (OSError, RuntimeError) as exc:
+        raise RuntimeError(
+            f"cannot verify repository binding for {root}"
+        ) from exc
+    if completed.returncode != 0:
+        diagnostic = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(
+            f"git {' '.join(arguments)} failed for {root}: "
+            f"{diagnostic or f'exit {completed.returncode}'}"
+        )
+    return completed.stdout.decode("utf-8", errors="strict").strip()
+
+
+def capture_repository_bindings(
+    roots: Mapping[str, Path],
+) -> dict[str, RepositoryBinding]:
+    bindings: dict[str, RepositoryBinding] = {}
+    for repository, root_value in sorted(roots.items()):
+        root = root_value.resolve()
+        if bounded_git(
+            root, "status", "--porcelain=v1", "--untracked-files=all"
+        ):
+            raise RuntimeError(f"publisher repository is dirty: {repository}")
+        bindings[repository] = RepositoryBinding(
+            root=root,
+            head=bounded_git(root, "rev-parse", "HEAD"),
+            origin=bounded_git(root, "remote", "get-url", "origin"),
+        )
+    return bindings
+
+
+def validate_repository_bindings(
+    roots: Mapping[str, Path], expected: Mapping[str, RepositoryBinding]
+) -> None:
+    actual = capture_repository_bindings(roots)
+    if actual != expected:
+        changed = sorted(
+            repository
+            for repository in set(actual) | set(expected)
+            if actual.get(repository) != expected.get(repository)
+        )
+        raise RuntimeError(
+            "publisher repository binding changed during validation: "
+            + ", ".join(changed)
+        )
+
+
+def validate_repository_map_digest(path: Path, expected_sha256: str) -> None:
+    """Bind an ordinary mapped run to the exact reviewed repository map."""
+
+    if CATALOG_CANDIDATE.SHA256.fullmatch(expected_sha256) is None:
+        raise RuntimeError("repository map SHA-256 is invalid")
+    payload = CATALOG_CANDIDATE.bounded_regular_file_bytes(
+        path,
+        description="repository map",
+        max_bytes=2 * 1024 * 1024,
+    )
+    if CATALOG_CANDIDATE.sha256_bytes(payload) != expected_sha256:
+        raise RuntimeError("repository map SHA-256 mismatch")
+
+
+def repository_map_digest(path: Path) -> str:
+    payload = CATALOG_CANDIDATE.bounded_regular_file_bytes(
+        path,
+        description="repository map",
+        max_bytes=2 * 1024 * 1024,
+    )
+    return CATALOG_CANDIDATE.sha256_bytes(payload)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -647,6 +719,10 @@ def main() -> int:
         "--repository-map",
         type=Path,
         help="Exact candidate repository map accepted by sync-shared-versions.py.",
+    )
+    parser.add_argument(
+        "--repository-map-sha256",
+        help="Optional exact digest assertion for --repository-map.",
     )
     parser.add_argument(
         "--candidate-manifest",
@@ -702,6 +778,14 @@ def main() -> int:
         return 2
 
     try:
+        if args.repository_map is None and args.repository_map_sha256 is not None:
+            raise RuntimeError("--repository-map-sha256 requires --repository-map")
+        if args.candidate_manifest is not None and args.repository_map_sha256 is not None:
+            raise RuntimeError("candidate manifest owns the repository map digest")
+        if args.repository_map_sha256 is not None:
+            validate_repository_map_digest(
+                args.repository_map, args.repository_map_sha256
+            )
         if args.candidate_manifest is not None:
             candidate = load_candidate_context(args.candidate_manifest)
             workspace = candidate.workspace
@@ -711,6 +795,11 @@ def main() -> int:
             workspace = args.workspace.resolve()
             repository_map = args.repository_map
             central_catalog = SCRIPT_ROOT / "gradle" / "libs.versions.toml"
+        repository_map_sha256 = (
+            repository_map_digest(repository_map)
+            if repository_map is not None
+            else None
+        )
         sync = load_sync_module()
         roots = resolve_repository_roots(repositories, workspace, repository_map)
         inventory_roots = dict(roots)
@@ -721,17 +810,35 @@ def main() -> int:
         )
         if inventory_errors:
             raise RuntimeError("\n".join(inventory_errors))
-        def generate_and_discover(repository: str) -> tuple[Path, ...]:
-            if not args.skip_generation:
-                clear_publication_poms(roots[repository])
-                generate_poms(
-                    repository,
-                    roots[repository],
-                    PUBLISHERS[repository],
-                    central_catalog,
-                    offline=args.offline,
+        binding_roots = dict(roots)
+        binding_roots[SELF_REPOSITORY] = (
+            candidate.central_root
+            if args.candidate_manifest is not None
+            else SCRIPT_ROOT
+        )
+        expected_bindings = capture_repository_bindings(binding_roots)
+
+        def revalidate_bindings() -> None:
+            if repository_map is not None and repository_map_sha256 is not None:
+                validate_repository_map_digest(
+                    repository_map, repository_map_sha256
                 )
-            return tuple(discover_poms(roots[repository], repository))
+            validate_repository_bindings(binding_roots, expected_bindings)
+
+        def generate_and_discover(repository: str) -> tuple[Path, ...]:
+            def action() -> tuple[Path, ...]:
+                if not args.skip_generation:
+                    clear_publication_poms(roots[repository])
+                    generate_poms(
+                        repository,
+                        roots[repository],
+                        PUBLISHERS[repository],
+                        central_catalog,
+                        offline=args.offline,
+                    )
+                return tuple(discover_poms(roots[repository], repository))
+
+            return with_binding_revalidation(revalidate_bindings, action)
 
         if args.candidate_manifest is not None:
             generated = run_bounded_jobs(

@@ -344,6 +344,10 @@ candidate artifact phase가 모두 통과한 경우에만 성립한다. `blocked
 새 `0700` 임시 `GRADLE_USER_HOME`을 사용하며 이 정책도 immutable command input digest에
 포함한다. schema v2 terminal 검증은 receipt와 같은 디렉터리의 `cache/`만 허용하고,
 각 cache key를 immutable input에서 다시 계산한 뒤 `0600` cache output을 재해시한다.
+9개 publisher를 전이 실행하는 `publication-poms` pseudo-command는 strict repository-map
+SHA-256을 immutable input, cache key와 command record에 함께 기록한다. terminal validator는
+이를 receipt의 repository-map SHA-256과 다시 비교하므로 sibling HEAD 조합이 바뀐 과거
+stdout cache를 재사용할 수 없다.
 candidate BOM은 receipt와 같은 디렉터리의 빈 `candidate-m2/`에
 `candidate-bom-publication` phase가 직접 게시한다. candidate manifest는 exact
 POM/module allowlist와 의미상 좌표, 전체 Maven repository tree, central candidate HEAD,
@@ -383,6 +387,10 @@ CLI는 `--execution-boundary persistent-trusted|disposable-hosted`를 필수로 
 `GITHUB_ACTIONS=true`와 `RUNNER_ENVIRONMENT=github-hosted`를 모두 확인하고 reviewed-head
 주장을 받지 않는다. 중앙 CI의 direct helper compile도 같은 hosted-environment assertion을
 통과한 뒤에만 bounded command를 실행한다.
+`verify-publication-poms.py` 내부의 일반/candidate Gradle 및 Maven 실행도 공통
+`catalog_candidate.run_bounded_capture`를 재사용하며 각 child의 timeout과 stdout/stderr
+합계 4 MiB 상한을 적용한다. 상위 runner의 pipe limit에 도달하기 전에 helper 메모리에
+무제한 출력을 축적하는 경로를 두지 않는다.
 
 tracked receipt를 담는 evidence commit은 자신의 SHA를 receipt 안에 기록하지 않는다.
 coordinator는 adopted receipt를 포함하는 prospective commit object를 branch ref
@@ -524,6 +532,9 @@ runner는 HEAD, helper/catalog/BOM digest, task/configuration과 toolchain으로
 evidence key의 성공 receipt와 output digest를 read-back한 경우 subprocess를 생략한다.
 `--refresh-dependencies`는 새 candidate의 최초 graph resolve에만 사용한다. 중앙 CI의 기존 managed-repository clone
 step에서 signing drift를 함께 검사해 별도 checkout을 만들지 않는다.
+publication POM gate는 signing ref manifest의 exact SHA를 직접 fetch/checkout하며,
+각 publisher 실행 직전과 성공·실패 직후에 중앙 catalog와 모든 publisher의
+`HEAD`, `origin`, clean 상태 및 repository-map digest를 다시 검사한다.
 
 ## 호환성과 운영 경계
 
