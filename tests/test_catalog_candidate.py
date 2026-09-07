@@ -297,6 +297,24 @@ class CatalogCandidateTest(unittest.TestCase):
                 timeout_seconds=3,
             )
 
+    def test_bounded_capture_rejects_descendant_processes(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(
+            RuntimeError, "left descendant processes"
+        ):
+            candidate.run_bounded_capture(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import subprocess, sys; "
+                        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'], "
+                        "stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)"
+                    ),
+                ],
+                cwd=Path(directory).resolve(),
+                timeout_seconds=3,
+            )
+
     def test_redactor_preserves_non_secret_assignments_and_query_values(self) -> None:
         diagnostic = (
             "status=healthy\n"

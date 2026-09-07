@@ -374,6 +374,17 @@ def run_bounded_capture(
     )
     if process.stdout is None or process.stderr is None:
         raise RuntimeError("bounded command pipes are unavailable")
+
+    def process_group_alive() -> bool:
+        process.poll()
+        try:
+            os.killpg(process.pid, 0)
+            return True
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+
     try:
         if process.stdin is not None:
             process.stdin.write(input_bytes or b"")
@@ -411,6 +422,8 @@ def run_bounded_capture(
                     if total > max_output_bytes:
                         raise RuntimeError("bounded command output limit exceeded")
         returncode = process.wait(timeout=max(0.01, deadline - time.monotonic()))
+        if process_group_alive():
+            raise RuntimeError("bounded command left descendant processes")
         return subprocess.CompletedProcess(
             command, returncode, bytes(stdout), bytes(stderr)
         )
@@ -423,6 +436,9 @@ def run_bounded_capture(
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
             pass
+        drain_deadline = time.monotonic() + 5
+        while process_group_alive() and time.monotonic() < drain_deadline:
+            time.sleep(0.02)
         raise
     finally:
         process.stdout.close()
