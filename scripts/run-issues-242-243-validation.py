@@ -1225,10 +1225,17 @@ def required_phase_heads(
         if set(names) - set(SIGNING_REPOSITORIES):
             raise InputContractError("signing phase repository is not allowlisted")
         heads = (str(entries[name]["candidate_head"]) for name in names)
-    elif phase in {"candidate-bom-publication", "publication-poms"}:
+    elif phase == "candidate-bom-publication":
         if repositories:
             raise InputContractError(f"{phase} does not accept repository selection")
         heads = (str(entries["bluetape4k-dependencies"]["candidate_head"]),)
+    elif phase == "publication-poms":
+        if repositories:
+            raise InputContractError(f"{phase} does not accept repository selection")
+        heads = (
+            str(entries[name]["candidate_head"])
+            for name in SIGNING_REPOSITORIES
+        )
     elif phase == "timefold-graphs-baseline":
         heads = (
             str(entries["bluetape4k-exposed"]["base_sha"]),
@@ -1237,6 +1244,7 @@ def required_phase_heads(
         )
     elif phase in {"timefold-graphs-candidate", "consumers"}:
         heads = (
+            str(entries["bluetape4k-dependencies"]["candidate_head"]),
             str(entries["bluetape4k-exposed"]["candidate_head"]),
             str(_consumer_entry(receipt, "timefold-workshop")["candidate_head"]),
             str(_consumer_entry(receipt, "clinic-appointment")["candidate_head"]),

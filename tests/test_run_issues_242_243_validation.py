@@ -1488,6 +1488,61 @@ class ValidationRunnerTest(unittest.TestCase):
             {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted"},
         )
 
+    def test_phase_trust_sets_include_every_executed_repository_head(self) -> None:
+        repository_map = {
+            "repositories": [
+                {
+                    "name": name,
+                    "candidate_head": f"{index + 1:040x}",
+                    "base_sha": f"{index + 101:040x}",
+                }
+                for index, name in enumerate(runner.CATALOG_REPOSITORIES)
+            ]
+        }
+        entries = {
+            item["name"]: item for item in repository_map["repositories"]
+        }
+
+        self.assertEqual(
+            runner.required_phase_heads(
+                "publication-poms", repository_map, {}, None
+            ),
+            frozenset(
+                entries[name]["candidate_head"]
+                for name in runner.SIGNING_REPOSITORIES
+            ),
+        )
+        self.assertEqual(
+            runner.required_phase_heads(
+                "candidate-bom-publication", repository_map, {}, None
+            ),
+            frozenset(
+                {entries["bluetape4k-dependencies"]["candidate_head"]}
+            ),
+        )
+
+        receipt = {
+            "consumers": [
+                {"name": "timefold-workshop", "candidate_head": "e" * 40},
+                {"name": "clinic-appointment", "candidate_head": "f" * 40},
+            ]
+        }
+        for phase in ("timefold-graphs-candidate", "consumers"):
+            with self.subTest(phase=phase):
+                self.assertEqual(
+                    runner.required_phase_heads(
+                        phase, repository_map, receipt, None
+                    ),
+                    frozenset(
+                        {
+                            entries["bluetape4k-dependencies"]["candidate_head"],
+                            entries["bluetape4k-exposed"]["candidate_head"],
+                            "e" * 40,
+                            "f" * 40,
+                        }
+                    ),
+                )
+
     def test_run_phase_rejects_lexical_parent_symlink_before_resolution(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

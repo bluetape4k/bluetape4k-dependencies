@@ -549,6 +549,7 @@ disposable hosted runner를 job-level containment로 사용한다. 악성 source
 python3 scripts/run-issues-242-243-validation.py \
   --phase consumers \
   --execution-boundary persistent-trusted \
+  --reviewed-head "$CENTRAL_REVIEWED_HEAD" \
   --reviewed-head "$EXPOSED_REVIEWED_HEAD" \
   --reviewed-head "$WORKSHOP_REVIEWED_HEAD" \
   --reviewed-head "$CLINIC_REVIEWED_HEAD" \
@@ -658,6 +659,14 @@ python3 scripts/run-issues-242-243-validation.py \
   --phase publication-poms \
   --execution-boundary persistent-trusted \
   --reviewed-head "$CENTRAL_REVIEWED_HEAD" \
+  --reviewed-head "$PROJECTS_REVIEWED_HEAD" \
+  --reviewed-head "$AWS_REVIEWED_HEAD" \
+  --reviewed-head "$EXPOSED_REVIEWED_HEAD" \
+  --reviewed-head "$GRAPH_REVIEWED_HEAD" \
+  --reviewed-head "$IMAGE_REVIEWED_HEAD" \
+  --reviewed-head "$JAVERS_REVIEWED_HEAD" \
+  --reviewed-head "$LEADER_REVIEWED_HEAD" \
+  --reviewed-head "$TEXT_REVIEWED_HEAD" \
   --repository-map "$PWD/build/issues-242-243/repository-map.json" \
   --receipt "$PWD/build/issues-242-243/local-receipt.json"
 ```
