@@ -120,10 +120,17 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "fatal:to\nken=sentinel-punctuation-boundary\n"
             "fatal: to\n\nken=sentinel-multi-line\n"
             "fatal: token=\nsentinel-value-line\n"
-            "fatal: token:\r\nsentinel-colon-value"
+            "fatal: token:\r\nsentinel-colon-value\n"
+            "Cookie: session=sentinel-cookie\n"
+            "Set-Cookie: session=sentinel-set-cookie\n"
+            "fatal: session=sentinel-session\n"
+            "Ａuthorization: Basic sentinel-fullwidth-header\n"
+            "Authoriz%61tion: Bearer sentinel-encoded-header"
         )
         failure = subprocess.CalledProcessError(128, ["git", "status"], stderr=raw)
-        with mock.patch.object(receipt.subprocess, "run", side_effect=failure):
+        with mock.patch.object(
+            receipt._CATALOG_CANDIDATE, "run_bounded_capture", side_effect=failure
+        ):
             with self.assertRaises(receipt.ReceiptError) as raised:
                 receipt._git(Path("/tmp/example"), "status")
         for sentinel in (
@@ -205,6 +212,11 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-multi-line",
             "sentinel-value-line",
             "sentinel-colon-value",
+            "sentinel-cookie",
+            "sentinel-set-cookie",
+            "sentinel-session",
+            "sentinel-fullwidth-header",
+            "sentinel-encoded-header",
         ):
             self.assertNotIn(sentinel, str(raised.exception))
 

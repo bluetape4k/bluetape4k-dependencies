@@ -10,9 +10,12 @@ import hashlib
 import json
 import os
 import re
+import selectors
+import signal
 import stat
 import subprocess
 import tempfile
+import time
 import unicodedata
 import urllib.parse
 from pathlib import Path
@@ -63,6 +66,7 @@ SECRET_URI_RE = re.compile(r"(?i)(://)[^/?#\s]*@")
 AUTHORIZATION_RE = re.compile(
     r"(?i)(\bauthorization\s*[:=]\s*)(?:(?:bearer|basic)\s+)?[^\r\n]+"
 )
+COOKIE_RE = re.compile(r"(?i)(\b(?:set-cookie|cookie)\s*:\s*)[^\r\n]+")
 BEARER_RE = re.compile(r"(?i)(\bbearer\s+)[^\s,;]+")
 QUERY_PARAMETER_RE = re.compile(
     r"([?&])([^=&#\s]+)(\s*=\s*)([^&#\s]+)"
@@ -76,8 +80,10 @@ LINE_BREAK_SECRET_VALUE_RE = re.compile(
 )
 MAX_IDENTIFIER_DECODE_ROUNDS = 4
 MAX_SECRET_IDENTIFIER_CHARS = 512
+MAX_GIT_CAPTURE_BYTES = 4 * 1024 * 1024
+GIT_CAPTURE_TIMEOUT_SECONDS = 30.0
 SECRET_NAME_PARTS = frozenset(
-    {"password", "passwd", "token", "secret", "credential", "key"}
+    {"password", "passwd", "token", "secret", "credential", "key", "session"}
 )
 SECRET_COMPOUND_NAMES = frozenset(
     {
@@ -103,11 +109,14 @@ SAFE_SECRET_LIKE_NAMES = frozenset(
         "credentialing",
         "hockey",
         "keyboard",
+        "keynote",
         "monkey",
         "mymonkey",
         "passwordless",
         "secretariat",
+        "secretary",
         "tokenization",
+        "tokenizer",
     }
 )
 
@@ -206,12 +215,42 @@ def is_secret_name(value: str) -> bool:
     return any(name in collapsed for name in secret_names)
 
 
-def _has_compatibility_assignment_delimiter(value: str) -> bool:
+def _contains_secret_assignment(value: str) -> bool:
     return any(
+        is_secret_name(match.group(1))
+        for match in ASSIGNMENT_CANDIDATE_RE.finditer(value)
+    ) or any(
+        is_secret_name(match.group(2))
+        for match in QUERY_PARAMETER_RE.finditer(value)
+    )
+
+
+def _has_compatibility_secret_delimiter(value: str) -> bool:
+    has_compatibility_delimiter = any(
         character not in {"=", ":"}
         and unicodedata.normalize("NFKC", character) in {"=", ":"}
         for character in value
     )
+    return has_compatibility_delimiter and _contains_secret_assignment(
+        unicodedata.normalize("NFKC", value)
+    )
+
+
+def _has_obfuscated_sensitive_header(value: str) -> bool:
+    for line in value.splitlines():
+        normalized = line
+        for _ in range(MAX_IDENTIFIER_DECODE_ROUNDS):
+            decoded = urllib.parse.unquote_plus(
+                unicodedata.normalize("NFKC", normalized)
+            )
+            if decoded == normalized:
+                break
+            normalized = decoded
+        if normalized != line and (
+            AUTHORIZATION_RE.search(normalized) or COOKIE_RE.search(normalized)
+        ):
+            return True
+    return False
 
 
 def _contains_line_break_secret_candidate(value: str) -> bool:
@@ -270,7 +309,10 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
             return text[:max_chars] if max_chars is not None else text
     else:
         text = str(value)
-    if _has_compatibility_assignment_delimiter(text):
+    if (
+        _has_compatibility_secret_delimiter(text)
+        or _has_obfuscated_sensitive_header(text)
+    ):
         text = "<redacted>"
         return text[:max_chars] if max_chars is not None else text
     text, has_unsupported_sequence = _strip_obfuscating_controls(text)
@@ -282,6 +324,7 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
         return text[:max_chars] if max_chars is not None else text
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
     text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
+    text = COOKIE_RE.sub(r"\1<redacted>", text)
     text = BEARER_RE.sub(r"\1<redacted>", text)
     text = QUERY_PARAMETER_RE.sub(_redact_query_parameter, text)
     text = _redact_assignments(text)
@@ -308,16 +351,100 @@ def _regular_nonsymlink(path: Path, description: str) -> None:
         raise RuntimeError(f"{description} must be a regular file: {path}")
 
 
+def run_bounded_capture(
+    command: list[str],
+    *,
+    cwd: Path,
+    input_bytes: bytes | None = None,
+    max_output_bytes: int = MAX_GIT_CAPTURE_BYTES,
+    timeout_seconds: float = GIT_CAPTURE_TIMEOUT_SECONDS,
+) -> subprocess.CompletedProcess[bytes]:
+    """Run a short helper command without unbounded stdout or stderr capture."""
+    if max_output_bytes <= 0 or timeout_seconds <= 0:
+        raise ValueError("bounded command limits must be positive")
+    if input_bytes is not None and len(input_bytes) > max_output_bytes:
+        raise RuntimeError("bounded command input limit exceeded")
+    process = subprocess.Popen(
+        command,
+        cwd=str(cwd),
+        stdin=subprocess.PIPE if input_bytes is not None else subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        start_new_session=True,
+    )
+    if process.stdout is None or process.stderr is None:
+        raise RuntimeError("bounded command pipes are unavailable")
+    try:
+        if process.stdin is not None:
+            process.stdin.write(input_bytes or b"")
+            process.stdin.close()
+        stdout = bytearray()
+        stderr = bytearray()
+        total = 0
+        deadline = time.monotonic() + timeout_seconds
+        with selectors.DefaultSelector() as output_selector:
+            for name, stream in (
+                ("stdout", process.stdout),
+                ("stderr", process.stderr),
+            ):
+                os.set_blocking(stream.fileno(), False)
+                output_selector.register(stream, selectors.EVENT_READ, name)
+            while output_selector.get_map():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise RuntimeError("bounded command timed out")
+                for selector_key, _mask in output_selector.select(
+                    timeout=min(0.05, remaining)
+                ):
+                    try:
+                        chunk = os.read(selector_key.fd, 65536)
+                    except BlockingIOError:
+                        continue
+                    if not chunk:
+                        output_selector.unregister(selector_key.fileobj)
+                        continue
+                    remaining_budget = max_output_bytes - total
+                    target = stdout if selector_key.data == "stdout" else stderr
+                    if remaining_budget > 0:
+                        target.extend(chunk[:remaining_budget])
+                    total += len(chunk)
+                    if total > max_output_bytes:
+                        raise RuntimeError("bounded command output limit exceeded")
+        returncode = process.wait(timeout=max(0.01, deadline - time.monotonic()))
+        return subprocess.CompletedProcess(
+            command, returncode, bytes(stdout), bytes(stderr)
+        )
+    except (OSError, subprocess.TimeoutExpired, RuntimeError):
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+        raise
+    finally:
+        process.stdout.close()
+        process.stderr.close()
+
+
 def _git(root: Path, *args: str) -> str:
     try:
-        return subprocess.run(
-            ["git", "-C", str(root), *args],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-    except subprocess.CalledProcessError as exc:
-        safe_stderr = redact_diagnostic(exc.stderr or "")
+        completed = run_bounded_capture(
+            ["git", "-C", str(root), *args], cwd=root
+        )
+        if completed.returncode:
+            raise subprocess.CalledProcessError(
+                completed.returncode,
+                completed.args,
+                output=completed.stdout,
+                stderr=completed.stderr,
+            )
+        return completed.stdout.decode("utf-8", errors="strict").strip()
+    except (subprocess.CalledProcessError, UnicodeDecodeError) as exc:
+        raw_stderr = exc.stderr if isinstance(exc, subprocess.CalledProcessError) else b""
+        safe_stderr = redact_diagnostic(raw_stderr or b"")
         detail = " | ".join(
             line.strip() for line in safe_stderr.splitlines() if line.strip()
         )
@@ -350,7 +477,7 @@ def inspect_repository_for_map(
     if not branch:
         branch = f"issues-242-243-{name}"
         try:
-            subprocess.run(
+            completed = run_bounded_capture(
                 [
                     "git",
                     "-C",
@@ -360,11 +487,11 @@ def inspect_repository_for_map(
                     branch,
                     "HEAD",
                 ],
-                check=True,
-                capture_output=True,
-                text=True,
+                cwd=resolved_root,
             )
-        except (OSError, subprocess.CalledProcessError) as exc:
+            if completed.returncode:
+                raise RuntimeError("git checkout failed")
+        except (OSError, RuntimeError) as exc:
             raise RuntimeError(
                 f"cannot attach repository map branch for {name}"
             ) from exc

@@ -637,7 +637,12 @@ class ValidationRunnerTest(unittest.TestCase):
             "fatal:to\nken=sentinel-punctuation-boundary\n"
             "fatal: to\n\nken=sentinel-multi-line\n"
             "fatal: token=\nsentinel-value-line\n"
-            "fatal: token:\r\nsentinel-colon-value"
+            "fatal: token:\r\nsentinel-colon-value\n"
+            "Cookie: session=sentinel-cookie\n"
+            "Set-Cookie: session=sentinel-set-cookie\n"
+            "fatal: session=sentinel-session\n"
+            "Ａuthorization: Basic sentinel-fullwidth-header\n"
+            "Authoriz%61tion: Bearer sentinel-encoded-header"
         )
         for sentinel in (
             "sentinel-password",
@@ -723,6 +728,11 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-multi-line",
             "sentinel-value-line",
             "sentinel-colon-value",
+            "sentinel-cookie",
+            "sentinel-set-cookie",
+            "sentinel-session",
+            "sentinel-fullwidth-header",
+            "sentinel-encoded-header",
         ):
             self.assertNotIn(sentinel, bypasses)
         lines = runner.bounded_diagnostics("\n".join(f"line-{i}" for i in range(100)))
@@ -1299,7 +1309,7 @@ class ValidationRunnerTest(unittest.TestCase):
                 command=(
                     sys.executable,
                     "-c",
-                    "import time; print('PASSWORD=secret\\nAWS_SECRET_ACCESS_KEY=sentinel-aws-secret\\nAWS_ACCESS_KEY_ID=sentinel-aws-id\\nMY_SECRET_ACCESS_KEY=sentinel-my-secret', flush=True); time.sleep(10)",
+                    "import time; print('PASSWORD=secret\\nAWS_SECRET_ACCESS_KEY=sentinel-aws-secret\\nAWS_ACCESS_KEY_ID=sentinel-aws-id\\nMY_SECRET_ACCESS_KEY=sentinel-my-secret\\nCookie: session=sentinel-cookie-artifact\\nＡuthorization: Basic sentinel-auth-artifact', flush=True); time.sleep(10)",
                 ),
                 cwd=root,
                 environment=os.environ,
@@ -1316,6 +1326,8 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-aws-secret", artifact_text)
             self.assertNotIn("sentinel-aws-id", artifact_text)
             self.assertNotIn("sentinel-my-secret", artifact_text)
+            self.assertNotIn("sentinel-cookie-artifact", artifact_text)
+            self.assertNotIn("sentinel-auth-artifact", artifact_text)
 
     def test_raw_control_bytes_fail_closed_for_command_and_cache_output(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -2032,7 +2044,9 @@ class ValidationRunnerTest(unittest.TestCase):
                 b"AWS_SECRET_ACCESS_KEY=sentinel-aws-secret\n"
                 b"AWS_ACCESS_KEY_ID=sentinel-aws-id\n"
                 b"MY_SECRET_ACCESS_KEY=sentinel-my-secret\n"
-                b"SERVICE_KEY=secret-key\n",
+                b"SERVICE_KEY=secret-key\n"
+                b"Cookie: session=sentinel-cookie-cache\n"
+                b"session=sentinel-session-cache\n",
                 metadata={
                     "accessToken": "sentinel-meta-camel",
                     "my_apikey": "sentinel-meta-compound",
@@ -2062,6 +2076,8 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-aws-secret", output["output"])
             self.assertNotIn("sentinel-aws-id", output["output"])
             self.assertNotIn("sentinel-my-secret", output["output"])
+            self.assertNotIn("sentinel-cookie-cache", output["output"])
+            self.assertNotIn("sentinel-session-cache", output["output"])
             cache_text = (cache / f"{key}.json").read_text(encoding="utf-8")
             self.assertNotIn("sentinel-meta-camel", cache_text)
             self.assertNotIn("sentinel-meta-compound", cache_text)

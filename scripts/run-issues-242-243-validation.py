@@ -18,6 +18,7 @@ import importlib.util
 import json
 import os
 import re
+import selectors
 import shutil
 import signal
 import stat
@@ -844,14 +845,6 @@ def _terminate_process_group(process: subprocess.Popen[bytes]) -> str:
     return "SIGKILL"
 
 
-def _read_spool_tail(spool: Any, size: int, budget: int) -> bytes:
-    if budget <= 0:
-        return b""
-    spool.flush()
-    spool.seek(max(0, size - budget))
-    return spool.read(budget)
-
-
 def run_command(
     *,
     command: Sequence[str],
@@ -897,25 +890,28 @@ def run_command(
                 diagnostics=text,
                 cancelled=True,
             )
-        with tempfile.TemporaryFile() as stdout_spool, tempfile.TemporaryFile() as stderr_spool:
-            process = subprocess.Popen(
-                [str(value) for value in command],
-                cwd=str(cwd),
-                env=child_environment(environment),
-                stdout=stdout_spool,
-                stderr=stderr_spool,
-                start_new_session=True,
-            )
+        process = subprocess.Popen(
+            [str(value) for value in command],
+            cwd=str(cwd),
+            env=child_environment(environment),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+        )
+        if process.stdout is None or process.stderr is None:
+            raise ValidationFailure("validation command pipes are unavailable")
+        stdout_buffer = bytearray()
+        stderr_buffer = bytearray()
+        total_output_bytes = 0
+        with selectors.DefaultSelector() as output_selector:
+            for name, stream in (
+                ("stdout", process.stdout),
+                ("stderr", process.stderr),
+            ):
+                os.set_blocking(stream.fileno(), False)
+                output_selector.register(stream, selectors.EVENT_READ, name)
             deadline = time.monotonic() + timeout_seconds
-            while True:
-                stdout_size = os.fstat(stdout_spool.fileno()).st_size
-                stderr_size = os.fstat(stderr_spool.fileno()).st_size
-                if stdout_size + stderr_size > MAX_COMMAND_OUTPUT_BYTES:
-                    output_limit_exceeded = True
-                    group_terminated = _process_group_alive(process)
-                    if group_terminated:
-                        termination_signal = _terminate_process_group(process)
-                    break
+            while output_selector.get_map():
                 if cancel_event is not None and cancel_event.is_set():
                     cancelled = True
                     group_terminated = True
@@ -927,33 +923,54 @@ def run_command(
                     group_terminated = True
                     termination_signal = _terminate_process_group(process)
                     break
+                events = output_selector.select(timeout=min(0.05, remaining))
+                for selector_key, _mask in events:
+                    try:
+                        chunk = os.read(selector_key.fd, 65536)
+                    except BlockingIOError:
+                        continue
+                    if not chunk:
+                        output_selector.unregister(selector_key.fileobj)
+                        continue
+                    remaining_budget = MAX_COMMAND_OUTPUT_BYTES - total_output_bytes
+                    target = (
+                        stdout_buffer
+                        if selector_key.data == "stdout"
+                        else stderr_buffer
+                    )
+                    if remaining_budget > 0:
+                        target.extend(chunk[:remaining_budget])
+                    total_output_bytes += len(chunk)
+                    if total_output_bytes > MAX_COMMAND_OUTPUT_BYTES:
+                        output_limit_exceeded = True
+                        group_terminated = _process_group_alive(process)
+                        if group_terminated:
+                            termination_signal = _terminate_process_group(process)
+                        break
+                if output_limit_exceeded:
+                    break
+                if process.poll() is not None and _process_group_alive(process):
+                    descendants_terminated = True
+                    group_terminated = True
+                    termination_signal = _terminate_process_group(process)
+                    break
+            if not (cancelled or timed_out or output_limit_exceeded):
+                remaining = deadline - time.monotonic()
                 try:
-                    process.wait(timeout=min(0.2, remaining))
+                    process.wait(timeout=max(0.01, remaining))
+                except subprocess.TimeoutExpired:
+                    timed_out = True
+                    group_terminated = True
+                    termination_signal = _terminate_process_group(process)
+                else:
                     if _process_group_alive(process):
                         descendants_terminated = True
                         group_terminated = True
                         termination_signal = _terminate_process_group(process)
-                    break
-                except subprocess.TimeoutExpired:
-                    continue
-
-            stdout_size = os.fstat(stdout_spool.fileno()).st_size
-            stderr_size = os.fstat(stderr_spool.fileno()).st_size
-            if stdout_size + stderr_size > MAX_COMMAND_OUTPUT_BYTES:
-                output_limit_exceeded = True
-            if stdout_size + stderr_size <= MAX_COMMAND_OUTPUT_BYTES:
-                stdout_budget = stdout_size
-                stderr_budget = stderr_size
-            else:
-                stderr_budget = min(stderr_size, MAX_COMMAND_OUTPUT_BYTES // 2)
-                stdout_budget = min(
-                    stdout_size, MAX_COMMAND_OUTPUT_BYTES - stderr_budget
-                )
-                stderr_budget = min(
-                    stderr_size, MAX_COMMAND_OUTPUT_BYTES - stdout_budget
-                )
-            stdout = _read_spool_tail(stdout_spool, stdout_size, stdout_budget)
-            stderr = _read_spool_tail(stderr_spool, stderr_size, stderr_budget)
+            stdout = bytes(stdout_buffer)
+            stderr = bytes(stderr_buffer)
+        process.stdout.close()
+        process.stderr.close()
     except OSError as exc:
         launch_error = f"cannot launch validation command: {exc.__class__.__name__}"
     ended = time.monotonic()
@@ -1280,15 +1297,14 @@ def publication_pom_command(
 
 def _git(root: Path, *args: str) -> str:
     try:
-        completed = subprocess.run(
-            ["git", "-C", str(root), *args],
-            check=True,
-            capture_output=True,
-            text=True,
+        completed = catalog_candidate.run_bounded_capture(
+            ["git", "-C", str(root), *args], cwd=root
         )
-    except (OSError, subprocess.CalledProcessError) as exc:
+        if completed.returncode:
+            raise InputContractError(f"cannot inspect repository: {root}")
+        return completed.stdout.decode("utf-8", errors="strict").strip()
+    except (OSError, UnicodeDecodeError, RuntimeError) as exc:
         raise InputContractError(f"cannot inspect repository: {root}") from exc
-    return completed.stdout.strip()
 
 
 def git_source_tree_sha256(root: Path, head: str) -> str:
@@ -1298,14 +1314,12 @@ def git_source_tree_sha256(root: Path, head: str) -> str:
     if COMMIT_RE.fullmatch(head) is None:
         raise InputContractError("invalid source HEAD")
     try:
-        completed = subprocess.run(
-            ["git", "-C", str(root), "ls-tree", "-r", "-z", head],
-            check=True,
-            capture_output=True,
+        completed = catalog_candidate.run_bounded_capture(
+            ["git", "-C", str(root), "ls-tree", "-r", "-z", head], cwd=root
         )
-    except subprocess.CalledProcessError as exc:
+    except (OSError, RuntimeError) as exc:
         raise InputContractError("cannot read source tree") from exc
-    if not completed.stdout:
+    if completed.returncode or not completed.stdout:
         raise InputContractError("source tree is empty")
     return sha256_bytes(completed.stdout)
 

@@ -228,6 +228,17 @@ class CatalogCandidateTest(unittest.TestCase):
             ("fatal: to\n\nken=multi-line-secret", "multi-line-secret"),
             ("fatal: token=\nvalue-line-secret", "value-line-secret"),
             ("fatal: token:\r\ncolon-value-secret", "colon-value-secret"),
+            ("Cookie: session=cookie-secret", "cookie-secret"),
+            ("Set-Cookie: session=set-cookie-secret", "set-cookie-secret"),
+            ("fatal: session=session-secret", "session-secret"),
+            (
+                "Ａuthorization: Basic fullwidth-header-secret",
+                "fullwidth-header-secret",
+            ),
+            (
+                "Authoriz%61tion: Bearer encoded-header-secret",
+                "encoded-header-secret",
+            ),
         )
         for stderr, secret in cases:
             with self.subTest(stderr=stderr):
@@ -237,7 +248,7 @@ class CatalogCandidateTest(unittest.TestCase):
                     stderr=stderr,
                 )
                 with mock.patch.object(
-                    candidate.subprocess, "run", side_effect=failure
+                    candidate, "run_bounded_capture", side_effect=failure
                 ):
                     with self.assertRaisesRegex(
                         RuntimeError,
@@ -271,6 +282,21 @@ class CatalogCandidateTest(unittest.TestCase):
             with self.subTest(safe=safe):
                 self.assertFalse(candidate.is_secret_name(safe))
 
+    def test_bounded_capture_rejects_unbounded_helper_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(
+            RuntimeError, "output limit exceeded"
+        ):
+            candidate.run_bounded_capture(
+                [
+                    sys.executable,
+                    "-c",
+                    "import os; chunk=b'x'*4096\nwhile True: os.write(1, chunk)",
+                ],
+                cwd=Path(directory).resolve(),
+                max_output_bytes=4096,
+                timeout_seconds=3,
+            )
+
     def test_redactor_preserves_non_secret_assignments_and_query_values(self) -> None:
         diagnostic = (
             "status=healthy\n"
@@ -280,10 +306,14 @@ class CatalogCandidateTest(unittest.TestCase):
             "passwordless=true\n"
             "secretariat=office\n"
             "keyboard=qwerty\n"
+            "keynote=meeting\n"
             "my_monkey=banana\n"
             "my%2520monkey=plantain\n"
             "my+monkey=papaya\n"
             "ｍｙ＿ｍｏｎｋｅｙ=guava\n"
+            "secretary=alice\n"
+            "tokenizer=fast\n"
+            "text：punctuation\n"
             "https://example.invalid/?mode=safe"
         )
         self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)

@@ -284,32 +284,37 @@ def _read_json(path: Path, description: str) -> Any:
 
 def _git(root: Path, *args: str, input_text: str | None = None) -> str:
     try:
-        completed = subprocess.run(
+        completed = _CATALOG_CANDIDATE.run_bounded_capture(
             ["git", "-C", str(root), *args],
-            input=input_text,
-            text=True,
-            capture_output=True,
-            check=True,
+            cwd=root,
+            input_bytes=None if input_text is None else input_text.encode("utf-8"),
         )
-    except (OSError, subprocess.CalledProcessError) as exc:
+        if completed.returncode:
+            raise subprocess.CalledProcessError(
+                completed.returncode,
+                completed.args,
+                output=completed.stdout,
+                stderr=completed.stderr,
+            )
+        return completed.stdout.decode("utf-8", errors="strict").strip()
+    except (OSError, UnicodeDecodeError, RuntimeError, subprocess.CalledProcessError) as exc:
         detail = "no stderr"
         if isinstance(exc, subprocess.CalledProcessError):
             detail = _CATALOG_CANDIDATE.redact_diagnostic(
-                exc.stderr or exc.stdout or "", max_chars=500
+                exc.stderr or exc.stdout or b"", max_chars=500
             ).strip() or "no stderr"
         raise ReceiptError(f"git validation failed for {root}: {detail}") from exc
-    return completed.stdout.strip()
 
 
 def _git_bytes(root: Path, *args: str) -> bytes:
     try:
-        completed = subprocess.run(
-            ["git", "-C", str(root), *args],
-            capture_output=True,
-            check=True,
+        completed = _CATALOG_CANDIDATE.run_bounded_capture(
+            ["git", "-C", str(root), *args], cwd=root
         )
-    except (OSError, subprocess.CalledProcessError) as exc:
+    except (OSError, RuntimeError) as exc:
         raise ReceiptError(f"git object validation failed for {root}") from exc
+    if completed.returncode:
+        raise ReceiptError(f"git object validation failed for {root}")
     return completed.stdout
 
 
