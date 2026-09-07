@@ -116,7 +116,11 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "fatal: mytoken=sentinel-contiguous-token\n"
             "fatal: tokenvalue=sentinel-contiguous-token-prefix\n"
             "fatal: mysecret=sentinel-contiguous-secret\n"
-            "fatal: mykey=sentinel-contiguous-key"
+            "fatal: mykey=sentinel-contiguous-key\n"
+            "fatal:to\nken=sentinel-punctuation-boundary\n"
+            "fatal: to\n\nken=sentinel-multi-line\n"
+            "fatal: token=\nsentinel-value-line\n"
+            "fatal: token:\r\nsentinel-colon-value"
         )
         failure = subprocess.CalledProcessError(128, ["git", "status"], stderr=raw)
         with mock.patch.object(receipt.subprocess, "run", side_effect=failure):
@@ -197,6 +201,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-contiguous-token-prefix",
             "sentinel-contiguous-secret",
             "sentinel-contiguous-key",
+            "sentinel-punctuation-boundary",
+            "sentinel-multi-line",
+            "sentinel-value-line",
+            "sentinel-colon-value",
         ):
             self.assertNotIn(sentinel, str(raised.exception))
 

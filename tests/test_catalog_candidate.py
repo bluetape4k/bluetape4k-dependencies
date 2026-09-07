@@ -224,6 +224,10 @@ class CatalogCandidateTest(unittest.TestCase):
             ),
             ("fatal: mysecret=contiguous-secret-secret", "contiguous-secret-secret"),
             ("fatal: mykey=contiguous-key-secret", "contiguous-key-secret"),
+            ("fatal:to\nken=punctuation-boundary-secret", "punctuation-boundary-secret"),
+            ("fatal: to\n\nken=multi-line-secret", "multi-line-secret"),
+            ("fatal: token=\nvalue-line-secret", "value-line-secret"),
+            ("fatal: token:\r\ncolon-value-secret", "colon-value-secret"),
         )
         for stderr, secret in cases:
             with self.subTest(stderr=stderr):

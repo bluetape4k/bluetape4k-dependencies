@@ -495,6 +495,26 @@ class ValidationRunnerTest(unittest.TestCase):
             output.write_bytes(b"tampered")
             self.assertIsNone(runner.read_cache_entry(cache, key))
 
+            for hostile_output in (
+                b"before to\x9b31mken=sentinel-raw-cache after",
+                b"before to\xffken=sentinel-invalid-cache after",
+            ):
+                output.write_bytes(hostile_output)
+                hostile_digest = hashlib.sha256(hostile_output).hexdigest()
+                entry.write_text(
+                    json.dumps(
+                        {
+                            "schema_version": 1,
+                            "status": "pass",
+                            "cache_key": key,
+                            "output_path": str(output),
+                            "output_sha256": hostile_digest,
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                self.assertIsNone(runner.read_cache_entry(cache, key))
+
             output.write_bytes(b"successful output\n")
             entry.write_text(
                 json.dumps(
@@ -613,7 +633,11 @@ class ValidationRunnerTest(unittest.TestCase):
             "fatal: mytoken=sentinel-contiguous-token\n"
             "fatal: tokenvalue=sentinel-contiguous-token-prefix\n"
             "fatal: mysecret=sentinel-contiguous-secret\n"
-            "fatal: mykey=sentinel-contiguous-key"
+            "fatal: mykey=sentinel-contiguous-key\n"
+            "fatal:to\nken=sentinel-punctuation-boundary\n"
+            "fatal: to\n\nken=sentinel-multi-line\n"
+            "fatal: token=\nsentinel-value-line\n"
+            "fatal: token:\r\nsentinel-colon-value"
         )
         for sentinel in (
             "sentinel-password",
@@ -695,6 +719,10 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-contiguous-token-prefix",
             "sentinel-contiguous-secret",
             "sentinel-contiguous-key",
+            "sentinel-punctuation-boundary",
+            "sentinel-multi-line",
+            "sentinel-value-line",
+            "sentinel-colon-value",
         ):
             self.assertNotIn(sentinel, bypasses)
         lines = runner.bounded_diagnostics("\n".join(f"line-{i}" for i in range(100)))
@@ -1344,6 +1372,37 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertTrue(result.process_group_terminated)
             self.assertIn("output limit exceeded", result.diagnostics)
             self.assertLessEqual(len(result.stdout.encode("utf-8")), 4096)
+
+    def test_successful_leader_cannot_leave_a_descendant_process_group(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(
+            runner, "TERMINATE_GRACE_SECONDS", 0.05
+        ):
+            root = Path(directory).resolve()
+            child_pid_path = root / "child.pid"
+            result = runner.run_command(
+                command=(
+                    sys.executable,
+                    "-c",
+                    (
+                        "import pathlib, subprocess, sys, time; "
+                        "child=subprocess.Popen([sys.executable, '-c', "
+                        "'import signal,time; signal.signal(signal.SIGTERM, signal.SIG_IGN); time.sleep(30)']); "
+                        "pathlib.Path(sys.argv[1]).write_text(str(child.pid)); "
+                        "time.sleep(0.1)"
+                    ),
+                    str(child_pid_path),
+                ),
+                cwd=root,
+                environment=os.environ,
+                timeout_seconds=3,
+            )
+            self.assertEqual(result.status, "fail")
+            self.assertTrue(result.process_group_terminated)
+            self.assertEqual(result.termination_signal, "SIGKILL")
+            self.assertIn("left descendant processes", result.diagnostics)
+            child_pid = int(child_pid_path.read_text(encoding="utf-8"))
+            with self.assertRaises(ProcessLookupError):
+                os.kill(child_pid, 0)
 
     def test_receipt_binding_rejects_map_path_or_digest_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

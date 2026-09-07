@@ -68,7 +68,11 @@ QUERY_PARAMETER_RE = re.compile(
     r"([?&])([^=&#\s]+)(\s*=\s*)([^&#\s]+)"
 )
 LINE_BREAK_IDENTIFIER_RE = re.compile(
-    r"(?m)(?:^|[ \t?&])([^\s=:?&#]+(?:\r\n?|\n)[^\s=:?&#]*)(?=[ \t]*[=:])"
+    r"([^\s=:?&#]+)[ \t]*(?:\r\n?|\n)"
+    r"(?:[ \t]*(?:\r\n?|\n))*[ \t]*([^\s=:?&#]*)(?=[ \t]*[=:])"
+)
+LINE_BREAK_SECRET_VALUE_RE = re.compile(
+    r"(?<![\w.%+-])([^\s=:?&#]+)[ \t]*[=:][ \t]*(?:\r\n?|\n)"
 )
 MAX_IDENTIFIER_DECODE_ROUNDS = 4
 MAX_SECRET_IDENTIFIER_CHARS = 512
@@ -212,8 +216,13 @@ def _has_compatibility_assignment_delimiter(value: str) -> bool:
 
 def _contains_line_break_secret_candidate(value: str) -> bool:
     secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
+    if any(
+        is_secret_name(match.group(1))
+        for match in LINE_BREAK_SECRET_VALUE_RE.finditer(value)
+    ):
+        return True
     for match in LINE_BREAK_IDENTIFIER_RE.finditer(value):
-        left, right = re.split(r"\r\n?|\n", match.group(1), maxsplit=1)
+        left, right = match.groups()
         if is_secret_name(left) or is_secret_name(right):
             return True
         left_collapsed, left_ambiguous = _collapse_secret_identifier(left)

@@ -665,7 +665,10 @@ def read_cache_entry(cache_directory: Path, key: str) -> Optional[dict[str, Any]
         output = output_path.read_bytes()
     except OSError:
         return None
-    output_text = output.decode("utf-8", errors="replace")
+    try:
+        output_text = output.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        return None
     if redact_output(output_text) != output_text:
         # Never promote an old or externally-written cache entry containing
         # material that the runner would redact into a trusted cache hit.
@@ -801,24 +804,44 @@ def bounded_diagnostics(value: Any, max_lines: int = MAX_DIAGNOSTIC_LINES) -> st
     return "\n".join(lines[-max_lines:])
 
 
+def _process_group_alive(process: subprocess.Popen[bytes]) -> bool:
+    process.poll()
+    try:
+        os.killpg(process.pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def _wait_for_process_group_exit(
+    process: subprocess.Popen[bytes], timeout_seconds: float
+) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while _process_group_alive(process):
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.02)
+    return True
+
+
 def _terminate_process_group(process: subprocess.Popen[bytes]) -> str:
+    if not _process_group_alive(process):
+        return "SIGTERM"
     try:
         os.killpg(process.pid, signal.SIGTERM)
     except ProcessLookupError:
         return "SIGTERM"
-    try:
-        process.wait(timeout=TERMINATE_GRACE_SECONDS)
+    if _wait_for_process_group_exit(process, TERMINATE_GRACE_SECONDS):
         return "SIGTERM"
-    except subprocess.TimeoutExpired:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        try:
-            process.wait(timeout=DRAIN_SECONDS)
-        except subprocess.TimeoutExpired as exc:
-            raise ValidationFailure("process group did not drain after SIGKILL") from exc
-        return "SIGKILL"
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    if not _wait_for_process_group_exit(process, DRAIN_SECONDS):
+        raise ValidationFailure("process group did not drain after SIGKILL")
+    return "SIGKILL"
 
 
 def _read_spool_tail(spool: Any, size: int, budget: int) -> bytes:
@@ -852,6 +875,7 @@ def run_command(
     termination_signal: Optional[str] = None
     cancelled = False
     output_limit_exceeded = False
+    descendants_terminated = False
     stdout = b""
     stderr = b""
     launch_error: Optional[str] = None
@@ -888,7 +912,7 @@ def run_command(
                 stderr_size = os.fstat(stderr_spool.fileno()).st_size
                 if stdout_size + stderr_size > MAX_COMMAND_OUTPUT_BYTES:
                     output_limit_exceeded = True
-                    group_terminated = process.poll() is None
+                    group_terminated = _process_group_alive(process)
                     if group_terminated:
                         termination_signal = _terminate_process_group(process)
                     break
@@ -905,6 +929,10 @@ def run_command(
                     break
                 try:
                     process.wait(timeout=min(0.2, remaining))
+                    if _process_group_alive(process):
+                        descendants_terminated = True
+                        group_terminated = True
+                        termination_signal = _terminate_process_group(process)
                     break
                 except subprocess.TimeoutExpired:
                     continue
@@ -934,6 +962,8 @@ def run_command(
         raw_output = launch_error.encode("utf-8")
     elif output_limit_exceeded:
         raw_output = b"validation command output limit exceeded\n" + raw_output
+    elif descendants_terminated:
+        raw_output = b"validation command left descendant processes\n" + raw_output
     redacted = redact_output(raw_output)
     output_digest = sha256_bytes(redacted.encode("utf-8"))
     returncode = None if process is None else process.returncode
@@ -946,6 +976,7 @@ def run_command(
             and returncode == 0
             and not timed_out
             and not output_limit_exceeded
+            and not descendants_terminated
         )
         else "fail"
     )
