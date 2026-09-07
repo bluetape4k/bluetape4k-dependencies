@@ -191,26 +191,27 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 "bluetape4k-projects": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
                 "bluetape4k-aws": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
                 "bluetape4k-exposed": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+                "bluetape4k-graph": "55b5269bddd2bd041d5f282abcd0238dc242c171",
                 "bluetape4k-javers": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
                 "bluetape4k-leader": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
             },
         )
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
-            {
-                "clinic-appointment",
-                "timefold-workshop",
-                "bluetape4k-workshop",
-                "exposed-r2dbc-workshop",
-                "exposed-workshop",
-            },
+            set(),
         )
         self.assertEqual(
             {
                 item["repository"]
                 for item in policy["development-snapshot-repositories"]
             },
-            set(),
+            {
+                "bluetape4k-workshop",
+                "clinic-appointment",
+                "timefold-workshop",
+                "exposed-r2dbc-workshop",
+                "exposed-workshop",
+            },
         )
         self.assertEqual(
             set(module.required_workspace_repositories(document)),

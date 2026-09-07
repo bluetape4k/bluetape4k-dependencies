@@ -1,7 +1,20 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-09-04 KST
+Snapshot: 2026-09-07 KST
 Scope: dependencies 2.1.0 minor 개발 train 및 외부 catalog 최신 안정판 정렬.
+
+## 2026-09-07 예제 저장소 2.1.0-SNAPSHOT 개발선 전환
+
+사용자 결정에 따라 `bluetape4k-workshop`, `clinic-appointment`,
+`exposed-r2dbc-workshop`, `exposed-workshop`, `timefold-workshop`을 모두
+`bluetape4k-dependencies:2.1.0-SNAPSHOT` 소비자로 분류한다. 기존 2026-09-04
+안정 소비자 정책은 이 결정을 기준으로 대체한다.
+
+중앙 verifier는 5개 저장소를 `development-snapshot-repositories`에서 검사하며,
+`official-release-repositories`는 빈 목록을 허용한다. 또한 live
+`bluetape4k-graph/develop`가 사용하는 catalog ref
+`55b5269bddd2bd041d5f282abcd0238dc242c171`을 명시적 override로 고정해 다음
+CI가 예제 정책 수정 뒤 다른 ref drift로 다시 실패하지 않게 한다.
 
 ## 2026-09-04 workshop 안정 소비자 정책 정렬
 

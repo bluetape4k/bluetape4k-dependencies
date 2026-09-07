@@ -166,8 +166,8 @@ def validate_manifest(document: dict[str, Any]) -> None:
             )
     if not repositories.issubset(snapshot_repositories):
         raise RuntimeError("every publishable repository must be a snapshot catalog consumer")
-    if not isinstance(official_repositories, list) or not official_repositories:
-        raise RuntimeError("official-release-repositories must be a non-empty list")
+    if not isinstance(official_repositories, list):
+        raise RuntimeError("official-release-repositories must be a list")
     if not isinstance(development_snapshot_repositories, list):
         raise RuntimeError("development-snapshot-repositories must be a list")
 
