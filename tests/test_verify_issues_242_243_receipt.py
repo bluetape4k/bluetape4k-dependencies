@@ -82,6 +82,9 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "fatal: to\u2029ken=sentinel-raw-paragraph-separator\n"
             "fatal: to\u00a0ken=sentinel-raw-nbsp\n"
             "fatal: to\tken=sentinel-raw-tab\n"
+            "fatal: to\u009b31mken=sentinel-c1-csi\n"
+            "fatal: to\u009dtitle\u009cken=sentinel-c1-osc\n"
+            "fatal: to\x1bPtitle\x1b\\ken=sentinel-dcs\n"
             "fatal: my_to%09ken=sentinel-namespaced-encoded-tab\n"
             "https://example.invalid/?to%E2%80%8Bken=sentinel-encoded-query\n"
             "https://example.invalid/?to%09ken=sentinel-encoded-tab-query\n"
@@ -153,6 +156,9 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-raw-paragraph-separator",
             "sentinel-raw-nbsp",
             "sentinel-raw-tab",
+            "sentinel-c1-csi",
+            "sentinel-c1-osc",
+            "sentinel-dcs",
             "sentinel-namespaced-encoded-tab",
             "sentinel-encoded-query",
             "sentinel-encoded-tab-query",

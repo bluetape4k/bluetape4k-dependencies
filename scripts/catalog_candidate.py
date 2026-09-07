@@ -115,10 +115,14 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _strip_obfuscating_controls(value: str) -> str:
+def _strip_obfuscating_controls(value: str) -> tuple[str, bool]:
     value = ANSI_RE.sub("", value)
+    has_unsupported_sequence = any(
+        character == "\x1b" or 0x80 <= ord(character) <= 0x9F
+        for character in value
+    )
     value = CONTROL_RE.sub("", value)
-    return "".join(
+    normalized = "".join(
         character
         for character in value
         if unicodedata.category(character) != "Cf"
@@ -131,6 +135,7 @@ def _strip_obfuscating_controls(value: str) -> str:
             and character != " "
         )
     )
+    return normalized, has_unsupported_sequence
 
 
 def _normalize_secret_identifier(value: str) -> tuple[str, bool]:
@@ -204,7 +209,10 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
         text = value.decode("utf-8", errors="replace")
     else:
         text = str(value)
-    text = _strip_obfuscating_controls(text)
+    text, has_unsupported_sequence = _strip_obfuscating_controls(text)
+    if has_unsupported_sequence:
+        text = "<redacted>"
+        return text[:max_chars] if max_chars is not None else text
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
     text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
     text = BEARER_RE.sub(r"\1<redacted>", text)

@@ -147,6 +147,15 @@ class CatalogCandidateTest(unittest.TestCase):
             ("fatal: to\u2029ken=raw-paragraph-separator-secret", "raw-paragraph-separator-secret"),
             ("fatal: to\u00a0ken=raw-nbsp-secret", "raw-nbsp-secret"),
             ("fatal: to\tken=raw-tab-secret", "raw-tab-secret"),
+            ("fatal: to\u009b31mken=c1-csi-secret", "c1-csi-secret"),
+            (
+                "fatal: to\u009dtitle\u009cken=c1-osc-secret",
+                "c1-osc-secret",
+            ),
+            (
+                "fatal: to\x1bPtitle\x1b\\ken=dcs-secret",
+                "dcs-secret",
+            ),
             (
                 "fatal: my_to%09ken=namespaced-encoded-tab-secret",
                 "namespaced-encoded-tab-secret",
