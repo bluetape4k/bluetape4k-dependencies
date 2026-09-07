@@ -142,6 +142,11 @@ class CatalogCandidateTest(unittest.TestCase):
                 "fatal: to%E2%80%A8ken=encoded-line-separator-secret",
                 "encoded-line-separator-secret",
             ),
+            ("fatal: to\x85ken=raw-c1-secret", "raw-c1-secret"),
+            ("fatal: to\u2028ken=raw-line-separator-secret", "raw-line-separator-secret"),
+            ("fatal: to\u2029ken=raw-paragraph-separator-secret", "raw-paragraph-separator-secret"),
+            ("fatal: to\u00a0ken=raw-nbsp-secret", "raw-nbsp-secret"),
+            ("fatal: to\tken=raw-tab-secret", "raw-tab-secret"),
             (
                 "fatal: my_to%09ken=namespaced-encoded-tab-secret",
                 "namespaced-encoded-tab-secret",
@@ -230,6 +235,10 @@ class CatalogCandidateTest(unittest.TestCase):
             "https://example.invalid/?mode=safe"
         )
         self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)
+        self.assertEqual(
+            candidate.redact_diagnostic("mon\u2028key=unicode-safe"),
+            "monkey=unicode-safe",
+        )
 
     def test_origin_mismatch_reports_only_a_safe_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

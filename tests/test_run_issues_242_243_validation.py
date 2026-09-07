@@ -574,6 +574,11 @@ class ValidationRunnerTest(unittest.TestCase):
             "fatal: to%0Dken=sentinel-encoded-cr\n"
             "fatal: to%C2%85ken=sentinel-encoded-c1\n"
             "fatal: to%E2%80%A8ken=sentinel-encoded-line-separator\n"
+            "fatal: to\x85ken=sentinel-raw-c1\n"
+            "fatal: to\u2028ken=sentinel-raw-line-separator\n"
+            "fatal: to\u2029ken=sentinel-raw-paragraph-separator\n"
+            "fatal: to\u00a0ken=sentinel-raw-nbsp\n"
+            "fatal: to\tken=sentinel-raw-tab\n"
             "fatal: my_to%09ken=sentinel-namespaced-encoded-tab\n"
             "https://example.invalid/?to%E2%80%8Bken=sentinel-encoded-query\n"
             "https://example.invalid/?to%09ken=sentinel-encoded-tab-query\n"
@@ -641,6 +646,11 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-encoded-cr",
             "sentinel-encoded-c1",
             "sentinel-encoded-line-separator",
+            "sentinel-raw-c1",
+            "sentinel-raw-line-separator",
+            "sentinel-raw-paragraph-separator",
+            "sentinel-raw-nbsp",
+            "sentinel-raw-tab",
             "sentinel-namespaced-encoded-tab",
             "sentinel-encoded-query",
             "sentinel-encoded-tab-query",

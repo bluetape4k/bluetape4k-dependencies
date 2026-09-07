@@ -122,6 +122,14 @@ def _strip_obfuscating_controls(value: str) -> str:
         character
         for character in value
         if unicodedata.category(character) != "Cf"
+        and not (
+            unicodedata.category(character) == "Cc"
+            and character not in {"\r", "\n"}
+        )
+        and not (
+            unicodedata.category(character).startswith("Z")
+            and character != " "
+        )
     )
 
 
@@ -234,10 +242,11 @@ def _git(root: Path, *args: str) -> str:
             text=True,
         ).stdout.strip()
     except subprocess.CalledProcessError as exc:
-        raw_detail = " | ".join(
-            line.strip() for line in (exc.stderr or "").splitlines() if line.strip()
+        safe_stderr = redact_diagnostic(exc.stderr or "")
+        detail = " | ".join(
+            line.strip() for line in safe_stderr.splitlines() if line.strip()
         )
-        detail = redact_diagnostic(raw_detail, max_chars=500) or "no stderr"
+        detail = detail[:500] or "no stderr"
         command = args[0] if args else "command"
         raise RuntimeError(f"git {command} failed for {root}: {detail}") from exc
     except OSError as exc:
