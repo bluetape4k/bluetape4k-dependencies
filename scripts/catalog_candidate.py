@@ -114,9 +114,19 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _strip_obfuscating_controls(value: str) -> str:
+    value = ANSI_RE.sub("", value)
+    value = CONTROL_RE.sub("", value)
+    return "".join(
+        character
+        for character in value
+        if unicodedata.category(character) != "Cf"
+    )
+
+
 def is_secret_name(value: str) -> bool:
     """Classify normalized snake, kebab, camel, encoded, and compound names."""
-    decoded = urllib.parse.unquote_plus(value)
+    decoded = _strip_obfuscating_controls(urllib.parse.unquote_plus(value))
     separated = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", decoded)
     separated = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", separated)
     parts = re.sub(r"[^A-Za-z0-9]+", "_", separated).lower().split("_")
@@ -154,13 +164,7 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
         text = value.decode("utf-8", errors="replace")
     else:
         text = str(value)
-    text = ANSI_RE.sub("", text)
-    text = CONTROL_RE.sub("", text)
-    text = "".join(
-        character
-        for character in text
-        if unicodedata.category(character) != "Cf"
-    )
+    text = _strip_obfuscating_controls(text)
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
     text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
     text = BEARER_RE.sub(r"\1<redacted>", text)

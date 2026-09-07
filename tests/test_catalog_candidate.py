@@ -101,6 +101,19 @@ class CatalogCandidateTest(unittest.TestCase):
                 "fatal: access%54oken=encoded-camel-assignment-secret",
                 "encoded-camel-assignment-secret",
             ),
+            ("fatal: to%00ken=encoded-control-secret", "encoded-control-secret"),
+            (
+                "fatal: to%E2%80%8Bken=encoded-format-secret",
+                "encoded-format-secret",
+            ),
+            (
+                "fatal: to%1B%5B31mken=encoded-ansi-secret",
+                "encoded-ansi-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?to%E2%80%8Bken=encoded-query-secret",
+                "encoded-query-secret",
+            ),
             (
                 "fatal: access\x1b[31mToken=ansi-assignment-secret",
                 "ansi-assignment-secret",

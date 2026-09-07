@@ -60,6 +60,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "https://example.invalid/repo?oauth_accesskeyid=sentinel-namespaced-query-access\n"
             "fatal: access%5Ftoken=sentinel-encoded-assignment\n"
             "fatal: access%54oken=sentinel-encoded-camel-assignment\n"
+            "fatal: to%00ken=sentinel-encoded-control\n"
+            "fatal: to%E2%80%8Bken=sentinel-encoded-format\n"
+            "fatal: to%1B%5B31mken=sentinel-encoded-ansi\n"
+            "https://example.invalid/?to%E2%80%8Bken=sentinel-encoded-query\n"
             "fatal: access\x1b[31mToken=sentinel-ansi-assignment\n"
             "fatal: to\x00ken=sentinel-control-assignment\n"
             "fatal: access\u200bToken=sentinel-format-assignment\n"
@@ -100,6 +104,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-namespaced-query-access",
             "sentinel-encoded-assignment",
             "sentinel-encoded-camel-assignment",
+            "sentinel-encoded-control",
+            "sentinel-encoded-format",
+            "sentinel-encoded-ansi",
+            "sentinel-encoded-query",
             "sentinel-ansi-assignment",
             "sentinel-control-assignment",
             "sentinel-format-assignment",
