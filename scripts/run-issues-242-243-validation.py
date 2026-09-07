@@ -452,6 +452,12 @@ def candidate_artifact_manifest(repository: Path) -> dict[str, Any]:
     """Return a digest-bound manifest for the local java-platform publication."""
 
     repository = _canonical_directory(repository, "candidate Maven repository")
+    try:
+        repository_files = catalog_candidate.bounded_file_manifest(
+            repository, description="candidate Maven repository"
+        )
+    except RuntimeError as exc:
+        raise InputContractError(str(exc)) from exc
     artifact_directory = (
         repository
         / "io"
@@ -494,14 +500,6 @@ def candidate_artifact_manifest(repository: Path) -> dict[str, Any]:
     )
     if pom_identity != expected_identity or module_identity != expected_identity:
         raise InputContractError("candidate BOM metadata identity mismatch")
-    repository_files: dict[str, str] = {}
-    for path in sorted(repository.rglob("*")):
-        if path.is_symlink():
-            raise InputContractError(f"candidate Maven repository contains a symlink: {path}")
-        if path.is_dir():
-            continue
-        _regular_file(path, f"candidate Maven repository file {path}")
-        repository_files[path.relative_to(repository).as_posix()] = sha256_file(path)
     digest = sha256_bytes(canonical_json_bytes(repository_files))
     return {
         "repository_path": str(repository),
@@ -854,7 +852,13 @@ def run_command(
     failure_artifact: Optional[Path] = None,
     cancel_event: Optional[threading.Event] = None,
 ) -> CommandResult:
-    """Run one command in a new process group with bounded termination."""
+    """Run trusted exact-source code with bounded inherited-group cleanup.
+
+    The process group is an operational cleanup mechanism, not a portable
+    adversarial sandbox. A hostile descendant can call ``setsid()`` and leave
+    the group, so high-level callers must first validate the approved origin,
+    exact reviewed HEAD, clean worktree, and immutable command inputs.
+    """
 
     if not command:
         raise InputContractError("validation command must not be empty")
@@ -980,7 +984,7 @@ def run_command(
     elif output_limit_exceeded:
         raw_output = b"validation command output limit exceeded\n" + raw_output
     elif descendants_terminated:
-        raw_output = b"validation command left descendant processes\n" + raw_output
+        raw_output = b"validation command left processes in its assigned group\n" + raw_output
     redacted = redact_output(raw_output)
     output_digest = sha256_bytes(redacted.encode("utf-8"))
     returncode = None if process is None else process.returncode

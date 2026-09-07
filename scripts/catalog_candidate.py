@@ -79,10 +79,16 @@ LINE_BREAK_IDENTIFIER_RE = re.compile(
 LINE_BREAK_SECRET_VALUE_RE = re.compile(
     r"(?<![\w.%+-])([^\s=:?&#]+)[ \t]*[=:][ \t]*(?:\r\n?|\n)"
 )
+FOLDED_VALUE_RE = re.compile(
+    r"(?m)(?<![\w.%+-])([^\s=:?&#]+)[ \t]*[=:][^\r\n]*(?:\r\n?|\n)[ \t]+"
+)
 MAX_IDENTIFIER_DECODE_ROUNDS = 4
 MAX_SECRET_IDENTIFIER_CHARS = 512
 MAX_GIT_CAPTURE_BYTES = 4 * 1024 * 1024
 MAX_REDACTION_SCAN_CHARS = MAX_GIT_CAPTURE_BYTES
+MAX_CANDIDATE_REPOSITORY_FILES = 4096
+MAX_CANDIDATE_REPOSITORY_FILE_BYTES = 16 * 1024 * 1024
+MAX_CANDIDATE_REPOSITORY_BYTES = 128 * 1024 * 1024
 GIT_CAPTURE_TIMEOUT_SECONDS = 30.0
 SECRET_NAME_PARTS = frozenset(
     {"password", "passwd", "token", "secret", "credential", "key", "session"}
@@ -94,14 +100,17 @@ SECRET_COMPOUND_NAMES = frozenset(
         "accesstoken",
         "apikey",
         "authtoken",
+        "authorization",
         "bearertoken",
         "clientsecret",
+        "cookie",
         "idtoken",
         "keypassword",
         "keystorepassword",
         "privatekey",
         "refreshtoken",
         "secretaccesskey",
+        "setcookie",
         "signingkey",
         "signingpassword",
     }
@@ -211,7 +220,7 @@ def _is_safe_secret_like_name(collapsed: str) -> bool:
     if "sessionfactory" not in collapsed:
         return False
     remainder = collapsed.replace("sessionfactory", "")
-    secret_names = (SECRET_NAME_PARTS - {"session"}) | SECRET_COMPOUND_NAMES
+    secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
     return not any(name in remainder for name in secret_names)
 
 
@@ -271,6 +280,11 @@ def _has_obfuscated_secret_syntax(value: str) -> bool:
 
 
 def _contains_line_break_secret_candidate(value: str) -> bool:
+    if any(
+        is_secret_name(match.group(1)) or _is_sensitive_header_name(match.group(1))
+        for match in FOLDED_VALUE_RE.finditer(value)
+    ):
+        return True
     if any(
         is_secret_name(match.group(1))
         for match in LINE_BREAK_SECRET_VALUE_RE.finditer(value)
@@ -382,6 +396,97 @@ def _regular_nonsymlink(path: Path, description: str) -> None:
         raise RuntimeError(f"{description} must be a regular file: {path}")
 
 
+def bounded_file_manifest(
+    root: Path,
+    *,
+    description: str,
+    max_files: int = MAX_CANDIDATE_REPOSITORY_FILES,
+    max_file_bytes: int = MAX_CANDIDATE_REPOSITORY_FILE_BYTES,
+    max_total_bytes: int = MAX_CANDIDATE_REPOSITORY_BYTES,
+) -> dict[str, str]:
+    """Hash a no-follow file tree with aggregate, per-file, and count limits."""
+    if min(max_files, max_file_bytes, max_total_bytes) <= 0:
+        raise ValueError("file manifest limits must be positive")
+    try:
+        directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+        file_flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC
+    except AttributeError as exc:
+        raise RuntimeError("platform lacks no-follow file traversal support") from exc
+    manifest: dict[str, str] = {}
+    total_bytes = 0
+
+    def visit(directory_fd: int, relative_parts: tuple[str, ...]) -> None:
+        nonlocal total_bytes
+        with os.scandir(directory_fd) as entries:
+            names = sorted(entry.name for entry in entries)
+        for name in names:
+            metadata = os.stat(
+                name, dir_fd=directory_fd, follow_symlinks=False
+            )
+            if stat.S_ISLNK(metadata.st_mode):
+                raise RuntimeError(f"{description} contains a symlink")
+            if stat.S_ISDIR(metadata.st_mode):
+                child_fd = os.open(name, directory_flags, dir_fd=directory_fd)
+                try:
+                    opened_directory = os.fstat(child_fd)
+                    if (
+                        not stat.S_ISDIR(opened_directory.st_mode)
+                        or metadata.st_dev != opened_directory.st_dev
+                        or metadata.st_ino != opened_directory.st_ino
+                    ):
+                        raise RuntimeError(f"{description} changed while traversing")
+                    visit(child_fd, (*relative_parts, name))
+                finally:
+                    os.close(child_fd)
+                continue
+            if not stat.S_ISREG(metadata.st_mode):
+                raise RuntimeError(f"{description} contains a non-file")
+            if len(manifest) >= max_files:
+                raise RuntimeError(f"{description} exceeds the file count limit")
+            descriptor = os.open(name, file_flags, dir_fd=directory_fd)
+            digest = hashlib.sha256()
+            file_bytes = 0
+            with os.fdopen(descriptor, "rb") as source:
+                opened = os.fstat(source.fileno())
+                if (
+                    not stat.S_ISREG(opened.st_mode)
+                    or metadata.st_dev != opened.st_dev
+                    or metadata.st_ino != opened.st_ino
+                ):
+                    raise RuntimeError(f"{description} changed while traversing")
+                while chunk := source.read(1024 * 1024):
+                    file_bytes += len(chunk)
+                    if file_bytes > max_file_bytes:
+                        raise RuntimeError(f"{description} exceeds the per-file limit")
+                    if total_bytes + file_bytes > max_total_bytes:
+                        raise RuntimeError(f"{description} exceeds the total byte limit")
+                    digest.update(chunk)
+                closed = os.fstat(source.fileno())
+            if (
+                opened.st_dev != closed.st_dev
+                or opened.st_ino != closed.st_ino
+                or opened.st_size != file_bytes
+                or closed.st_size != file_bytes
+                or opened.st_mtime_ns != closed.st_mtime_ns
+            ):
+                raise RuntimeError(f"{description} changed while hashing")
+            total_bytes += file_bytes
+            relative = Path(*relative_parts, name).as_posix()
+            manifest[relative] = digest.hexdigest()
+
+    try:
+        root_fd = os.open(root, directory_flags)
+        try:
+            if not stat.S_ISDIR(os.fstat(root_fd).st_mode):
+                raise RuntimeError(f"{description} must be a directory")
+            visit(root_fd, ())
+        finally:
+            os.close(root_fd)
+    except OSError as exc:
+        raise RuntimeError(f"{description} cannot be read") from exc
+    return manifest
+
+
 def run_bounded_capture(
     command: list[str],
     *,
@@ -390,7 +495,12 @@ def run_bounded_capture(
     max_output_bytes: int = MAX_GIT_CAPTURE_BYTES,
     timeout_seconds: float = GIT_CAPTURE_TIMEOUT_SECONDS,
 ) -> subprocess.CompletedProcess[bytes]:
-    """Run a short helper command without unbounded stdout or stderr capture."""
+    """Run a trusted helper with bounded capture and inherited-group cleanup.
+
+    This is an operational cleanup boundary, not an adversarial sandbox. A
+    deliberately hostile descendant can create a new session and leave the
+    process group; callers must execute only reviewed exact-source helpers.
+    """
     if max_output_bytes <= 0 or timeout_seconds <= 0:
         raise ValueError("bounded command limits must be positive")
     if input_bytes is not None and len(input_bytes) > max_output_bytes:
@@ -474,7 +584,7 @@ def run_bounded_capture(
                         raise RuntimeError("bounded command output limit exceeded")
         returncode = process.wait(timeout=max(0.01, deadline - time.monotonic()))
         if process_group_alive():
-            raise RuntimeError("bounded command left descendant processes")
+            raise RuntimeError("bounded command left processes in its assigned group")
         return subprocess.CompletedProcess(
             command, returncode, bytes(stdout), bytes(stderr)
         )

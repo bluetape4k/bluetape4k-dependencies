@@ -524,6 +524,13 @@ redacted first-failure artifact를 고정한다. 모든 Gradle command는 `--no-
 `--refresh-dependencies`는 새 catalog/BOM candidate를 처음 resolve하는 graph 단계에만
 추가하며, 같은 exact evidence cache key의 test 재실행에서는 사용하지 않는다.
 
+Process-group 종료는 같은 PGID를 유지한 정상 descendant의 bounded cleanup 계약이며 악성
+`setsid()` containment 계약이 아니다. Persistent developer host에서는 approved origin,
+exact reviewed HEAD, clean worktree와 immutable input을 재검증한 maintainer-trusted source만
+실행한다. 외부 fork와 임의 merge ref는 이 경로에 넣지 않으며, GitHub PR에서는 secret 없는
+disposable hosted runner를 job-level containment로 사용한다. 악성 source 검증이 필요하면
+이 계획의 runner를 재사용하지 않고 VM/container 또는 플랫폼별 sandbox를 별도 gate로 둔다.
+
 ```bash
 python3 scripts/run-issues-242-243-validation.py \
   --phase consumers \

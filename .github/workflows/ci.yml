@@ -230,6 +230,15 @@ jobs:
             --repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json" \
             --check --summary
 
+      - uses: actions/setup-java@v6.0.0
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+      - uses: gradle/actions/setup-gradle@v6.3.0
+        with:
+          gradle-version: wrapper
+          cache-read-only: ${{ github.event_name == 'pull_request' }}
+
       - name: Compile generated signing helpers
         shell: bash
         run: |
@@ -238,7 +247,6 @@ jobs:
           import concurrent.futures
           import importlib.util
           import os
-          import subprocess
           import sys
           from pathlib import Path
 
@@ -269,8 +277,16 @@ jobs:
           def compile_helper(repository):
               environment = runner.sanitized_environment(os.environ)
               environment["GRADLE_OPTS"] = "-Dorg.gradle.daemon=false"
-              completed = subprocess.run(
-                  [
+              gradle_home = (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "signing-gradle-homes"
+                  / repository.name
+              )
+              gradle_home.mkdir(parents=True, mode=0o700)
+              os.chmod(gradle_home, 0o700)
+              environment["GRADLE_USER_HOME"] = str(gradle_home)
+              result = runner.run_command(
+                  command=(
                       str(repository.root / "gradlew"),
                       "-p",
                       "buildSrc",
@@ -282,16 +298,15 @@ jobs:
                       "--no-configuration-cache",
                       "--no-build-cache",
                       "--console=plain",
-                  ],
+                  ),
                   cwd=repository.root,
-                  env=environment,
-                  check=False,
-                  text=True,
+                  environment=environment,
+                  timeout_seconds=600,
               )
-              if completed.returncode:
+              if result.status != "pass":
                   raise RuntimeError(
                       f"buildSrc validation failed for {repository.name}: "
-                      f"exit {completed.returncode}"
+                      f"status={result.status}, exit={result.returncode}"
                   )
               return repository.name
 
@@ -330,14 +345,6 @@ jobs:
         run: |
           scripts/sync-shared-versions.py --workspace .. --check --summary
           scripts/sync-dependabot-ignores.py --workspace .. --check --summary
-      - uses: actions/setup-java@v6.0.0
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: ${{ env.JAVA_DISTRIBUTION }}
-      - uses: gradle/actions/setup-gradle@v6.3.0
-        with:
-          gradle-version: wrapper
-          cache-read-only: ${{ github.event_name == 'pull_request' }}
       - name: Build BOM
         run: ./gradlew build
         env:

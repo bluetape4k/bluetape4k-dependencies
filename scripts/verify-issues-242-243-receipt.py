@@ -149,7 +149,7 @@ SECRET_VALUE_RE = re.compile(
 )
 SECRET_FIELD_RE = re.compile(
     r"(?:password|passwd|secret|credential|private[_-]?key|access[_-]?token|"
-    r"authorization|client[_-]?secret|signing[_-]?key)",
+    r"authorization|cookie|set[_-]?cookie|session|client[_-]?secret|signing[_-]?key)",
     re.IGNORECASE,
 )
 
@@ -763,7 +763,16 @@ def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
                 _regular_nonsymlink(output_path, "command cache output")
                 if stat.S_IMODE(output_path.stat().st_mode) & 0o077:
                     raise ReceiptError("command cache output permissions are not private")
-                if sha256_bytes(output_path.read_bytes()) != item["output_sha256"]:
+                if output_path.stat().st_size > _CATALOG_CANDIDATE.MAX_GIT_CAPTURE_BYTES:
+                    raise ReceiptError("command cache output exceeds the size limit")
+                output_bytes = output_path.read_bytes()
+                try:
+                    output_text = output_bytes.decode("utf-8", errors="strict")
+                except UnicodeDecodeError as exc:
+                    raise ReceiptError("command cache output is not UTF-8") from exc
+                if _CATALOG_CANDIDATE.redact_diagnostic(output_text) != output_text:
+                    raise ReceiptError("command cache output contains redacted material")
+                if sha256_bytes(output_bytes) != item["output_sha256"]:
                     raise ReceiptError("command cache output SHA-256 mismatch")
             elif cache_key_value is not None or cache_output_value is not None:
                 raise ReceiptError("non-passing command must not claim cache evidence")
@@ -850,21 +859,12 @@ def _validate_candidate_artifact_manifest(
     repository_files = item["repository_files"]
     if not isinstance(repository_files, Mapping) or not repository_files:
         raise ReceiptError("candidate repository file manifest is missing")
-    actual_files: dict[str, str] = {}
-    for path in sorted(repository.rglob("*")):
-        try:
-            mode = path.lstat().st_mode
-        except OSError as exc:
-            raise ReceiptError("candidate Maven repository cannot be read") from exc
-        if stat.S_ISLNK(mode):
-            raise ReceiptError("candidate Maven repository contains a symlink")
-        if stat.S_ISDIR(mode):
-            continue
-        if not stat.S_ISREG(mode):
-            raise ReceiptError("candidate Maven repository contains a non-file")
-        actual_files[path.relative_to(repository).as_posix()] = sha256_bytes(
-            path.read_bytes()
+    try:
+        actual_files = _CATALOG_CANDIDATE.bounded_file_manifest(
+            repository, description="candidate Maven repository"
         )
+    except RuntimeError as exc:
+        raise ReceiptError(str(exc)) from exc
     if dict(repository_files) != actual_files:
         raise ReceiptError("candidate repository file manifest mismatch")
     repository_sha256 = sha256_bytes(canonical_json_bytes(actual_files))

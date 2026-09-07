@@ -321,9 +321,20 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         compile_step = workflow.split(
             "      - name: Compile generated signing helpers\n", 1
         )[1].split("      - name:", 1)[0]
+        setup_java = workflow.index("      - uses: actions/setup-java@v6.0.0")
+        setup_gradle = workflow.index("      - uses: gradle/actions/setup-gradle@v6.3.0")
+        compile_helpers = workflow.index("      - name: Compile generated signing helpers")
+        self.assertLess(setup_java, compile_helpers)
+        self.assertLess(setup_gradle, compile_helpers)
         self.assertIn("ThreadPoolExecutor(max_workers=2)", compile_step)
         self.assertIn("catalog_candidate.SIGNING_REPOSITORIES", compile_step)
         self.assertIn("runner.sanitized_environment", compile_step)
+        self.assertIn("runner.run_command", compile_step)
+        self.assertNotIn("subprocess.run", compile_step)
+        self.assertIn('Path(os.environ["RUNNER_TEMP"])', compile_step)
+        self.assertIn('environment["GRADLE_USER_HOME"]', compile_step)
+        self.assertIn("os.chmod(gradle_home, 0o700)", compile_step)
+        self.assertIn("timeout_seconds=600", compile_step)
         self.assertIn('"-p",', compile_step)
         self.assertIn('"PublishingSigningSupportTest",', compile_step)
         self.assertIn('"--tests",', compile_step)

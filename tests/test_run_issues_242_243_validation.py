@@ -1411,7 +1411,7 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertEqual(result.status, "fail")
             self.assertTrue(result.process_group_terminated)
             self.assertEqual(result.termination_signal, "SIGKILL")
-            self.assertIn("left descendant processes", result.diagnostics)
+            self.assertIn("left processes in its assigned group", result.diagnostics)
             child_pid = int(child_pid_path.read_text(encoding="utf-8"))
             with self.assertRaises(ProcessLookupError):
                 os.kill(child_pid, 0)
@@ -1983,6 +1983,13 @@ class ValidationRunnerTest(unittest.TestCase):
                 "mytoken=sentinel-arg-contiguous",
                 "token＝sentinel-arg-unicode-delimiter",
                 "to\nken=sentinel-arg-cross-line",
+                "sessionFactorySession=sentinel-arg-session-factory-session",
+                "myAuthorization=sentinel-arg-authorization",
+                "authorizationHeader=sentinel-arg-authorization-header",
+                "proxyAuthorization=sentinel-arg-proxy-authorization",
+                "cookieHeader=sentinel-arg-cookie-header",
+                "setCookieHeader=sentinel-arg-set-cookie-header",
+                "Authorization: Bear\r\n er sentinel-arg-folded-authorization",
             )
         )
         rendered_command = " ".join(command)
@@ -2006,6 +2013,13 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-arg-contiguous",
             "sentinel-arg-unicode-delimiter",
             "sentinel-arg-cross-line",
+            "sentinel-arg-session-factory-session",
+            "sentinel-arg-authorization",
+            "sentinel-arg-authorization-header",
+            "sentinel-arg-proxy-authorization",
+            "sentinel-arg-cookie-header",
+            "sentinel-arg-set-cookie-header",
+            "sentinel-arg-folded-authorization",
         ):
             self.assertNotIn(sentinel, rendered_command)
         self.assertEqual(
@@ -2029,10 +2043,26 @@ class ValidationRunnerTest(unittest.TestCase):
                     "mytoken": "sentinel-meta-contiguous-token",
                     "mykey": "sentinel-meta-contiguous-key",
                     "to\u200bken": "sentinel-meta-raw-format",
+                    "sessionFactorySession": "sentinel-meta-session-factory-session",
+                    "myAuthorization": "sentinel-meta-authorization",
+                    "authorizationHeader": "sentinel-meta-authorization-header",
+                    "proxyAuthorization": "sentinel-meta-proxy-authorization",
+                    "cookieHeader": "sentinel-meta-cookie-header",
+                    "setCookieHeader": "sentinel-meta-set-cookie-header",
                     "safe": "ok",
                 }
             ),
             {"safe": "ok"},
+        )
+        self.assertEqual(
+            runner._redact_value(
+                {
+                    "safe": (
+                        "Authorization: Bear\r\n er sentinel-meta-folded-authorization"
+                    )
+                }
+            ),
+            {"safe": "<redacted>"},
         )
         with tempfile.TemporaryDirectory() as directory:
             cache = Path(directory).resolve()
@@ -2048,7 +2078,14 @@ class ValidationRunnerTest(unittest.TestCase):
                 b"Cookie: session=sentinel-cookie-cache\n"
                 b"session=sentinel-session-cache\n"
                 b"TOKEN%252525253Dsentinel-deep-cache\n"
-                b"token\nsuffix=sentinel-fragment-cache\n",
+                b"token\nsuffix=sentinel-fragment-cache\n"
+                b"sessionFactorySession=sentinel-session-factory-cache\n"
+                b"myAuthorization=sentinel-authorization-cache\n"
+                b"authorizationHeader=sentinel-authorization-header-cache\n"
+                b"proxyAuthorization=sentinel-proxy-authorization-cache\n"
+                b"cookieHeader=sentinel-cookie-header-cache\n"
+                b"setCookieHeader=sentinel-set-cookie-header-cache\n"
+                b"Authorization: Bear\r\n er sentinel-folded-authorization-cache\n",
                 metadata={
                     "accessToken": "sentinel-meta-camel",
                     "my_apikey": "sentinel-meta-compound",
@@ -2082,6 +2119,13 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-session-cache", output["output"])
             self.assertNotIn("sentinel-deep-cache", output["output"])
             self.assertNotIn("sentinel-fragment-cache", output["output"])
+            self.assertNotIn("sentinel-session-factory-cache", output["output"])
+            self.assertNotIn("sentinel-authorization-cache", output["output"])
+            self.assertNotIn("sentinel-authorization-header-cache", output["output"])
+            self.assertNotIn("sentinel-proxy-authorization-cache", output["output"])
+            self.assertNotIn("sentinel-cookie-header-cache", output["output"])
+            self.assertNotIn("sentinel-set-cookie-header-cache", output["output"])
+            self.assertNotIn("sentinel-folded-authorization-cache", output["output"])
             cache_text = (cache / f"{key}.json").read_text(encoding="utf-8")
             self.assertNotIn("sentinel-meta-camel", cache_text)
             self.assertNotIn("sentinel-meta-compound", cache_text)

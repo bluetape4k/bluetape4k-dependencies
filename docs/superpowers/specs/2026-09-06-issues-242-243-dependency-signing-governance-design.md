@@ -368,6 +368,16 @@ process-group runner로 실행한다. Gradle version은 wrapper를 실행하지 
 `gradle-wrapper.properties`에서 읽는다. JDK probe의 실패나 빈 출력은 `unavailable` 같은
 유효해 보이는 identity로 대체하지 않고 전체 검증을 즉시 실패시킨다.
 
+이 runner의 process group은 timeout, cancellation, output limit과 정상 leader 종료 때
+같은 PGID를 상속한 프로세스를 정리하는 운영 경계다. Python 표준 라이브러리만으로 macOS와
+Linux 모두에서 의도적으로 `setsid()`한 악성 descendant를 완전히 격리할 수 없으므로 보안
+sandbox로 간주하지 않는다. 실행 대상은 approved `bluetape4k` origin, exact reviewed HEAD,
+clean worktree와 immutable input digest를 매 child 직전에 재검증한 maintainer-trusted
+source로 한정한다. 외부 fork, 임의 PR merge ref 또는 검토되지 않은 source를 persistent
+developer host에서 이 runner로 실행하지 않는다. GitHub PR 검증은 secret이 없는 disposable
+GitHub-hosted runner를 job-level containment로 사용하며, 악성 code containment가 필요한
+별도 검증은 VM/container 또는 플랫폼별 sandbox에서 수행한다.
+
 tracked receipt를 담는 evidence commit은 자신의 SHA를 receipt 안에 기록하지 않는다.
 coordinator는 adopted receipt를 포함하는 prospective commit object를 branch ref
 갱신 없이 만들고, final validator는 별도 `--evidence-commit` 입력을 받아 그 commit의 parent가

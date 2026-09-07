@@ -124,6 +124,14 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "Cookie: session=sentinel-cookie\n"
             "Set-Cookie: session=sentinel-set-cookie\n"
             "fatal: session=sentinel-session\n"
+            "fatal: sessionFactorySession=sentinel-session-factory-session\n"
+            "fatal: myAuthorization=sentinel-my-authorization\n"
+            "fatal: authorizationHeader=sentinel-authorization-header\n"
+            "fatal: proxyAuthorization=sentinel-proxy-authorization\n"
+            "fatal: cookieHeader=sentinel-cookie-header\n"
+            "fatal: setCookieHeader=sentinel-set-cookie-header\n"
+            "Authorization: Bear\r\n er sentinel-folded-authorization\n"
+            "MyCookie: opaque\n sentinel-folded-cookie\n"
             "Ａuthorization: Basic sentinel-fullwidth-header\n"
             "Authoriz%61tion: Bearer sentinel-encoded-header"
         )
@@ -215,6 +223,14 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-cookie",
             "sentinel-set-cookie",
             "sentinel-session",
+            "sentinel-session-factory-session",
+            "sentinel-my-authorization",
+            "sentinel-authorization-header",
+            "sentinel-proxy-authorization",
+            "sentinel-cookie-header",
+            "sentinel-set-cookie-header",
+            "sentinel-folded-authorization",
+            "sentinel-folded-cookie",
             "sentinel-fullwidth-header",
             "sentinel-encoded-header",
         ):
@@ -862,6 +878,60 @@ class Issues242243ReceiptTest(unittest.TestCase):
         )
         artifact.write_bytes(artifact.read_bytes() + b"tampered\n")
         with self.assertRaisesRegex(receipt.ReceiptError, "repository file manifest"):
+            receipt.validate_receipt(path)
+
+    def test_terminal_receipt_rejects_secret_bearing_cache_output(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        command = document["commands"][0]
+        output = b"Authorization: Bear\r\n er folded-cache-secret\n"
+        output_path = Path(command["cache_output_path"])
+        output_path.write_bytes(output)
+        os.chmod(output_path, 0o600)
+        command["output_sha256"] = receipt.sha256_bytes(output)
+        phase = next(
+            item for item in document["phases"] if item["name"] == command["phase"]
+        )
+        phase_commands = {
+            item["job_id"]: item
+            for item in document["commands"]
+            if item["phase"] == phase["name"]
+        }
+        phase["output_sha256"] = receipt.sha256_bytes(
+            receipt.canonical_json_bytes(
+                {
+                    "schema_version": 1,
+                    "phase": phase["name"],
+                    "results": [
+                        {
+                            "status": phase_commands[job_id]["result"],
+                            "output_sha256": phase_commands[job_id]["output_sha256"],
+                            "cached": phase_commands[job_id]["cache"] == "shared-read",
+                            "job_id": job_id,
+                            "repository": phase_commands[job_id]["repository"],
+                            "cancelled": False,
+                        }
+                        for job_id in phase["job_ids"]
+                    ],
+                    "failure": None,
+                }
+            )
+        )
+        path.write_bytes(receipt.canonical_json_bytes(document))
+
+        with self.assertRaisesRegex(receipt.ReceiptError, "redacted material"):
+            receipt.validate_receipt(path)
+
+    def test_terminal_receipt_bounds_cache_output_size(self) -> None:
+        _workspace, path, document = self.make_fixture()
+        self.make_adoptable(document)
+        self.mark_validated(document)
+        path.write_bytes(receipt.canonical_json_bytes(document))
+
+        with mock.patch.object(
+            receipt._CATALOG_CANDIDATE, "MAX_GIT_CAPTURE_BYTES", 1
+        ), self.assertRaisesRegex(receipt.ReceiptError, "size limit"):
             receipt.validate_receipt(path)
 
     def test_terminal_receipt_rejects_synthetic_cache_and_budget_job_bindings(self) -> None:

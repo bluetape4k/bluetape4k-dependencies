@@ -234,6 +234,29 @@ class CatalogCandidateTest(unittest.TestCase):
             ("Set-Cookie: session=set-cookie-secret", "set-cookie-secret"),
             ("fatal: session=session-secret", "session-secret"),
             (
+                "fatal: sessionFactorySession=session-factory-session-secret",
+                "session-factory-session-secret",
+            ),
+            (
+                "fatal: myAuthorization=namespaced-authorization",
+                "namespaced-authorization",
+            ),
+            (
+                "fatal: authorizationHeader=authorization-header",
+                "authorization-header",
+            ),
+            ("fatal: proxyAuthorization=proxy-authorization", "proxy-authorization"),
+            ("fatal: cookieHeader=cookie-header", "cookie-header"),
+            ("fatal: setCookieHeader=set-cookie-header", "set-cookie-header"),
+            (
+                "Authorization: Bear\r\n er folded-authorization-secret",
+                "folded-authorization-secret",
+            ),
+            (
+                "MyCookie: opaque\n continuation-cookie-secret",
+                "continuation-cookie-secret",
+            ),
+            (
                 "Ａuthorization: Basic fullwidth-header-secret",
                 "fullwidth-header-secret",
             ),
@@ -334,9 +357,27 @@ class CatalogCandidateTest(unittest.TestCase):
                 timeout_seconds=3,
             )
 
+    def test_file_manifest_enforces_aggregate_resource_limits(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "first.bin").write_bytes(b"ab")
+            (root / "second.bin").write_bytes(b"cd")
+            with self.assertRaisesRegex(RuntimeError, "file count limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_files=1
+                )
+            with self.assertRaisesRegex(RuntimeError, "per-file limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_file_bytes=1
+                )
+            with self.assertRaisesRegex(RuntimeError, "total byte limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_total_bytes=3
+                )
+
     def test_bounded_capture_rejects_descendant_processes(self) -> None:
         with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(
-            RuntimeError, "left descendant processes"
+            RuntimeError, "left processes in its assigned group"
         ):
             candidate.run_bounded_capture(
                 [
