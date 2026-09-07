@@ -325,6 +325,8 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("catalog_candidate.SIGNING_REPOSITORIES", compile_step)
         self.assertIn("runner.sanitized_environment", compile_step)
         self.assertIn('"-p",', compile_step)
+        self.assertIn('"PublishingSigningSupportTest",', compile_step)
+        self.assertIn('"--tests",', compile_step)
         self.assertIn('"buildSrc",', compile_step)
         self.assertIn('"compileKotlin",', compile_step)
         self.assertIn('"test",', compile_step)
