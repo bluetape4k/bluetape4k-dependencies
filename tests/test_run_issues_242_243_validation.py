@@ -536,12 +536,20 @@ class ValidationRunnerTest(unittest.TestCase):
             "Authorization: Bearer sentinel-bearer\n"
             "https://example.invalid/path?token=sentinel-query&safe=yes\n"
             "warning: api_key=sentinel-api-key\n"
+            "fatal: access_token=sentinel-access-token\n"
+            "fatal: client-secret: sentinel-client-secret\n"
+            "prefix Authorization: Basic sentinel-basic\n"
+            "https://user:sentinel-userinfo@example.invalid/repo.git\n"
         )
         for sentinel in (
             "sentinel-password",
             "sentinel-bearer",
             "sentinel-query",
             "sentinel-api-key",
+            "sentinel-access-token",
+            "sentinel-client-secret",
+            "sentinel-basic",
+            "sentinel-userinfo",
         ):
             self.assertNotIn(sentinel, bypasses)
         lines = runner.bounded_diagnostics("\n".join(f"line-{i}" for i in range(100)))

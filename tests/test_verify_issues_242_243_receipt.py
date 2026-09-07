@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import io
 import os
 import stat
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
+from unittest import mock
 
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "verify-issues-242-243-receipt.py"
@@ -34,6 +37,34 @@ class Issues242243ReceiptTest(unittest.TestCase):
         self.assertEqual(receipt.CATALOG_NAMES, candidate.CATALOG_REPOSITORIES)
         self.assertEqual(receipt.PUBLISHER_NAMES, frozenset(candidate.PUBLISHER_REPOSITORIES))
         self.assertEqual(receipt.SIGNING_NAMES, frozenset(candidate.SIGNING_REPOSITORIES))
+
+    def test_git_failure_and_cli_errors_reuse_credential_redaction(self) -> None:
+        raw = (
+            "fatal: access_token=sentinel-access-token\n"
+            "prefix Authorization: Basic sentinel-basic\n"
+            "https://user:sentinel-userinfo@example.invalid/repo.git"
+        )
+        failure = subprocess.CalledProcessError(128, ["git", "status"], stderr=raw)
+        with mock.patch.object(receipt.subprocess, "run", side_effect=failure):
+            with self.assertRaises(receipt.ReceiptError) as raised:
+                receipt._git(Path("/tmp/example"), "status")
+        for sentinel in (
+            "sentinel-access-token",
+            "sentinel-basic",
+            "sentinel-userinfo",
+        ):
+            self.assertNotIn(sentinel, str(raised.exception))
+
+        stderr = io.StringIO()
+        with mock.patch.object(
+            receipt,
+            "validate_receipt",
+            side_effect=receipt.ReceiptError("client_secret=sentinel-client-secret"),
+        ), redirect_stderr(stderr):
+            exit_code = receipt.main(["validate", "/tmp/receipt.json"])
+        self.assertEqual(exit_code, 2)
+        self.assertNotIn("sentinel-client-secret", stderr.getvalue())
+        self.assertIn("<redacted>", stderr.getvalue())
 
     def git(
         self,

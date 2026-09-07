@@ -30,6 +30,14 @@ class CatalogCandidateTest(unittest.TestCase):
             ("fatal: authorization=Basic basic-secret", "basic-secret"),
             ("fatal: token=token-secret", "token-secret"),
             ("fatal: password: password-secret", "password-secret"),
+            ("fatal: access_token=access-token-secret", "access-token-secret"),
+            ("fatal: client-secret: client-secret-value", "client-secret-value"),
+            ("fatal: api_key=api-key-secret", "api-key-secret"),
+            (
+                "fatal: https://example.invalid/repo?access_token=query-secret",
+                "query-secret",
+            ),
+            ("prefix Authorization: Basic embedded-secret", "embedded-secret"),
             (
                 "warning: retrying\nfatal: Authorization: Bearer multiline-secret",
                 "multiline-secret",
@@ -51,6 +59,25 @@ class CatalogCandidateTest(unittest.TestCase):
                         candidate._git(Path("/tmp/example"), "rev-parse", "missing")
 
                 self.assertNotIn(secret, str(raised.exception))
+
+    def test_origin_mismatch_reports_only_a_safe_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root, _, head = self.make_repository(Path(tmp), "central")
+            origin = "https://origin-user:origin-secret@example.invalid/repo.git"
+            subprocess.run(
+                ["git", "-C", str(root), "remote", "set-url", "origin", origin],
+                check=True,
+            )
+
+            with self.assertRaisesRegex(RuntimeError, r"origin mismatch.*sha256=") as raised:
+                candidate.inspect_repository_for_map(
+                    candidate.REPOSITORY_NAMES["central"], root, head
+                )
+
+            message = str(raised.exception)
+            self.assertNotIn("origin-user", message)
+            self.assertNotIn("origin-secret", message)
+            self.assertIn(hashlib.sha256(origin.encode()).hexdigest()[:12], message)
 
     def make_repository(self, workspace: Path, key: str) -> tuple[Path, str, str]:
         name = candidate.REPOSITORY_NAMES[key]

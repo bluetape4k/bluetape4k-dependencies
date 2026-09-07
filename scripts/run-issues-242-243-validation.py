@@ -212,24 +212,10 @@ def validate_graph_result(job: ValidationJob, result: CommandResult) -> CommandR
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
-ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
-CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 PRIVATE_ARMOR_RE = re.compile(
     r"-----BEGIN [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----.*?"
     r"-----END [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----",
     re.IGNORECASE | re.DOTALL,
-)
-SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?im)\b((?:[A-Za-z0-9]+[_-])*(?:password|passwd|token|secret|credential|"
-    r"private[_-]?key|secret[_-]?access[_-]?key|access[_-]?key(?:[_-]?id)?|"
-    r"api[_-]?key|signing[_-]?key|key)(?:[_-][A-Za-z0-9]+)*)\b"
-    r"(\s*[=:]\s*)([^\r\n]+)"
-)
-SECRET_URI_RE = re.compile(r"(?i)(://[^\s:/]+:)[^\s@]+(@)")
-AUTHORIZATION_RE = re.compile(r"(?im)^(\s*Authorization\s*:\s*)[^\r\n]+")
-BEARER_RE = re.compile(r"(?i)(\bBearer\s+)[^\s,;]+")
-QUERY_SECRET_RE = re.compile(
-    r"(?i)([?&](?:token|password|passwd|secret|api[_-]?key|access[_-]?key)\s*=)[^&#\s]+"
 )
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
 SECRET_NAME_RE = re.compile(
@@ -732,30 +718,12 @@ def write_cache_entry(
 
 
 def redact_output(value: Any) -> str:
-    """Redact armor, secret assignments, credentials, controls, and ANSI escapes."""
-
-    if isinstance(value, bytes):
-        text = value.decode("utf-8", errors="replace")
-    else:
-        text = str(value)
-    text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
-    text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
-    text = BEARER_RE.sub(r"\1<redacted>", text)
-    text = QUERY_SECRET_RE.sub(r"\1<redacted>", text)
-    text = SECRET_ASSIGNMENT_RE.sub(_redact_assignment, text)
-    text = SECRET_URI_RE.sub(r"\1<redacted>\2", text)
-    text = ANSI_RE.sub("", text)
-    text = CONTROL_RE.sub("", text)
-    return text
+    """Reuse the catalog candidate's credential-safe diagnostic boundary."""
+    return catalog_candidate.redact_diagnostic(value)
 
 
 def _is_secret_name(value: str) -> bool:
     return SECRET_NAME_RE.search(value.replace("-", "_")) is not None
-
-
-def _redact_assignment(match: re.Match[str]) -> str:
-    key, separator, value = match.groups()
-    return f"{key}{separator}<redacted>" if _is_secret_name(key) else f"{key}{separator}{value}"
 
 
 def _redact_value(value: Any) -> Any:

@@ -46,6 +46,29 @@ REPOSITORY_FIELDS = frozenset(
 )
 GIT_OBJECT = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
+CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+PRIVATE_ARMOR_RE = re.compile(
+    r"-----BEGIN [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----.*?"
+    r"-----END [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----",
+    re.IGNORECASE | re.DOTALL,
+)
+SECRET_ASSIGNMENT_RE = re.compile(
+    r"(?im)\b((?:[A-Za-z0-9]+[_-])*(?:password|passwd|token|secret|credential|"
+    r"private[_-]?key|secret[_-]?access[_-]?key|access[_-]?key(?:[_-]?id)?|"
+    r"api[_-]?key|signing[_-]?key|key)(?:[_-][A-Za-z0-9]+)*)\b"
+    r"(\s*[=:]\s*)([^\r\n]+)"
+)
+SECRET_URI_RE = re.compile(r"(?i)(://[^\s:/]+:)[^\s@]+(@)")
+AUTHORIZATION_RE = re.compile(
+    r"(?i)(\bauthorization\s*[:=]\s*)(?:(?:bearer|basic)\s+)?[^\r\n]+"
+)
+BEARER_RE = re.compile(r"(?i)(\bbearer\s+)[^\s,;]+")
+QUERY_SECRET_RE = re.compile(
+    r"(?i)([?&](?:(?:[A-Za-z0-9]+[_-])*(?:token|password|passwd|secret|"
+    r"credential)|api[_-]?key|access[_-]?key(?:[_-]?id)?|client[_-]?secret)"
+    r"\s*=)[^&#\s]+"
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -69,6 +92,23 @@ def canonical_json_bytes(value: Any) -> bytes:
 
 def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
+
+
+def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
+    """Return credential-free diagnostic text suitable for logs and errors."""
+    if isinstance(value, bytes):
+        text = value.decode("utf-8", errors="replace")
+    else:
+        text = str(value)
+    text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
+    text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
+    text = BEARER_RE.sub(r"\1<redacted>", text)
+    text = QUERY_SECRET_RE.sub(r"\1<redacted>", text)
+    text = SECRET_ASSIGNMENT_RE.sub(r"\1\2<redacted>", text)
+    text = SECRET_URI_RE.sub(r"\1<redacted>\2", text)
+    text = ANSI_RE.sub("", text)
+    text = CONTROL_RE.sub("", text)
+    return text[:max_chars] if max_chars is not None else text
 
 
 def _is_relative_to(path: Path, parent: Path) -> bool:
@@ -99,21 +139,10 @@ def _git(root: Path, *args: str) -> str:
             text=True,
         ).stdout.strip()
     except subprocess.CalledProcessError as exc:
-        detail = " | ".join(
+        raw_detail = " | ".join(
             line.strip() for line in (exc.stderr or "").splitlines() if line.strip()
         )
-        detail = re.sub(r"(https?://)[^/@\s]+@", r"\1<redacted>@", detail)
-        detail = re.sub(
-            r"(?i)\bauthorization(\s*[:=]\s*)(?:bearer|basic)\s+\S+",
-            r"Authorization\1<redacted>",
-            detail,
-        )
-        detail = re.sub(
-            r"(?i)\b(authorization|password|secret|token)(\s*[:=]\s*)\S+",
-            r"\1\2<redacted>",
-            detail,
-        )
-        detail = detail[:500] or "no stderr"
+        detail = redact_diagnostic(raw_detail, max_chars=500) or "no stderr"
         command = args[0] if args else "command"
         raise RuntimeError(f"git {command} failed for {root}: {detail}") from exc
     except OSError as exc:
@@ -135,7 +164,8 @@ def inspect_repository_for_map(
     origin = _git(resolved_root, "remote", "get-url", "origin")
     expected_origin = f"git@github.com:bluetape4k/{name}.git"
     if origin != expected_origin:
-        raise RuntimeError(f"origin mismatch for {name}: {origin}")
+        fingerprint = sha256_bytes(origin.encode())[:12]
+        raise RuntimeError(f"origin mismatch for {name}: sha256={fingerprint}")
     branch = _git(resolved_root, "branch", "--show-current")
     if not branch:
         branch = f"issues-242-243-{name}"

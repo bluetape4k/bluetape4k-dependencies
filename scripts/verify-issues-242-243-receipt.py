@@ -292,9 +292,11 @@ def _git(root: Path, *args: str, input_text: str | None = None) -> str:
             check=True,
         )
     except (OSError, subprocess.CalledProcessError) as exc:
-        detail = ""
+        detail = "no stderr"
         if isinstance(exc, subprocess.CalledProcessError):
-            detail = (exc.stderr or exc.stdout or "").strip().splitlines()[0:1]
+            detail = _CATALOG_CANDIDATE.redact_diagnostic(
+                exc.stderr or exc.stdout or "", max_chars=500
+            ).strip() or "no stderr"
         raise ReceiptError(f"git validation failed for {root}: {detail}") from exc
     return completed.stdout.strip()
 
@@ -1596,7 +1598,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(document["current_state"])
         return 0
     except (ReceiptError, OSError, ValueError) as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        detail = _CATALOG_CANDIDATE.redact_diagnostic(exc, max_chars=500)
+        print(f"error: {detail}", file=sys.stderr)
         return 2
 
 
