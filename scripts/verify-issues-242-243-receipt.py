@@ -152,6 +152,7 @@ SECRET_FIELD_RE = re.compile(
     r"authorization|cookie|set[_-]?cookie|session|client[_-]?secret|signing[_-]?key)",
     re.IGNORECASE,
 )
+MAX_COMMAND_CACHE_OUTPUT_BYTES = 2 * 1024 * 1024
 
 
 class ReceiptError(RuntimeError):
@@ -763,9 +764,15 @@ def _validate_commands(value: Any, evidence_cache_root: Path | None) -> None:
                 _regular_nonsymlink(output_path, "command cache output")
                 if stat.S_IMODE(output_path.stat().st_mode) & 0o077:
                     raise ReceiptError("command cache output permissions are not private")
-                if output_path.stat().st_size > _CATALOG_CANDIDATE.MAX_GIT_CAPTURE_BYTES:
-                    raise ReceiptError("command cache output exceeds the size limit")
-                output_bytes = output_path.read_bytes()
+                try:
+                    output_bytes = _CATALOG_CANDIDATE.bounded_regular_file_bytes(
+                        output_path,
+                        description="command cache output",
+                        max_bytes=MAX_COMMAND_CACHE_OUTPUT_BYTES,
+                        require_private_mode=True,
+                    )
+                except RuntimeError as exc:
+                    raise ReceiptError(str(exc)) from exc
                 try:
                     output_text = output_bytes.decode("utf-8", errors="strict")
                 except UnicodeDecodeError as exc:

@@ -265,6 +265,7 @@ jobs:
           runner = importlib.util.module_from_spec(runner_spec)
           sys.modules[runner_spec.name] = runner
           runner_spec.loader.exec_module(runner)
+          runner.require_disposable_hosted_environment(os.environ)
           repositories = catalog_candidate.load_repository_map_v1(
               map_path, Path.cwd().parent.resolve()
           )

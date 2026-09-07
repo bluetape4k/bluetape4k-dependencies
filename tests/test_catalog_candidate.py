@@ -375,6 +375,23 @@ class CatalogCandidateTest(unittest.TestCase):
                     root, description="fixture", max_total_bytes=3
                 )
 
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            for index in range(3):
+                (root / f"empty-{index}").mkdir()
+            with self.assertRaisesRegex(RuntimeError, "entry count limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_files=1
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "first" / "second").mkdir(parents=True)
+            with self.assertRaisesRegex(RuntimeError, "depth limit"):
+                candidate.bounded_file_manifest(
+                    root, description="fixture", max_depth=1
+                )
+
     def test_bounded_capture_rejects_descendant_processes(self) -> None:
         with tempfile.TemporaryDirectory() as directory, self.assertRaisesRegex(
             RuntimeError, "left processes in its assigned group"

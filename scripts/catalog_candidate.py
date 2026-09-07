@@ -89,6 +89,7 @@ MAX_REDACTION_SCAN_CHARS = MAX_GIT_CAPTURE_BYTES
 MAX_CANDIDATE_REPOSITORY_FILES = 4096
 MAX_CANDIDATE_REPOSITORY_FILE_BYTES = 16 * 1024 * 1024
 MAX_CANDIDATE_REPOSITORY_BYTES = 128 * 1024 * 1024
+MAX_CANDIDATE_REPOSITORY_DEPTH = 64
 GIT_CAPTURE_TIMEOUT_SECONDS = 30.0
 SECRET_NAME_PARTS = frozenset(
     {"password", "passwd", "token", "secret", "credential", "key", "session"}
@@ -396,6 +397,46 @@ def _regular_nonsymlink(path: Path, description: str) -> None:
         raise RuntimeError(f"{description} must be a regular file: {path}")
 
 
+def bounded_regular_file_bytes(
+    path: Path,
+    *,
+    description: str,
+    max_bytes: int,
+    require_private_mode: bool = False,
+) -> bytes:
+    """Read one stable regular file without following its final component."""
+
+    if max_bytes <= 0:
+        raise ValueError("bounded file size limit must be positive")
+    try:
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC
+    except AttributeError as exc:
+        raise RuntimeError("platform lacks no-follow file support") from exc
+    try:
+        descriptor = os.open(path, flags)
+        with os.fdopen(descriptor, "rb") as source:
+            opened = os.fstat(source.fileno())
+            if not stat.S_ISREG(opened.st_mode):
+                raise RuntimeError(f"{description} must be a regular file")
+            if require_private_mode and stat.S_IMODE(opened.st_mode) & 0o077:
+                raise RuntimeError(f"{description} must have private permissions")
+            payload = source.read(max_bytes + 1)
+            closed = os.fstat(source.fileno())
+    except OSError as exc:
+        raise RuntimeError(f"{description} cannot be read") from exc
+    if len(payload) > max_bytes:
+        raise RuntimeError(f"{description} exceeds the size limit")
+    if (
+        opened.st_dev != closed.st_dev
+        or opened.st_ino != closed.st_ino
+        or opened.st_size != len(payload)
+        or closed.st_size != len(payload)
+        or opened.st_mtime_ns != closed.st_mtime_ns
+    ):
+        raise RuntimeError(f"{description} changed while reading")
+    return payload
+
+
 def bounded_file_manifest(
     root: Path,
     *,
@@ -403,9 +444,13 @@ def bounded_file_manifest(
     max_files: int = MAX_CANDIDATE_REPOSITORY_FILES,
     max_file_bytes: int = MAX_CANDIDATE_REPOSITORY_FILE_BYTES,
     max_total_bytes: int = MAX_CANDIDATE_REPOSITORY_BYTES,
+    max_entries: int | None = None,
+    max_depth: int = MAX_CANDIDATE_REPOSITORY_DEPTH,
 ) -> dict[str, str]:
     """Hash a no-follow file tree with aggregate, per-file, and count limits."""
-    if min(max_files, max_file_bytes, max_total_bytes) <= 0:
+    if max_entries is None:
+        max_entries = max_files * 2
+    if min(max_files, max_file_bytes, max_total_bytes, max_entries, max_depth) <= 0:
         raise ValueError("file manifest limits must be positive")
     try:
         directory_flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
@@ -414,11 +459,18 @@ def bounded_file_manifest(
         raise RuntimeError("platform lacks no-follow file traversal support") from exc
     manifest: dict[str, str] = {}
     total_bytes = 0
+    entry_count = 0
 
     def visit(directory_fd: int, relative_parts: tuple[str, ...]) -> None:
-        nonlocal total_bytes
+        nonlocal entry_count, total_bytes
+        names: list[str] = []
         with os.scandir(directory_fd) as entries:
-            names = sorted(entry.name for entry in entries)
+            for entry in entries:
+                entry_count += 1
+                if entry_count > max_entries:
+                    raise RuntimeError(f"{description} exceeds the entry count limit")
+                names.append(entry.name)
+        names.sort()
         for name in names:
             metadata = os.stat(
                 name, dir_fd=directory_fd, follow_symlinks=False
@@ -426,6 +478,8 @@ def bounded_file_manifest(
             if stat.S_ISLNK(metadata.st_mode):
                 raise RuntimeError(f"{description} contains a symlink")
             if stat.S_ISDIR(metadata.st_mode):
+                if len(relative_parts) + 1 > max_depth:
+                    raise RuntimeError(f"{description} exceeds the depth limit")
                 child_fd = os.open(name, directory_flags, dir_fd=directory_fd)
                 try:
                     opened_directory = os.fstat(child_fd)

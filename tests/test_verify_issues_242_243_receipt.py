@@ -930,7 +930,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
         path.write_bytes(receipt.canonical_json_bytes(document))
 
         with mock.patch.object(
-            receipt._CATALOG_CANDIDATE, "MAX_GIT_CAPTURE_BYTES", 1
+            receipt, "MAX_COMMAND_CACHE_OUTPUT_BYTES", 1
         ), self.assertRaisesRegex(receipt.ReceiptError, "size limit"):
             receipt.validate_receipt(path)
 

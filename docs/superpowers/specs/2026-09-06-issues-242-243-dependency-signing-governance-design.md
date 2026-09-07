@@ -377,6 +377,12 @@ source로 한정한다. 외부 fork, 임의 PR merge ref 또는 검토되지 않
 developer host에서 이 runner로 실행하지 않는다. GitHub PR 검증은 secret이 없는 disposable
 GitHub-hosted runner를 job-level containment로 사용하며, 악성 code containment가 필요한
 별도 검증은 VM/container 또는 플랫폼별 sandbox에서 수행한다.
+CLI는 `--execution-boundary persistent-trusted|disposable-hosted`를 필수로 받는다.
+`persistent-trusted`는 실행 phase의 모든 distinct repository HEAD와 운영자가 별도로 제공한
+반복 `--reviewed-head` 집합이 정확히 같아야 child를 시작한다. `disposable-hosted`는
+`GITHUB_ACTIONS=true`와 `RUNNER_ENVIRONMENT=github-hosted`를 모두 확인하고 reviewed-head
+주장을 받지 않는다. 중앙 CI의 direct helper compile도 같은 hosted-environment assertion을
+통과한 뒤에만 bounded command를 실행한다.
 
 tracked receipt를 담는 evidence commit은 자신의 SHA를 receipt 안에 기록하지 않는다.
 coordinator는 adopted receipt를 포함하는 prospective commit object를 branch ref

@@ -530,6 +530,23 @@ class ValidationRunnerTest(unittest.TestCase):
             )
             self.assertIsNone(runner.read_cache_entry(cache, key))
 
+            with mock.patch.object(runner, "MAX_COMMAND_OUTPUT_BYTES", 16):
+                oversized = b"x" * 17
+                output.write_bytes(oversized)
+                entry.write_text(
+                    json.dumps(
+                        {
+                            "schema_version": 1,
+                            "status": "pass",
+                            "cache_key": key,
+                            "output_path": str(output),
+                            "output_sha256": hashlib.sha256(oversized).hexdigest(),
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                self.assertIsNone(runner.read_cache_entry(cache, key))
+
     def test_redaction_removes_secret_material_and_bounds_diagnostics(self) -> None:
         armor_header = "-----BEGIN PGP " + "PRIVATE KEY BLOCK-----"
         armor_footer = "-----END PGP " + "PRIVATE KEY BLOCK-----"
@@ -1436,6 +1453,41 @@ class ValidationRunnerTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "SHA-256 mismatch"):
                 runner.load_local_receipt(receipt, map_path)
 
+    def test_execution_boundary_requires_reviewed_heads_or_hosted_runner(self) -> None:
+        job = runner.ValidationJob(
+            repository="bluetape4k-dependencies",
+            phase="signing-buildsrc",
+            cwd=Path("/workspace"),
+            command=("./gradlew", "test"),
+            configuration="buildSrc",
+            task_set=("test",),
+            repository_head="a" * 40,
+            helper_sha256="b" * 64,
+            catalog_sha256="c" * 64,
+            bom_sha256="d" * 64,
+            jdk_version="25",
+            gradle_version="9.7.0",
+        )
+        with self.assertRaisesRegex(runner.InputContractError, "boundary"):
+            runner.validate_execution_boundary(None, (), (job.repository_head,), {})
+        with self.assertRaisesRegex(runner.InputContractError, "every exact job HEAD"):
+            runner.validate_execution_boundary(
+                "persistent-trusted", (), (job.repository_head,), {}
+            )
+        runner.validate_execution_boundary(
+            "persistent-trusted", ("a" * 40,), (job.repository_head,), {}
+        )
+        with self.assertRaisesRegex(runner.InputContractError, "GitHub-hosted"):
+            runner.validate_execution_boundary(
+                "disposable-hosted", (), (job.repository_head,), {}
+            )
+        runner.validate_execution_boundary(
+            "disposable-hosted",
+            (),
+            (job.repository_head,),
+            {"GITHUB_ACTIONS": "true", "RUNNER_ENVIRONMENT": "github-hosted"},
+        )
+
     def test_run_phase_rejects_lexical_parent_symlink_before_resolution(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -1486,6 +1538,11 @@ class ValidationRunnerTest(unittest.TestCase):
                 ),
                 mock.patch.object(runner, "sha256_file", return_value="b" * 64),
                 mock.patch.object(
+                    runner,
+                    "required_phase_heads",
+                    return_value=frozenset({"a" * 40}),
+                ),
+                mock.patch.object(
                     runner, "_reserve_validation_budget", side_effect=reserve
                 ),
                 mock.patch.object(runner, "build_phase_jobs", side_effect=build),
@@ -1495,6 +1552,8 @@ class ValidationRunnerTest(unittest.TestCase):
                     "signing-buildsrc",
                     repository_map_path=map_path,
                     receipt_path=receipt_path,
+                    execution_boundary="persistent-trusted",
+                    reviewed_heads=("a" * 40,),
                 )
 
             self.assertEqual(events, ["reserve"])

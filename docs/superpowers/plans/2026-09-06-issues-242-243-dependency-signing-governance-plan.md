@@ -363,6 +363,16 @@ exact `(HEAD, helper digest, task set)` cache key, elapsed, retry count를 기�
 ```bash
 python3 scripts/run-issues-242-243-validation.py \
   --phase signing-buildsrc \
+  --execution-boundary persistent-trusted \
+  --reviewed-head "$CENTRAL_REVIEWED_HEAD" \
+  --reviewed-head "$PROJECTS_REVIEWED_HEAD" \
+  --reviewed-head "$AWS_REVIEWED_HEAD" \
+  --reviewed-head "$EXPOSED_REVIEWED_HEAD" \
+  --reviewed-head "$GRAPH_REVIEWED_HEAD" \
+  --reviewed-head "$IMAGE_REVIEWED_HEAD" \
+  --reviewed-head "$JAVERS_REVIEWED_HEAD" \
+  --reviewed-head "$LEADER_REVIEWED_HEAD" \
+  --reviewed-head "$TEXT_REVIEWED_HEAD" \
   --repository-map "$PWD/build/issues-242-243/repository-map.json" \
   --receipt "$PWD/build/issues-242-243/local-receipt.json"
 ```
@@ -429,6 +439,10 @@ configuration만 입력받는다. 각 child는 600초 timeout을 가진다.
 ```bash
 python3 scripts/run-issues-242-243-validation.py \
   --phase timefold-graphs-baseline \
+  --execution-boundary persistent-trusted \
+  --reviewed-head "$EXPOSED_BASE_SHA" \
+  --reviewed-head "$WORKSHOP_BASE_SHA" \
+  --reviewed-head "$CLINIC_BASE_SHA" \
   --repository-map "$PWD/build/issues-242-243/repository-map.json" \
   --exposed-baseline-root /absolute/path/to/bluetape4k-exposed-base-worktree \
   --workshop-baseline-root /absolute/path/to/timefold-workshop-base-worktree \
@@ -534,6 +548,10 @@ disposable hosted runner를 job-level containment로 사용한다. 악성 source
 ```bash
 python3 scripts/run-issues-242-243-validation.py \
   --phase consumers \
+  --execution-boundary persistent-trusted \
+  --reviewed-head "$EXPOSED_REVIEWED_HEAD" \
+  --reviewed-head "$WORKSHOP_REVIEWED_HEAD" \
+  --reviewed-head "$CLINIC_REVIEWED_HEAD" \
   --repository-map "$PWD/build/issues-242-243/repository-map.json" \
   --workshop-root /Users/debop/work/bluetape4k/timefold-workshop/.worktrees/chore/issues-242-243-validation \
   --clinic-root /Users/debop/work/bluetape4k/clinic-appointment/.worktrees/chore/issues-242-243-validation \
@@ -638,6 +656,8 @@ runner의 `publication-poms` phase는 `scripts/verify-publication-poms.py --work
 ```bash
 python3 scripts/run-issues-242-243-validation.py \
   --phase publication-poms \
+  --execution-boundary persistent-trusted \
+  --reviewed-head "$CENTRAL_REVIEWED_HEAD" \
   --repository-map "$PWD/build/issues-242-243/repository-map.json" \
   --receipt "$PWD/build/issues-242-243/local-receipt.json"
 ```

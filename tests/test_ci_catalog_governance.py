@@ -329,6 +329,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("ThreadPoolExecutor(max_workers=2)", compile_step)
         self.assertIn("catalog_candidate.SIGNING_REPOSITORIES", compile_step)
         self.assertIn("runner.sanitized_environment", compile_step)
+        self.assertIn("runner.require_disposable_hosted_environment", compile_step)
         self.assertIn("runner.run_command", compile_step)
         self.assertNotIn("subprocess.run", compile_step)
         self.assertIn('Path(os.environ["RUNNER_TEMP"])', compile_step)

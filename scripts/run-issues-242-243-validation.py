@@ -50,6 +50,7 @@ PHASES = (
     "consumers",
     "publication-poms",
 )
+EXECUTION_BOUNDARIES = ("persistent-trusted", "disposable-hosted")
 MAX_WORKERS = 2
 CHILD_TIMEOUT_SECONDS = 600
 PUBLICATION_POMS_TIMEOUT_SECONDS = 1800
@@ -59,6 +60,7 @@ DRAIN_SECONDS = 5
 MAX_DIAGNOSTIC_LINES = 80
 MAX_COMMAND_OUTPUT_BYTES = 2 * 1024 * 1024
 MAX_FAILURE_ARTIFACT_BYTES = 2 * 1024 * 1024
+MAX_CACHE_ENTRY_BYTES = 64 * 1024
 GRADLE_FLAGS = (
     "--no-daemon",
     "--no-configuration-cache",
@@ -638,9 +640,14 @@ def read_cache_entry(cache_directory: Path, key: str) -> Optional[dict[str, Any]
     if not entry_path.exists():
         return None
     try:
-        _regular_file(entry_path, "evidence cache entry", require_secure_mode=True)
-        document = json.loads(entry_path.read_bytes().decode("utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError, InputContractError):
+        entry_bytes = catalog_candidate.bounded_regular_file_bytes(
+            entry_path,
+            description="evidence cache entry",
+            max_bytes=MAX_CACHE_ENTRY_BYTES,
+            require_private_mode=True,
+        )
+        document = json.loads(entry_bytes.decode("utf-8"))
+    except (OSError, RuntimeError, UnicodeDecodeError, json.JSONDecodeError):
         return None
     if not isinstance(document, dict) or document.get("schema_version") != 1:
         return None
@@ -658,11 +665,15 @@ def read_cache_entry(cache_directory: Path, key: str) -> Optional[dict[str, Any]
     if not _is_relative_to(output_path, cache_directory):
         return None
     try:
-        _regular_file(output_path, "evidence cache output", require_secure_mode=True)
-        if sha256_file(output_path) != digest:
-            return None
-        output = output_path.read_bytes()
-    except OSError:
+        output = catalog_candidate.bounded_regular_file_bytes(
+            output_path,
+            description="evidence cache output",
+            max_bytes=MAX_COMMAND_OUTPUT_BYTES,
+            require_private_mode=True,
+        )
+    except (OSError, RuntimeError):
+        return None
+    if sha256_bytes(output) != digest:
         return None
     try:
         output_text = output.decode("utf-8", errors="strict")
@@ -688,8 +699,12 @@ def write_cache_entry(
 ) -> dict[str, Any]:
     if not SHA256_RE.fullmatch(key):
         raise InputContractError("invalid evidence cache key")
+    if len(output) > MAX_COMMAND_OUTPUT_BYTES:
+        raise InputContractError("evidence cache output exceeds the size limit")
     cache_directory = _safe_cache_directory(cache_directory)
     safe_output = redact_output(output).encode("utf-8")
+    if len(safe_output) > MAX_COMMAND_OUTPUT_BYTES:
+        raise InputContractError("redacted cache output exceeds the size limit")
     output_path = cache_directory / f"{key}.output"
     digest = sha256_bytes(safe_output)
     _atomic_write(output_path, safe_output)
@@ -1150,6 +1165,88 @@ def run_bounded_jobs(
         cancelled=tuple(ordered(cancelled)),
         first_failure=first_failure,
     )
+
+
+def require_disposable_hosted_environment(environment: Mapping[str, str]) -> None:
+    """Require GitHub's disposable hosted-runner boundary."""
+
+    if (
+        environment.get("GITHUB_ACTIONS") != "true"
+        or environment.get("RUNNER_ENVIRONMENT") != "github-hosted"
+    ):
+        raise InputContractError(
+            "disposable-hosted execution requires a GitHub-hosted Actions runner"
+        )
+
+
+def validate_execution_boundary(
+    boundary: Optional[str],
+    reviewed_heads: Sequence[str],
+    required_heads: Iterable[str],
+    environment: Mapping[str, str],
+) -> None:
+    """Bind execution to either reviewed heads or a disposable hosted job."""
+
+    if boundary not in EXECUTION_BOUNDARIES:
+        raise InputContractError("validation execution boundary is required")
+    required_head_set = set(required_heads)
+    if not required_head_set or any(
+        COMMIT_RE.fullmatch(head) is None for head in required_head_set
+    ):
+        raise InputContractError("validation job has an invalid repository HEAD")
+    if boundary == "disposable-hosted":
+        require_disposable_hosted_environment(environment)
+        if reviewed_heads:
+            raise InputContractError(
+                "disposable-hosted execution must not claim persistent reviewed heads"
+            )
+        return
+    if len(reviewed_heads) != len(set(reviewed_heads)) or any(
+        COMMIT_RE.fullmatch(head) is None for head in reviewed_heads
+    ):
+        raise InputContractError("reviewed HEAD assertions are invalid")
+    if set(reviewed_heads) != required_head_set:
+        raise InputContractError(
+            "persistent-trusted execution requires every exact job HEAD to be reviewed"
+        )
+
+
+def required_phase_heads(
+    phase: str,
+    repository_map: Mapping[str, Any],
+    receipt: Mapping[str, Any],
+    repositories: Optional[Sequence[str]],
+) -> frozenset[str]:
+    """Derive the phase trust set without executing repository code."""
+
+    entries = _entry_by_name(repository_map)
+    if phase == "signing-buildsrc":
+        names = tuple(repositories) if repositories is not None else SIGNING_REPOSITORIES
+        if set(names) - set(SIGNING_REPOSITORIES):
+            raise InputContractError("signing phase repository is not allowlisted")
+        heads = (str(entries[name]["candidate_head"]) for name in names)
+    elif phase in {"candidate-bom-publication", "publication-poms"}:
+        if repositories:
+            raise InputContractError(f"{phase} does not accept repository selection")
+        heads = (str(entries["bluetape4k-dependencies"]["candidate_head"]),)
+    elif phase == "timefold-graphs-baseline":
+        heads = (
+            str(entries["bluetape4k-exposed"]["base_sha"]),
+            str(_consumer_entry(receipt, "timefold-workshop")["base_sha"]),
+            str(_consumer_entry(receipt, "clinic-appointment")["base_sha"]),
+        )
+    elif phase in {"timefold-graphs-candidate", "consumers"}:
+        heads = (
+            str(entries["bluetape4k-exposed"]["candidate_head"]),
+            str(_consumer_entry(receipt, "timefold-workshop")["candidate_head"]),
+            str(_consumer_entry(receipt, "clinic-appointment")["candidate_head"]),
+        )
+    else:
+        raise InputContractError(f"unknown validation phase: {phase}")
+    result = frozenset(heads)
+    if not result or any(COMMIT_RE.fullmatch(head) is None for head in result):
+        raise InputContractError("validation phase has an invalid repository HEAD")
+    return result
 
 
 def _load_receipt_module() -> Any:
@@ -2670,6 +2767,8 @@ def run_phase(
     cache_directory: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
     dry_run: bool = False,
+    execution_boundary: Optional[str] = None,
+    reviewed_heads: Sequence[str] = (),
 ) -> PhaseResult:
     # Reject lexical parent/component symlinks before any canonical resolution.
     repository_map_path = _canonical_input_path(repository_map_path, "repository map")
@@ -2715,6 +2814,12 @@ def run_phase(
     ) != expected_cache_directory:
         raise InputContractError("evidence cache must use the receipt-bound path")
     cache_directory = expected_cache_directory
+    validate_execution_boundary(
+        execution_boundary,
+        reviewed_heads,
+        required_phase_heads(phase, repository_map, receipt, repositories),
+        os.environ,
+    )
     reserved_budget: Optional[float] = None
     phase_started: Optional[float] = None
     deadline: Optional[float] = None
@@ -2830,6 +2935,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--candidate-maven-repository", type=Path)
     parser.add_argument("--cache-dir", type=Path)
     parser.add_argument("--repo", action="append", dest="repositories")
+    parser.add_argument(
+        "--execution-boundary", choices=EXECUTION_BOUNDARIES, required=True
+    )
+    parser.add_argument("--reviewed-head", action="append", default=[])
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--summary", action="store_true")
     return parser
@@ -2851,6 +2960,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             cache_directory=args.cache_dir,
             repositories=args.repositories,
             dry_run=args.dry_run,
+            execution_boundary=args.execution_boundary,
+            reviewed_heads=args.reviewed_head,
         )
     except (InputContractError, ValidationFailure, OSError, RuntimeError) as exc:
         print(redact_output(str(exc)), file=sys.stderr)
