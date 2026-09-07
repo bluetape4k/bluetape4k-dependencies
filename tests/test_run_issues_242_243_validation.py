@@ -538,6 +538,10 @@ class ValidationRunnerTest(unittest.TestCase):
             "warning: api_key=sentinel-api-key\n"
             "fatal: access_token=sentinel-access-token\n"
             "fatal: client-secret: sentinel-client-secret\n"
+            "fatal: accessToken=sentinel-camel-access\n"
+            "fatal: clientSecret: sentinel-camel-client\n"
+            "fatal: apiKey=sentinel-camel-api\n"
+            "https://example.invalid/repo?accessToken=sentinel-camel-query\n"
             "prefix Authorization: Basic sentinel-basic\n"
             "https://user:sentinel-userinfo@example.invalid/repo.git\n"
             "https://sentinel-token-only@example.invalid/repo.git\n"
@@ -551,6 +555,10 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-api-key",
             "sentinel-access-token",
             "sentinel-client-secret",
+            "sentinel-camel-access",
+            "sentinel-camel-client",
+            "sentinel-camel-api",
+            "sentinel-camel-query",
             "sentinel-basic",
             "sentinel-userinfo",
             "sentinel-token-only",

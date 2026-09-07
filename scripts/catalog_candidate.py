@@ -13,6 +13,7 @@ import re
 import stat
 import subprocess
 import tempfile
+import urllib.parse
 from pathlib import Path
 from typing import Any
 
@@ -53,21 +54,20 @@ PRIVATE_ARMOR_RE = re.compile(
     r"-----END [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----",
     re.IGNORECASE | re.DOTALL,
 )
-SECRET_ASSIGNMENT_RE = re.compile(
-    r"(?im)\b((?:[A-Za-z0-9]+[_-])*(?:password|passwd|token|secret|credential|"
-    r"private[_-]?key|secret[_-]?access[_-]?key|access[_-]?key(?:[_-]?id)?|"
-    r"api[_-]?key|signing[_-]?key|key)(?:[_-][A-Za-z0-9]+)*)\b"
-    r"([ \t]*[=:][ \t]*)([^\r\n]*(?:\r?\n[ \t]+[^\r\n]*)*)"
+ASSIGNMENT_CANDIDATE_RE = re.compile(
+    r"(?m)(?<![A-Za-z0-9_-])(?=([A-Za-z][A-Za-z0-9_-]*)\b"
+    r"([ \t]*[=:][ \t]*)([^\r\n]*(?:\r?\n[ \t]+[^\r\n]*)*))"
 )
 SECRET_URI_RE = re.compile(r"(?i)(://)[^/?#\s]*@")
 AUTHORIZATION_RE = re.compile(
     r"(?i)(\bauthorization\s*[:=]\s*)(?:(?:bearer|basic)\s+)?[^\r\n]+"
 )
 BEARER_RE = re.compile(r"(?i)(\bbearer\s+)[^\s,;]+")
-QUERY_SECRET_RE = re.compile(
-    r"(?i)([?&](?:(?:[A-Za-z0-9]+[_-])*(?:token|password|passwd|secret|"
-    r"credential)|api[_-]?key|access[_-]?key(?:[_-]?id)?|client[_-]?secret)"
-    r"\s*=)[^&#\s]+"
+QUERY_PARAMETER_RE = re.compile(
+    r"([?&])([A-Za-z0-9_.%-]+)(\s*=\s*)([^&#\s]+)"
+)
+SECRET_NAME_PARTS = frozenset(
+    {"password", "passwd", "token", "secret", "credential", "key"}
 )
 
 
@@ -94,6 +94,35 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _is_secret_name(value: str) -> bool:
+    decoded = urllib.parse.unquote_plus(value)
+    separated = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", decoded)
+    separated = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", separated)
+    parts = re.sub(r"[^A-Za-z0-9]+", "_", separated).lower().split("_")
+    return any(part in SECRET_NAME_PARTS for part in parts)
+
+
+def _redact_assignments(value: str) -> str:
+    parts: list[str] = []
+    cursor = 0
+    for match in ASSIGNMENT_CANDIDATE_RE.finditer(value):
+        key_start, _key_end = match.span(1)
+        if key_start < cursor or not _is_secret_name(match.group(1)):
+            continue
+        parts.append(value[cursor:key_start])
+        parts.append(f"{match.group(1)}{match.group(2)}<redacted>")
+        cursor = match.end(3)
+    parts.append(value[cursor:])
+    return "".join(parts)
+
+
+def _redact_query_parameter(match: re.Match[str]) -> str:
+    prefix, key, separator, _value = match.groups()
+    if _is_secret_name(key):
+        return f"{prefix}{key}{separator}<redacted>"
+    return match.group(0)
+
+
 def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
     """Return credential-free diagnostic text suitable for logs and errors."""
     if isinstance(value, bytes):
@@ -103,8 +132,8 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
     text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
     text = BEARER_RE.sub(r"\1<redacted>", text)
-    text = QUERY_SECRET_RE.sub(r"\1<redacted>", text)
-    text = SECRET_ASSIGNMENT_RE.sub(r"\1\2<redacted>", text)
+    text = QUERY_PARAMETER_RE.sub(_redact_query_parameter, text)
+    text = _redact_assignments(text)
     text = SECRET_URI_RE.sub(r"\1<redacted>@", text)
     text = ANSI_RE.sub("", text)
     text = CONTROL_RE.sub("", text)

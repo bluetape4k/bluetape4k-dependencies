@@ -33,9 +33,20 @@ class CatalogCandidateTest(unittest.TestCase):
             ("fatal: access_token=access-token-secret", "access-token-secret"),
             ("fatal: client-secret: client-secret-value", "client-secret-value"),
             ("fatal: api_key=api-key-secret", "api-key-secret"),
+            ("fatal: accessToken=camel-access-secret", "camel-access-secret"),
+            ("fatal: clientSecret: camel-client-secret", "camel-client-secret"),
+            ("fatal: apiKey=camel-api-secret", "camel-api-secret"),
             (
                 "fatal: https://example.invalid/repo?access_token=query-secret",
                 "query-secret",
+            ),
+            (
+                "fatal: https://example.invalid/repo?accessToken=camel-query-secret",
+                "camel-query-secret",
+            ),
+            (
+                "fatal: https://example.invalid/repo?access%54oken=encoded-key-secret",
+                "encoded-key-secret",
             ),
             ("prefix Authorization: Basic embedded-secret", "embedded-secret"),
             (
@@ -68,6 +79,10 @@ class CatalogCandidateTest(unittest.TestCase):
                         candidate._git(Path("/tmp/example"), "rev-parse", "missing")
 
                 self.assertNotIn(secret, str(raised.exception))
+
+    def test_redactor_preserves_non_secret_assignments_and_query_values(self) -> None:
+        diagnostic = "status=healthy\nmonkey: banana\nhttps://example.invalid/?mode=safe"
+        self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)
 
     def test_origin_mismatch_reports_only_a_safe_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

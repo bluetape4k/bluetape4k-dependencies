@@ -41,6 +41,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
     def test_git_failure_and_cli_errors_reuse_credential_redaction(self) -> None:
         raw = (
             "fatal: access_token=sentinel-access-token\n"
+            "fatal: accessToken=sentinel-camel-access\n"
+            "fatal: clientSecret: sentinel-camel-client\n"
+            "fatal: apiKey=sentinel-camel-api\n"
+            "https://example.invalid/repo?accessToken=sentinel-camel-query\n"
             "prefix Authorization: Basic sentinel-basic\n"
             "https://user:sentinel-userinfo@example.invalid/repo.git\n"
             "https://sentinel-token-only@example.invalid/repo.git\n"
@@ -53,6 +57,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
                 receipt._git(Path("/tmp/example"), "status")
         for sentinel in (
             "sentinel-access-token",
+            "sentinel-camel-access",
+            "sentinel-camel-client",
+            "sentinel-camel-api",
+            "sentinel-camel-query",
             "sentinel-basic",
             "sentinel-userinfo",
             "sentinel-token-only",
