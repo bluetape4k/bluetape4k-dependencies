@@ -73,6 +73,7 @@
       "bluetape4k-projects": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
       "bluetape4k-aws": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
       "bluetape4k-exposed": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+      "bluetape4k-graph": "55b5269bddd2bd041d5f282abcd0238dc242c171",
       "bluetape4k-javers": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
       "bluetape4k-leader": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b"
     },
@@ -87,7 +88,12 @@
       "bluetape4k-leader",
       "bluetape4k-text"
     ],
-    "official-release-repositories": [
+    "official-release-repositories": [],
+    "development-snapshot-repositories": [
+      {
+        "repository": "bluetape4k-workshop",
+        "catalog-version-key": "bluetape4k-dependencies-version"
+      },
       {
         "repository": "clinic-appointment",
         "catalog-version-key": "bluetape4k-dependencies"
@@ -97,10 +103,6 @@
         "catalog-version-key": "bluetape4k-dependencies"
       },
       {
-        "repository": "bluetape4k-workshop",
-        "catalog-version-key": "bluetape4k-dependencies-version"
-      },
-      {
         "repository": "exposed-r2dbc-workshop",
         "catalog-version-key": "bluetape4k-dependencies"
       },
@@ -108,7 +110,6 @@
         "repository": "exposed-workshop",
         "catalog-version-key": "bluetape4k-dependencies"
       }
-    ],
-    "development-snapshot-repositories": []
+    ]
   }
 }
