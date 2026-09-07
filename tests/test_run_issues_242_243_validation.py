@@ -604,7 +604,16 @@ class ValidationRunnerTest(unittest.TestCase):
             "https://user%3Asentinel-encoded@example.invalid/repo.git\n"
             "password: |\n  sentinel-folded\n"
             "-----BEGIN PGP PRIVATE KEY BLOCK-----\n"
-            "sentinel-truncated-private-body"
+            "sentinel-truncated-private-body\n"
+            "fatal: token＝sentinel-unicode-equals\n"
+            "fatal: token：sentinel-unicode-colon\n"
+            "https://x.invalid/?token＝sentinel-unicode-query\n"
+            "fatal: token\r\n=sentinel-crlf-delimiter\n"
+            "fatal: to\nken=sentinel-cross-line\n"
+            "fatal: mytoken=sentinel-contiguous-token\n"
+            "fatal: tokenvalue=sentinel-contiguous-token-prefix\n"
+            "fatal: mysecret=sentinel-contiguous-secret\n"
+            "fatal: mykey=sentinel-contiguous-key"
         )
         for sentinel in (
             "sentinel-password",
@@ -677,6 +686,15 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-token-only",
             "sentinel-encoded",
             "sentinel-folded",
+            "sentinel-unicode-equals",
+            "sentinel-unicode-colon",
+            "sentinel-unicode-query",
+            "sentinel-crlf-delimiter",
+            "sentinel-cross-line",
+            "sentinel-contiguous-token",
+            "sentinel-contiguous-token-prefix",
+            "sentinel-contiguous-secret",
+            "sentinel-contiguous-key",
         ):
             self.assertNotIn(sentinel, bypasses)
         lines = runner.bounded_diagnostics("\n".join(f"line-{i}" for i in range(100)))
@@ -1271,6 +1289,62 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-aws-id", artifact_text)
             self.assertNotIn("sentinel-my-secret", artifact_text)
 
+    def test_raw_control_bytes_fail_closed_for_command_and_cache_output(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            artifact = root / "failure.log"
+            result = runner.run_command(
+                command=(
+                    sys.executable,
+                    "-c",
+                    "import os, sys; os.write(2, b'before to\\x9b31mken=sentinel-raw-csi after'); sys.exit(1)",
+                ),
+                cwd=root,
+                environment=os.environ,
+                timeout_seconds=2,
+                failure_artifact=artifact,
+            )
+            self.assertEqual(result.status, "fail")
+            self.assertEqual(result.stderr, "<redacted>")
+            self.assertNotIn("sentinel-raw-csi", result.diagnostics)
+            self.assertEqual(artifact.read_text(encoding="utf-8"), "<redacted>")
+
+            cache = root / "cache"
+            key = "b" * 64
+            runner.write_cache_entry(
+                cache,
+                key,
+                b"before to\xffken=sentinel-invalid-utf8 after",
+            )
+            hit = runner.read_cache_entry(cache, key)
+            self.assertIsNotNone(hit)
+            self.assertEqual(hit["output"], "<redacted>")
+            self.assertNotIn(
+                "sentinel-invalid-utf8",
+                (cache / f"{key}.output").read_text(encoding="utf-8"),
+            )
+
+    def test_output_limit_terminates_process_group_and_bounds_capture(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(
+            runner, "MAX_COMMAND_OUTPUT_BYTES", 4096
+        ):
+            root = Path(directory).resolve()
+            result = runner.run_command(
+                command=(
+                    sys.executable,
+                    "-c",
+                    "import os; chunk=b'x'*4096\nwhile True: os.write(1, chunk)",
+                ),
+                cwd=root,
+                environment=os.environ,
+                timeout_seconds=5,
+            )
+            self.assertEqual(result.status, "fail")
+            self.assertFalse(result.timed_out)
+            self.assertTrue(result.process_group_terminated)
+            self.assertIn("output limit exceeded", result.diagnostics)
+            self.assertLessEqual(len(result.stdout.encode("utf-8")), 4096)
+
     def test_receipt_binding_rejects_map_path_or_digest_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()
@@ -1835,6 +1909,9 @@ class ValidationRunnerTest(unittest.TestCase):
                 "to%EF%BC%8500ken=sentinel-arg-fullwidth-percent",
                 "--myapikey=sentinel-arg-compound-prefix",
                 "apikeyfoo=sentinel-arg-compound-suffix",
+                "mytoken=sentinel-arg-contiguous",
+                "token＝sentinel-arg-unicode-delimiter",
+                "to\nken=sentinel-arg-cross-line",
             )
         )
         rendered_command = " ".join(command)
@@ -1855,6 +1932,9 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-arg-fullwidth-percent",
             "sentinel-arg-compound-prefix",
             "sentinel-arg-compound-suffix",
+            "sentinel-arg-contiguous",
+            "sentinel-arg-unicode-delimiter",
+            "sentinel-arg-cross-line",
         ):
             self.assertNotIn(sentinel, rendered_command)
         self.assertEqual(
@@ -1875,6 +1955,8 @@ class ValidationRunnerTest(unittest.TestCase):
                     "to%EF%BC%8500ken": "sentinel-meta-fullwidth-percent",
                     "myapikey": "sentinel-meta-compound-prefix",
                     "apikeyfoo": "sentinel-meta-compound-suffix",
+                    "mytoken": "sentinel-meta-contiguous-token",
+                    "mykey": "sentinel-meta-contiguous-key",
                     "to\u200bken": "sentinel-meta-raw-format",
                     "safe": "ok",
                 }
@@ -1908,6 +1990,8 @@ class ValidationRunnerTest(unittest.TestCase):
                     "to%EF%BC%8500ken": "sentinel-meta-fullwidth-percent",
                     "myapikey": "sentinel-meta-compound-prefix",
                     "apikeyfoo": "sentinel-meta-compound-suffix",
+                    "mytoken": "sentinel-meta-contiguous-token",
+                    "mykey": "sentinel-meta-contiguous-key",
                     "to\u200bken": "sentinel-meta-raw-format",
                     "safe": "ok",
                 },
@@ -1935,6 +2019,8 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-meta-fullwidth-percent", cache_text)
             self.assertNotIn("sentinel-meta-compound-prefix", cache_text)
             self.assertNotIn("sentinel-meta-compound-suffix", cache_text)
+            self.assertNotIn("sentinel-meta-contiguous-token", cache_text)
+            self.assertNotIn("sentinel-meta-contiguous-key", cache_text)
             self.assertNotIn("sentinel-meta-raw-format", cache_text)
             self.assertEqual(output["safe"], "ok")
 

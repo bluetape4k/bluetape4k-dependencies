@@ -209,6 +209,21 @@ class CatalogCandidateTest(unittest.TestCase):
                 "-----BEGIN PGP PRIVATE KEY BLOCK-----\ntruncated-private-body",
                 "truncated-private-body",
             ),
+            ("fatal: token＝unicode-equals-secret", "unicode-equals-secret"),
+            ("fatal: token：unicode-colon-secret", "unicode-colon-secret"),
+            (
+                "fatal: https://x.invalid/?token＝unicode-query-secret",
+                "unicode-query-secret",
+            ),
+            ("fatal: token\r\n=crlf-delimiter-secret", "crlf-delimiter-secret"),
+            ("fatal: to\nken=cross-line-secret", "cross-line-secret"),
+            ("fatal: mytoken=contiguous-token-secret", "contiguous-token-secret"),
+            (
+                "fatal: tokenvalue=contiguous-token-prefix-secret",
+                "contiguous-token-prefix-secret",
+            ),
+            ("fatal: mysecret=contiguous-secret-secret", "contiguous-secret-secret"),
+            ("fatal: mykey=contiguous-key-secret", "contiguous-key-secret"),
         )
         for stderr, secret in cases:
             with self.subTest(stderr=stderr):
@@ -227,6 +242,30 @@ class CatalogCandidateTest(unittest.TestCase):
                         candidate._git(Path("/tmp/example"), "rev-parse", "missing")
 
                 self.assertNotIn(secret, str(raised.exception))
+
+    def test_invalid_utf8_and_raw_c1_bytes_fail_closed(self) -> None:
+        for raw in (
+            b"before to\x9b31mken=raw-csi-secret after",
+            b"before to\x9dtitle\x9cken=raw-osc-secret after",
+            b"before to\xffken=invalid-utf8-secret after",
+        ):
+            with self.subTest(raw=raw):
+                self.assertEqual(candidate.redact_diagnostic(raw), "<redacted>")
+
+    def test_secret_name_classifier_bounds_ambiguous_identifiers(self) -> None:
+        self.assertTrue(candidate.is_secret_name("field_" * 100))
+        for safe in (
+            "credentialing",
+            "hockey",
+            "keyboard",
+            "monkey",
+            "my_monkey",
+            "passwordless",
+            "secretariat",
+            "tokenization",
+        ):
+            with self.subTest(safe=safe):
+                self.assertFalse(candidate.is_secret_name(safe))
 
     def test_redactor_preserves_non_secret_assignments_and_query_values(self) -> None:
         diagnostic = (

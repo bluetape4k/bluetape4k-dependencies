@@ -56,6 +56,7 @@ TOTAL_VALIDATION_BUDGET_SECONDS = 90 * 60
 TERMINATE_GRACE_SECONDS = 5
 DRAIN_SECONDS = 5
 MAX_DIAGNOSTIC_LINES = 80
+MAX_COMMAND_OUTPUT_BYTES = 2 * 1024 * 1024
 MAX_FAILURE_ARTIFACT_BYTES = 2 * 1024 * 1024
 GRADLE_FLAGS = (
     "--no-daemon",
@@ -820,6 +821,14 @@ def _terminate_process_group(process: subprocess.Popen[bytes]) -> str:
         return "SIGKILL"
 
 
+def _read_spool_tail(spool: Any, size: int, budget: int) -> bytes:
+    if budget <= 0:
+        return b""
+    spool.flush()
+    spool.seek(max(0, size - budget))
+    return spool.read(budget)
+
+
 def run_command(
     *,
     command: Sequence[str],
@@ -842,6 +851,7 @@ def run_command(
     group_terminated = False
     termination_signal: Optional[str] = None
     cancelled = False
+    output_limit_exceeded = False
     stdout = b""
     stderr = b""
     launch_error: Optional[str] = None
@@ -863,40 +873,67 @@ def run_command(
                 diagnostics=text,
                 cancelled=True,
             )
-        process = subprocess.Popen(
-            [str(value) for value in command],
-            cwd=str(cwd),
-            env=child_environment(environment),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            start_new_session=True,
-        )
-        deadline = time.monotonic() + timeout_seconds
-        while True:
-            if cancel_event is not None and cancel_event.is_set():
-                cancelled = True
-                group_terminated = True
-                termination_signal = _terminate_process_group(process)
-                stdout, stderr = process.communicate()
-                break
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                timed_out = True
-                group_terminated = True
-                termination_signal = _terminate_process_group(process)
-                stdout, stderr = process.communicate()
-                break
-            try:
-                stdout, stderr = process.communicate(timeout=min(0.2, remaining))
-                break
-            except subprocess.TimeoutExpired:
-                continue
+        with tempfile.TemporaryFile() as stdout_spool, tempfile.TemporaryFile() as stderr_spool:
+            process = subprocess.Popen(
+                [str(value) for value in command],
+                cwd=str(cwd),
+                env=child_environment(environment),
+                stdout=stdout_spool,
+                stderr=stderr_spool,
+                start_new_session=True,
+            )
+            deadline = time.monotonic() + timeout_seconds
+            while True:
+                stdout_size = os.fstat(stdout_spool.fileno()).st_size
+                stderr_size = os.fstat(stderr_spool.fileno()).st_size
+                if stdout_size + stderr_size > MAX_COMMAND_OUTPUT_BYTES:
+                    output_limit_exceeded = True
+                    group_terminated = process.poll() is None
+                    if group_terminated:
+                        termination_signal = _terminate_process_group(process)
+                    break
+                if cancel_event is not None and cancel_event.is_set():
+                    cancelled = True
+                    group_terminated = True
+                    termination_signal = _terminate_process_group(process)
+                    break
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    timed_out = True
+                    group_terminated = True
+                    termination_signal = _terminate_process_group(process)
+                    break
+                try:
+                    process.wait(timeout=min(0.2, remaining))
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
+
+            stdout_size = os.fstat(stdout_spool.fileno()).st_size
+            stderr_size = os.fstat(stderr_spool.fileno()).st_size
+            if stdout_size + stderr_size > MAX_COMMAND_OUTPUT_BYTES:
+                output_limit_exceeded = True
+            if stdout_size + stderr_size <= MAX_COMMAND_OUTPUT_BYTES:
+                stdout_budget = stdout_size
+                stderr_budget = stderr_size
+            else:
+                stderr_budget = min(stderr_size, MAX_COMMAND_OUTPUT_BYTES // 2)
+                stdout_budget = min(
+                    stdout_size, MAX_COMMAND_OUTPUT_BYTES - stderr_budget
+                )
+                stderr_budget = min(
+                    stderr_size, MAX_COMMAND_OUTPUT_BYTES - stdout_budget
+                )
+            stdout = _read_spool_tail(stdout_spool, stdout_size, stdout_budget)
+            stderr = _read_spool_tail(stderr_spool, stderr_size, stderr_budget)
     except OSError as exc:
         launch_error = f"cannot launch validation command: {exc.__class__.__name__}"
     ended = time.monotonic()
     raw_output = stdout + (b"\n" if stdout and stderr else b"") + stderr
     if launch_error:
         raw_output = launch_error.encode("utf-8")
+    elif output_limit_exceeded:
+        raw_output = b"validation command output limit exceeded\n" + raw_output
     redacted = redact_output(raw_output)
     output_digest = sha256_bytes(redacted.encode("utf-8"))
     returncode = None if process is None else process.returncode
@@ -904,7 +941,12 @@ def run_command(
         "blocked"
         if cancelled
         else "pass"
-        if process is not None and returncode == 0 and not timed_out
+        if (
+            process is not None
+            and returncode == 0
+            and not timed_out
+            and not output_limit_exceeded
+        )
         else "fail"
     )
     artifact: Optional[Path] = None

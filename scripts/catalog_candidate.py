@@ -67,7 +67,11 @@ BEARER_RE = re.compile(r"(?i)(\bbearer\s+)[^\s,;]+")
 QUERY_PARAMETER_RE = re.compile(
     r"([?&])([^=&#\s]+)(\s*=\s*)([^&#\s]+)"
 )
+LINE_BREAK_IDENTIFIER_RE = re.compile(
+    r"(?m)(?:^|[ \t?&])([^\s=:?&#]+(?:\r\n?|\n)[^\s=:?&#]*)(?=[ \t]*[=:])"
+)
 MAX_IDENTIFIER_DECODE_ROUNDS = 4
+MAX_SECRET_IDENTIFIER_CHARS = 512
 SECRET_NAME_PARTS = frozenset(
     {"password", "passwd", "token", "secret", "credential", "key"}
 )
@@ -88,6 +92,18 @@ SECRET_COMPOUND_NAMES = frozenset(
         "secretaccesskey",
         "signingkey",
         "signingpassword",
+    }
+)
+SAFE_SECRET_LIKE_NAMES = frozenset(
+    {
+        "credentialing",
+        "hockey",
+        "keyboard",
+        "monkey",
+        "mymonkey",
+        "passwordless",
+        "secretariat",
+        "tokenization",
     }
 )
 
@@ -159,11 +175,10 @@ def _normalize_secret_identifier(value: str) -> tuple[str, bool]:
     return normalized, has_encoded_remainder or has_disallowed_control
 
 
-def is_secret_name(value: str) -> bool:
-    """Classify normalized snake, kebab, camel, encoded, and compound names."""
+def _collapse_secret_identifier(value: str) -> tuple[str, bool]:
     decoded, is_ambiguous = _normalize_secret_identifier(value)
     if is_ambiguous:
-        return True
+        return "", True
     separated = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", decoded)
     separated = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", separated)
     parts = tuple(
@@ -171,15 +186,48 @@ def is_secret_name(value: str) -> bool:
         for part in re.sub(r"[^A-Za-z0-9]+", "_", separated).lower().split("_")
         if part
     )
-    secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
-    collapsed = "".join(parts)
-    if any(name in collapsed for name in SECRET_COMPOUND_NAMES):
+    return "".join(parts), False
+
+
+def is_secret_name(value: str) -> bool:
+    """Classify normalized snake, kebab, camel, encoded, and compound names."""
+    if len(value) > MAX_SECRET_IDENTIFIER_CHARS:
         return True
+    collapsed, is_ambiguous = _collapse_secret_identifier(value)
+    if is_ambiguous:
+        return True
+    secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
+    if collapsed in SAFE_SECRET_LIKE_NAMES:
+        return False
+    return any(name in collapsed for name in secret_names)
+
+
+def _has_compatibility_assignment_delimiter(value: str) -> bool:
     return any(
-        "".join(parts[start:end]) in secret_names
-        for start in range(len(parts))
-        for end in range(start + 1, len(parts) + 1)
+        character not in {"=", ":"}
+        and unicodedata.normalize("NFKC", character) in {"=", ":"}
+        for character in value
     )
+
+
+def _contains_line_break_secret_candidate(value: str) -> bool:
+    secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
+    for match in LINE_BREAK_IDENTIFIER_RE.finditer(value):
+        left, right = re.split(r"\r\n?|\n", match.group(1), maxsplit=1)
+        if is_secret_name(left) or is_secret_name(right):
+            return True
+        left_collapsed, left_ambiguous = _collapse_secret_identifier(left)
+        right_collapsed, right_ambiguous = _collapse_secret_identifier(right)
+        if left_ambiguous or right_ambiguous:
+            return True
+        if any(
+            left_collapsed.endswith(secret_name[:split])
+            and right_collapsed.startswith(secret_name[split:])
+            for secret_name in secret_names
+            for split in range(1, len(secret_name))
+        ):
+            return True
+    return False
 
 
 def _redact_assignments(value: str) -> str:
@@ -206,11 +254,21 @@ def _redact_query_parameter(match: re.Match[str]) -> str:
 def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
     """Return credential-free diagnostic text suitable for logs and errors."""
     if isinstance(value, bytes):
-        text = value.decode("utf-8", errors="replace")
+        try:
+            text = value.decode("utf-8", errors="strict")
+        except UnicodeDecodeError:
+            text = "<redacted>"
+            return text[:max_chars] if max_chars is not None else text
     else:
         text = str(value)
+    if _has_compatibility_assignment_delimiter(text):
+        text = "<redacted>"
+        return text[:max_chars] if max_chars is not None else text
     text, has_unsupported_sequence = _strip_obfuscating_controls(text)
     if has_unsupported_sequence:
+        text = "<redacted>"
+        return text[:max_chars] if max_chars is not None else text
+    if ("\r" in text or "\n" in text) and _contains_line_break_secret_candidate(text):
         text = "<redacted>"
         return text[:max_chars] if max_chars is not None else text
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)

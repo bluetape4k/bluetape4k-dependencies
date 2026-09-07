@@ -107,7 +107,16 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "https://user%3Asentinel-encoded@example.invalid/repo.git\n"
             "password: |\n  sentinel-folded\n"
             "-----BEGIN PGP PRIVATE KEY BLOCK-----\n"
-            "sentinel-truncated-private-body"
+            "sentinel-truncated-private-body\n"
+            "fatal: token＝sentinel-unicode-equals\n"
+            "fatal: token：sentinel-unicode-colon\n"
+            "https://x.invalid/?token＝sentinel-unicode-query\n"
+            "fatal: token\r\n=sentinel-crlf-delimiter\n"
+            "fatal: to\nken=sentinel-cross-line\n"
+            "fatal: mytoken=sentinel-contiguous-token\n"
+            "fatal: tokenvalue=sentinel-contiguous-token-prefix\n"
+            "fatal: mysecret=sentinel-contiguous-secret\n"
+            "fatal: mykey=sentinel-contiguous-key"
         )
         failure = subprocess.CalledProcessError(128, ["git", "status"], stderr=raw)
         with mock.patch.object(receipt.subprocess, "run", side_effect=failure):
@@ -179,6 +188,15 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-token-only",
             "sentinel-encoded",
             "sentinel-folded",
+            "sentinel-unicode-equals",
+            "sentinel-unicode-colon",
+            "sentinel-unicode-query",
+            "sentinel-crlf-delimiter",
+            "sentinel-cross-line",
+            "sentinel-contiguous-token",
+            "sentinel-contiguous-token-prefix",
+            "sentinel-contiguous-secret",
+            "sentinel-contiguous-key",
         ):
             self.assertNotIn(sentinel, str(raised.exception))
 
