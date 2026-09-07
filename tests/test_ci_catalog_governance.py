@@ -265,6 +265,12 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         self.assertIn("fetch --no-tags --filter=blob:none origin", clone_step)
         self.assertIn("clone_args=(--depth 1)", clone_step)
         self.assertIn("clone_args=(--filter=blob:none --no-checkout)", clone_step)
+        self.assertIn(
+            'clone_args=(--filter=blob:none --branch "$candidate_branch" --single-branch)',
+            clone_step,
+        )
+        self.assertIn("selected_candidate_branch=true", clone_step)
+        self.assertIn('origin "develop:refs/remotes/origin/develop"', clone_step)
         self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
         self.assertIn('checkout -B "issues-242-243-', clone_step)
         self.assertIn("remote get-url origin", clone_step)

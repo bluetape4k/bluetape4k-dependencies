@@ -98,8 +98,22 @@ def _git(root: Path, *args: str) -> str:
             capture_output=True,
             text=True,
         ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise RuntimeError(f"cannot inspect git worktree: {root}") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = " | ".join(
+            line.strip() for line in (exc.stderr or "").splitlines() if line.strip()
+        )
+        detail = re.sub(r"(https?://)[^/@\s]+@", r"\1<redacted>@", detail)
+        detail = re.sub(
+            r"(?i)\b(authorization|password|secret|token)(\s*[:=]\s*)\S+",
+            r"\1\2<redacted>",
+            detail,
+        )
+        detail = detail[:500] or "no stderr"
+        command = args[0] if args else "command"
+        raise RuntimeError(f"git {command} failed for {root}: {detail}") from exc
+    except OSError as exc:
+        command = args[0] if args else "command"
+        raise RuntimeError(f"cannot execute git {command} for {root}") from exc
 
 
 def _approved_origin(key: str) -> str:

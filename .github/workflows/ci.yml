@@ -110,6 +110,7 @@ jobs:
             if [[ -n "$expected_sha" ]]; then
               clone_args=(--filter=blob:none --no-checkout)
             fi
+            selected_candidate_branch=false
             use_snapshot_candidate=false
             for snapshot_repo in "${snapshot_repositories[@]}"; do
               if [[ "$snapshot_repo" == "$repo" ]]; then
@@ -121,7 +122,8 @@ jobs:
               branch_error="$RUNNER_TEMP/snapshot-candidate-${repo}.error"
               if gh api "repos/bluetape4k/${repo}/branches/${candidate_branch}" \
                    >/dev/null 2>"$branch_error"; then
-                clone_args+=(--branch "$candidate_branch" --single-branch)
+                clone_args=(--filter=blob:none --branch "$candidate_branch" --single-branch)
+                selected_candidate_branch=true
               elif grep -Fq "(HTTP 404)" "$branch_error"; then
                 clone_args+=(--branch develop --single-branch)
               else
@@ -130,6 +132,10 @@ jobs:
               fi
             fi
             gh repo clone "bluetape4k/${repo}" "../${repo}" -- "${clone_args[@]}"
+            if [[ "$selected_candidate_branch" == true ]]; then
+              git -C "../${repo}" fetch --no-tags --filter=blob:none \
+                origin "develop:refs/remotes/origin/develop"
+            fi
             if [[ -n "$expected_sha" ]]; then
               # Keep the authenticated HTTPS remote installed by gh for the
               # immutable fetch.  The strict map gets its SSH origin only

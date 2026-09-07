@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from unittest import mock
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "catalog_candidate.py"
 SPEC = importlib.util.spec_from_file_location("catalog_candidate", SCRIPT_PATH)
@@ -19,6 +20,24 @@ SPEC.loader.exec_module(candidate)
 
 
 class CatalogCandidateTest(unittest.TestCase):
+    def test_git_failure_preserves_redacted_diagnostic(self) -> None:
+        failure = subprocess.CalledProcessError(
+            128,
+            ["git", "rev-parse", "missing"],
+            stderr=(
+                "fatal: unable to access "
+                "https://x-access-token:secret-value@github.com/example/repo.git"
+            ),
+        )
+        with mock.patch.object(candidate.subprocess, "run", side_effect=failure):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                r"git rev-parse failed.*https://<redacted>@github.com/example/repo.git",
+            ) as raised:
+                candidate._git(Path("/tmp/example"), "rev-parse", "missing")
+
+        self.assertNotIn("secret-value", str(raised.exception))
+
     def make_repository(self, workspace: Path, key: str) -> tuple[Path, str, str]:
         name = candidate.REPOSITORY_NAMES[key]
         root = workspace / name
@@ -286,6 +305,126 @@ class CatalogCandidateTest(unittest.TestCase):
             projects_entry = next(item for item in loaded if item.key == "projects")
             self.assertEqual(projects_entry.base_sha, fork_point)
             self.assertEqual(projects_entry.expected_head, candidate_head)
+
+    def test_map_producer_accepts_single_branch_candidate_after_develop_fetch(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            source, _, fork_point = self.make_repository(workspace, "projects")
+            subprocess.run(
+                ["git", "-C", str(source), "checkout", "-b", "develop"],
+                check=True,
+                capture_output=True,
+            )
+            (source / "develop.txt").write_text("develop\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(source), "add", "develop.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(source),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance develop",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(source), "checkout", "candidate"],
+                check=True,
+                capture_output=True,
+            )
+            (source / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(source), "add", "candidate.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(source),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance candidate",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            candidate_head = subprocess.check_output(
+                ["git", "-C", str(source), "rev-parse", "HEAD"], text=True
+            ).strip()
+
+            bare = workspace / "projects-remote.git"
+            clone = workspace / "single-branch-projects"
+            subprocess.run(
+                ["git", "clone", "--bare", str(source), str(bare)],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--filter=blob:none",
+                    "--branch",
+                    "candidate",
+                    "--single-branch",
+                    f"file://{bare}",
+                    str(clone),
+                ],
+                check=True,
+                capture_output=True,
+            )
+            missing_develop = subprocess.run(
+                ["git", "-C", str(clone), "rev-parse", "origin/develop"],
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(missing_develop.returncode, 0)
+
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(clone),
+                    "fetch",
+                    "--no-tags",
+                    "--filter=blob:none",
+                    "origin",
+                    "develop:refs/remotes/origin/develop",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(clone),
+                    "remote",
+                    "set-url",
+                    "origin",
+                    "git@github.com:bluetape4k/bluetape4k-projects.git",
+                ],
+                check=True,
+            )
+
+            entry = candidate.inspect_repository_for_map(
+                "bluetape4k-projects", clone, candidate_head
+            )
+            self.assertEqual(entry["base_sha"], fork_point)
 
     def test_manifest_verify_revalidates_every_bound_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
