@@ -116,6 +116,16 @@ class CatalogCandidateTest(unittest.TestCase):
             ),
             ("fatal: to+ken=plus-encoded-secret", "plus-encoded-secret"),
             ("fatal: to%u006ben=residual-percent-secret", "residual-percent-secret"),
+            ("fatal: ｔｏｋｅｎ=fullwidth-token-secret", "fullwidth-token-secret"),
+            ("fatal: ａｐｉｋｅｙ=fullwidth-api-secret", "fullwidth-api-secret"),
+            (
+                "fatal: to%EF%BC%8500ken=encoded-fullwidth-percent-secret",
+                "encoded-fullwidth-percent-secret",
+            ),
+            (
+                "fatal: to％00ken=raw-fullwidth-percent-secret",
+                "raw-fullwidth-percent-secret",
+            ),
             (
                 "fatal: to%2500ken=nested-control-secret",
                 "nested-control-secret",
@@ -147,6 +157,10 @@ class CatalogCandidateTest(unittest.TestCase):
             (
                 "fatal: https://x.invalid/?to+ken=plus-query-secret",
                 "plus-query-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?ｔｏｋｅｎ=fullwidth-query-secret",
+                "fullwidth-query-secret",
             ),
             ("fatal: myapikey=compound-prefix-secret", "compound-prefix-secret"),
             ("fatal: apikeyfoo=compound-suffix-secret", "compound-suffix-secret"),
@@ -212,6 +226,7 @@ class CatalogCandidateTest(unittest.TestCase):
             "my_monkey=banana\n"
             "my%2520monkey=plantain\n"
             "my+monkey=papaya\n"
+            "ｍｙ＿ｍｏｎｋｅｙ=guava\n"
             "https://example.invalid/?mode=safe"
         )
         self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)

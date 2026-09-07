@@ -563,6 +563,10 @@ class ValidationRunnerTest(unittest.TestCase):
             "fatal: access%255Ftoken=sentinel-nested-encoded\n"
             "fatal: to+ken=sentinel-plus-encoded\n"
             "fatal: to%u006ben=sentinel-residual-percent\n"
+            "fatal: ｔｏｋｅｎ=sentinel-fullwidth-token\n"
+            "fatal: ａｐｉｋｅｙ=sentinel-fullwidth-api\n"
+            "fatal: to%EF%BC%8500ken=sentinel-encoded-fullwidth-percent\n"
+            "fatal: to％00ken=sentinel-raw-fullwidth-percent\n"
             "fatal: to%2500ken=sentinel-nested-control\n"
             "fatal: to%25E2%2580%258Bken=sentinel-nested-format\n"
             "fatal: to%09ken=sentinel-encoded-tab\n"
@@ -574,6 +578,7 @@ class ValidationRunnerTest(unittest.TestCase):
             "https://example.invalid/?to%E2%80%8Bken=sentinel-encoded-query\n"
             "https://example.invalid/?to%09ken=sentinel-encoded-tab-query\n"
             "https://example.invalid/?to+ken=sentinel-plus-query\n"
+            "https://example.invalid/?ｔｏｋｅｎ=sentinel-fullwidth-query\n"
             "fatal: myapikey=sentinel-compound-prefix\n"
             "fatal: apikeyfoo=sentinel-compound-suffix\n"
             "fatal: secretaccesskeyid=sentinel-compound-nested\n"
@@ -625,6 +630,10 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-nested-encoded",
             "sentinel-plus-encoded",
             "sentinel-residual-percent",
+            "sentinel-fullwidth-token",
+            "sentinel-fullwidth-api",
+            "sentinel-encoded-fullwidth-percent",
+            "sentinel-raw-fullwidth-percent",
             "sentinel-nested-control",
             "sentinel-nested-format",
             "sentinel-encoded-tab",
@@ -636,6 +645,7 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-encoded-query",
             "sentinel-encoded-tab-query",
             "sentinel-plus-query",
+            "sentinel-fullwidth-query",
             "sentinel-compound-prefix",
             "sentinel-compound-suffix",
             "sentinel-compound-nested",
@@ -1805,6 +1815,8 @@ class ValidationRunnerTest(unittest.TestCase):
                 "access%255Ftoken=sentinel-arg-nested",
                 "to+ken=sentinel-arg-plus",
                 "to%u006ben=sentinel-arg-residual-percent",
+                "ｔｏｋｅｎ=sentinel-arg-fullwidth-token",
+                "to%EF%BC%8500ken=sentinel-arg-fullwidth-percent",
                 "--myapikey=sentinel-arg-compound-prefix",
                 "apikeyfoo=sentinel-arg-compound-suffix",
             )
@@ -1823,6 +1835,8 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-arg-nested",
             "sentinel-arg-plus",
             "sentinel-arg-residual-percent",
+            "sentinel-arg-fullwidth-token",
+            "sentinel-arg-fullwidth-percent",
             "sentinel-arg-compound-prefix",
             "sentinel-arg-compound-suffix",
         ):
@@ -1841,6 +1855,8 @@ class ValidationRunnerTest(unittest.TestCase):
                     "access%255Ftoken": "sentinel-meta-nested",
                     "to+ken": "sentinel-meta-plus",
                     "to%u006ben": "sentinel-meta-residual-percent",
+                    "ｔｏｋｅｎ": "sentinel-meta-fullwidth-token",
+                    "to%EF%BC%8500ken": "sentinel-meta-fullwidth-percent",
                     "myapikey": "sentinel-meta-compound-prefix",
                     "apikeyfoo": "sentinel-meta-compound-suffix",
                     "to\u200bken": "sentinel-meta-raw-format",
@@ -1872,6 +1888,8 @@ class ValidationRunnerTest(unittest.TestCase):
                     "access%255Ftoken": "sentinel-meta-nested",
                     "to+ken": "sentinel-meta-plus",
                     "to%u006ben": "sentinel-meta-residual-percent",
+                    "ｔｏｋｅｎ": "sentinel-meta-fullwidth-token",
+                    "to%EF%BC%8500ken": "sentinel-meta-fullwidth-percent",
                     "myapikey": "sentinel-meta-compound-prefix",
                     "apikeyfoo": "sentinel-meta-compound-suffix",
                     "to\u200bken": "sentinel-meta-raw-format",
@@ -1897,6 +1915,8 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-meta-nested", cache_text)
             self.assertNotIn("sentinel-meta-plus", cache_text)
             self.assertNotIn("sentinel-meta-residual-percent", cache_text)
+            self.assertNotIn("sentinel-meta-fullwidth-token", cache_text)
+            self.assertNotIn("sentinel-meta-fullwidth-percent", cache_text)
             self.assertNotIn("sentinel-meta-compound-prefix", cache_text)
             self.assertNotIn("sentinel-meta-compound-suffix", cache_text)
             self.assertNotIn("sentinel-meta-raw-format", cache_text)

@@ -218,7 +218,7 @@ PRIVATE_ARMOR_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
-SECRET_ASSIGNMENT_ARG_RE = re.compile(r"^([A-Za-z_%+][A-Za-z0-9_.%+-]*)(=)(.*)$")
+SECRET_ASSIGNMENT_ARG_RE = re.compile(r"^([^\s=]+)(=)(.*)$")
 SAFE_ENVIRONMENT_KEYS = frozenset(
     {
         "PATH",

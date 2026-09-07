@@ -66,6 +66,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "fatal: access%255Ftoken=sentinel-nested-encoded\n"
             "fatal: to+ken=sentinel-plus-encoded\n"
             "fatal: to%u006ben=sentinel-residual-percent\n"
+            "fatal: ｔｏｋｅｎ=sentinel-fullwidth-token\n"
+            "fatal: ａｐｉｋｅｙ=sentinel-fullwidth-api\n"
+            "fatal: to%EF%BC%8500ken=sentinel-encoded-fullwidth-percent\n"
+            "fatal: to％00ken=sentinel-raw-fullwidth-percent\n"
             "fatal: to%2500ken=sentinel-nested-control\n"
             "fatal: to%25E2%2580%258Bken=sentinel-nested-format\n"
             "fatal: to%09ken=sentinel-encoded-tab\n"
@@ -77,6 +81,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "https://example.invalid/?to%E2%80%8Bken=sentinel-encoded-query\n"
             "https://example.invalid/?to%09ken=sentinel-encoded-tab-query\n"
             "https://example.invalid/?to+ken=sentinel-plus-query\n"
+            "https://example.invalid/?ｔｏｋｅｎ=sentinel-fullwidth-query\n"
             "fatal: myapikey=sentinel-compound-prefix\n"
             "fatal: apikeyfoo=sentinel-compound-suffix\n"
             "fatal: secretaccesskeyid=sentinel-compound-nested\n"
@@ -127,6 +132,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-nested-encoded",
             "sentinel-plus-encoded",
             "sentinel-residual-percent",
+            "sentinel-fullwidth-token",
+            "sentinel-fullwidth-api",
+            "sentinel-encoded-fullwidth-percent",
+            "sentinel-raw-fullwidth-percent",
             "sentinel-nested-control",
             "sentinel-nested-format",
             "sentinel-encoded-tab",
@@ -138,6 +147,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-encoded-query",
             "sentinel-encoded-tab-query",
             "sentinel-plus-query",
+            "sentinel-fullwidth-query",
             "sentinel-compound-prefix",
             "sentinel-compound-suffix",
             "sentinel-compound-nested",

@@ -56,7 +56,7 @@ PRIVATE_ARMOR_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 ASSIGNMENT_CANDIDATE_RE = re.compile(
-    r"(?m)(?<![A-Za-z0-9_.%+-])(?=([A-Za-z%+][A-Za-z0-9_.%+-]*)\b"
+    r"(?m)(?<![\w.%+-])(?=([^\s=:?&#]+)"
     r"([ \t]*[=:][ \t]*)([^\r\n]*(?:\r?\n[ \t]+[^\r\n]*)*))"
 )
 SECRET_URI_RE = re.compile(r"(?i)(://)[^/?#\s]*@")
@@ -65,7 +65,7 @@ AUTHORIZATION_RE = re.compile(
 )
 BEARER_RE = re.compile(r"(?i)(\bbearer\s+)[^\s,;]+")
 QUERY_PARAMETER_RE = re.compile(
-    r"([?&])([A-Za-z0-9_.%+-]+)(\s*=\s*)([^&#\s]+)"
+    r"([?&])([^=&#\s]+)(\s*=\s*)([^&#\s]+)"
 )
 MAX_IDENTIFIER_DECODE_ROUNDS = 4
 SECRET_NAME_PARTS = frozenset(
@@ -127,12 +127,12 @@ def _strip_obfuscating_controls(value: str) -> str:
 
 def _normalize_secret_identifier(value: str) -> tuple[str, bool]:
     for _ in range(MAX_IDENTIFIER_DECODE_ROUNDS):
-        decoded = urllib.parse.unquote_plus(value)
+        decoded = urllib.parse.unquote_plus(unicodedata.normalize("NFKC", value))
         if decoded == value:
             break
         value = decoded
-    has_encoded_remainder = "%" in value
     value = unicodedata.normalize("NFKC", value)
+    has_encoded_remainder = "%" in value
     value = ANSI_RE.sub("", value)
     has_disallowed_control = any(
         unicodedata.category(character) in {"Cc", "Cf"}
