@@ -104,6 +104,11 @@ def _git(root: Path, *args: str) -> str:
         )
         detail = re.sub(r"(https?://)[^/@\s]+@", r"\1<redacted>@", detail)
         detail = re.sub(
+            r"(?i)\bauthorization(\s*[:=]\s*)(?:bearer|basic)\s+\S+",
+            r"Authorization\1<redacted>",
+            detail,
+        )
+        detail = re.sub(
             r"(?i)\b(authorization|password|secret|token)(\s*[:=]\s*)\S+",
             r"\1\2<redacted>",
             detail,

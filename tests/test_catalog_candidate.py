@@ -20,23 +20,37 @@ SPEC.loader.exec_module(candidate)
 
 
 class CatalogCandidateTest(unittest.TestCase):
-    def test_git_failure_preserves_redacted_diagnostic(self) -> None:
-        failure = subprocess.CalledProcessError(
-            128,
-            ["git", "rev-parse", "missing"],
-            stderr=(
-                "fatal: unable to access "
-                "https://x-access-token:secret-value@github.com/example/repo.git"
+    def test_git_failure_preserves_only_redacted_diagnostics(self) -> None:
+        cases = (
+            (
+                "fatal: https://x-access-token:url-secret@github.com/example/repo.git",
+                "url-secret",
+            ),
+            ("fatal: Authorization: Bearer bearer-secret", "bearer-secret"),
+            ("fatal: authorization=Basic basic-secret", "basic-secret"),
+            ("fatal: token=token-secret", "token-secret"),
+            ("fatal: password: password-secret", "password-secret"),
+            (
+                "warning: retrying\nfatal: Authorization: Bearer multiline-secret",
+                "multiline-secret",
             ),
         )
-        with mock.patch.object(candidate.subprocess, "run", side_effect=failure):
-            with self.assertRaisesRegex(
-                RuntimeError,
-                r"git rev-parse failed.*https://<redacted>@github.com/example/repo.git",
-            ) as raised:
-                candidate._git(Path("/tmp/example"), "rev-parse", "missing")
+        for stderr, secret in cases:
+            with self.subTest(stderr=stderr):
+                failure = subprocess.CalledProcessError(
+                    128,
+                    ["git", "rev-parse", "missing"],
+                    stderr=stderr,
+                )
+                with mock.patch.object(
+                    candidate.subprocess, "run", side_effect=failure
+                ):
+                    with self.assertRaisesRegex(
+                        RuntimeError, r"git rev-parse failed.*<redacted>"
+                    ) as raised:
+                        candidate._git(Path("/tmp/example"), "rev-parse", "missing")
 
-        self.assertNotIn("secret-value", str(raised.exception))
+                self.assertNotIn(secret, str(raised.exception))
 
     def make_repository(self, workspace: Path, key: str) -> tuple[Path, str, str]:
         name = candidate.REPOSITORY_NAMES[key]
