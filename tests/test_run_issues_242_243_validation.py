@@ -560,7 +560,24 @@ class ValidationRunnerTest(unittest.TestCase):
             "fatal: to%00ken=sentinel-encoded-control\n"
             "fatal: to%E2%80%8Bken=sentinel-encoded-format\n"
             "fatal: to%1B%5B31mken=sentinel-encoded-ansi\n"
+            "fatal: access%255Ftoken=sentinel-nested-encoded\n"
+            "fatal: to+ken=sentinel-plus-encoded\n"
+            "fatal: to%u006ben=sentinel-residual-percent\n"
+            "fatal: to%2500ken=sentinel-nested-control\n"
+            "fatal: to%25E2%2580%258Bken=sentinel-nested-format\n"
+            "fatal: to%09ken=sentinel-encoded-tab\n"
+            "fatal: to%0Aken=sentinel-encoded-lf\n"
+            "fatal: to%0Dken=sentinel-encoded-cr\n"
+            "fatal: to%C2%85ken=sentinel-encoded-c1\n"
+            "fatal: to%E2%80%A8ken=sentinel-encoded-line-separator\n"
+            "fatal: my_to%09ken=sentinel-namespaced-encoded-tab\n"
             "https://example.invalid/?to%E2%80%8Bken=sentinel-encoded-query\n"
+            "https://example.invalid/?to%09ken=sentinel-encoded-tab-query\n"
+            "https://example.invalid/?to+ken=sentinel-plus-query\n"
+            "fatal: myapikey=sentinel-compound-prefix\n"
+            "fatal: apikeyfoo=sentinel-compound-suffix\n"
+            "fatal: secretaccesskeyid=sentinel-compound-nested\n"
+            "fatal: myprivatekey=sentinel-compound-private-prefix\n"
             "fatal: access\x1b[31mToken=sentinel-ansi-assignment\n"
             "fatal: to\x00ken=sentinel-control-assignment\n"
             "fatal: access\u200bToken=sentinel-format-assignment\n"
@@ -605,7 +622,24 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-encoded-control",
             "sentinel-encoded-format",
             "sentinel-encoded-ansi",
+            "sentinel-nested-encoded",
+            "sentinel-plus-encoded",
+            "sentinel-residual-percent",
+            "sentinel-nested-control",
+            "sentinel-nested-format",
+            "sentinel-encoded-tab",
+            "sentinel-encoded-lf",
+            "sentinel-encoded-cr",
+            "sentinel-encoded-c1",
+            "sentinel-encoded-line-separator",
+            "sentinel-namespaced-encoded-tab",
             "sentinel-encoded-query",
+            "sentinel-encoded-tab-query",
+            "sentinel-plus-query",
+            "sentinel-compound-prefix",
+            "sentinel-compound-suffix",
+            "sentinel-compound-nested",
+            "sentinel-compound-private-prefix",
             "sentinel-ansi-assignment",
             "sentinel-control-assignment",
             "sentinel-format-assignment",
@@ -1765,6 +1799,14 @@ class ValidationRunnerTest(unittest.TestCase):
                 "--my_apikey=sentinel-arg-compound",
                 "to%00ken=sentinel-arg-control",
                 "--to%E2%80%8Bken=sentinel-arg-format",
+                "to%09ken=sentinel-arg-tab",
+                "--to%0Aken=sentinel-arg-lf",
+                "--my_to%0Dken=sentinel-arg-namespaced-cr",
+                "access%255Ftoken=sentinel-arg-nested",
+                "to+ken=sentinel-arg-plus",
+                "to%u006ben=sentinel-arg-residual-percent",
+                "--myapikey=sentinel-arg-compound-prefix",
+                "apikeyfoo=sentinel-arg-compound-suffix",
             )
         )
         rendered_command = " ".join(command)
@@ -1775,6 +1817,14 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-arg-compound",
             "sentinel-arg-control",
             "sentinel-arg-format",
+            "sentinel-arg-tab",
+            "sentinel-arg-lf",
+            "sentinel-arg-namespaced-cr",
+            "sentinel-arg-nested",
+            "sentinel-arg-plus",
+            "sentinel-arg-residual-percent",
+            "sentinel-arg-compound-prefix",
+            "sentinel-arg-compound-suffix",
         ):
             self.assertNotIn(sentinel, rendered_command)
         self.assertEqual(
@@ -1785,6 +1835,14 @@ class ValidationRunnerTest(unittest.TestCase):
                     "to%00ken": "sentinel-meta-control",
                     "to%E2%80%8Bken": "sentinel-meta-format",
                     "to%1B%5B31mken": "sentinel-meta-ansi",
+                    "to%09ken": "sentinel-meta-tab",
+                    "to%0Aken": "sentinel-meta-lf",
+                    "my_to%0Dken": "sentinel-meta-namespaced-cr",
+                    "access%255Ftoken": "sentinel-meta-nested",
+                    "to+ken": "sentinel-meta-plus",
+                    "to%u006ben": "sentinel-meta-residual-percent",
+                    "myapikey": "sentinel-meta-compound-prefix",
+                    "apikeyfoo": "sentinel-meta-compound-suffix",
                     "to\u200bken": "sentinel-meta-raw-format",
                     "safe": "ok",
                 }
@@ -1808,6 +1866,14 @@ class ValidationRunnerTest(unittest.TestCase):
                     "to%00ken": "sentinel-meta-control",
                     "to%E2%80%8Bken": "sentinel-meta-format",
                     "to%1B%5B31mken": "sentinel-meta-ansi",
+                    "to%09ken": "sentinel-meta-tab",
+                    "to%0Aken": "sentinel-meta-lf",
+                    "my_to%0Dken": "sentinel-meta-namespaced-cr",
+                    "access%255Ftoken": "sentinel-meta-nested",
+                    "to+ken": "sentinel-meta-plus",
+                    "to%u006ben": "sentinel-meta-residual-percent",
+                    "myapikey": "sentinel-meta-compound-prefix",
+                    "apikeyfoo": "sentinel-meta-compound-suffix",
                     "to\u200bken": "sentinel-meta-raw-format",
                     "safe": "ok",
                 },
@@ -1825,6 +1891,14 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-meta-control", cache_text)
             self.assertNotIn("sentinel-meta-format", cache_text)
             self.assertNotIn("sentinel-meta-ansi", cache_text)
+            self.assertNotIn("sentinel-meta-tab", cache_text)
+            self.assertNotIn("sentinel-meta-lf", cache_text)
+            self.assertNotIn("sentinel-meta-namespaced-cr", cache_text)
+            self.assertNotIn("sentinel-meta-nested", cache_text)
+            self.assertNotIn("sentinel-meta-plus", cache_text)
+            self.assertNotIn("sentinel-meta-residual-percent", cache_text)
+            self.assertNotIn("sentinel-meta-compound-prefix", cache_text)
+            self.assertNotIn("sentinel-meta-compound-suffix", cache_text)
             self.assertNotIn("sentinel-meta-raw-format", cache_text)
             self.assertEqual(output["safe"], "ok")
 

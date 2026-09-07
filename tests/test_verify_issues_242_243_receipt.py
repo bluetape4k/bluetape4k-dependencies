@@ -63,7 +63,24 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "fatal: to%00ken=sentinel-encoded-control\n"
             "fatal: to%E2%80%8Bken=sentinel-encoded-format\n"
             "fatal: to%1B%5B31mken=sentinel-encoded-ansi\n"
+            "fatal: access%255Ftoken=sentinel-nested-encoded\n"
+            "fatal: to+ken=sentinel-plus-encoded\n"
+            "fatal: to%u006ben=sentinel-residual-percent\n"
+            "fatal: to%2500ken=sentinel-nested-control\n"
+            "fatal: to%25E2%2580%258Bken=sentinel-nested-format\n"
+            "fatal: to%09ken=sentinel-encoded-tab\n"
+            "fatal: to%0Aken=sentinel-encoded-lf\n"
+            "fatal: to%0Dken=sentinel-encoded-cr\n"
+            "fatal: to%C2%85ken=sentinel-encoded-c1\n"
+            "fatal: to%E2%80%A8ken=sentinel-encoded-line-separator\n"
+            "fatal: my_to%09ken=sentinel-namespaced-encoded-tab\n"
             "https://example.invalid/?to%E2%80%8Bken=sentinel-encoded-query\n"
+            "https://example.invalid/?to%09ken=sentinel-encoded-tab-query\n"
+            "https://example.invalid/?to+ken=sentinel-plus-query\n"
+            "fatal: myapikey=sentinel-compound-prefix\n"
+            "fatal: apikeyfoo=sentinel-compound-suffix\n"
+            "fatal: secretaccesskeyid=sentinel-compound-nested\n"
+            "fatal: myprivatekey=sentinel-compound-private-prefix\n"
             "fatal: access\x1b[31mToken=sentinel-ansi-assignment\n"
             "fatal: to\x00ken=sentinel-control-assignment\n"
             "fatal: access\u200bToken=sentinel-format-assignment\n"
@@ -107,7 +124,24 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-encoded-control",
             "sentinel-encoded-format",
             "sentinel-encoded-ansi",
+            "sentinel-nested-encoded",
+            "sentinel-plus-encoded",
+            "sentinel-residual-percent",
+            "sentinel-nested-control",
+            "sentinel-nested-format",
+            "sentinel-encoded-tab",
+            "sentinel-encoded-lf",
+            "sentinel-encoded-cr",
+            "sentinel-encoded-c1",
+            "sentinel-encoded-line-separator",
+            "sentinel-namespaced-encoded-tab",
             "sentinel-encoded-query",
+            "sentinel-encoded-tab-query",
+            "sentinel-plus-query",
+            "sentinel-compound-prefix",
+            "sentinel-compound-suffix",
+            "sentinel-compound-nested",
+            "sentinel-compound-private-prefix",
             "sentinel-ansi-assignment",
             "sentinel-control-assignment",
             "sentinel-format-assignment",

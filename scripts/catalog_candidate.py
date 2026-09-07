@@ -56,7 +56,7 @@ PRIVATE_ARMOR_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 ASSIGNMENT_CANDIDATE_RE = re.compile(
-    r"(?m)(?<![A-Za-z0-9_.%-])(?=([A-Za-z%][A-Za-z0-9_.%-]*)\b"
+    r"(?m)(?<![A-Za-z0-9_.%+-])(?=([A-Za-z%+][A-Za-z0-9_.%+-]*)\b"
     r"([ \t]*[=:][ \t]*)([^\r\n]*(?:\r?\n[ \t]+[^\r\n]*)*))"
 )
 SECRET_URI_RE = re.compile(r"(?i)(://)[^/?#\s]*@")
@@ -65,8 +65,9 @@ AUTHORIZATION_RE = re.compile(
 )
 BEARER_RE = re.compile(r"(?i)(\bbearer\s+)[^\s,;]+")
 QUERY_PARAMETER_RE = re.compile(
-    r"([?&])([A-Za-z0-9_.%-]+)(\s*=\s*)([^&#\s]+)"
+    r"([?&])([A-Za-z0-9_.%+-]+)(\s*=\s*)([^&#\s]+)"
 )
+MAX_IDENTIFIER_DECODE_ROUNDS = 4
 SECRET_NAME_PARTS = frozenset(
     {"password", "passwd", "token", "secret", "credential", "key"}
 )
@@ -124,16 +125,47 @@ def _strip_obfuscating_controls(value: str) -> str:
     )
 
 
+def _normalize_secret_identifier(value: str) -> tuple[str, bool]:
+    for _ in range(MAX_IDENTIFIER_DECODE_ROUNDS):
+        decoded = urllib.parse.unquote_plus(value)
+        if decoded == value:
+            break
+        value = decoded
+    has_encoded_remainder = "%" in value
+    value = unicodedata.normalize("NFKC", value)
+    value = ANSI_RE.sub("", value)
+    has_disallowed_control = any(
+        unicodedata.category(character) in {"Cc", "Cf"}
+        for character in value
+    )
+    normalized = "".join(
+        character
+        for character in value
+        if unicodedata.category(character) not in {"Cc", "Cf"}
+    )
+    return normalized, has_encoded_remainder or has_disallowed_control
+
+
 def is_secret_name(value: str) -> bool:
     """Classify normalized snake, kebab, camel, encoded, and compound names."""
-    decoded = _strip_obfuscating_controls(urllib.parse.unquote_plus(value))
+    decoded, is_ambiguous = _normalize_secret_identifier(value)
+    if is_ambiguous:
+        return True
     separated = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", decoded)
     separated = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", separated)
-    parts = re.sub(r"[^A-Za-z0-9]+", "_", separated).lower().split("_")
+    parts = tuple(
+        part
+        for part in re.sub(r"[^A-Za-z0-9]+", "_", separated).lower().split("_")
+        if part
+    )
+    secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
     collapsed = "".join(parts)
-    return collapsed in SECRET_COMPOUND_NAMES or any(
-        part in SECRET_NAME_PARTS or part in SECRET_COMPOUND_NAMES
-        for part in parts
+    if any(name in collapsed for name in SECRET_COMPOUND_NAMES):
+        return True
+    return any(
+        "".join(parts[start:end]) in secret_names
+        for start in range(len(parts))
+        for end in range(start + 1, len(parts) + 1)
     )
 
 

@@ -111,9 +111,50 @@ class CatalogCandidateTest(unittest.TestCase):
                 "encoded-ansi-secret",
             ),
             (
+                "fatal: access%255Ftoken=nested-encoded-secret",
+                "nested-encoded-secret",
+            ),
+            ("fatal: to+ken=plus-encoded-secret", "plus-encoded-secret"),
+            ("fatal: to%u006ben=residual-percent-secret", "residual-percent-secret"),
+            (
+                "fatal: to%2500ken=nested-control-secret",
+                "nested-control-secret",
+            ),
+            (
+                "fatal: to%25E2%2580%258Bken=nested-format-secret",
+                "nested-format-secret",
+            ),
+            ("fatal: to%09ken=encoded-tab-secret", "encoded-tab-secret"),
+            ("fatal: to%0Aken=encoded-lf-secret", "encoded-lf-secret"),
+            ("fatal: to%0Dken=encoded-cr-secret", "encoded-cr-secret"),
+            ("fatal: to%C2%85ken=encoded-c1-secret", "encoded-c1-secret"),
+            (
+                "fatal: to%E2%80%A8ken=encoded-line-separator-secret",
+                "encoded-line-separator-secret",
+            ),
+            (
+                "fatal: my_to%09ken=namespaced-encoded-tab-secret",
+                "namespaced-encoded-tab-secret",
+            ),
+            (
                 "fatal: https://x.invalid/?to%E2%80%8Bken=encoded-query-secret",
                 "encoded-query-secret",
             ),
+            (
+                "fatal: https://x.invalid/?to%09ken=encoded-tab-query-secret",
+                "encoded-tab-query-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?to+ken=plus-query-secret",
+                "plus-query-secret",
+            ),
+            ("fatal: myapikey=compound-prefix-secret", "compound-prefix-secret"),
+            ("fatal: apikeyfoo=compound-suffix-secret", "compound-suffix-secret"),
+            (
+                "fatal: secretaccesskeyid=compound-nested-secret",
+                "compound-nested-secret",
+            ),
+            ("fatal: myprivatekey=compound-private-secret", "compound-private-secret"),
             (
                 "fatal: access\x1b[31mToken=ansi-assignment-secret",
                 "ansi-assignment-secret",
@@ -169,6 +210,8 @@ class CatalogCandidateTest(unittest.TestCase):
             "secretariat=office\n"
             "keyboard=qwerty\n"
             "my_monkey=banana\n"
+            "my%2520monkey=plantain\n"
+            "my+monkey=papaya\n"
             "https://example.invalid/?mode=safe"
         )
         self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)
