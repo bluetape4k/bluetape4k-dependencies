@@ -240,6 +240,7 @@ SAFE_ENVIRONMENT_KEYS = frozenset(
 CANDIDATE_ENVIRONMENT_KEYS = frozenset(
     {
         "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH",
+        catalog_candidate.PROCESS_GROUP_OWNER_ENV,
         "ISSUES_242_243_CANDIDATE_MAVEN_REPO",
     }
 )
@@ -2093,6 +2094,10 @@ def _job_environment(job: ValidationJob) -> dict[str, str]:
         if not value:
             raise InputContractError(f"job environment value is empty: {key}")
         environment[key] = value
+    if job.phase == "publication-poms":
+        environment[catalog_candidate.PROCESS_GROUP_OWNER_ENV] = (
+            catalog_candidate.PROCESS_GROUP_OWNER_VALUE
+        )
     return environment
 
 

@@ -1446,6 +1446,58 @@ class ValidationRunnerTest(unittest.TestCase):
             with self.assertRaises(ProcessLookupError):
                 os.kill(child_pid, 0)
 
+    def test_nested_bounded_capture_inherits_outer_process_group(self) -> None:
+        with tempfile.TemporaryDirectory() as directory, mock.patch.object(
+            runner, "TERMINATE_GRACE_SECONDS", 0.05
+        ):
+            root = Path(directory).resolve()
+            child_pid_path = root / "nested-child.pid"
+            child_code = (
+                "import os,pathlib,sys,time; "
+                "pathlib.Path(sys.argv[1]).write_text(str(os.getpid())); "
+                "time.sleep(30)"
+            )
+            helper_code = (
+                "import importlib.util,pathlib,sys; "
+                "spec=importlib.util.spec_from_file_location('nested_candidate', sys.argv[1]); "
+                "module=importlib.util.module_from_spec(spec); "
+                "sys.modules[spec.name]=module; spec.loader.exec_module(module); "
+                "module.run_bounded_capture([sys.executable, '-c', sys.argv[3], sys.argv[4]], "
+                "cwd=pathlib.Path(sys.argv[2]), timeout_seconds=30)"
+            )
+            environment = dict(os.environ)
+            environment[runner.catalog_candidate.PROCESS_GROUP_OWNER_ENV] = (
+                runner.catalog_candidate.PROCESS_GROUP_OWNER_VALUE
+            )
+            result = runner.run_command(
+                command=(
+                    sys.executable,
+                    "-c",
+                    helper_code,
+                    str(runner.CATALOG_CANDIDATE_PATH),
+                    str(root),
+                    child_code,
+                    str(child_pid_path),
+                ),
+                cwd=root,
+                environment=environment,
+                timeout_seconds=0.5,
+            )
+
+            self.assertTrue(result.timed_out)
+            self.assertTrue(result.process_group_terminated)
+            child_pid = int(child_pid_path.read_text(encoding="utf-8"))
+            with self.assertRaises(ProcessLookupError):
+                os.kill(child_pid, 0)
+
+    def test_publication_job_declares_the_outer_process_group_owner(self) -> None:
+        job = mock.Mock(phase="publication-poms", environment_overrides=())
+        environment = runner._job_environment(job)
+        self.assertEqual(
+            environment[runner.catalog_candidate.PROCESS_GROUP_OWNER_ENV],
+            runner.catalog_candidate.PROCESS_GROUP_OWNER_VALUE,
+        )
+
     def test_receipt_binding_rejects_map_path_or_digest_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

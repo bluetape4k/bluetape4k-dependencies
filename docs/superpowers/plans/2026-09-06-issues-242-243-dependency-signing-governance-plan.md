@@ -660,6 +660,10 @@ helper는 각 publisher 명령 직전과 성공·실패 직후에 repository-map
 publisher의 `HEAD`, `origin`, clean 상태가 시작 시 binding과 같은지 검사한다. hosted CI의
 publication job도 `config/publishing-signing-repository-refs.json`의 exact SHA만 fetch/checkout한
 뒤 같은 helper를 실행하며 default-branch shallow clone을 허용하지 않는다.
+상위 runner가 `publication-poms` helper를 실행할 때는 자신을 유일한 process-group owner로
+표시한다. 내부 Gradle/Maven/git bounded capture는 새 session을 만들지 않고 그 group을
+상속하므로, 30분 phase timeout과 90분 전역 budget cleanup이 helper와 모든 정상 descendant를
+한 번에 종료한다. runner 밖에서 helper를 직접 실행하면 기존처럼 각 명령이 자체 group을 소유한다.
 
 ```bash
 python3 scripts/run-issues-242-243-validation.py \

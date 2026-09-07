@@ -87,6 +87,8 @@ MAX_IDENTIFIER_DECODE_ROUNDS = 4
 MAX_SECRET_IDENTIFIER_CHARS = 512
 MAX_GIT_CAPTURE_BYTES = 4 * 1024 * 1024
 MAX_REDACTION_SCAN_CHARS = MAX_GIT_CAPTURE_BYTES
+PROCESS_GROUP_OWNER_ENV = "BLUETAPE4K_VALIDATION_PROCESS_GROUP_OWNER"
+PROCESS_GROUP_OWNER_VALUE = "runner-v1"
 MAX_CANDIDATE_REPOSITORY_FILES = 4096
 MAX_CANDIDATE_REPOSITORY_FILE_BYTES = 16 * 1024 * 1024
 MAX_CANDIDATE_REPOSITORY_BYTES = 128 * 1024 * 1024
@@ -556,12 +558,17 @@ def run_bounded_capture(
     This is an operational cleanup boundary, not an adversarial sandbox. A
     deliberately hostile descendant can create a new session and leave the
     process group; callers must execute only reviewed exact-source helpers.
+    When the validation runner declares itself the group owner, nested commands
+    inherit that group so the outer phase timeout retains cleanup authority.
     """
     if max_output_bytes <= 0 or timeout_seconds <= 0:
         raise ValueError("bounded command limits must be positive")
     if input_bytes is not None and len(input_bytes) > max_output_bytes:
         raise RuntimeError("bounded command input limit exceeded")
     deadline = time.monotonic() + timeout_seconds
+    external_process_group_owner = (
+        os.environ.get(PROCESS_GROUP_OWNER_ENV) == PROCESS_GROUP_OWNER_VALUE
+    )
     process = subprocess.Popen(
         command,
         cwd=str(cwd),
@@ -569,13 +576,15 @@ def run_bounded_capture(
         stdin=subprocess.PIPE if input_bytes is not None else subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        start_new_session=True,
+        start_new_session=not external_process_group_owner,
     )
     if process.stdout is None or process.stderr is None:
         raise RuntimeError("bounded command pipes are unavailable")
 
     def process_group_alive() -> bool:
         process.poll()
+        if external_process_group_owner:
+            return process.returncode is None
         try:
             os.killpg(process.pid, 0)
             return True
@@ -647,7 +656,10 @@ def run_bounded_capture(
         )
     except (OSError, subprocess.TimeoutExpired, RuntimeError):
         try:
-            os.killpg(process.pid, signal.SIGKILL)
+            if external_process_group_owner:
+                process.kill()
+            else:
+                os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
         try:

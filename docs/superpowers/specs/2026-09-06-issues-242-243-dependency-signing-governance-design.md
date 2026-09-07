@@ -535,6 +535,9 @@ step에서 signing drift를 함께 검사해 별도 checkout을 만들지 않는
 publication POM gate는 signing ref manifest의 exact SHA를 직접 fetch/checkout하며,
 각 publisher 실행 직전과 성공·실패 직후에 중앙 catalog와 모든 publisher의
 `HEAD`, `origin`, clean 상태 및 repository-map digest를 다시 검사한다.
+runner가 호출한 publication helper의 내부 명령은 새 session을 중첩하지 않고 runner의
+process group을 상속한다. 따라서 phase timeout이나 전역 budget 만료 시 helper와 내부
+Gradle/Maven/git descendant가 같은 cleanup owner 아래에서 종료된다.
 
 ## 호환성과 운영 경계
 
