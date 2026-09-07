@@ -45,6 +45,13 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "fatal: clientSecret: sentinel-camel-client\n"
             "fatal: apiKey=sentinel-camel-api\n"
             "https://example.invalid/repo?accessToken=sentinel-camel-query\n"
+            "fatal: apikey=sentinel-compound-api\n"
+            "fatal: privatekey=sentinel-compound-private\n"
+            "fatal: signingkey=sentinel-compound-signing\n"
+            "fatal: accesskey=sentinel-compound-access\n"
+            "fatal: secretaccesskey=sentinel-compound-secret-access\n"
+            "https://example.invalid/repo?apikey=sentinel-compound-query-api\n"
+            "https://example.invalid/repo?clientsecret=sentinel-compound-query-client\n"
             "prefix Authorization: Basic sentinel-basic\n"
             "https://user:sentinel-userinfo@example.invalid/repo.git\n"
             "https://sentinel-token-only@example.invalid/repo.git\n"
@@ -61,6 +68,13 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-camel-client",
             "sentinel-camel-api",
             "sentinel-camel-query",
+            "sentinel-compound-api",
+            "sentinel-compound-private",
+            "sentinel-compound-signing",
+            "sentinel-compound-access",
+            "sentinel-compound-secret-access",
+            "sentinel-compound-query-api",
+            "sentinel-compound-query-client",
             "sentinel-basic",
             "sentinel-userinfo",
             "sentinel-token-only",

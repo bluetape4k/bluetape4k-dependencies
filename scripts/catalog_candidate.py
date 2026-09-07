@@ -69,6 +69,25 @@ QUERY_PARAMETER_RE = re.compile(
 SECRET_NAME_PARTS = frozenset(
     {"password", "passwd", "token", "secret", "credential", "key"}
 )
+SECRET_COMPOUND_NAMES = frozenset(
+    {
+        "accesskey",
+        "accesskeyid",
+        "accesstoken",
+        "apikey",
+        "authtoken",
+        "bearertoken",
+        "clientsecret",
+        "idtoken",
+        "keypassword",
+        "keystorepassword",
+        "privatekey",
+        "refreshtoken",
+        "secretaccesskey",
+        "signingkey",
+        "signingpassword",
+    }
+)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -99,7 +118,10 @@ def _is_secret_name(value: str) -> bool:
     separated = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", decoded)
     separated = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", separated)
     parts = re.sub(r"[^A-Za-z0-9]+", "_", separated).lower().split("_")
-    return any(part in SECRET_NAME_PARTS for part in parts)
+    collapsed = "".join(parts)
+    return any(part in SECRET_NAME_PARTS for part in parts) or (
+        collapsed in SECRET_COMPOUND_NAMES
+    )
 
 
 def _redact_assignments(value: str) -> str:

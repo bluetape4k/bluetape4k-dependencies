@@ -36,6 +36,14 @@ class CatalogCandidateTest(unittest.TestCase):
             ("fatal: accessToken=camel-access-secret", "camel-access-secret"),
             ("fatal: clientSecret: camel-client-secret", "camel-client-secret"),
             ("fatal: apiKey=camel-api-secret", "camel-api-secret"),
+            ("fatal: apikey=compound-api-secret", "compound-api-secret"),
+            ("fatal: privatekey=compound-private-secret", "compound-private-secret"),
+            ("fatal: signingkey=compound-signing-secret", "compound-signing-secret"),
+            ("fatal: accesskey=compound-access-secret", "compound-access-secret"),
+            (
+                "fatal: secretaccesskey=compound-secret-access",
+                "compound-secret-access",
+            ),
             (
                 "fatal: https://example.invalid/repo?access_token=query-secret",
                 "query-secret",
@@ -47,6 +55,14 @@ class CatalogCandidateTest(unittest.TestCase):
             (
                 "fatal: https://example.invalid/repo?access%54oken=encoded-key-secret",
                 "encoded-key-secret",
+            ),
+            (
+                "fatal: https://example.invalid/repo?apikey=compound-query-api",
+                "compound-query-api",
+            ),
+            (
+                "fatal: https://example.invalid/repo?clientsecret=compound-query-client",
+                "compound-query-client",
             ),
             ("prefix Authorization: Basic embedded-secret", "embedded-secret"),
             (
@@ -81,7 +97,16 @@ class CatalogCandidateTest(unittest.TestCase):
                 self.assertNotIn(secret, str(raised.exception))
 
     def test_redactor_preserves_non_secret_assignments_and_query_values(self) -> None:
-        diagnostic = "status=healthy\nmonkey: banana\nhttps://example.invalid/?mode=safe"
+        diagnostic = (
+            "status=healthy\n"
+            "monkey: banana\n"
+            "hockey=ice\n"
+            "tokenization=enabled\n"
+            "passwordless=true\n"
+            "secretariat=office\n"
+            "keyboard=qwerty\n"
+            "https://example.invalid/?mode=safe"
+        )
         self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)
 
     def test_origin_mismatch_reports_only_a_safe_fingerprint(self) -> None:
