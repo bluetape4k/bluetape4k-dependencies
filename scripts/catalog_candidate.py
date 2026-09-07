@@ -72,8 +72,9 @@ QUERY_PARAMETER_RE = re.compile(
     r"([?&])([^=&#\s]+)(\s*=\s*)([^&#\s]+)"
 )
 LINE_BREAK_IDENTIFIER_RE = re.compile(
-    r"([^\s=:?&#]+)[ \t]*(?:\r\n?|\n)"
-    r"(?:[ \t]*(?:\r\n?|\n))*[ \t]*([^\s=:?&#]*)(?=[ \t]*[=:])"
+    r"(?<![\w.%+\-=])([^\s=:?&#]+"
+    r"(?:(?:[ \t]*(?:\r\n?|\n))+[ \t]*[^\s=:?&#]*)+)"
+    r"(?=[ \t]*[=:])"
 )
 LINE_BREAK_SECRET_VALUE_RE = re.compile(
     r"(?<![\w.%+-])([^\s=:?&#]+)[ \t]*[=:][ \t]*(?:\r\n?|\n)"
@@ -81,6 +82,7 @@ LINE_BREAK_SECRET_VALUE_RE = re.compile(
 MAX_IDENTIFIER_DECODE_ROUNDS = 4
 MAX_SECRET_IDENTIFIER_CHARS = 512
 MAX_GIT_CAPTURE_BYTES = 4 * 1024 * 1024
+MAX_REDACTION_SCAN_CHARS = MAX_GIT_CAPTURE_BYTES
 GIT_CAPTURE_TIMEOUT_SECONDS = 30.0
 SECRET_NAME_PARTS = frozenset(
     {"password", "passwd", "token", "secret", "credential", "key", "session"}
@@ -115,6 +117,7 @@ SAFE_SECRET_LIKE_NAMES = frozenset(
         "passwordless",
         "secretariat",
         "secretary",
+        "sessionfactory",
         "tokenization",
         "tokenizer",
     }
@@ -225,55 +228,60 @@ def _contains_secret_assignment(value: str) -> bool:
     )
 
 
-def _has_compatibility_secret_delimiter(value: str) -> bool:
-    has_compatibility_delimiter = any(
-        character not in {"=", ":"}
-        and unicodedata.normalize("NFKC", character) in {"=", ":"}
-        for character in value
-    )
-    return has_compatibility_delimiter and _contains_secret_assignment(
-        unicodedata.normalize("NFKC", value)
-    )
+def _decode_obfuscated_text(value: str) -> tuple[str, bool]:
+    normalized = value
+    for _ in range(MAX_IDENTIFIER_DECODE_ROUNDS):
+        decoded = urllib.parse.unquote_plus(unicodedata.normalize("NFKC", normalized))
+        if decoded == normalized:
+            break
+        normalized = decoded
+    return normalized, normalized != value
 
 
-def _has_obfuscated_sensitive_header(value: str) -> bool:
-    for line in value.splitlines():
-        normalized = line
-        for _ in range(MAX_IDENTIFIER_DECODE_ROUNDS):
-            decoded = urllib.parse.unquote_plus(
-                unicodedata.normalize("NFKC", normalized)
-            )
-            if decoded == normalized:
-                break
-            normalized = decoded
-        if normalized != line and (
-            AUTHORIZATION_RE.search(normalized) or COOKIE_RE.search(normalized)
-        ):
-            return True
-    return False
+def _is_sensitive_header_name(value: str) -> bool:
+    collapsed, is_ambiguous = _collapse_secret_identifier(value)
+    return is_ambiguous or collapsed in {"authorization", "cookie", "setcookie"}
+
+
+def _has_obfuscated_secret_syntax(value: str) -> bool:
+    if len(value) > MAX_REDACTION_SCAN_CHARS:
+        return True
+    normalized, changed = _decode_obfuscated_text(value)
+    return changed and (
+        _contains_secret_assignment(normalized)
+        or AUTHORIZATION_RE.search(normalized) is not None
+        or COOKIE_RE.search(normalized) is not None
+        or _contains_line_break_secret_candidate(normalized)
+    )
 
 
 def _contains_line_break_secret_candidate(value: str) -> bool:
-    secret_names = SECRET_NAME_PARTS | SECRET_COMPOUND_NAMES
     if any(
         is_secret_name(match.group(1))
         for match in LINE_BREAK_SECRET_VALUE_RE.finditer(value)
     ):
         return True
     for match in LINE_BREAK_IDENTIFIER_RE.finditer(value):
-        left, right = match.groups()
-        if is_secret_name(left) or is_secret_name(right):
+        fragments = tuple(
+            fragment
+            for fragment in re.split(r"[ \t\r\n]+", match.group(1))
+            if fragment
+        )
+        fragment_is_sensitive = tuple(
+            is_secret_name(fragment) or _is_sensitive_header_name(fragment)
+            for fragment in fragments
+        )
+        if len(fragments) == 1 and fragment_is_sensitive[0]:
             return True
-        left_collapsed, left_ambiguous = _collapse_secret_identifier(left)
-        right_collapsed, right_ambiguous = _collapse_secret_identifier(right)
-        if left_ambiguous or right_ambiguous:
-            return True
-        if any(
-            left_collapsed.endswith(secret_name[:split])
-            and right_collapsed.startswith(secret_name[split:])
-            for secret_name in secret_names
-            for split in range(1, len(secret_name))
-        ):
+        if any(fragment_is_sensitive):
+            continue
+        identifier = "".join(fragments)
+        final_fragment, final_is_ambiguous = _collapse_secret_identifier(
+            fragments[-1]
+        )
+        if not final_is_ambiguous and final_fragment in SAFE_SECRET_LIKE_NAMES:
+            continue
+        if is_secret_name(identifier) or _is_sensitive_header_name(identifier):
             return True
     return False
 
@@ -309,10 +317,7 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
             return text[:max_chars] if max_chars is not None else text
     else:
         text = str(value)
-    if (
-        _has_compatibility_secret_delimiter(text)
-        or _has_obfuscated_sensitive_header(text)
-    ):
+    if _has_obfuscated_secret_syntax(text):
         text = "<redacted>"
         return text[:max_chars] if max_chars is not None else text
     text, has_unsupported_sequence = _strip_obfuscating_controls(text)
@@ -364,6 +369,7 @@ def run_bounded_capture(
         raise ValueError("bounded command limits must be positive")
     if input_bytes is not None and len(input_bytes) > max_output_bytes:
         raise RuntimeError("bounded command input limit exceeded")
+    deadline = time.monotonic() + timeout_seconds
     process = subprocess.Popen(
         command,
         cwd=str(cwd),
@@ -386,33 +392,52 @@ def run_bounded_capture(
             return True
 
     try:
-        if process.stdin is not None:
-            process.stdin.write(input_bytes or b"")
-            process.stdin.close()
         stdout = bytearray()
         stderr = bytearray()
         total = 0
-        deadline = time.monotonic() + timeout_seconds
-        with selectors.DefaultSelector() as output_selector:
+        input_view = memoryview(input_bytes or b"")
+        input_offset = 0
+        with selectors.DefaultSelector() as io_selector:
             for name, stream in (
                 ("stdout", process.stdout),
                 ("stderr", process.stderr),
             ):
                 os.set_blocking(stream.fileno(), False)
-                output_selector.register(stream, selectors.EVENT_READ, name)
-            while output_selector.get_map():
+                io_selector.register(stream, selectors.EVENT_READ, name)
+            if process.stdin is not None:
+                os.set_blocking(process.stdin.fileno(), False)
+                if input_view:
+                    io_selector.register(process.stdin, selectors.EVENT_WRITE, "stdin")
+                else:
+                    process.stdin.close()
+            while io_selector.get_map():
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise RuntimeError("bounded command timed out")
-                for selector_key, _mask in output_selector.select(
+                for selector_key, _mask in io_selector.select(
                     timeout=min(0.05, remaining)
                 ):
+                    if selector_key.data == "stdin":
+                        try:
+                            written = os.write(
+                                selector_key.fd,
+                                input_view[input_offset : input_offset + 65536],
+                            )
+                        except BrokenPipeError:
+                            written = len(input_view) - input_offset
+                        except BlockingIOError:
+                            continue
+                        input_offset += written
+                        if input_offset >= len(input_view):
+                            io_selector.unregister(selector_key.fileobj)
+                            selector_key.fileobj.close()
+                        continue
                     try:
                         chunk = os.read(selector_key.fd, 65536)
                     except BlockingIOError:
                         continue
                     if not chunk:
-                        output_selector.unregister(selector_key.fileobj)
+                        io_selector.unregister(selector_key.fileobj)
                         continue
                     remaining_budget = max_output_bytes - total
                     target = stdout if selector_key.data == "stdout" else stderr
@@ -441,6 +466,8 @@ def run_bounded_capture(
             time.sleep(0.02)
         raise
     finally:
+        if process.stdin is not None and not process.stdin.closed:
+            process.stdin.close()
         process.stdout.close()
         process.stderr.close()
 

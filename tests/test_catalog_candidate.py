@@ -226,6 +226,7 @@ class CatalogCandidateTest(unittest.TestCase):
             ("fatal: mykey=contiguous-key-secret", "contiguous-key-secret"),
             ("fatal:to\nken=punctuation-boundary-secret", "punctuation-boundary-secret"),
             ("fatal: to\n\nken=multi-line-secret", "multi-line-secret"),
+            ("fatal: to\nk\nen=fragmented-secret", "fragmented-secret"),
             ("fatal: token=\nvalue-line-secret", "value-line-secret"),
             ("fatal: token:\r\ncolon-value-secret", "colon-value-secret"),
             ("Cookie: session=cookie-secret", "cookie-secret"),
@@ -238,6 +239,16 @@ class CatalogCandidateTest(unittest.TestCase):
             (
                 "Authoriz%61tion: Bearer encoded-header-secret",
                 "encoded-header-secret",
+            ),
+            ("token%3Dencoded-delimiter-secret", "encoded-delimiter-secret"),
+            (
+                "token%EF%BC%9Dfullwidth-encoded-delimiter-secret",
+                "fullwidth-encoded-delimiter-secret",
+            ),
+            ("Cook\nie: opaque-split-cookie", "opaque-split-cookie"),
+            (
+                "Authoriz\nation: Basic split-authorization-secret",
+                "split-authorization-secret",
             ),
         )
         for stderr, secret in cases:
@@ -266,6 +277,14 @@ class CatalogCandidateTest(unittest.TestCase):
         ):
             with self.subTest(raw=raw):
                 self.assertEqual(candidate.redact_diagnostic(raw), "<redacted>")
+
+    def test_oversized_diagnostic_fails_closed(self) -> None:
+        self.assertEqual(
+            candidate.redact_diagnostic(
+                "x" * (candidate.MAX_REDACTION_SCAN_CHARS + 1)
+            ),
+            "<redacted>",
+        )
 
     def test_secret_name_classifier_bounds_ambiguous_identifiers(self) -> None:
         self.assertTrue(candidate.is_secret_name("field_" * 100))
@@ -315,6 +334,30 @@ class CatalogCandidateTest(unittest.TestCase):
                 timeout_seconds=3,
             )
 
+    def test_bounded_capture_drains_stdin_and_stdout_without_deadlock(self) -> None:
+        payload = b"x" * (1024 * 1024)
+        with tempfile.TemporaryDirectory() as directory:
+            completed = candidate.run_bounded_capture(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import sys; "
+                        "sys.stdout.buffer.write(b'y' * (1024 * 1024)); "
+                        "sys.stdout.buffer.flush(); "
+                        "data = sys.stdin.buffer.read(); "
+                        "sys.stderr.write(str(len(data)))"
+                    ),
+                ],
+                cwd=Path(directory).resolve(),
+                input_bytes=payload,
+                max_output_bytes=2 * 1024 * 1024,
+                timeout_seconds=3,
+            )
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(len(completed.stdout), len(payload))
+        self.assertEqual(completed.stderr, str(len(payload)).encode())
+
     def test_redactor_preserves_non_secret_assignments_and_query_values(self) -> None:
         diagnostic = (
             "status=healthy\n"
@@ -330,6 +373,7 @@ class CatalogCandidateTest(unittest.TestCase):
             "my+monkey=papaya\n"
             "ｍｙ＿ｍｏｎｋｅｙ=guava\n"
             "secretary=alice\n"
+            "sessionFactory=default\n"
             "tokenizer=fast\n"
             "text：punctuation\n"
             "https://example.invalid/?mode=safe"
