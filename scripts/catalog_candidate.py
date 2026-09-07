@@ -106,6 +106,62 @@ def _approved_origin(key: str) -> str:
     return f"git@github.com:bluetape4k/{REPOSITORY_NAMES[key]}.git"
 
 
+def inspect_repository_for_map(
+    name: str, root: Path, expected_head: str | None = None
+) -> dict[str, object]:
+    """Build one strict repository-map entry from the checked-out git topology."""
+    if name not in CATALOG_REPOSITORIES:
+        raise RuntimeError(f"repository name is not managed: {name}")
+    resolved_root = root.resolve()
+    origin = _git(resolved_root, "remote", "get-url", "origin")
+    expected_origin = f"git@github.com:bluetape4k/{name}.git"
+    if origin != expected_origin:
+        raise RuntimeError(f"origin mismatch for {name}: {origin}")
+    branch = _git(resolved_root, "branch", "--show-current")
+    if not branch:
+        branch = f"issues-242-243-{name}"
+        try:
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(resolved_root),
+                    "checkout",
+                    "-B",
+                    branch,
+                    "HEAD",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except (OSError, subprocess.CalledProcessError) as exc:
+            raise RuntimeError(
+                f"cannot attach repository map branch for {name}"
+            ) from exc
+    head = _git(resolved_root, "rev-parse", "HEAD")
+    peeled_commit = _git(resolved_root, "rev-parse", f"{head}^{{commit}}")
+    if peeled_commit != head or (expected_head is not None and head != expected_head):
+        raise RuntimeError(f"HEAD mismatch for {name}: {head}")
+    develop_head = _git(
+        resolved_root, "rev-parse", "refs/remotes/origin/develop^{commit}"
+    )
+    base_sha = _git(resolved_root, "merge-base", head, develop_head)
+    if _git(resolved_root, "rev-parse", f"{base_sha}^{{commit}}") != base_sha:
+        raise RuntimeError(f"base SHA does not peel for {name}")
+    if _git(resolved_root, "status", "--porcelain=v1", "--untracked-files=all"):
+        raise RuntimeError(f"worktree is dirty for {name}")
+    return {
+        "root": str(resolved_root),
+        "catalog": str(resolved_root / "gradle" / "libs.versions.toml"),
+        "origin": origin,
+        "branch": branch,
+        "base_sha": base_sha,
+        "expected_head": head,
+        "clean": True,
+    }
+
+
 def _validate_repository(key: str, value: Any, workspace: Path) -> CandidateRepository:
     if not isinstance(value, dict) or set(value) != REPOSITORY_FIELDS:
         raise RuntimeError(f"repository map fields are invalid for {key}")

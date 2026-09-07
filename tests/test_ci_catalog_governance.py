@@ -139,6 +139,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             clone_step,
         )
         self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
+        self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
         self.assertIn("snapshot candidate lookup failed", clone_step)
         self.assertIn("exit 1", clone_step)
 
@@ -177,6 +178,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         )
         self.assertIn('--branch "$candidate_branch" --single-branch', clone_step)
         self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
+        self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
         self.assertIn("snapshot candidate lookup failed", clone_step)
 
         fixture_step = workflow.split(
@@ -260,7 +262,10 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             "      - name: Clone managed repositories for catalog script checks\n", 1
         )[1].split("      - name:", 1)[0]
         self.assertIn("config/publishing-signing-repository-refs.json", clone_step)
-        self.assertIn("fetch --no-tags origin", clone_step)
+        self.assertIn("fetch --no-tags --filter=blob:none origin", clone_step)
+        self.assertIn("clone_args=(--depth 1)", clone_step)
+        self.assertIn("clone_args=(--filter=blob:none --no-checkout)", clone_step)
+        self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
         self.assertIn('checkout -B "issues-242-243-', clone_step)
         self.assertIn("remote get-url origin", clone_step)
         self.assertIn("rev-parse --verify", clone_step)
@@ -275,12 +280,18 @@ class CatalogGovernanceCiTest(unittest.TestCase):
         map_step = workflow.split(
             "      - name: Build exact catalog repository map\n", 1
         )[1].split("      - name:", 1)[0]
-        self.assertIn("peeled_commit", map_step)
-        self.assertIn("origin/develop", map_step)
+        self.assertIn("inspect_repository_for_map", map_step)
         self.assertIn("issues-242-243-repository-map.json", map_step)
-        self.assertIn('"remote", "get-url", "origin"', map_step)
-        self.assertIn('"rev-parse", "--verify"', map_step)
-        self.assertIn('"status", "--porcelain=v1", "--untracked-files=all"', map_step)
+
+        candidate_source = (
+            REPO_ROOT / "scripts" / "catalog_candidate.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn('"remote", "get-url", "origin"', candidate_source)
+        self.assertIn('"merge-base", head, develop_head', candidate_source)
+        self.assertIn(
+            '"status", "--porcelain=v1", "--untracked-files=all"',
+            candidate_source,
+        )
 
         recheck_step = workflow.split(
             "      - name: Recheck exact signing refs before sync\n", 1

@@ -199,6 +199,94 @@ class CatalogCandidateTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "fork point"):
                 candidate.load_repository_map_v1(path, workspace)
 
+    def test_map_producer_round_trips_a_diverged_exact_head(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_map(workspace)
+            projects = Path(document["repositories"]["projects"]["root"])
+            fork_point = str(document["repositories"]["projects"]["base_sha"])
+
+            subprocess.run(
+                ["git", "-C", str(projects), "checkout", "-b", "develop"],
+                check=True,
+                capture_output=True,
+            )
+            (projects / "develop.txt").write_text("develop\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(projects), "add", "develop.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance develop",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            develop_head = subprocess.check_output(
+                ["git", "-C", str(projects), "rev-parse", "HEAD"], text=True
+            ).strip()
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "update-ref",
+                    "refs/remotes/origin/develop",
+                    develop_head,
+                ],
+                check=True,
+            )
+
+            subprocess.run(
+                ["git", "-C", str(projects), "checkout", "candidate"],
+                check=True,
+                capture_output=True,
+            )
+            (projects / "candidate.txt").write_text("candidate\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(projects), "add", "candidate.txt"], check=True
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(projects),
+                    "-c",
+                    "user.name=Test",
+                    "-c",
+                    "user.email=test@example.invalid",
+                    "commit",
+                    "-m",
+                    "advance candidate",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            candidate_head = subprocess.check_output(
+                ["git", "-C", str(projects), "rev-parse", "HEAD"], text=True
+            ).strip()
+
+            document["repositories"]["projects"] = (
+                candidate.inspect_repository_for_map(
+                    "bluetape4k-projects", projects, candidate_head
+                )
+            )
+            path.write_text(json.dumps(document), encoding="utf-8")
+            loaded = candidate.load_repository_map_v1(path, workspace)
+
+            projects_entry = next(item for item in loaded if item.key == "projects")
+            self.assertEqual(projects_entry.base_sha, fork_point)
+            self.assertEqual(projects_entry.expected_head, candidate_head)
+
     def test_manifest_verify_revalidates_every_bound_input(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp).resolve()

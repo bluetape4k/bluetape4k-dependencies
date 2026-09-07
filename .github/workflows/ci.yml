@@ -108,7 +108,7 @@ jobs:
             expected_sha="${signing_sha[$repo]:-}"
             clone_args=(--depth 1)
             if [[ -n "$expected_sha" ]]; then
-              clone_args+=(--no-checkout)
+              clone_args=(--filter=blob:none --no-checkout)
             fi
             use_snapshot_candidate=false
             for snapshot_repo in "${snapshot_repositories[@]}"; do
@@ -123,7 +123,7 @@ jobs:
                    >/dev/null 2>"$branch_error"; then
                 clone_args+=(--branch "$candidate_branch" --single-branch)
               elif grep -Fq "(HTTP 404)" "$branch_error"; then
-                : # The repository has no snapshot-candidate branch; use develop.
+                clone_args+=(--branch develop --single-branch)
               else
                 sed 's/^/snapshot candidate lookup failed: /' "$branch_error" >&2
                 exit 1
@@ -134,7 +134,7 @@ jobs:
               # Keep the authenticated HTTPS remote installed by gh for the
               # immutable fetch.  The strict map gets its SSH origin only
               # after this exact object has been checked out.
-              git -C "../${repo}" fetch --no-tags origin "$expected_sha"
+              git -C "../${repo}" fetch --no-tags --filter=blob:none origin "$expected_sha"
               git -C "../${repo}" fetch --no-tags origin "develop:refs/remotes/origin/develop"
               git -C "../${repo}" checkout -B "issues-242-243-${repo}" "$expected_sha"
               peeled_sha=$(git -C "../${repo}" rev-parse --verify "${expected_sha}^{commit}")
@@ -153,7 +153,6 @@ jobs:
           git remote set-url origin git@github.com:bluetape4k/bluetape4k-dependencies.git
           python3 - "$GITHUB_WORKSPACE" "$RUNNER_TEMP/issues-242-243-repository-map.json" <<'PY'
           import json
-          import subprocess
           import sys
           from pathlib import Path
 
@@ -173,76 +172,19 @@ jobs:
               for key in catalog_candidate.REPOSITORY_KEYS
           }
 
-          def git(root: Path, *arguments: str) -> str:
-              return subprocess.run(
-                  ["git", "-C", str(root), *arguments],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-              ).stdout.strip()
-
-          def inspect(name: str, root: Path, expected: str | None = None) -> dict[str, object]:
-              root = root.resolve()
-              origin = git(root, "remote", "get-url", "origin")
-              expected_origin = f"git@github.com:bluetape4k/{name}.git"
-              if origin != expected_origin:
-                  raise SystemExit(f"origin mismatch for {name}: {origin}")
-              branch = git(root, "branch", "--show-current")
-              if not branch:
-                  branch = f"issues-242-243-{name}"
-                  subprocess.run(
-                      ["git", "-C", str(root), "checkout", "-B", branch, "HEAD"],
-                      check=True,
-                      stdout=subprocess.PIPE,
-                      stderr=subprocess.PIPE,
-                      text=True,
-                  )
-              head = git(root, "rev-parse", "HEAD")
-              peeled_commit = git(root, "rev-parse", "--verify", f"{head}^{{commit}}")
-              if peeled_commit != head or (expected is not None and head != expected):
-                  raise SystemExit(f"HEAD mismatch for {name}: {head}")
-              try:
-                  base_sha = git(root, "rev-parse", "origin/develop")
-              except subprocess.CalledProcessError:
-                  subprocess.run(
-                      [
-                          "git",
-                          "-C",
-                          str(root),
-                          "fetch",
-                          "--no-tags",
-                          "origin",
-                          "develop:refs/remotes/origin/develop",
-                      ],
-                      check=True,
-                      stdout=subprocess.PIPE,
-                      stderr=subprocess.PIPE,
-                      text=True,
-                  )
-                  base_sha = git(root, "rev-parse", "origin/develop")
-              if git(root, "rev-parse", "--verify", f"{base_sha}^{{commit}}") != base_sha:
-                  raise SystemExit(f"base SHA does not peel for {name}")
-              if git(root, "status", "--porcelain=v1", "--untracked-files=all"):
-                  raise SystemExit(f"worktree is dirty for {name}")
-              return {
-                  "root": str(root),
-                  "catalog": str(root / "gradle" / "libs.versions.toml"),
-                  "origin": origin,
-                  "branch": branch,
-                  "base_sha": base_sha,
-                  "expected_head": head,
-                  "clean": True,
-              }
-
           document = {
               "schema_version": 1,
-              "central": inspect("bluetape4k-dependencies", central),
+              "central": catalog_candidate.inspect_repository_for_map(
+                  "bluetape4k-dependencies", central
+              ),
               "repositories": {},
           }
           for key, name in repositories.items():
               root = workspace / name
               expected = manifest["repositories"].get(name, {}).get("commit")
-              document["repositories"][key] = inspect(name, root, expected)
+              document["repositories"][key] = (
+                  catalog_candidate.inspect_repository_for_map(name, root, expected)
+              )
           output.parent.mkdir(parents=True, exist_ok=True)
           output.write_text(
               json.dumps(document, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
