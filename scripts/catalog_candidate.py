@@ -13,6 +13,7 @@ import re
 import stat
 import subprocess
 import tempfile
+import unicodedata
 import urllib.parse
 from pathlib import Path
 from typing import Any
@@ -51,11 +52,11 @@ ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
 CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 PRIVATE_ARMOR_RE = re.compile(
     r"-----BEGIN [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----.*?"
-    r"-----END [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----",
+    r"(?:-----END [^-\r\n]*PRIVATE KEY(?: BLOCK)?-----|\Z)",
     re.IGNORECASE | re.DOTALL,
 )
 ASSIGNMENT_CANDIDATE_RE = re.compile(
-    r"(?m)(?<![A-Za-z0-9_-])(?=([A-Za-z][A-Za-z0-9_-]*)\b"
+    r"(?m)(?<![A-Za-z0-9_.%-])(?=([A-Za-z%][A-Za-z0-9_.%-]*)\b"
     r"([ \t]*[=:][ \t]*)([^\r\n]*(?:\r?\n[ \t]+[^\r\n]*)*))"
 )
 SECRET_URI_RE = re.compile(r"(?i)(://)[^/?#\s]*@")
@@ -113,14 +114,16 @@ def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-def _is_secret_name(value: str) -> bool:
+def is_secret_name(value: str) -> bool:
+    """Classify normalized snake, kebab, camel, encoded, and compound names."""
     decoded = urllib.parse.unquote_plus(value)
     separated = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", decoded)
     separated = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", separated)
     parts = re.sub(r"[^A-Za-z0-9]+", "_", separated).lower().split("_")
     collapsed = "".join(parts)
-    return any(part in SECRET_NAME_PARTS for part in parts) or (
-        collapsed in SECRET_COMPOUND_NAMES
+    return collapsed in SECRET_COMPOUND_NAMES or any(
+        part in SECRET_NAME_PARTS or part in SECRET_COMPOUND_NAMES
+        for part in parts
     )
 
 
@@ -129,7 +132,7 @@ def _redact_assignments(value: str) -> str:
     cursor = 0
     for match in ASSIGNMENT_CANDIDATE_RE.finditer(value):
         key_start, _key_end = match.span(1)
-        if key_start < cursor or not _is_secret_name(match.group(1)):
+        if key_start < cursor or not is_secret_name(match.group(1)):
             continue
         parts.append(value[cursor:key_start])
         parts.append(f"{match.group(1)}{match.group(2)}<redacted>")
@@ -140,7 +143,7 @@ def _redact_assignments(value: str) -> str:
 
 def _redact_query_parameter(match: re.Match[str]) -> str:
     prefix, key, separator, _value = match.groups()
-    if _is_secret_name(key):
+    if is_secret_name(key):
         return f"{prefix}{key}{separator}<redacted>"
     return match.group(0)
 
@@ -151,14 +154,19 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
         text = value.decode("utf-8", errors="replace")
     else:
         text = str(value)
+    text = ANSI_RE.sub("", text)
+    text = CONTROL_RE.sub("", text)
+    text = "".join(
+        character
+        for character in text
+        if unicodedata.category(character) != "Cf"
+    )
     text = PRIVATE_ARMOR_RE.sub("<redacted-private-key>", text)
     text = AUTHORIZATION_RE.sub(r"\1<redacted>", text)
     text = BEARER_RE.sub(r"\1<redacted>", text)
     text = QUERY_PARAMETER_RE.sub(_redact_query_parameter, text)
     text = _redact_assignments(text)
     text = SECRET_URI_RE.sub(r"\1<redacted>@", text)
-    text = ANSI_RE.sub("", text)
-    text = CONTROL_RE.sub("", text)
     return text[:max_chars] if max_chars is not None else text
 
 

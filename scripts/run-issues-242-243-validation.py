@@ -218,13 +218,7 @@ PRIVATE_ARMOR_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9_.-]+")
-SECRET_NAME_RE = re.compile(
-    r"(?:^|[_-])(?:password|passwd|token|secret|credential|private[_-]?key|"
-    r"secret[_-]?access[_-]?key|access[_-]?key(?:[_-]?id)?|api[_-]?key|"
-    r"signing[_-]?key|key)$",
-    re.IGNORECASE,
-)
-SECRET_ASSIGNMENT_ARG_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*)(=)(.*)$")
+SECRET_ASSIGNMENT_ARG_RE = re.compile(r"^([A-Za-z_%][A-Za-z0-9_.%-]*)(=)(.*)$")
 SAFE_ENVIRONMENT_KEYS = frozenset(
     {
         "PATH",
@@ -707,7 +701,7 @@ def write_cache_entry(
         for field, value in metadata.items():
             if field not in document:
                 field_text = str(field)
-                if SECRET_NAME_RE.search(field_text):
+                if catalog_candidate.is_secret_name(field_text):
                     continue
                 document[field] = _redact_value(value)
     _atomic_write(cache_directory / f"{key}.json", canonical_json_bytes(document))
@@ -722,10 +716,6 @@ def redact_output(value: Any) -> str:
     return catalog_candidate.redact_diagnostic(value)
 
 
-def _is_secret_name(value: str) -> bool:
-    return SECRET_NAME_RE.search(value.replace("-", "_")) is not None
-
-
 def _redact_value(value: Any) -> Any:
     if isinstance(value, (bytes, str)):
         return redact_output(value)
@@ -733,7 +723,7 @@ def _redact_value(value: Any) -> Any:
         return {
             str(key): _redact_value(nested)
             for key, nested in value.items()
-            if not SECRET_NAME_RE.search(str(key))
+            if not catalog_candidate.is_secret_name(str(key))
         }
     if isinstance(value, list):
         return [_redact_value(nested) for nested in value]
@@ -749,7 +739,8 @@ def sanitized_environment(source: Optional[Mapping[str, str]] = None) -> dict[st
     return {
         str(key): str(value)
         for key, value in values.items()
-        if str(key) in SAFE_ENVIRONMENT_KEYS and SECRET_NAME_RE.search(str(key)) is None
+        if str(key) in SAFE_ENVIRONMENT_KEYS
+        and not catalog_candidate.is_secret_name(str(key))
     }
 
 
@@ -760,7 +751,7 @@ def child_environment(source: Mapping[str, str]) -> dict[str, str]:
     return {
         str(key): str(value)
         for key, value in source.items()
-        if str(key) in allowed and SECRET_NAME_RE.search(str(key)) is None
+        if str(key) in allowed and not catalog_candidate.is_secret_name(str(key))
     }
 
 
@@ -776,18 +767,20 @@ def redact_command(command: Sequence[str]) -> tuple[str, ...]:
             redact_next = False
             continue
         assignment = SECRET_ASSIGNMENT_ARG_RE.fullmatch(value)
-        if assignment is not None and _is_secret_name(assignment.group(1)):
+        if assignment is not None and catalog_candidate.is_secret_name(
+            assignment.group(1)
+        ):
             redacted.append(f"{assignment.group(1)}=<redacted>")
             continue
         option_assignment = re.match(r"^(-{1,2}[^=]+)=(.*)$", value)
-        if option_assignment is not None and _is_secret_name(option_assignment.group(1).lstrip("-")):
+        if option_assignment is not None and catalog_candidate.is_secret_name(
+            option_assignment.group(1).lstrip("-")
+        ):
             redacted.append(f"{option_assignment.group(1)}=<redacted>")
             continue
-        short_property = re.match(r"^(-P[^=]*(?:password|passwd|token|secret|key))=(.*)$", value, re.IGNORECASE)
-        if short_property is not None:
-            redacted.append(f"{short_property.group(1)}=<redacted>")
-            continue
-        if value.startswith("-") and _is_secret_name(value.lstrip("-")):
+        if value.startswith("-") and catalog_candidate.is_secret_name(
+            value.lstrip("-")
+        ):
             redacted.append(value)
             redact_next = True
             continue

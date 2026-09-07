@@ -52,11 +52,28 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "fatal: secretaccesskey=sentinel-compound-secret-access\n"
             "https://example.invalid/repo?apikey=sentinel-compound-query-api\n"
             "https://example.invalid/repo?clientsecret=sentinel-compound-query-client\n"
+            "fatal: my_apikey=sentinel-namespaced-api\n"
+            "fatal: service-privatekey=sentinel-namespaced-private\n"
+            "fatal: aws_secretaccesskey=sentinel-namespaced-secret-access\n"
+            "fatal: build_signingkey=sentinel-namespaced-signing\n"
+            "https://example.invalid/repo?my_clientsecret=sentinel-namespaced-query-client\n"
+            "https://example.invalid/repo?oauth_accesskeyid=sentinel-namespaced-query-access\n"
+            "fatal: access%5Ftoken=sentinel-encoded-assignment\n"
+            "fatal: access%54oken=sentinel-encoded-camel-assignment\n"
+            "fatal: access\x1b[31mToken=sentinel-ansi-assignment\n"
+            "fatal: to\x00ken=sentinel-control-assignment\n"
+            "fatal: access\u200bToken=sentinel-format-assignment\n"
+            "https://example.invalid/?access\x1b[31mToken=sentinel-ansi-query\n"
+            "-----BEGIN PGP PRIVATE\x1b[31m KEY BLOCK-----\n"
+            "sentinel-ansi-private-body\n"
+            "-----END PGP PRIVATE KEY BLOCK-----\n"
             "prefix Authorization: Basic sentinel-basic\n"
             "https://user:sentinel-userinfo@example.invalid/repo.git\n"
             "https://sentinel-token-only@example.invalid/repo.git\n"
             "https://user%3Asentinel-encoded@example.invalid/repo.git\n"
-            "password: |\n  sentinel-folded"
+            "password: |\n  sentinel-folded\n"
+            "-----BEGIN PGP PRIVATE KEY BLOCK-----\n"
+            "sentinel-truncated-private-body"
         )
         failure = subprocess.CalledProcessError(128, ["git", "status"], stderr=raw)
         with mock.patch.object(receipt.subprocess, "run", side_effect=failure):
@@ -75,6 +92,20 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-compound-secret-access",
             "sentinel-compound-query-api",
             "sentinel-compound-query-client",
+            "sentinel-namespaced-api",
+            "sentinel-namespaced-private",
+            "sentinel-namespaced-secret-access",
+            "sentinel-namespaced-signing",
+            "sentinel-namespaced-query-client",
+            "sentinel-namespaced-query-access",
+            "sentinel-encoded-assignment",
+            "sentinel-encoded-camel-assignment",
+            "sentinel-ansi-assignment",
+            "sentinel-control-assignment",
+            "sentinel-format-assignment",
+            "sentinel-ansi-query",
+            "sentinel-ansi-private-body",
+            "sentinel-truncated-private-body",
             "sentinel-basic",
             "sentinel-userinfo",
             "sentinel-token-only",

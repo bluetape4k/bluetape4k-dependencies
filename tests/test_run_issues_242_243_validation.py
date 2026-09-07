@@ -549,11 +549,28 @@ class ValidationRunnerTest(unittest.TestCase):
             "fatal: secretaccesskey=sentinel-compound-secret-access\n"
             "https://example.invalid/repo?apikey=sentinel-compound-query-api\n"
             "https://example.invalid/repo?clientsecret=sentinel-compound-query-client\n"
+            "fatal: my_apikey=sentinel-namespaced-api\n"
+            "fatal: service-privatekey=sentinel-namespaced-private\n"
+            "fatal: aws_secretaccesskey=sentinel-namespaced-secret-access\n"
+            "fatal: build_signingkey=sentinel-namespaced-signing\n"
+            "https://example.invalid/repo?my_clientsecret=sentinel-namespaced-query-client\n"
+            "https://example.invalid/repo?oauth_accesskeyid=sentinel-namespaced-query-access\n"
+            "fatal: access%5Ftoken=sentinel-encoded-assignment\n"
+            "fatal: access%54oken=sentinel-encoded-camel-assignment\n"
+            "fatal: access\x1b[31mToken=sentinel-ansi-assignment\n"
+            "fatal: to\x00ken=sentinel-control-assignment\n"
+            "fatal: access\u200bToken=sentinel-format-assignment\n"
+            "https://example.invalid/?access\x1b[31mToken=sentinel-ansi-query\n"
+            "-----BEGIN PGP PRIVATE\x1b[31m KEY BLOCK-----\n"
+            "sentinel-ansi-private-body\n"
+            "-----END PGP PRIVATE KEY BLOCK-----\n"
             "prefix Authorization: Basic sentinel-basic\n"
             "https://user:sentinel-userinfo@example.invalid/repo.git\n"
             "https://sentinel-token-only@example.invalid/repo.git\n"
             "https://user%3Asentinel-encoded@example.invalid/repo.git\n"
             "password: |\n  sentinel-folded\n"
+            "-----BEGIN PGP PRIVATE KEY BLOCK-----\n"
+            "sentinel-truncated-private-body"
         )
         for sentinel in (
             "sentinel-password",
@@ -573,6 +590,20 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-compound-secret-access",
             "sentinel-compound-query-api",
             "sentinel-compound-query-client",
+            "sentinel-namespaced-api",
+            "sentinel-namespaced-private",
+            "sentinel-namespaced-secret-access",
+            "sentinel-namespaced-signing",
+            "sentinel-namespaced-query-client",
+            "sentinel-namespaced-query-access",
+            "sentinel-encoded-assignment",
+            "sentinel-encoded-camel-assignment",
+            "sentinel-ansi-assignment",
+            "sentinel-control-assignment",
+            "sentinel-format-assignment",
+            "sentinel-ansi-query",
+            "sentinel-ansi-private-body",
+            "sentinel-truncated-private-body",
             "sentinel-basic",
             "sentinel-userinfo",
             "sentinel-token-only",
@@ -1720,9 +1751,30 @@ class ValidationRunnerTest(unittest.TestCase):
                 "MY_SECRET_ACCESS_KEY=sentinel-my-secret",
                 "SERVICE_KEY=secret-key",
                 "--password=secret-password",
+                "--clientSecret",
+                "sentinel-arg-camel",
+                "access%54oken=sentinel-arg-encoded",
+                "--my_apikey=sentinel-arg-compound",
             )
         )
-        self.assertNotIn("secret", " ".join(command))
+        rendered_command = " ".join(command)
+        for sentinel in (
+            "secret",
+            "sentinel-arg-camel",
+            "sentinel-arg-encoded",
+            "sentinel-arg-compound",
+        ):
+            self.assertNotIn(sentinel, rendered_command)
+        self.assertEqual(
+            runner._redact_value(
+                {
+                    "accessToken": "sentinel-meta-camel",
+                    "my_apikey": "sentinel-meta-compound",
+                    "safe": "ok",
+                }
+            ),
+            {"safe": "ok"},
+        )
         with tempfile.TemporaryDirectory() as directory:
             cache = Path(directory).resolve()
             key = "a" * 64
@@ -1734,6 +1786,11 @@ class ValidationRunnerTest(unittest.TestCase):
                 b"AWS_ACCESS_KEY_ID=sentinel-aws-id\n"
                 b"MY_SECRET_ACCESS_KEY=sentinel-my-secret\n"
                 b"SERVICE_KEY=secret-key\n",
+                metadata={
+                    "accessToken": "sentinel-meta-camel",
+                    "my_apikey": "sentinel-meta-compound",
+                    "safe": "ok",
+                },
             )
             output = runner.read_cache_entry(cache, key)
             self.assertIsNotNone(output)
@@ -1742,6 +1799,10 @@ class ValidationRunnerTest(unittest.TestCase):
             self.assertNotIn("sentinel-aws-secret", output["output"])
             self.assertNotIn("sentinel-aws-id", output["output"])
             self.assertNotIn("sentinel-my-secret", output["output"])
+            cache_text = (cache / f"{key}.json").read_text(encoding="utf-8")
+            self.assertNotIn("sentinel-meta-camel", cache_text)
+            self.assertNotIn("sentinel-meta-compound", cache_text)
+            self.assertEqual(output["safe"], "ok")
 
 
 if __name__ == "__main__":

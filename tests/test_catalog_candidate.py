@@ -44,6 +44,13 @@ class CatalogCandidateTest(unittest.TestCase):
                 "fatal: secretaccesskey=compound-secret-access",
                 "compound-secret-access",
             ),
+            ("fatal: my_apikey=namespaced-api", "namespaced-api"),
+            ("fatal: service-privatekey=namespaced-private", "namespaced-private"),
+            (
+                "fatal: aws_secretaccesskey=namespaced-secret-access",
+                "namespaced-secret-access",
+            ),
+            ("fatal: build_signingkey=namespaced-signing", "namespaced-signing"),
             (
                 "fatal: https://example.invalid/repo?access_token=query-secret",
                 "query-secret",
@@ -64,6 +71,14 @@ class CatalogCandidateTest(unittest.TestCase):
                 "fatal: https://example.invalid/repo?clientsecret=compound-query-client",
                 "compound-query-client",
             ),
+            (
+                "fatal: https://example.invalid/repo?my_clientsecret=namespaced-query-client",
+                "namespaced-query-client",
+            ),
+            (
+                "fatal: https://example.invalid/repo?oauth_accesskeyid=namespaced-query-access",
+                "namespaced-query-access",
+            ),
             ("prefix Authorization: Basic embedded-secret", "embedded-secret"),
             (
                 "fatal: https://token-only-secret@example.invalid/repo.git",
@@ -78,6 +93,40 @@ class CatalogCandidateTest(unittest.TestCase):
                 "warning: retrying\nfatal: Authorization: Bearer multiline-secret",
                 "multiline-secret",
             ),
+            (
+                "fatal: access%5Ftoken=encoded-assignment-secret",
+                "encoded-assignment-secret",
+            ),
+            (
+                "fatal: access%54oken=encoded-camel-assignment-secret",
+                "encoded-camel-assignment-secret",
+            ),
+            (
+                "fatal: access\x1b[31mToken=ansi-assignment-secret",
+                "ansi-assignment-secret",
+            ),
+            (
+                "fatal: to\x00ken=control-assignment-secret",
+                "control-assignment-secret",
+            ),
+            (
+                "fatal: access\u200bToken=format-assignment-secret",
+                "format-assignment-secret",
+            ),
+            (
+                "fatal: https://x.invalid/?access\x1b[31mToken=ansi-query-secret",
+                "ansi-query-secret",
+            ),
+            (
+                "-----BEGIN PGP PRIVATE\x1b[31m KEY BLOCK-----\n"
+                "ansi-private-body\n"
+                "-----END PGP PRIVATE KEY BLOCK-----",
+                "ansi-private-body",
+            ),
+            (
+                "-----BEGIN PGP PRIVATE KEY BLOCK-----\ntruncated-private-body",
+                "truncated-private-body",
+            ),
         )
         for stderr, secret in cases:
             with self.subTest(stderr=stderr):
@@ -90,7 +139,8 @@ class CatalogCandidateTest(unittest.TestCase):
                     candidate.subprocess, "run", side_effect=failure
                 ):
                     with self.assertRaisesRegex(
-                        RuntimeError, r"git rev-parse failed.*<redacted>"
+                        RuntimeError,
+                        r"git rev-parse failed.*<redacted(?:-private-key)?>",
                     ) as raised:
                         candidate._git(Path("/tmp/example"), "rev-parse", "missing")
 
@@ -105,6 +155,7 @@ class CatalogCandidateTest(unittest.TestCase):
             "passwordless=true\n"
             "secretariat=office\n"
             "keyboard=qwerty\n"
+            "my_monkey=banana\n"
             "https://example.invalid/?mode=safe"
         )
         self.assertEqual(candidate.redact_diagnostic(diagnostic), diagnostic)
