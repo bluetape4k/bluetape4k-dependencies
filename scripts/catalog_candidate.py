@@ -57,9 +57,9 @@ SECRET_ASSIGNMENT_RE = re.compile(
     r"(?im)\b((?:[A-Za-z0-9]+[_-])*(?:password|passwd|token|secret|credential|"
     r"private[_-]?key|secret[_-]?access[_-]?key|access[_-]?key(?:[_-]?id)?|"
     r"api[_-]?key|signing[_-]?key|key)(?:[_-][A-Za-z0-9]+)*)\b"
-    r"(\s*[=:]\s*)([^\r\n]+)"
+    r"([ \t]*[=:][ \t]*)([^\r\n]*(?:\r?\n[ \t]+[^\r\n]*)*)"
 )
-SECRET_URI_RE = re.compile(r"(?i)(://[^\s:/]+:)[^\s@]+(@)")
+SECRET_URI_RE = re.compile(r"(?i)(://)[^/?#\s]*@")
 AUTHORIZATION_RE = re.compile(
     r"(?i)(\bauthorization\s*[:=]\s*)(?:(?:bearer|basic)\s+)?[^\r\n]+"
 )
@@ -105,7 +105,7 @@ def redact_diagnostic(value: Any, *, max_chars: int | None = None) -> str:
     text = BEARER_RE.sub(r"\1<redacted>", text)
     text = QUERY_SECRET_RE.sub(r"\1<redacted>", text)
     text = SECRET_ASSIGNMENT_RE.sub(r"\1\2<redacted>", text)
-    text = SECRET_URI_RE.sub(r"\1<redacted>\2", text)
+    text = SECRET_URI_RE.sub(r"\1<redacted>@", text)
     text = ANSI_RE.sub("", text)
     text = CONTROL_RE.sub("", text)
     return text[:max_chars] if max_chars is not None else text
@@ -164,7 +164,8 @@ def inspect_repository_for_map(
     origin = _git(resolved_root, "remote", "get-url", "origin")
     expected_origin = f"git@github.com:bluetape4k/{name}.git"
     if origin != expected_origin:
-        fingerprint = sha256_bytes(origin.encode())[:12]
+        safe_origin = redact_diagnostic(origin)
+        fingerprint = sha256_bytes(safe_origin.encode())[:12]
         raise RuntimeError(f"origin mismatch for {name}: sha256={fingerprint}")
     branch = _git(resolved_root, "branch", "--show-current")
     if not branch:

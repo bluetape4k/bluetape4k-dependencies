@@ -39,6 +39,15 @@ class CatalogCandidateTest(unittest.TestCase):
             ),
             ("prefix Authorization: Basic embedded-secret", "embedded-secret"),
             (
+                "fatal: https://token-only-secret@example.invalid/repo.git",
+                "token-only-secret",
+            ),
+            (
+                "fatal: https://user%3Aencoded-secret@example.invalid/repo.git",
+                "encoded-secret",
+            ),
+            ("fatal: password: |\n  folded-secret", "folded-secret"),
+            (
                 "warning: retrying\nfatal: Authorization: Bearer multiline-secret",
                 "multiline-secret",
             ),
@@ -77,7 +86,9 @@ class CatalogCandidateTest(unittest.TestCase):
             message = str(raised.exception)
             self.assertNotIn("origin-user", message)
             self.assertNotIn("origin-secret", message)
-            self.assertIn(hashlib.sha256(origin.encode()).hexdigest()[:12], message)
+            safe_origin = candidate.redact_diagnostic(origin)
+            self.assertIn(hashlib.sha256(safe_origin.encode()).hexdigest()[:12], message)
+            self.assertNotIn(hashlib.sha256(origin.encode()).hexdigest()[:12], message)
 
     def make_repository(self, workspace: Path, key: str) -> tuple[Path, str, str]:
         name = candidate.REPOSITORY_NAMES[key]

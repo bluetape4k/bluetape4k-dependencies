@@ -540,6 +540,9 @@ class ValidationRunnerTest(unittest.TestCase):
             "fatal: client-secret: sentinel-client-secret\n"
             "prefix Authorization: Basic sentinel-basic\n"
             "https://user:sentinel-userinfo@example.invalid/repo.git\n"
+            "https://sentinel-token-only@example.invalid/repo.git\n"
+            "https://user%3Asentinel-encoded@example.invalid/repo.git\n"
+            "password: |\n  sentinel-folded\n"
         )
         for sentinel in (
             "sentinel-password",
@@ -550,6 +553,9 @@ class ValidationRunnerTest(unittest.TestCase):
             "sentinel-client-secret",
             "sentinel-basic",
             "sentinel-userinfo",
+            "sentinel-token-only",
+            "sentinel-encoded",
+            "sentinel-folded",
         ):
             self.assertNotIn(sentinel, bypasses)
         lines = runner.bounded_diagnostics("\n".join(f"line-{i}" for i in range(100)))

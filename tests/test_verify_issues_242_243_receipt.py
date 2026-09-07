@@ -42,7 +42,10 @@ class Issues242243ReceiptTest(unittest.TestCase):
         raw = (
             "fatal: access_token=sentinel-access-token\n"
             "prefix Authorization: Basic sentinel-basic\n"
-            "https://user:sentinel-userinfo@example.invalid/repo.git"
+            "https://user:sentinel-userinfo@example.invalid/repo.git\n"
+            "https://sentinel-token-only@example.invalid/repo.git\n"
+            "https://user%3Asentinel-encoded@example.invalid/repo.git\n"
+            "password: |\n  sentinel-folded"
         )
         failure = subprocess.CalledProcessError(128, ["git", "status"], stderr=raw)
         with mock.patch.object(receipt.subprocess, "run", side_effect=failure):
@@ -52,6 +55,9 @@ class Issues242243ReceiptTest(unittest.TestCase):
             "sentinel-access-token",
             "sentinel-basic",
             "sentinel-userinfo",
+            "sentinel-token-only",
+            "sentinel-encoded",
+            "sentinel-folded",
         ):
             self.assertNotIn(sentinel, str(raised.exception))
 
