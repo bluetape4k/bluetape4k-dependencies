@@ -15,6 +15,41 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
+    def test_pinned_catalog_history_fetches_commit_outside_branch_history(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        marker = "      - name: Fetch pinned snapshot catalog history\n"
+        self.assertIn(marker, workflow)
+        step = workflow.split(marker, 1)[1].split("      - name:", 1)[0]
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+        from tests.test_post_publish_next_development_line import run_git
+        import json
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            run_git(source, "init", "-b", "develop")
+            run_git(source, "config", "user.name", "test")
+            run_git(source, "config", "user.email", "test@example.com")
+            (source / "file").write_text("content")
+            run_git(source, "add", ".")
+            run_git(source, "commit", "-m", "base")
+            tree = run_git(source, "rev-parse", "HEAD^{tree}")
+            hidden = run_git(source, "commit-tree", tree, "-m", "catalog")
+            checkout = root / "checkout"
+            subprocess.run(["git", "clone", "--no-local", str(source), str(checkout)], check=True, capture_output=True)
+            before = run_git(checkout, "rev-parse", "HEAD")
+            missing = subprocess.run(["git", "cat-file", "-e", hidden], cwd=checkout, capture_output=True)
+            self.assertNotEqual(missing.returncode, 0)
+            (checkout / "config").mkdir()
+            (checkout / "config/post-publish-next-development-line.json").write_text(json.dumps({
+                "consumer-policy": {"snapshot-catalog-ref": hidden, "snapshot-catalog-ref-overrides": {}}
+            }))
+            result = subprocess.run(["bash", "-c", script], cwd=checkout, env={**os.environ, "RUNNER_TEMP": str(root)}, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(run_git(checkout, "cat-file", "-t", hidden), "commit")
+            self.assertEqual(run_git(checkout, "rev-parse", "HEAD"), before)
+
     def test_catalog_and_pom_jobs_share_refs_without_reusing_signing_checkout(
         self,
     ) -> None:

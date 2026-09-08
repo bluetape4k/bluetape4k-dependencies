@@ -37,3 +37,4 @@ projects #1715–#1717의 SDK와 신규 모듈 alias를 중앙에 등록했다. 
 - 중앙 develop 병합 시 감사 JSON을 한쪽으로 덮어쓰면 새 SDK나 기존 감사 결과를 잃는다. upstream 515개 record의 완전 동일성과 신규 SDK 6개 보존을 비교하고, inventory·checksum·입력 hash를 갱신한 뒤 감사 검사를 실행한다.
 - macOS 기본 `python3`는 Apple Python 3.9를 선택해 `tomllib`과 sandbox 라이브러리 로딩 검사를 실패시켰다. 전체 검사 전 interpreter 버전을 확인하고 설치된 Python 3.14로 실행한다.
 - 카탈로그 참조를 갱신한 publisher는 중앙 `post-publish-next-development-line.json`의 해당 repository override도 함께 갱신한다. CI가 실제 Projects 참조 `f16b29a0da64481c19443f76476e8166dbc57618`과 이전 정책 참조 불일치를 검출했다. 다른 repository override와 strict equality 검증은 유지한다.
+- 병합 이력을 선형으로 정리하면 다른 저장소가 사용하는 이전 catalog SHA가 현재 브랜치의 조상에서 빠질 수 있다. `fetch-depth: 0`만으로 그 SHA를 확보한다고 가정하지 않는다. 개발선 검증 전에 정책에 선언된 immutable SHA를 명시적으로 fetch하고 commit 객체를 확인한다. 브랜치에서 도달할 수 없는 commit을 만든 실제 Git 회귀 테스트로 이 경계를 검증한다.
