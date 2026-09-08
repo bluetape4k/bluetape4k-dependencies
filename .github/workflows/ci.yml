@@ -361,7 +361,7 @@ jobs:
 
       - name: Verify catalog scripts
         run: |
-          python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/sync-publishing-signing-support.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
+          python3 -m py_compile scripts/audit-latest-stable.py scripts/snapshot-consumer-inputs.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/sync-publishing-signing-support.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
           python3 -m unittest \
             tests/test_sync_publishing_signing_support.py \
             tests/test_run_issues_242_243_validation.py \
@@ -392,6 +392,28 @@ jobs:
         run: ./gradlew build
         env:
           GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+      - name: Write snapshot consumer input manifest
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        run: |
+          set -euo pipefail
+          python3 scripts/snapshot-consumer-inputs.py write \
+            --workspace "$RUNNER_TEMP/development-workspace" \
+            --central-root "$GITHUB_WORKSPACE" \
+            --output "$RUNNER_TEMP/snapshot-consumer-inputs/snapshot-consumer-inputs.json" \
+            --source-commit "$GITHUB_SHA" \
+            --workflow-run-id "$GITHUB_RUN_ID" \
+            --workflow-attempt "$GITHUB_RUN_ATTEMPT"
+
+      - name: Upload snapshot consumer input manifest
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: snapshot-consumer-inputs
+          path: ${{ runner.temp }}/snapshot-consumer-inputs/snapshot-consumer-inputs.json
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 90
 
   publication-pom-contract:
     name: Cross-repository Publication POM Contract
