@@ -26,7 +26,7 @@ class CatalogGovernanceCiTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            source = root / "source"
+            source = root / "source.git"
             source.mkdir()
             run_git(source, "init", "-b", "develop")
             run_git(source, "config", "user.name", "test")
@@ -39,13 +39,14 @@ class CatalogGovernanceCiTest(unittest.TestCase):
             checkout = root / "checkout"
             subprocess.run(["git", "clone", "--no-local", str(source), str(checkout)], check=True, capture_output=True)
             before = run_git(checkout, "rev-parse", "HEAD")
+            run_git(checkout, "remote", "set-url", "origin", str(root / "unavailable-origin"))
             missing = subprocess.run(["git", "cat-file", "-e", hidden], cwd=checkout, capture_output=True)
             self.assertNotEqual(missing.returncode, 0)
             (checkout / "config").mkdir()
             (checkout / "config/post-publish-next-development-line.json").write_text(json.dumps({
                 "consumer-policy": {"snapshot-catalog-ref": hidden, "snapshot-catalog-ref-overrides": {}}
             }))
-            result = subprocess.run(["bash", "-c", script], cwd=checkout, env={**os.environ, "RUNNER_TEMP": str(root)}, capture_output=True, text=True)
+            result = subprocess.run(["bash", "-c", script], cwd=checkout, env={**os.environ, "RUNNER_TEMP": str(root), "GITHUB_SERVER_URL": root.as_uri(), "GITHUB_REPOSITORY": "source"}, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(run_git(checkout, "cat-file", "-t", hidden), "commit")
             self.assertEqual(run_git(checkout, "rev-parse", "HEAD"), before)
