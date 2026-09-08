@@ -246,7 +246,7 @@ gh() {
         build_job = workflow.split("  build:\n", 1)[1].split(
             "  publication-pom-contract:\n", 1
         )[0]
-        self.assertIn("scripts/snapshot-consumer-inputs.py write", build_job)
+        self.assertIn("scripts/write-snapshot-consumer-inputs.py write", build_job)
         self.assertIn("--workspace \"$RUNNER_TEMP/development-workspace\"", build_job)
         self.assertIn("--source-commit \"$GITHUB_SHA\"", build_job)
         self.assertIn("--workflow-run-id \"$GITHUB_RUN_ID\"", build_job)

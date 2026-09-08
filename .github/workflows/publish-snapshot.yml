@@ -55,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           manifest="$RUNNER_TEMP/snapshot-consumer-inputs/snapshot-consumer-inputs.json"
-          source_commit=$(python3 scripts/snapshot-consumer-inputs.py source-commit --manifest "$manifest")
+          source_commit=$(python3 scripts/write-snapshot-consumer-inputs.py source-commit --manifest "$manifest")
           source_run=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}")
           echo "$source_run" \
             | jq -e --arg expected_sha "$source_commit" \
@@ -72,7 +72,7 @@ jobs:
             git checkout --detach "$source_commit"
           fi
           test "$(git rev-parse HEAD)" = "$source_commit"
-          python3 scripts/snapshot-consumer-inputs.py validate \
+          python3 scripts/write-snapshot-consumer-inputs.py validate \
             --manifest "$manifest" \
             --expected-source-commit "$source_commit" \
             --expected-workflow-run-id "$SOURCE_RUN_ID" \

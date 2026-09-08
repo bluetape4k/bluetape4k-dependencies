@@ -10,7 +10,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 POLICY = REPO_ROOT / "config" / "post-publish-next-development-line.json"
-SCRIPT = REPO_ROOT / "scripts" / "snapshot-consumer-inputs.py"
+SCRIPT = REPO_ROOT / "scripts" / "write-snapshot-consumer-inputs.py"
 CHECKOUT = REPO_ROOT / "scripts" / "checkout-snapshot-consumers.sh"
 
 

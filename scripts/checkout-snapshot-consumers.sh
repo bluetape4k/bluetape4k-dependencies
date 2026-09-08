@@ -8,11 +8,11 @@ manifest=${2:?Usage: checkout-snapshot-consumers.sh WORKSPACE MANIFEST [POLICY]}
 policy=${3:-"$script_dir/../config/post-publish-next-development-line.json"}
 python=${PYTHON:-python3}
 
-validation=$("$python" "$script_dir/snapshot-consumer-inputs.py" validate \
+validation=$("$python" "$script_dir/write-snapshot-consumer-inputs.py" validate \
   --policy "$policy" \
   --manifest "$manifest")
 test "$validation" = "Snapshot consumer input manifest is valid."
-refs=$("$python" "$script_dir/snapshot-consumer-inputs.py" print-checkouts \
+refs=$("$python" "$script_dir/write-snapshot-consumer-inputs.py" print-checkouts \
   --policy "$policy" \
   --manifest "$manifest")
 
