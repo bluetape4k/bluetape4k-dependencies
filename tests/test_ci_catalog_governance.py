@@ -15,6 +15,29 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
+    def test_catalog_and_pom_jobs_share_refs_without_reusing_signing_checkout(
+        self,
+    ) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        checkout = 'bash scripts/checkout-catalog-publishers.sh "$RUNNER_TEMP/catalog-workspace"'
+        build_job = workflow.split("  build:\n", 1)[1].split(
+            "  publication-pom-contract:\n", 1
+        )[0]
+        pom_job = workflow.split("  publication-pom-contract:\n", 1)[1].split(
+            "  supply-chain-report-only:\n", 1
+        )[0]
+        self.assertIn(checkout, build_job)
+        self.assertIn(checkout, pom_job)
+        self.assertIn(
+            'scripts/sync-managed-catalog.py --workspace-root "$RUNNER_TEMP/catalog-workspace" --check --summary',
+            build_job,
+        )
+        self.assertIn(
+            'scripts/verify-publication-poms.py --workspace "$RUNNER_TEMP/catalog-workspace" --summary',
+            pom_job,
+        )
+        self.assertNotIn("publishing-signing-repository-refs.json", pom_job)
+
     def test_development_checkout_selection_preserves_the_signing_checkout(
         self,
     ) -> None:
@@ -132,7 +155,9 @@ gh() {
 
         self.assertIn("scripts/audit-latest-stable.py", script_step)
         self.assertIn("scripts/verify-latest-stable-resolved-graphs.py", script_step)
-        self.assertIn("scripts/verify-post-publish-next-development-line.py", script_step)
+        self.assertIn(
+            "scripts/verify-post-publish-next-development-line.py", script_step
+        )
         self.assertIn(
             "scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary",
             script_step,
@@ -146,13 +171,15 @@ gh() {
             script_step,
         )
 
-    def test_publish_workflows_guard_the_development_line_and_stable_boundary(self) -> None:
-        snapshot_workflow = (REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml").read_text(
-            encoding="utf-8"
-        )
-        release_workflow = (REPO_ROOT / ".github" / "workflows" / "release.yml").read_text(
-            encoding="utf-8"
-        )
+    def test_publish_workflows_guard_the_development_line_and_stable_boundary(
+        self,
+    ) -> None:
+        snapshot_workflow = (
+            REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml"
+        ).read_text(encoding="utf-8")
+        release_workflow = (
+            REPO_ROOT / ".github" / "workflows" / "release.yml"
+        ).read_text(encoding="utf-8")
 
         self.assertIn(
             "python3 scripts/verify-post-publish-next-development-line.py --summary\n",
@@ -220,7 +247,9 @@ gh() {
         self.assertIn("path: build/supply-chain-report/", workflow)
         self.assertIn("if-no-files-found: error", workflow)
 
-    def test_publish_snapshot_limits_candidate_branch_to_snapshot_catalog_consumers(self) -> None:
+    def test_publish_snapshot_limits_candidate_branch_to_snapshot_catalog_consumers(
+        self,
+    ) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml"
         ).read_text(encoding="utf-8")
@@ -315,27 +344,43 @@ gh() {
         )[1].split("      - uses:", 1)[0]
 
         self.assertIn("if: ${{ github.event_name != 'pull_request' }}", audit_step)
-        self.assertIn("sync-shared-versions.py --workspace .. --check --summary", audit_step)
-        self.assertIn("sync-dependabot-ignores.py --workspace .. --check --summary", audit_step)
+        self.assertIn(
+            "sync-shared-versions.py --workspace .. --check --summary", audit_step
+        )
+        self.assertIn(
+            "sync-dependabot-ignores.py --workspace .. --check --summary", audit_step
+        )
 
     def test_ci_runs_cross_repository_publication_pom_contract(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        job = workflow.split("  publication-pom-contract:\n", 1)[1].split("  ci-status:\n", 1)[0]
+        job = workflow.split("  publication-pom-contract:\n", 1)[1].split(
+            "  ci-status:\n", 1
+        )[0]
 
         self.assertIn("timeout-minutes: 30", job)
         self.assertIn("if: ${{ github.event_name != 'push' }}", job)
-        self.assertIn("scripts/verify-publication-poms.py --print-default-repositories", job)
-        self.assertIn("scripts/verify-publication-poms.py --workspace .. --summary", job)
-        self.assertIn("config/publishing-signing-repository-refs.json", job)
-        self.assertIn('fetch --no-tags --filter=blob:none origin "$expected_sha"', job)
-        self.assertIn('rev-parse --verify "${expected_sha}^{commit}"', job)
-        self.assertNotIn("--depth 1", job)
+        self.assertIn(
+            'scripts/verify-publication-poms.py --workspace "$RUNNER_TEMP/catalog-workspace" --summary',
+            job,
+        )
+        checkout = (REPO_ROOT / "scripts/checkout-catalog-publishers.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("config/catalog-publisher-repository-refs.json", checkout)
+        self.assertIn(
+            'fetch --no-tags --filter=blob:none origin "$expected_sha"', checkout
+        )
+        self.assertIn('rev-parse --verify "${expected_sha}^{commit}"', checkout)
+        self.assertNotIn("--depth 1", checkout)
         self.assertIn("uses: actions/setup-java@v6", job)
         self.assertIn("uses: gradle/actions/setup-gradle@v6", job)
 
         status_job = workflow.split("  ci-status:\n", 1)[1]
         self.assertIn("- publication-pom-contract", status_job)
-        self.assertIn("PUBLICATION_POM_RESULT: ${{ needs.publication-pom-contract.result }}", status_job)
+        self.assertIn(
+            "PUBLICATION_POM_RESULT: ${{ needs.publication-pom-contract.result }}",
+            status_job,
+        )
         self.assertIn(
             'if [[ "$EVENT_NAME" != "push" && "$PUBLICATION_POM_RESULT" != "success" ]]; then',
             status_job,
@@ -343,9 +388,9 @@ gh() {
 
     def test_ci_runs_issue_242_243_python_contract_tests_and_sync_check(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        script_step = workflow.split(
-            "      - name: Verify catalog scripts\n", 1
-        )[1].split("      - name:", 1)[0]
+        script_step = workflow.split("      - name: Verify catalog scripts\n", 1)[
+            1
+        ].split("      - name:", 1)[0]
 
         for test_name in (
             "tests/test_sync_publishing_signing_support.py",
@@ -390,9 +435,9 @@ gh() {
         self.assertIn("inspect_repository_for_map", map_step)
         self.assertIn("issues-242-243-repository-map.json", map_step)
 
-        candidate_source = (
-            REPO_ROOT / "scripts" / "catalog_candidate.py"
-        ).read_text(encoding="utf-8")
+        candidate_source = (REPO_ROOT / "scripts" / "catalog_candidate.py").read_text(
+            encoding="utf-8"
+        )
         self.assertIn('"remote", "get-url", "origin"', candidate_source)
         self.assertIn('"merge-base", head, develop_head', candidate_source)
         self.assertIn(
@@ -415,7 +460,9 @@ gh() {
             '--repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json"',
             central_step,
         )
-        self.assertIn("python3 scripts/sync-publishing-signing-support.py", central_step)
+        self.assertIn(
+            "python3 scripts/sync-publishing-signing-support.py", central_step
+        )
         self.assertNotIn("--repo ", central_step)
         self.assertNotIn("Verify PR central generated signing copy", workflow)
         self.assertIn("catalog_candidate.REPOSITORY_KEYS", map_step)
@@ -423,8 +470,12 @@ gh() {
             "      - name: Compile generated signing helpers\n", 1
         )[1].split("      - name:", 1)[0]
         setup_java = workflow.index("      - uses: actions/setup-java@v6.0.0")
-        setup_gradle = workflow.index("      - uses: gradle/actions/setup-gradle@v6.3.0")
-        compile_helpers = workflow.index("      - name: Compile generated signing helpers")
+        setup_gradle = workflow.index(
+            "      - uses: gradle/actions/setup-gradle@v6.3.0"
+        )
+        compile_helpers = workflow.index(
+            "      - name: Compile generated signing helpers"
+        )
         self.assertLess(setup_java, compile_helpers)
         self.assertLess(setup_gradle, compile_helpers)
         self.assertIn("ThreadPoolExecutor(max_workers=2)", compile_step)
@@ -455,13 +506,15 @@ gh() {
         self.assertNotIn("gh repo clone", check_step)
         self.assertNotIn("Verify PR central generated signing copy", workflow)
 
-    def test_release_diagnostic_matches_transport_classes_without_secret_output(self) -> None:
-        workflow = (
-            REPO_ROOT / ".github" / "workflows" / "release.yml"
-        ).read_text(encoding="utf-8")
-        diagnostic = workflow.split("      - name: Diagnose signing inputs\n", 1)[1].split(
-            "      - name:", 1
-        )[0]
+    def test_release_diagnostic_matches_transport_classes_without_secret_output(
+        self,
+    ) -> None:
+        workflow = (REPO_ROOT / ".github" / "workflows" / "release.yml").read_text(
+            encoding="utf-8"
+        )
+        diagnostic = workflow.split("      - name: Diagnose signing inputs\n", 1)[
+            1
+        ].split("      - name:", 1)[0]
         for classification in (
             "raw_armor",
             "escaped_newline",

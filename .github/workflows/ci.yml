@@ -353,6 +353,12 @@ jobs:
             gh repo clone "bluetape4k/${repo}" "$RUNNER_TEMP/development-workspace/${repo}" -- "${clone_args[@]}"
           done
 
+      - name: Clone catalog publisher candidates
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_LFS_SKIP_SMUDGE: "1"
+        run: bash scripts/checkout-catalog-publishers.sh "$RUNNER_TEMP/catalog-workspace"
+
       - name: Verify catalog scripts
         run: |
           python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/sync-publishing-signing-support.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
@@ -363,7 +369,7 @@ jobs:
             tests/test_publishing_signing_smoke.py
           python3 -m unittest discover -s tests -p 'test_*.py'
           scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary
-          scripts/sync-managed-catalog.py --check --summary
+          scripts/sync-managed-catalog.py --workspace-root "$RUNNER_TEMP/catalog-workspace" --check --summary
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" && "${GITHUB_BASE_REF}" == "main" ]]; then
             scripts/verify-managed-artifacts.py --summary
           else
@@ -403,49 +409,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GIT_LFS_SKIP_SMUDGE: "1"
-        run: |
-          set -euo pipefail
-          mapfile -t repos < <(scripts/verify-publication-poms.py --print-default-repositories)
-          python3 - "${repos[@]}" <<'PY'
-          import json
-          import sys
-          from pathlib import Path
-
-          expected = set(sys.argv[1:])
-          document = json.loads(
-              Path("config/publishing-signing-repository-refs.json").read_text(
-                  encoding="utf-8"
-              )
-          )
-          actual = set(document["repositories"])
-          if actual != expected:
-              raise SystemExit(
-                  "publication publisher ref inventory mismatch: "
-                  f"missing={sorted(expected - actual)} extra={sorted(actual - expected)}"
-              )
-          PY
-          while IFS=$'\t' read -r repo expected_sha; do
-            gh repo clone "bluetape4k/${repo}" "../${repo}" -- \
-              --filter=blob:none --no-checkout
-            git -C "../${repo}" fetch --no-tags --filter=blob:none origin "$expected_sha"
-            git -C "../${repo}" checkout --detach "$expected_sha"
-            peeled_sha=$(git -C "../${repo}" rev-parse --verify "${expected_sha}^{commit}")
-            test "$peeled_sha" = "$expected_sha"
-            test "$(git -C "../${repo}" rev-parse HEAD)" = "$expected_sha"
-            test -z "$(git -C "../${repo}" status --porcelain=v1 --untracked-files=all)"
-          done < <(python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          document = json.loads(
-              Path("config/publishing-signing-repository-refs.json").read_text(
-                  encoding="utf-8"
-              )
-          )
-          for repository, value in sorted(document["repositories"].items()):
-              print(f"{repository}\t{value['commit']}")
-          PY
-          )
+        run: bash scripts/checkout-catalog-publishers.sh "$RUNNER_TEMP/catalog-workspace"
       - uses: actions/setup-java@v6.0.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -455,7 +419,7 @@ jobs:
           gradle-version: wrapper
           cache-read-only: true
       - name: Generate and validate publication POMs
-        run: scripts/verify-publication-poms.py --workspace .. --summary
+        run: scripts/verify-publication-poms.py --workspace "$RUNNER_TEMP/catalog-workspace" --summary
 
   supply-chain-report-only:
     name: Supply-chain Report (report-only)
