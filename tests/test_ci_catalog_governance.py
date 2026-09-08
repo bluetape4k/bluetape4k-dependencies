@@ -282,6 +282,10 @@ gh() {
             'git rev-parse --verify "${catalog_ref}^{commit}"',
             fetch_step,
         )
+        self.assertIn(
+            'test "$(git rev-parse --verify "${catalog_ref}^{commit}")" = "$catalog_ref"',
+            fetch_step,
+        )
         self.assertLess(workflow.index(fetch_marker), workflow.index(preflight_marker))
 
     def test_publish_snapshot_uploads_a_run_scoped_supply_chain_report(self) -> None:

@@ -101,7 +101,7 @@ jobs:
           PYCODE
           while IFS= read -r catalog_ref; do
             git fetch --no-tags "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" "$catalog_ref"
-            git rev-parse --verify "${catalog_ref}^{commit}"
+            test "$(git rev-parse --verify "${catalog_ref}^{commit}")" = "$catalog_ref"
           done < "$RUNNER_TEMP/snapshot-catalog-refs.txt"
 
       - name: Checkout exact CI consumer inputs
