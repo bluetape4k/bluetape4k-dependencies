@@ -36,6 +36,16 @@ merge, workflow dispatch, Maven Central publication은 이 repair의 검증과
 `git rev-parse HEAD` read-back을 함께 유지하고, artifact가 없으면
 `develop`으로 조용히 대체하지 않는다.
 
+## Publish job의 catalog history 경계
+
+Publish job은 manifest의 중앙 source commit을 detached checkout한 뒤
+preflight를 실행하므로, 중앙 저장소의 branch history에 포함되지 않은 pinned
+catalog SHA를 자동으로 보유하지 않는다. CI와 Publish 양쪽에서
+`GITHUB_SERVER_URL/GITHUB_REPOSITORY`를 직접 지정해 policy의 모든 catalog
+ref를 fetch하고 `git rev-parse --verify`로 확인해야 한다. 이 fetch가 없으면
+CI는 통과해도 Publish preflight가 `pinned snapshot catalog ref ... is missing`
+으로 publication 전에 중단된다.
+
 ## DoD
 
 - source commit과 CI run ID가 manifest에 포함된다.
