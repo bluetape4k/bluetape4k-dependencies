@@ -132,6 +132,21 @@ gh() {
             '--summary --workspace "$RUNNER_TEMP/development-workspace"', workflow
         )
 
+    def test_pinned_catalog_history_is_fetched_before_remote_switch(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        fetch_marker = "      - name: Fetch pinned snapshot catalog history\n"
+        map_marker = "      - name: Build exact catalog repository map\n"
+        self.assertIn(fetch_marker, workflow)
+        self.assertIn(map_marker, workflow)
+        fetch_step = workflow.split(fetch_marker, 1)[1].split("      - name:", 1)[0]
+        self.assertIn('git fetch --no-tags origin "$catalog_ref"', fetch_step)
+        self.assertIn('git rev-parse --verify "${catalog_ref}^{commit}"', fetch_step)
+        self.assertLess(workflow.index(fetch_marker), workflow.index(map_marker))
+        self.assertLess(
+            workflow.index(fetch_marker),
+            workflow.index('git remote set-url origin git@github.com:bluetape4k/bluetape4k-dependencies.git'),
+        )
+
     def test_ci_validates_supply_chain_reports_without_promoting_findings(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
