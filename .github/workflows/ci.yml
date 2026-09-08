@@ -359,6 +359,25 @@ jobs:
           GIT_LFS_SKIP_SMUDGE: "1"
         run: bash scripts/checkout-catalog-publishers.sh "$RUNNER_TEMP/catalog-workspace"
 
+      - name: Fetch pinned snapshot catalog history
+        run: |
+          set -euo pipefail
+          python3 - <<'PYCODE' > "$RUNNER_TEMP/snapshot-catalog-refs.txt"
+          import json
+          import re
+          from pathlib import Path
+          policy = json.loads(Path("config/post-publish-next-development-line.json").read_text())["consumer-policy"]
+          refs = {policy["snapshot-catalog-ref"], *policy.get("snapshot-catalog-ref-overrides", {}).values()}
+          for ref in sorted(refs):
+              if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                  raise SystemExit("snapshot catalog ref must be an immutable commit SHA")
+              print(ref)
+          PYCODE
+          while IFS= read -r catalog_ref; do
+            git fetch --no-tags origin "$catalog_ref"
+            git rev-parse --verify "${catalog_ref}^{commit}"
+          done < "$RUNNER_TEMP/snapshot-catalog-refs.txt"
+
       - name: Verify catalog scripts
         run: |
           python3 -m py_compile scripts/audit-latest-stable.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/sync-publishing-signing-support.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
