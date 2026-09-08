@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -12,6 +15,100 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
+    def test_development_checkout_selection_preserves_the_signing_checkout(
+        self,
+    ) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        marker = "      - name: Clone development verification repositories\n"
+        self.assertIn(marker, workflow)
+        step = workflow.split(marker, 1)[1].split("      - name:", 1)[0]
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+        from tests.test_post_publish_next_development_line import (
+            create_catalog_history,
+            run_git,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "signing-checkout"
+            refs = create_catalog_history(source)
+            candidate = subprocess.check_output(
+                [
+                    sys.executable,
+                    str(
+                        REPO_ROOT
+                        / "scripts/verify-post-publish-next-development-line.py"
+                    ),
+                    "--print-snapshot-candidate-branch",
+                ],
+                text=True,
+            ).strip()
+            run_git(source, "branch", candidate, refs["forward"])
+            run_git(source, "checkout", "--detach", refs["minimum"])
+            for status, expected in (
+                (200, refs["forward"]),
+                (404, refs["candidate"]),
+                (403, None),
+            ):
+                with self.subTest(status=status):
+                    runner_temp = root / str(status)
+                    runner_temp.mkdir()
+                    environment = dict(
+                        os.environ,
+                        RUNNER_TEMP=str(runner_temp),
+                        FIXTURE_SOURCE=str(source),
+                        LOOKUP_STATUS=str(status),
+                    )
+                    # GitHub 호출만 대체하고 checkout과 ref 선택은 실제 Git으로 검증한다.
+                    github_fixture = """
+gh() {
+  if [ "$1" = api ]; then
+    if [ "$LOOKUP_STATUS" = 200 ]; then return 0; fi
+    echo "gh: lookup failed (HTTP $LOOKUP_STATUS)" >&2
+    return 1
+  fi
+  local destination="$4"
+  shift 5
+  git clone "$FIXTURE_SOURCE" "$destination" "$@"
+}
+"""
+                    result = subprocess.run(
+                        ["bash", "-c", github_fixture + script],
+                        cwd=REPO_ROOT,
+                        env=environment,
+                        text=True,
+                        capture_output=True,
+                        timeout=60,
+                        check=False,
+                    )
+                    if expected is None:
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn("snapshot candidate lookup failed", result.stderr)
+                    else:
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        graph = runner_temp / "development-workspace/bluetape4k-graph"
+                        self.assertEqual(run_git(graph, "rev-parse", "HEAD"), expected)
+                    self.assertEqual(
+                        run_git(source, "rev-parse", "HEAD"), refs["minimum"]
+                    )
+                    self.assertEqual(run_git(source, "status", "--porcelain"), "")
+
+    def test_development_guard_uses_a_separate_checkout_from_signing(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "      - name: Clone development verification repositories\n", workflow
+        )
+        clone_step = workflow.split(
+            "      - name: Clone development verification repositories\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertIn('"$RUNNER_TEMP/development-workspace/${repo}"', clone_step)
+        self.assertNotIn("signing_sha", clone_step)
+        self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
+        self.assertIn("snapshot candidate lookup failed", clone_step)
+        self.assertIn(
+            '--summary --workspace "$RUNNER_TEMP/development-workspace"', workflow
+        )
+
     def test_ci_validates_supply_chain_reports_without_promoting_findings(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 

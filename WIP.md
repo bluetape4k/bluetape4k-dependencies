@@ -13,8 +13,13 @@ Scope: dependencies 2.1.0 minor 개발 train 및 외부 catalog 최신 안정판
 중앙 verifier는 5개 저장소를 `development-snapshot-repositories`에서 검사하며,
 `official-release-repositories`는 빈 목록을 허용한다. 또한 live
 `bluetape4k-graph/develop`가 사용하는 catalog ref
-`55b5269bddd2bd041d5f282abcd0238dc242c171`을 명시적 override로 고정해 다음
-CI가 예제 정책 수정 뒤 다른 ref drift로 다시 실패하지 않게 한다.
+`55b5269bddd2bd041d5f282abcd0238dc242c171`을 명시적 override로 고정한다.
+
+2026-09-08 PR #247 CI에서는 signing 고정 커밋의 checkout을 개발선 검사에도
+사용해 Graph ref가 불일치했다. signing manifest와 exact repository map은
+유지하고, 개발선 검증은 별도 `$RUNNER_TEMP/development-workspace`에서
+Publish Snapshot과 같은 후보/develop 선택 정책으로 수행한다. 회귀 테스트는
+후보 선택, 404 대체, 403 중단과 signing checkout 보존을 검증한다.
 
 ## 2026-09-04 workshop 안정 소비자 정책 정렬
 
