@@ -1,7 +1,7 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "408c57b228e5c52f831d6680601f7bd472b77c1f63eedccaa29408fbfa162865",
+    "sha256": "3e0540c4ddfb7034089b0d1ae4ee0f5aa2410a492a81f303af6d20162c76407f",
     "summary": {
       "authority-count": 515,
       "line-count": 549,
@@ -23,7 +23,7 @@
     "catalog-sha256": "622761bc3e518f052fe769c7fa057b3e1ec0cacd22ad9a871a9d1d8157120e0a"
   },
   "candidate": {
-    "catalog-sha256": "22747f445cb3c6965f6192347809b4e52d74cca980f1b75b62621fbfe6dba7d4"
+    "catalog-sha256": "6dcaaf935800703d34e80c9eb896f10c4375d5e67edb78d73bf67ed7aeadcff9"
   },
   "delta": [
     {

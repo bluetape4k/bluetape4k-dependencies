@@ -585,7 +585,7 @@
       "audit": "config/latest-stable-version-audit.json",
       "authority-delta-ledger": "config/kotlin-2.4.20-version-deltas.json",
       "baseline-catalog-ref": "31babe619f802eab4e35322bc3b35b851915ff50",
-      "catalog-sha256": "22747f445cb3c6965f6192347809b4e52d74cca980f1b75b62621fbfe6dba7d4",
+      "catalog-sha256": "6dcaaf935800703d34e80c9eb896f10c4375d5e67edb78d73bf67ed7aeadcff9",
       "delta-count": 1,
       "downstream-full-builds": {
         "repositories": 9,
