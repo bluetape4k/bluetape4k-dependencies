@@ -1273,6 +1273,7 @@ bluetape4k-exposed-spring-boot-jdbc            = { module = "io.github.bluetape4
 bluetape4k-exposed-spring-boot-r2dbc           = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-boot-r2dbc", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-spring-modulith             = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-spring-modulith", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-starrocks                   = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-starrocks", version.ref = "bluetape4k-exposed-bom" }
+bluetape4k-exposed-tenant-jdbc                 = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-tenant-jdbc", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-timefold-solver-persistence = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-timefold-solver-persistence", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-tink                        = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-tink", version.ref = "bluetape4k-exposed-bom" }
 bluetape4k-exposed-trino                       = { module = "io.github.bluetape4k.exposed:bluetape4k-exposed-trino", version.ref = "bluetape4k-exposed-bom" }
