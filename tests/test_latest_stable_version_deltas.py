@@ -212,7 +212,11 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(document["schema-version"], 3)
         self.assertEqual(
             document["rollout"],
-            central_document["subsequent-rollouts"][-1]["rollout"],
+            next(
+                rollout["rollout"]
+                for rollout in central_document["subsequent-rollouts"]
+                if rollout["rollout"] == document["rollout"]
+            ),
         )
         self.assertEqual(document["audit-cutoff"], "2026-09-04")
         self.assertEqual(document["status"], "verified-resolved-graph")
@@ -314,9 +318,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
             self.assertEqual(candidate_receipt["publication-poms"]["files"], 188)
 
-    def test_audit_closes_all_safe_adoption_candidates(self) -> None:
+    def test_completed_rollout_keeps_its_original_audit_summary(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
-        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+        # 후속 Kotlin 전환의 최신 조회 결과를 과거 전환의 완료 증거와 혼동하지 않는다.
+        audit = document["audit"]
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
         self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
@@ -324,6 +329,33 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(audit["summary"]["line-count"], 549)
         self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
         self.assertEqual(audit["summary"]["metadata-verified"], 510)
+
+    def test_kotlin_candidate_is_stable_and_all_plugin_aliases_are_aligned(self) -> None:
+        versions = catalog_versions()
+        self.assertEqual(versions["kotlin"], "2.4.20")
+        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+        kotlin_records = [
+            record
+            for record in audit["records"]
+            if any(line["version-key"] == "kotlin" for line in record["current-lines"])
+        ]
+        self.assertEqual(
+            {record["coordinate-or-plugin-id"] for record in kotlin_records},
+            {
+                "org.jetbrains.kotlin.jvm",
+                "org.jetbrains.kotlin.kapt",
+                "org.jetbrains.kotlin.plugin.allopen",
+                "org.jetbrains.kotlin.plugin.jpa",
+                "org.jetbrains.kotlin.plugin.noarg",
+                "org.jetbrains.kotlin.plugin.serialization",
+                "org.jetbrains.kotlin.plugin.spring",
+            },
+        )
+        for record in kotlin_records:
+            self.assertEqual(record["latest-stable"]["status"], "verified")
+            for line in record["current-lines"]:
+                self.assertEqual(line["current"], versions["kotlin"])
+                self.assertEqual(line["disposition"], "current")
 
     def test_explicit_compatibility_and_unavailable_holds_remain(self) -> None:
         audit = json.loads(AUDIT.read_text(encoding="utf-8"))

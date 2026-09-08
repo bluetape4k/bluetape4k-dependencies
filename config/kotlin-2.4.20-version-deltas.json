@@ -1,0 +1,88 @@
+{
+  "audit": {
+    "path": "config/latest-stable-version-audit.json",
+    "sha256": "408c57b228e5c52f831d6680601f7bd472b77c1f63eedccaa29408fbfa162865",
+    "summary": {
+      "authority-count": 515,
+      "line-count": 549,
+      "line-dispositions": {
+        "adopt-latest": 23,
+        "current": 417,
+        "defer-breaking-migration": 25,
+        "hold-compatibility": 75,
+        "hold-unavailable": 9
+      },
+      "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
+      "metadata-verified": 510
+    }
+  },
+  "audit-cutoff": "2026-09-08",
+  "baseline": {
+    "catalog-ref": "31babe619f802eab4e35322bc3b35b851915ff50",
+    "catalog-sha256": "622761bc3e518f052fe769c7fa057b3e1ec0cacd22ad9a871a9d1d8157120e0a"
+  },
+  "candidate": {
+    "catalog-sha256": "22747f445cb3c6965f6192347809b4e52d74cca980f1b75b62621fbfe6dba7d4"
+  },
+  "delta": [
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.4.20"
+      },
+      "after": "2.4.20",
+      "authorities": [
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.jvm",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.jvm",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.kapt",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.kapt",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.allopen",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.allopen",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.jpa",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.jpa",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.noarg",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.noarg",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.serialization",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.serialization",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.spring",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.spring",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "2.4.10",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "kotlin"
+    }
+  ],
+  "rollout": "2026-09-08-issue-197-kotlin-2.4.20",
+  "schema-version": 3,
+  "status": "validation-pending"
+}

@@ -34,7 +34,7 @@
     },
     "kotlin": {
       "disposition": "current",
-      "reason": "Keep all Kotlin compiler and Gradle plugin aliases on the approved 2.4.10 line."
+      "reason": "Keep all Kotlin compiler and Gradle plugin aliases on the approved 2.4.20 stable line (issue #197)."
     },
     "logback": {
       "disposition": "hold-compatibility",
