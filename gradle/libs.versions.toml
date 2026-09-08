@@ -32,7 +32,7 @@ bluetape4k-exposed-bom = "2.1.0-SNAPSHOT"  # Exposed next minor development line
 bluetape4k-javers-bom  = "1.1.0-SNAPSHOT"  # Javers next minor development line.
 
 # ── Build tooling ──────────────────────────────────────────────────────────
-kotlin             = "2.4.10"  # Stable line; GHSA-r937-wjx7-w2jp awaits the Kotlin 2.4.20 stable release.
+kotlin             = "2.4.20"  # GHSA-r937-wjx7-w2jp: 안정판 compiler와 Gradle plugin을 같은 버전으로 유지한다.
 byte-buddy         = "1.18.13"  # https://mvnrepository.com/artifact/net.bytebuddy/byte-buddy-gradle-plugin
 nmcp               = "1.6.2"  # https://mvnrepository.com/artifact/com.gradleup.nmcp/nmcp
 dokka              = "2.2.0"  # https://mvnrepository.com/artifact/org.jetbrains.dokka/dokka-gradle-plugin

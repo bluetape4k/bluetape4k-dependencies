@@ -580,6 +580,25 @@
       },
       "rollout": "2026-09-04-catalog-version-refresh",
       "status": "verified-resolved-graph"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/kotlin-2.4.20-version-deltas.json",
+      "baseline-catalog-ref": "31babe619f802eab4e35322bc3b35b851915ff50",
+      "catalog-sha256": "22747f445cb3c6965f6192347809b4e52d74cca980f1b75b62621fbfe6dba7d4",
+      "delta-count": 1,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-09-08-issue-197-kotlin-2.4.20",
+      "status": "validation-pending"
     }
   ],
   "delta": [
