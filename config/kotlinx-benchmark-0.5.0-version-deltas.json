@@ -1,0 +1,90 @@
+{
+  "audit": {
+    "path": "config/latest-stable-version-audit.json",
+    "sha256": "f34e34d2ce2a9cb8305c8cc9bec73e0d479d90586f4c189e946103b790fcf337",
+    "summary": {
+      "authority-count": 521,
+      "line-count": 555,
+      "line-dispositions": {
+        "adopt-latest": 78,
+        "current": 375,
+        "defer-breaking-migration": 22,
+        "hold-compatibility": 71,
+        "hold-unavailable": 9
+      },
+      "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
+      "metadata-verified": 516
+    }
+  },
+  "audit-cutoff": "2026-09-12",
+  "baseline": {
+    "catalog-ref": "origin/develop",
+    "catalog-sha256": "0954ccab87e9bd8380610134f91cf70aa6bcd0799f94a3b43181d7b083efd2e5"
+  },
+  "candidate": {
+    "catalog-sha256": "f6f1ce3cdc3c4027cf536216fe7c1be6ab781e776257b664baffa927044e3ef8"
+  },
+  "delta": [
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.5.0"
+      },
+      "after": "0.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-kotlinx-benchmark-ha2bb946de05b",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlinx.benchmark",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "0.4.19",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "managed-kotlinx-benchmark-ha2bb946de05b"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.5.0"
+      },
+      "after": "0.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-kotlinx-benchmark-runtime-hb75fd55df187",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlinx:kotlinx-benchmark-runtime",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "0.4.19",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "managed-kotlinx-benchmark-runtime-hb75fd55df187"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.5.0"
+      },
+      "after": "0.5.0",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-kotlinx-benchmark-runtime-jvm-hde0985ebfbfe",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlinx:kotlinx-benchmark-runtime-jvm",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "0.4.19",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "managed-kotlinx-benchmark-runtime-jvm-hde0985ebfbfe"
+    }
+  ],
+  "rollout": "2026-09-12-pr-244-kotlinx-benchmark-0.5.0",
+  "schema-version": 3,
+  "status": "validation-pending"
+}
