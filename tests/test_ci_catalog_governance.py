@@ -260,6 +260,30 @@ gh() {
             release_workflow,
         )
 
+    def test_publish_snapshot_fetches_pinned_catalog_history_before_preflight(
+        self,
+    ) -> None:
+        workflow = (
+            REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml"
+        ).read_text(encoding="utf-8")
+        fetch_marker = "      - name: Fetch pinned snapshot catalog history\n"
+        preflight_marker = "      - name: Verify next development line preflight\n"
+
+        self.assertIn(fetch_marker, workflow)
+        self.assertIn(preflight_marker, workflow)
+        fetch_step = workflow.split(fetch_marker, 1)[1].split(
+            "      - name:", 1
+        )[0]
+        self.assertIn(
+            'git fetch --no-tags "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" "$catalog_ref"',
+            fetch_step,
+        )
+        self.assertIn(
+            'git rev-parse --verify "${catalog_ref}^{commit}"',
+            fetch_step,
+        )
+        self.assertLess(workflow.index(fetch_marker), workflow.index(preflight_marker))
+
     def test_publish_snapshot_uploads_a_run_scoped_supply_chain_report(self) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml"
