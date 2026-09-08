@@ -168,6 +168,25 @@ gh() {
             '--summary --workspace "$RUNNER_TEMP/development-workspace"', workflow
         )
 
+    def test_pinned_catalog_history_is_fetched_before_remote_switch(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        fetch_marker = "      - name: Fetch pinned snapshot catalog history\n"
+        map_marker = "      - name: Build exact catalog repository map\n"
+        self.assertIn(fetch_marker, workflow)
+        self.assertIn(map_marker, workflow)
+        fetch_step = workflow.split(fetch_marker, 1)[1].split("      - name:", 1)[0]
+        self.assertIn(
+            'git fetch --no-tags "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" "$catalog_ref"',
+            fetch_step,
+        )
+        self.assertNotIn('git fetch --no-tags origin "$catalog_ref"', fetch_step)
+        self.assertIn('git rev-parse --verify "${catalog_ref}^{commit}"', fetch_step)
+        self.assertLess(workflow.index(fetch_marker), workflow.index(map_marker))
+        self.assertLess(
+            workflow.index(fetch_marker),
+            workflow.index('git remote set-url origin git@github.com:bluetape4k/bluetape4k-dependencies.git'),
+        )
+
     def test_ci_validates_supply_chain_reports_without_promoting_findings(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
 
@@ -218,28 +237,22 @@ gh() {
         ).read_text(encoding="utf-8")
 
         self.assertIn(
-            "python3 scripts/verify-post-publish-next-development-line.py --summary\n",
+            "python3 scripts/verify-post-publish-next-development-line.py --summary --workspace \"$RUNNER_TEMP/snapshot-consumer-workspace\"",
             snapshot_workflow,
         )
-        clone_command = (
-            "python3 scripts/verify-post-publish-next-development-line.py "
-            "--print-required-repositories"
-        )
-        self.assertIn(clone_command, snapshot_workflow)
+        self.assertIn("actions: read", snapshot_workflow)
+        self.assertIn("ci_run_id:", snapshot_workflow)
+        self.assertIn("actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7", snapshot_workflow)
+        self.assertIn("name: snapshot-consumer-inputs", snapshot_workflow)
+        self.assertIn("run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.ci_run_id }}", snapshot_workflow)
+        self.assertIn('gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}"', snapshot_workflow)
+        self.assertIn('(.status == "completed") and (.conclusion == "success")', snapshot_workflow)
+        self.assertIn("source_attempt=$(jq -er '.run_attempt | tostring' <<<\"$source_run\")", snapshot_workflow)
+        self.assertIn('--expected-workflow-attempt "$source_attempt"', snapshot_workflow)
+        self.assertIn("bash scripts/checkout-snapshot-consumers.sh", snapshot_workflow)
+        self.assertNotIn("--print-snapshot-candidate-branch", snapshot_workflow)
         self.assertIn(
-            "python3 scripts/verify-post-publish-next-development-line.py "
-            "--print-snapshot-candidate-branch",
-            snapshot_workflow,
-        )
-        self.assertIn('--branch "$candidate_branch" --single-branch', snapshot_workflow)
-        self.assertLess(
-            snapshot_workflow.index(clone_command),
-            snapshot_workflow.index(
-                "python3 scripts/verify-post-publish-next-development-line.py --summary\n"
-            ),
-        )
-        self.assertIn(
-            "python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts",
+            "python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts --workspace \"$RUNNER_TEMP/snapshot-consumer-workspace\"",
             snapshot_workflow,
         )
         self.assertIn(
@@ -254,7 +267,7 @@ gh() {
 
         publish_verification = (
             "python3 scripts/verify-post-publish-next-development-line.py "
-            "--summary --require-artifacts"
+            "--summary --require-artifacts --workspace \"$RUNNER_TEMP/snapshot-consumer-workspace\""
         )
         generation = "python3 scripts/generate-supply-chain-report.py"
         validation = (
@@ -283,27 +296,39 @@ gh() {
         self.assertIn("path: build/supply-chain-report/", workflow)
         self.assertIn("if-no-files-found: error", workflow)
 
-    def test_publish_snapshot_limits_candidate_branch_to_snapshot_catalog_consumers(
+    def test_ci_uploads_the_consumer_manifest_after_the_build(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        build_job = workflow.split("  build:\n", 1)[1].split(
+            "  publication-pom-contract:\n", 1
+        )[0]
+        self.assertIn("scripts/write-snapshot-consumer-inputs.py write", build_job)
+        self.assertIn("--workspace \"$RUNNER_TEMP/development-workspace\"", build_job)
+        self.assertIn("--source-commit \"$GITHUB_SHA\"", build_job)
+        self.assertIn("--workflow-run-id \"$GITHUB_RUN_ID\"", build_job)
+        self.assertIn(
+            "uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7",
+            build_job,
+        )
+        self.assertIn("name: snapshot-consumer-inputs", build_job)
+        self.assertIn("if-no-files-found: error", build_job)
+        self.assertIn("overwrite: true", build_job)
+        self.assertLess(build_job.index("- name: Build BOM"), build_job.index("- name: Write snapshot consumer input manifest"))
+        self.assertLess(build_job.index("- name: Write snapshot consumer input manifest"), build_job.index("- name: Upload snapshot consumer input manifest"))
+
+    def test_publish_snapshot_uses_exact_manifest_heads_without_develop_fallback(
         self,
     ) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "publish-snapshot.yml"
         ).read_text(encoding="utf-8")
-        clone_step = workflow.split(
-            "      - name: Clone snapshot libraries and official-release examples\n",
-            1,
+        checkout_step = workflow.split(
+            "      - name: Checkout exact CI consumer inputs\n", 1
         )[1].split("      - uses:", 1)[0]
-
-        self.assertIn("--print-snapshot-catalog-repositories", clone_step)
-        self.assertIn("use_snapshot_candidate=true", clone_step)
-        self.assertIn(
-            '[[ "$use_snapshot_candidate" == true ]]',
-            clone_step,
-        )
-        self.assertIn('grep -Fq "(HTTP 404)"', clone_step)
-        self.assertIn("clone_args+=(--branch develop --single-branch)", clone_step)
-        self.assertIn("snapshot candidate lookup failed", clone_step)
-        self.assertIn("exit 1", clone_step)
+        self.assertIn("bash scripts/checkout-snapshot-consumers.sh", checkout_step)
+        self.assertIn("snapshot-consumer-workspace", checkout_step)
+        self.assertNotIn("clone_args", checkout_step)
+        self.assertNotIn("--branch develop", checkout_step)
+        self.assertNotIn("snapshot-candidate", checkout_step)
 
     def test_develop_validation_prefers_snapshot_candidate_branches(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")

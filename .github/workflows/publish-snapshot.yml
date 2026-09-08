@@ -1,6 +1,7 @@
 name: Publish Snapshot
 
 permissions:
+  actions: read
   contents: read
 
 on:
@@ -9,6 +10,11 @@ on:
     branches: [develop]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: "재사용할 성공한 CI workflow run ID"
+        required: true
+        type: string
 
 concurrency:
   group: publish-snapshot
@@ -31,47 +37,57 @@ jobs:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
 
-      - name: Verify source commit
+      - name: Download CI consumer input manifest
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: snapshot-consumer-inputs
+          path: ${{ runner.temp }}/snapshot-consumer-inputs
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.ci_run_id }}
+
+      - name: Verify and checkout exact CI source commit
         shell: bash
         env:
-          EXPECTED_HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_WORKFLOW_HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+          SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.ci_run_id }}
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD_SHA"
+          manifest="$RUNNER_TEMP/snapshot-consumer-inputs/snapshot-consumer-inputs.json"
+          source_commit=$(python3 scripts/write-snapshot-consumer-inputs.py source-commit --manifest "$manifest")
+          source_run=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}")
+          echo "$source_run" \
+            | jq -e --arg expected_sha "$source_commit" \
+              '(.name == "CI") and (.head_branch == "develop") and
+               (.status == "completed") and (.conclusion == "success") and
+               (.head_sha == $expected_sha)' >/dev/null
+          source_attempt=$(jq -er '.run_attempt | tostring' <<<"$source_run")
+          if [[ -n "$EXPECTED_WORKFLOW_HEAD_SHA" && "$source_commit" != "$EXPECTED_WORKFLOW_HEAD_SHA" ]]; then
+            echo "snapshot manifest source $source_commit must match workflow_run head $EXPECTED_WORKFLOW_HEAD_SHA" >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" != "$source_commit" ]]; then
+            git fetch --no-tags origin "$source_commit"
+            git checkout --detach "$source_commit"
+          fi
+          test "$(git rev-parse HEAD)" = "$source_commit"
+          python3 scripts/write-snapshot-consumer-inputs.py validate \
+            --manifest "$manifest" \
+            --expected-source-commit "$source_commit" \
+            --expected-workflow-run-id "$SOURCE_RUN_ID" \
+            --expected-workflow-attempt "$source_attempt"
 
-      - name: Clone snapshot libraries and official-release examples
+      - name: Checkout exact CI consumer inputs
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GIT_LFS_SKIP_SMUDGE: "1"
         run: |
           set -euo pipefail
-          mapfile -t repos < <(python3 scripts/verify-post-publish-next-development-line.py --print-required-repositories)
-          mapfile -t snapshot_repositories < <(python3 scripts/verify-post-publish-next-development-line.py --print-snapshot-catalog-repositories)
-          candidate_branch=$(python3 scripts/verify-post-publish-next-development-line.py --print-snapshot-candidate-branch)
-          for repo in "${repos[@]}"; do
-            clone_args=(--depth 1)
-            use_snapshot_candidate=false
-            for snapshot_repo in "${snapshot_repositories[@]}"; do
-              if [[ "$snapshot_repo" == "$repo" ]]; then
-                use_snapshot_candidate=true
-                break
-              fi
-            done
-            if [[ "$use_snapshot_candidate" == true ]]; then
-              branch_error="$RUNNER_TEMP/snapshot-candidate-${repo}.error"
-              if gh api "repos/bluetape4k/${repo}/branches/${candidate_branch}" \
-                   >/dev/null 2>"$branch_error"; then
-                clone_args+=(--branch "$candidate_branch" --single-branch)
-              elif grep -Fq "(HTTP 404)" "$branch_error"; then
-                clone_args+=(--branch develop --single-branch)
-              else
-                sed 's/^/snapshot candidate lookup failed: /' "$branch_error" >&2
-                exit 1
-              fi
-            fi
-            gh repo clone "bluetape4k/${repo}" "../${repo}" -- "${clone_args[@]}"
-          done
+          bash scripts/checkout-snapshot-consumers.sh \
+            "$RUNNER_TEMP/snapshot-consumer-workspace" \
+            "$RUNNER_TEMP/snapshot-consumer-inputs/snapshot-consumer-inputs.json"
 
       - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
@@ -84,7 +100,7 @@ jobs:
           cache-read-only: true
 
       - name: Verify next development line preflight
-        run: python3 scripts/verify-post-publish-next-development-line.py --summary
+        run: python3 scripts/verify-post-publish-next-development-line.py --summary --workspace "$RUNNER_TEMP/snapshot-consumer-workspace"
 
       - name: Publish SNAPSHOT
         run: ./gradlew publishAllPublicationsToCentralSnapshots -PsnapshotVersion=-SNAPSHOT --no-daemon --no-configuration-cache --no-build-cache
@@ -97,7 +113,7 @@ jobs:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
       - name: Verify published snapshot metadata
-        run: python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts
+        run: python3 scripts/verify-post-publish-next-development-line.py --summary --require-artifacts --workspace "$RUNNER_TEMP/snapshot-consumer-workspace"
 
       - name: Generate run-scoped supply-chain report-only evidence
         shell: bash
