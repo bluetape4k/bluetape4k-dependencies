@@ -502,6 +502,21 @@ def upsert_catalog_rollout(
     return updated
 
 
+def parse_retrieval_time(value: Any) -> dt.datetime:
+    """감사 조회 시각을 초 단위 UTC로 검증한다."""
+    if (
+        not isinstance(value, str)
+        or re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value) is None
+    ):
+        raise RuntimeError("audit metadata retrieval time is invalid")
+    try:
+        return dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=dt.timezone.utc
+        )
+    except ValueError as error:
+        raise RuntimeError("audit metadata retrieval time is invalid") from error
+
+
 def validate_audit(
     audit: dict[str, Any],
     inventory: dict[str, Any],
@@ -534,6 +549,7 @@ def validate_audit(
     if actual_keys != expected_keys or len(records) != len(expected_keys):
         raise RuntimeError("audit authority coverage does not match the current inventory")
 
+    snapshot_time = parse_retrieval_time(audit.get("retrieved-at"))
     allowed_metadata_statuses = {"verified", "metadata-unavailable", "preview-only"}
     allowed_dispositions = {
         "adopt-latest",
@@ -585,7 +601,7 @@ def validate_audit(
             record["kind"], record["coordinate-or-plugin-id"]
         ):
             raise RuntimeError(f"audit metadata source is invalid: {record['authority-key']}")
-        if metadata.get("retrieved-at") != audit.get("retrieved-at"):
+        if parse_retrieval_time(metadata.get("retrieved-at")) > snapshot_time:
             raise RuntimeError(
                 f"audit metadata retrieval time is invalid: {record['authority-key']}"
             )
@@ -880,11 +896,11 @@ def build_inventory(catalog_path: Path, policy_path: Path) -> dict[str, Any]:
     if (
         len(managed_records) != 325
         or len(policy_records) != 67
-        or len(catalog_records) != 123
-        or len(records) != 515
+        or len(catalog_records) != 129
+        or len(records) != 521
     ):
         raise RuntimeError(
-            "authority universe changed; expected 325 managed + 67 policy + 123 catalog = 515, "
+            "authority universe changed; expected 325 managed + 67 policy + 129 catalog = 521, "
             f"found {len(managed_records)} + {len(policy_records)} + "
             f"{len(catalog_records)} = {len(records)}"
         )

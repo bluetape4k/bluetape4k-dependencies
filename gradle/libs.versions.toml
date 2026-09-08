@@ -2,6 +2,9 @@
 # Gradle Version Catalog for bluetape4k-dependencies (ecosystem BOM)
 
 [versions]
+openfga = "0.10.0"
+qdrant = "1.19.0"
+temporal = "1.38.0"
 # <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
 bluetape4k-dependencies = "2.1.0"  # Current catalog/BOM development line; update after each stable release.
@@ -547,6 +550,12 @@ protobuf-plugin = { id = "com.google.protobuf", version.ref = "managed-protobuf-
 test-logger = { id = "com.adarshr.test-logger", version.ref = "managed-test-logger-h65ff1704d5b5" }
 # </generated-central-authority-plugins>
 [libraries]
+openfga-sdk = { module = "dev.openfga:openfga-sdk", version.ref = "openfga" }
+qdrant-client = { module = "io.qdrant:client", version.ref = "qdrant" }
+temporal-bom = { module = "io.temporal:temporal-bom", version.ref = "temporal" }
+temporal-sdk = { module = "io.temporal:temporal-sdk", version.ref = "temporal" }
+temporal-kotlin = { module = "io.temporal:temporal-kotlin", version.ref = "temporal" }
+temporal-testing = { module = "io.temporal:temporal-testing", version.ref = "temporal" }
 bluetape4k-dependencies                       = { module = "io.github.bluetape4k:bluetape4k-dependencies", version.ref = "bluetape4k-dependencies" }
 
 # <external-managed-modules by dependency governance>
@@ -1138,10 +1147,12 @@ bluetape4k-mutiny                              = { module = "io.github.bluetape4
 bluetape4k-nats                                = { module = "io.github.bluetape4k:bluetape4k-nats", version.ref = "bluetape4k-bom" }
 bluetape4k-netty                               = { module = "io.github.bluetape4k:bluetape4k-netty", version.ref = "bluetape4k-bom" }
 bluetape4k-okio                                = { module = "io.github.bluetape4k:bluetape4k-okio", version.ref = "bluetape4k-bom" }
+bluetape4k-openfga                             = { module = "io.github.bluetape4k:bluetape4k-openfga", version.ref = "bluetape4k-bom" }
 bluetape4k-opentelemetry                       = { module = "io.github.bluetape4k:bluetape4k-opentelemetry", version.ref = "bluetape4k-bom" }
 bluetape4k-probabilistic                       = { module = "io.github.bluetape4k:bluetape4k-probabilistic", version.ref = "bluetape4k-bom" }
 bluetape4k-protobuf                            = { module = "io.github.bluetape4k:bluetape4k-protobuf", version.ref = "bluetape4k-bom" }
 bluetape4k-pulsar                              = { module = "io.github.bluetape4k:bluetape4k-pulsar", version.ref = "bluetape4k-bom" }
+bluetape4k-qdrant                              = { module = "io.github.bluetape4k:bluetape4k-qdrant", version.ref = "bluetape4k-bom" }
 bluetape4k-r2dbc                               = { module = "io.github.bluetape4k:bluetape4k-r2dbc", version.ref = "bluetape4k-bom" }
 bluetape4k-redis                               = { module = "io.github.bluetape4k:bluetape4k-redis", version.ref = "bluetape4k-bom" }
 bluetape4k-redisson                            = { module = "io.github.bluetape4k:bluetape4k-redisson", version.ref = "bluetape4k-bom" }
@@ -1156,6 +1167,7 @@ bluetape4k-spring-boot-mongodb                 = { module = "io.github.bluetape4
 bluetape4k-spring-boot-r2dbc                   = { module = "io.github.bluetape4k:bluetape4k-spring-boot-r2dbc", version.ref = "bluetape4k-bom" }
 bluetape4k-spring-boot-redis                   = { module = "io.github.bluetape4k:bluetape4k-spring-boot-redis", version.ref = "bluetape4k-bom" }
 bluetape4k-states                              = { module = "io.github.bluetape4k:bluetape4k-states", version.ref = "bluetape4k-bom" }
+bluetape4k-temporal                            = { module = "io.github.bluetape4k:bluetape4k-temporal", version.ref = "bluetape4k-bom" }
 bluetape4k-tenant                              = { module = "io.github.bluetape4k:bluetape4k-tenant", version.ref = "bluetape4k-bom" }
 bluetape4k-tenant-reactor                      = { module = "io.github.bluetape4k:bluetape4k-tenant-reactor", version.ref = "bluetape4k-bom" }
 bluetape4k-testcontainers                      = { module = "io.github.bluetape4k:bluetape4k-testcontainers", version.ref = "bluetape4k-bom" }
