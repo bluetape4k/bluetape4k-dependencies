@@ -177,7 +177,7 @@ jobs:
               print(ref)
           PYCODE
           while IFS= read -r catalog_ref; do
-            git fetch --no-tags origin "$catalog_ref"
+            git fetch --no-tags "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" "$catalog_ref"
             test "$(git rev-parse --verify "${catalog_ref}^{commit}")" = "$catalog_ref"
           done < "$RUNNER_TEMP/snapshot-catalog-refs.txt"
 

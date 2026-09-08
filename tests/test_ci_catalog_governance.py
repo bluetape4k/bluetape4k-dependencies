@@ -139,7 +139,11 @@ gh() {
         self.assertIn(fetch_marker, workflow)
         self.assertIn(map_marker, workflow)
         fetch_step = workflow.split(fetch_marker, 1)[1].split("      - name:", 1)[0]
-        self.assertIn('git fetch --no-tags origin "$catalog_ref"', fetch_step)
+        self.assertIn(
+            'git fetch --no-tags "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git" "$catalog_ref"',
+            fetch_step,
+        )
+        self.assertNotIn('git fetch --no-tags origin "$catalog_ref"', fetch_step)
         self.assertIn('git rev-parse --verify "${catalog_ref}^{commit}"', fetch_step)
         self.assertLess(workflow.index(fetch_marker), workflow.index(map_marker))
         self.assertLess(
