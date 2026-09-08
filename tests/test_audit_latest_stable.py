@@ -509,6 +509,40 @@ class LatestStableInventoryTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "summary"):
             module.validate_audit(tampered_summary, inventory)
 
+    def test_validate_audit_preserves_earlier_metadata_retrieval_times(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+        audit["records"][0]["latest-stable"]["retrieved-at"] = "2026-08-05T00:00:00Z"
+
+        module.validate_audit(audit, inventory)
+
+    def test_validate_audit_rejects_invalid_or_future_retrieval_times(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        original = json.loads(AUDIT.read_text(encoding="utf-8"))
+        for timestamp in (
+            None, "", "invalid", "2026-09-08T12:00:00",
+            "2026-02-30T00:00:00Z", "9999-01-01T00:00:00Z",
+        ):
+            with self.subTest(timestamp=timestamp):
+                audit = copy.deepcopy(original)
+                audit["records"][0]["latest-stable"]["retrieved-at"] = timestamp
+                with self.assertRaisesRegex(RuntimeError, "retrieval time"):
+                    module.validate_audit(audit, inventory)
+
+    def test_validate_audit_rejects_invalid_snapshot_time(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        for timestamp in (
+            None, "", "invalid", "2026-09-08T12:00:00", "2026-02-30T00:00:00Z",
+        ):
+            with self.subTest(timestamp=timestamp):
+                audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+                audit["retrieved-at"] = timestamp
+                with self.assertRaisesRegex(RuntimeError, "retrieval time"):
+                    module.validate_audit(audit, inventory)
+
     def test_validate_audit_rejects_incoherent_unavailable_metadata(self) -> None:
         module = load_script()
         inventory = module.build_inventory(CATALOG, POLICY)
@@ -581,25 +615,50 @@ class LatestStableInventoryTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("authority=515", result.stdout)
+        self.assertIn("authority=521", result.stdout)
 
     def test_inventory_reconstructs_the_exact_authority_universe(self) -> None:
         module = load_script()
         inventory = module.build_inventory(CATALOG, POLICY)
 
         self.assertEqual(inventory["schema-version"], 1)
-        self.assertEqual(inventory["summary"]["authority-count"], 515)
-        self.assertEqual(inventory["summary"]["catalog-direct"], 123)
+        self.assertEqual(inventory["summary"]["authority-count"], 521)
+        self.assertEqual(inventory["summary"]["catalog-direct"], 129)
         self.assertEqual(inventory["summary"]["managed-generated"], 325)
         self.assertEqual(inventory["summary"]["policy-subjects"], 67)
-        self.assertEqual(inventory["summary"]["audit-pending"], 515)
-        self.assertEqual(len(inventory["records"]), 515)
+        self.assertEqual(inventory["summary"]["audit-pending"], 521)
+        self.assertEqual(len(inventory["records"]), 521)
         self.assertEqual(
             len({record["authority-key"] for record in inventory["records"]}),
-            515,
+            521,
         )
         self.assertNotIn("bluetape4k-workshop", inventory["scope"]["repositories"])
         self.assertIn("bluetape4k-workshop", inventory["scope"]["excluded"])
+
+    def test_inventory_includes_the_new_infra_sdk_authorities(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        catalog_versions = module.parse_versions(CATALOG.read_text(encoding="utf-8"))
+        records = {
+            record["coordinate-or-plugin-id"]: record for record in inventory["records"]
+        }
+
+        expected = {
+            "dev.openfga:openfga-sdk": ("openfga-sdk", "openfga"),
+            "io.qdrant:client": ("qdrant-client", "qdrant"),
+            "io.temporal:temporal-bom": ("temporal-bom", "temporal"),
+            "io.temporal:temporal-kotlin": ("temporal-kotlin", "temporal"),
+            "io.temporal:temporal-sdk": ("temporal-sdk", "temporal"),
+            "io.temporal:temporal-testing": ("temporal-testing", "temporal"),
+        }
+
+        for coordinate, (alias, version_key) in expected.items():
+            record = records[coordinate]
+            self.assertEqual(record["authority-source"], "catalog-direct")
+            self.assertEqual(record["aliases"], [alias])
+            line = record["current-lines"][0]
+            self.assertEqual(line["version-key"], version_key)
+            self.assertEqual(line["current"], catalog_versions[version_key])
 
     def test_committed_inventory_is_canonical_and_current(self) -> None:
         module = load_script()

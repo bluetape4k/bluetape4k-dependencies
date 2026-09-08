@@ -35,6 +35,9 @@ MARKER_START = (
 MARKER_END = "      # </central-dependency-ignore>"
 
 CENTRAL_DEPENDENCY_IGNORES = (
+    "dev.openfga:*",
+    "io.qdrant:*",
+    "io.temporal:*",
     "io.github.bluetape4k*",
     "org.jetbrains.kotlin*",
     "org.jetbrains.kotlinx*",

@@ -163,9 +163,12 @@ dependencies {
     api(platform(libs.reactor.bom))
     api(platform(libs.timefold.solver.bom))
     api(platform(libs.vertx.dependencies))
+    api(platform(libs.temporal.bom))
 
     constraints {
         // <external-managed-modules by dependency governance>
+        api(libs.openfga.sdk)
+        api(libs.qdrant.client)
         api(libs.agroal.pool)
         api(libs.avro)
         api(libs.avro.compiler)
