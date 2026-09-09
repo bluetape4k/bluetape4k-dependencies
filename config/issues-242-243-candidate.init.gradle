@@ -57,9 +57,20 @@ gradle.beforeProject { project ->
                 details.because("issues #242/#243 validation must resolve the receipt-bound candidate BOM")
             }
         }
-        if (configuration.name == "testImplementation") {
+    }
+    // Add the candidate platform to test dependencies only for projects that
+    // actually declare a Timefold module.  Injecting it into every project
+    // pollutes unrelated test lockfiles (for example the API boundary) with
+    // a solver BOM that the published API must not expose.
+    project.afterEvaluate {
+        def usesTimefold = project.configurations.any { configuration ->
+            configuration.dependencies.any { dependency ->
+                dependency.group == "ai.timefold.solver"
+            }
+        }
+        if (usesTimefold) {
             project.dependencies.add(
-                configuration.name,
+                "testImplementation",
                 project.dependencies.enforcedPlatform(candidateBom),
             )
         }
