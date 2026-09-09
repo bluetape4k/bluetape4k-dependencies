@@ -462,12 +462,26 @@ class ValidationRunnerTest(unittest.TestCase):
         source = {
             "PATH": "/bin",
             "HOME": "/tmp/home",
+            "DOCKER_HOST": "unix:///Users/debop/.colima/default/docker.sock",
+            "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE": "/var/run/docker.sock",
+            "TESTCONTAINERS_REUSE_ENABLE": "true",
+            "TESTCONTAINERS_RYUK_DISABLED": "true",
             "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": "/candidate/catalog.toml",
             "ISSUES_242_243_CANDIDATE_MAVEN_REPO": "/candidate/m2",
             "CENTRAL_PASSWORD": "secret",
         }
         environment = runner.sanitized_environment(source)
-        self.assertEqual(set(environment), {"PATH", "HOME"})
+        self.assertEqual(
+            set(environment),
+            {
+                "PATH",
+                "HOME",
+                "DOCKER_HOST",
+                "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE",
+                "TESTCONTAINERS_REUSE_ENABLE",
+                "TESTCONTAINERS_RYUK_DISABLED",
+            },
+        )
         job = mock.Mock(
             environment_overrides=(
                 ("BLUETAPE4K_DEPENDENCIES_CATALOG_PATH", "/candidate/catalog.toml"),
@@ -481,6 +495,10 @@ class ValidationRunnerTest(unittest.TestCase):
             {
                 "PATH",
                 "HOME",
+                "DOCKER_HOST",
+                "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE",
+                "TESTCONTAINERS_REUSE_ENABLE",
+                "TESTCONTAINERS_RYUK_DISABLED",
                 "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH",
                 "ISSUES_242_243_CANDIDATE_MAVEN_REPO",
             },

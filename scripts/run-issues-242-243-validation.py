@@ -307,6 +307,15 @@ SAFE_ENVIRONMENT_KEYS = frozenset(
         "USER",
         "LOGNAME",
         "TERM",
+        # Testcontainers on macOS needs the managed Colima endpoint and the
+        # socket path that is mounted inside its containers.  These are
+        # connection coordinates, not credentials; keep the allowlist narrow
+        # so the runner remains deterministic without dropping the local
+        # Docker runtime contract.
+        "DOCKER_HOST",
+        "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE",
+        "TESTCONTAINERS_REUSE_ENABLE",
+        "TESTCONTAINERS_RYUK_DISABLED",
     }
 )
 CANDIDATE_ENVIRONMENT_KEYS = frozenset(
