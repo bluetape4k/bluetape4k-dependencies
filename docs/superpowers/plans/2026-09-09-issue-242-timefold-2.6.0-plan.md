@@ -346,8 +346,11 @@ JSON receipt, GitHub Actions exact-head checks.
   `-Pbluetape4kDependenciesCatalogPath=<candidate catalog file>` 또는 repository가
   선언한 동일 property로 전달하고, runner의
   `config/issues-242-243-candidate.init.gradle`로 candidate BOM coordinate를
-  `testImplementation`에 enforced platform으로 주입한다. `settings.gradle.kts`의
-  regular-file/checksum 검증을 우회하지 않는다.
+  `testImplementation`에 enforced platform으로 주입한다. Spring
+  `io.spring.dependency-management` consumer에는 같은 candidate BOM을
+  dependency-management import로도 주입해 stable BOM의 managed constraint가
+  남지 않게 한다. `settings.gradle.kts`의 regular-file/checksum 검증을 우회하지
+  않는다.
 
 - [ ] **Step 3: candidate graph RED/GREEN을 확인한다.**
 

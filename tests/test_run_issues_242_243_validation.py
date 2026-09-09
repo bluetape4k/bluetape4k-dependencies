@@ -1397,6 +1397,8 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn('configuration.name == "testImplementation"', script)
         self.assertIn("project.dependencies.enforcedPlatform(candidateBom)", script)
         self.assertIn("details.useVersion(candidateBomVersion)", script)
+        self.assertIn('project.plugins.withId("io.spring.dependency-management")', script)
+        self.assertIn("dependencyManagement.imports", script)
 
     def test_consumer_jobs_bind_canonical_helper_without_generated_copy(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
