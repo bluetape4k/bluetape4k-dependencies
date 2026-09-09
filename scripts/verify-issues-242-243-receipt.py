@@ -1728,7 +1728,10 @@ def _validate_issue_242_document(
     state = document["current_state"]
     validate_issue_242_graphs(
         {item["name"]: item["graphs"] for item in verified_consumers},
-        allow_pending=state in {"discovered", "prepared"},
+        # A blocked receipt must preserve the complete graph inventory even
+        # when a failed phase left some coordinates unresolved.  Only
+        # validated/adopted receipts require terminal versions and digests.
+        allow_pending=state in {"discovered", "prepared", "blocked"},
     )
     manifest = document["candidate_artifact_manifest"]
     if isinstance(manifest, Mapping):

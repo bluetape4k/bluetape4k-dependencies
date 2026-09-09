@@ -649,6 +649,33 @@ class Issues242243ReceiptTest(unittest.TestCase):
         with self.assertRaisesRegex(receipt.ReceiptError, "signing"):
             receipt.validate_receipt(path)
 
+    def test_issue_242_blocked_receipt_preserves_pending_graph_evidence(self) -> None:
+        _workspace, path, document = self.make_issue_242_fixture()
+        document["current_state"] = "blocked"
+        document["central"]["state"] = "blocked"
+        for item in document["repositories"]:
+            item["state"] = "blocked"
+        for item in document["consumers"]:
+            item["state"] = "blocked"
+        graph = document["consumers"][0]["graphs"][0]
+        graph["before_version"] = "pending-baseline"
+        graph["after_version"] = "pending-candidate"
+        graph["selection_reason"] = "before: pending-baseline; after: pending-candidate"
+        graph["output_sha256"] = "0" * 64
+        document["failure_record"] = [
+            {
+                "repository": "bluetape4k-exposed",
+                "phase": "timefold-graphs-baseline",
+                "reason": "dependency was not resolved",
+                "output_sha256": "c" * 64,
+            }
+        ]
+        path.write_bytes(receipt.canonical_json_bytes(document))
+
+        validated = receipt.validate_receipt(path)
+
+        self.assertEqual(validated["current_state"], "blocked")
+
     def make_adoptable(self, document: dict[str, object]) -> None:
         workspace = Path(str(document["repository_map"]["path"])).parents[2]
         cache_directory = workspace / "build/issues-242-243/cache"
