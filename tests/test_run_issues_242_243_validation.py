@@ -63,16 +63,20 @@ class ValidationRunnerTest(unittest.TestCase):
         with self.assertRaisesRegex(runner.InputContractError, "signing"):
             runner.validate_scope_phase("issue-242", "signing-buildsrc")
 
-    def test_issue_242_exposed_graph_contains_all_four_timefold_coordinates(self) -> None:
+    def test_issue_242_exposed_graph_contains_only_direct_timefold_coordinate(self) -> None:
         self.assertEqual(
             runner.issue_242_graph_coordinates("bluetape4k-exposed"),
             (
                 "ai.timefold.solver:timefold-solver-core",
-                "ai.timefold.solver:timefold-solver-benchmark",
-                "ai.timefold.solver:timefold-solver-jackson",
-                "ai.timefold.solver:timefold-solver-spring-boot-starter",
             ),
         )
+
+    def test_issue_242_graphs_cover_all_required_coordinates_across_consumers(self) -> None:
+        covered = set().union(
+            *(runner.issue_242_graph_coordinates(repository)
+              for repository in runner.ISSUE_242_CONSUMER_REPOSITORIES)
+        )
+        self.assertEqual(covered, set(runner.TIMEFOLD_COORDINATES))
 
     def test_timefold_tasks_use_exact_included_project_names(self) -> None:
         self.assertEqual(

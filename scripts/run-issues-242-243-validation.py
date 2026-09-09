@@ -59,11 +59,12 @@ ISSUE_242_REQUIRED_PHASES = (
     "publication-poms",
 )
 ISSUE_242_GRAPH_COORDINATES = {
+    # Validate only coordinates that the selected consumer configuration
+    # actually resolves.  Issue #242's four-coordinate contract is covered
+    # across the Exposed, Workshop, and Clinic consumer set; Exposed's
+    # persistence module directly consumes core only.
     "bluetape4k-exposed": (
         "ai.timefold.solver:timefold-solver-core",
-        "ai.timefold.solver:timefold-solver-benchmark",
-        "ai.timefold.solver:timefold-solver-jackson",
-        "ai.timefold.solver:timefold-solver-spring-boot-starter",
     ),
     "timefold-workshop": (
         "ai.timefold.solver:timefold-solver-core",
