@@ -47,6 +47,33 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("--no-configuration-cache", runner.GRADLE_FLAGS)
         self.assertIn("--no-build-cache", runner.GRADLE_FLAGS)
 
+    def test_issue_242_scope_excludes_signing_and_keeps_required_phases(self) -> None:
+        self.assertEqual(
+            runner.ISSUE_242_REQUIRED_PHASES,
+            (
+                "candidate-bom-publication",
+                "timefold-graphs-baseline",
+                "timefold-graphs-candidate",
+                "consumers",
+                "publication-poms",
+            ),
+        )
+        self.assertEqual(runner.scoped_phases("issue-242"), runner.ISSUE_242_REQUIRED_PHASES)
+        self.assertEqual(runner.scoped_phases("issues-242-243"), runner.PHASES)
+        with self.assertRaisesRegex(runner.InputContractError, "signing"):
+            runner.validate_scope_phase("issue-242", "signing-buildsrc")
+
+    def test_issue_242_exposed_graph_contains_all_four_timefold_coordinates(self) -> None:
+        self.assertEqual(
+            runner.issue_242_graph_coordinates("bluetape4k-exposed"),
+            (
+                "ai.timefold.solver:timefold-solver-core",
+                "ai.timefold.solver:timefold-solver-benchmark",
+                "ai.timefold.solver:timefold-solver-jackson",
+                "ai.timefold.solver:timefold-solver-spring-boot-starter",
+            ),
+        )
+
     def test_timefold_tasks_use_exact_included_project_names(self) -> None:
         self.assertEqual(
             runner.TIMEFOLD_COORDINATES,
@@ -203,6 +230,62 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("before: By constraint: stable BOM", graph["selection_reason"])
         self.assertIn("after: By constraint: candidate BOM", graph["selection_reason"])
         self.assertEqual(graph["output_sha256"], "b" * 64)
+
+    def test_issue_242_consumer_graph_receipt_includes_exposed_coordinates(self) -> None:
+        document = {
+            "scope": "issue-242",
+            "consumers": [
+                {
+                    "name": name,
+                    "graphs": [],
+                }
+                for name in runner.ISSUE_242_CONSUMER_REPOSITORIES
+            ],
+        }
+        coordinates = runner.issue_242_graph_coordinates("bluetape4k-exposed")
+        jobs = tuple(
+            mock.Mock(
+                repository="bluetape4k-exposed",
+                coordinate=coordinate,
+                configuration="testRuntimeClasspath",
+            )
+            for coordinate in coordinates
+        )
+
+        def phase_result(version: str, digest_prefix: str) -> runner.PhaseResult:
+            results = tuple(
+                runner.CommandResult(
+                    status="pass",
+                    returncode=0,
+                    stdout=(
+                        f"{coordinate}:{version}\n"
+                        "  Selection reasons:\n"
+                        f"      - By constraint: {'candidate' if version == '2.6.0' else 'stable'} BOM\n"
+                    ),
+                    stderr="",
+                    elapsed_seconds=0.1,
+                    timed_out=False,
+                    process_group_terminated=False,
+                    termination_signal=None,
+                    output_sha256=digest_prefix * 64,
+                )
+                for coordinate in coordinates
+            )
+            return runner.PhaseResult(
+                "timefold-graphs-baseline" if version == "2.4.0" else "timefold-graphs-candidate",
+                "pass",
+                digest_prefix * 64,
+                results,
+            )
+
+        runner._update_consumer_graphs(document, phase_result("2.4.0", "c"), jobs)
+        runner._update_consumer_graphs(document, phase_result("2.6.0", "d"), jobs)
+        exposed = next(item for item in document["consumers"] if item["name"] == "bluetape4k-exposed")
+        self.assertEqual(
+            [graph["coordinate"] for graph in exposed["graphs"]],
+            list(coordinates),
+        )
+        self.assertTrue(all(graph["after_version"] == "2.6.0" for graph in exposed["graphs"]))
 
     def test_failed_candidate_phase_keeps_pending_consumer_baseline_without_crashing(self) -> None:
         coordinate = "ai.timefold.solver:timefold-solver-benchmark"

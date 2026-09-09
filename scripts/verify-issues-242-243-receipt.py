@@ -30,6 +30,38 @@ from typing import Any, Iterator, Mapping, Sequence
 SCHEMA_VERSION = 2
 TOTAL_VALIDATION_BUDGET_SECONDS = 90 * 60
 ISSUES = (242, 243)
+ISSUE_242_SCOPE = "issue-242"
+ISSUE_242_CONSUMER_NAMES = (
+    "bluetape4k-exposed",
+    "timefold-workshop",
+    "clinic-appointment",
+)
+ISSUE_242_REQUIRED_PHASES = frozenset(
+    {
+        "candidate-bom-publication",
+        "timefold-graphs-baseline",
+        "timefold-graphs-candidate",
+        "consumers",
+        "publication-poms",
+        "candidate-bom-artifacts",
+    }
+)
+ISSUE_242_GRAPH_COORDINATES = {
+    "bluetape4k-exposed": (
+        "ai.timefold.solver:timefold-solver-core",
+        "ai.timefold.solver:timefold-solver-benchmark",
+        "ai.timefold.solver:timefold-solver-jackson",
+        "ai.timefold.solver:timefold-solver-spring-boot-starter",
+    ),
+    "timefold-workshop": (
+        "ai.timefold.solver:timefold-solver-core",
+        "ai.timefold.solver:timefold-solver-jackson",
+        "ai.timefold.solver:timefold-solver-spring-boot-starter",
+    ),
+    "clinic-appointment": (
+        "ai.timefold.solver:timefold-solver-benchmark",
+    ),
+}
 STATES = frozenset({"discovered", "prepared", "validated", "adopted", "blocked"})
 TERMINAL_STATE = "adopted"
 LEGAL_TRANSITIONS = {
@@ -526,6 +558,36 @@ def _validate_graph(graph: Any, consumer: str) -> None:
     for key in ("coordinate", "configuration", "before_version", "after_version", "selection_reason"):
         _require_nonempty_string(value[key], f"graph {key} for {consumer}")
     _require_sha256(value["output_sha256"], f"graph output for {consumer}")
+
+
+def validate_issue_242_graphs(value: Any) -> None:
+    """Require the complete Issue #242 consumer graph and semantic reasons."""
+
+    if not isinstance(value, Mapping) or set(value) != set(ISSUE_242_CONSUMER_NAMES):
+        raise ReceiptError("Issue #242 graph consumers are incomplete")
+    for consumer in ISSUE_242_CONSUMER_NAMES:
+        graphs = value[consumer]
+        if not isinstance(graphs, list):
+            raise ReceiptError(f"Issue #242 graphs are not a list for {consumer}")
+        expected = ISSUE_242_GRAPH_COORDINATES[consumer]
+        coordinates = [
+            graph.get("coordinate")
+            for graph in graphs
+            if isinstance(graph, Mapping)
+        ]
+        if len(coordinates) != len(expected) or set(coordinates) != set(expected):
+            raise ReceiptError(f"Issue #242 graph coordinates mismatch for {consumer}")
+        for graph in graphs:
+            _validate_graph(graph, consumer)
+            if graph["configuration"] != "testRuntimeClasspath":
+                raise ReceiptError(f"Issue #242 graph configuration mismatch for {consumer}")
+            if graph["before_version"] == "pending-baseline":
+                raise ReceiptError(f"Issue #242 baseline graph is pending for {consumer}")
+            if graph["after_version"] != "2.6.0":
+                raise ReceiptError(f"Issue #242 candidate graph version mismatch for {consumer}")
+            reason = str(graph["selection_reason"])
+            if not reason.startswith("before: ") or "; after: " not in reason:
+                raise ReceiptError(f"Issue #242 selection reason is incomplete for {consumer}")
 
 
 def _validate_consumer(
@@ -1422,12 +1484,280 @@ def _validate_receipt_document(
     }
 
 
+def _validate_issue_242_consumer_worktree(
+    item: Mapping[str, Any], workspace_root: Path
+) -> None:
+    """Validate a consumer worktree without importing signing requirements."""
+
+    name = _require_nonempty_string(item["name"], "Issue #242 consumer name")
+    root = _canonical_path(
+        item["candidate_worktree"], f"Issue #242 consumer worktree for {name}"
+    )
+    canonical = _canonical_path(
+        item["candidate_worktree"], f"Issue #242 consumer path for {name}"
+    )
+    if root != canonical or not root.is_dir() or root.is_symlink():
+        raise ReceiptError(f"Issue #242 consumer worktree is invalid for {name}")
+    if not _is_relative_to(root, workspace_root):
+        raise ReceiptError(f"Issue #242 consumer path escapes workspace for {name}")
+    origin = _require_nonempty_string(item["origin"], f"Issue #242 consumer origin for {name}")
+    if origin != _approved_origin(name) or _git(root, "remote", "get-url", "origin") != origin:
+        raise ReceiptError(f"Issue #242 consumer origin mismatch for {name}")
+    if item["role"] != "consumer" or item["validation_only"] is not False:
+        raise ReceiptError(f"Issue #242 consumer role is invalid for {name}")
+    if item["base_ref"] != "origin/develop":
+        raise ReceiptError(f"Issue #242 consumer base ref is invalid for {name}")
+    base_sha = _require_commit(item["base_sha"], f"Issue #242 consumer base for {name}")
+    candidate_sha = _require_commit(
+        item["candidate_head"], f"Issue #242 consumer candidate for {name}"
+    )
+    branch = _require_nonempty_string(
+        item["candidate_branch"], f"Issue #242 consumer branch for {name}"
+    )
+    if branch in {"develop", "main", "master"}:
+        raise ReceiptError(f"Issue #242 consumer branch is not isolated for {name}")
+    if item["clean"] is not True or item["exact_head"] is not True:
+        raise ReceiptError(f"Issue #242 consumer requires clean exact-head state for {name}")
+    if _git(root, "rev-parse", "HEAD") != candidate_sha:
+        raise ReceiptError(f"Issue #242 consumer HEAD mismatch for {name}")
+    if _git(root, "branch", "--show-current") != branch:
+        raise ReceiptError(f"Issue #242 consumer branch mismatch for {name}")
+    if _git(root, "rev-parse", f"{base_sha}^{{commit}}") != base_sha:
+        raise ReceiptError(f"Issue #242 consumer base SHA does not peel for {name}")
+    if _git(root, "rev-parse", f"{candidate_sha}^{{commit}}") != candidate_sha:
+        raise ReceiptError(f"Issue #242 consumer candidate SHA does not peel for {name}")
+    develop_head = _git(root, "rev-parse", "refs/remotes/origin/develop^{commit}")
+    if _git(root, "merge-base", candidate_sha, develop_head) != base_sha:
+        raise ReceiptError(f"Issue #242 consumer base SHA is not origin/develop fork point for {name}")
+    if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
+        raise ReceiptError(f"Issue #242 consumer worktree is dirty for {name}")
+
+
+def _validate_issue_242_consumer(item: Any, workspace_root: Path) -> dict[str, Any]:
+    fields = {
+        "name",
+        "role",
+        "origin",
+        "base_ref",
+        "base_sha",
+        "candidate_branch",
+        "candidate_worktree",
+        "candidate_head",
+        "clean",
+        "exact_head",
+        "validation_only",
+        "state",
+        "catalog_ref",
+        "catalog_sha256",
+        "catalog_source",
+        "bom_coordinate",
+        "local_override",
+        "graphs",
+    }
+    value = _expected_fields(item, fields, "Issue #242 consumer receipt")
+    name = _require_nonempty_string(value["name"], "Issue #242 consumer name")
+    if name not in ISSUE_242_CONSUMER_NAMES:
+        raise ReceiptError(f"Issue #242 consumer is not allowlisted: {name}")
+    _validate_issue_242_consumer_worktree(value, workspace_root)
+    if value["state"] not in STATES:
+        raise ReceiptError(f"Issue #242 consumer state is invalid for {name}")
+    _require_nonempty_string(value["catalog_ref"], f"Issue #242 catalog ref for {name}")
+    catalog_sha = _require_sha256(value["catalog_sha256"], f"Issue #242 catalog for {name}")
+    if value["catalog_source"] not in {"local-candidate", "immutable-ref", "repo-local"}:
+        raise ReceiptError(f"Issue #242 catalog source is invalid for {name}")
+    catalog = Path(str(value["candidate_worktree"])) / "gradle/libs.versions.toml"
+    if value["catalog_source"] == "repo-local":
+        _regular_nonsymlink(catalog, f"Issue #242 local catalog for {name}")
+        if sha256_bytes(catalog.read_bytes()) != catalog_sha:
+            raise ReceiptError(f"Issue #242 local catalog SHA-256 mismatch for {name}")
+    _require_nonempty_string(value["bom_coordinate"], f"Issue #242 BOM coordinate for {name}")
+    if value["bom_coordinate"] != "io.github.bluetape4k:bluetape4k-dependencies:2.1.0-issue-242.local":
+        raise ReceiptError(f"Issue #242 BOM coordinate mismatch for {name}")
+    if value["local_override"] not in {"present", "removed", "not-applicable"}:
+        raise ReceiptError(f"Issue #242 local override is invalid for {name}")
+    graphs = value["graphs"]
+    if not isinstance(graphs, list):
+        raise ReceiptError(f"Issue #242 graphs are invalid for {name}")
+    for graph in graphs:
+        _validate_graph(graph, name)
+    return dict(value)
+
+
+def _validate_issue_242_terminal_evidence(document: Mapping[str, Any]) -> None:
+    state = str(document["current_state"])
+    phases = document["phases"]
+    phase_names = [str(item["name"]) for item in phases]
+    if len(phase_names) != len(set(phase_names)):
+        raise ReceiptError(f"{state} Issue #242 receipt contains duplicate phases")
+    missing = ISSUE_242_REQUIRED_PHASES - set(phase_names)
+    if missing:
+        raise ReceiptError(
+            f"{state} Issue #242 receipt is missing required phases: "
+            + ", ".join(sorted(missing))
+        )
+    unknown = set(phase_names) - ISSUE_242_REQUIRED_PHASES - {"discover"}
+    if unknown or any(name == "signing-buildsrc" for name in phase_names):
+        raise ReceiptError(f"{state} Issue #242 receipt contains an out-of-scope phase")
+    if any(item["result"] != "pass" for item in phases):
+        raise ReceiptError(f"{state} Issue #242 receipt requires every phase to pass")
+    if not isinstance(document["candidate_artifact_manifest"], Mapping):
+        raise ReceiptError(f"{state} Issue #242 receipt lacks candidate artifacts")
+    if document["failure_record"] or document["rollback_record"]:
+        raise ReceiptError(f"{state} Issue #242 receipt requires empty failure and rollback records")
+
+
+def _validate_issue_242_document(
+    path: Path, document: Mapping[str, Any]
+) -> dict[str, Any]:
+    fields = {
+        "schema_version",
+        "scope",
+        "issues",
+        "current_state",
+        "validation_budget",
+        "repository_map",
+        "central",
+        "candidate_artifact_manifest",
+        "evidence_cache_root",
+        "repositories",
+        "consumers",
+        "commands",
+        "phases",
+        "failure_record",
+        "rollback_record",
+        "evidence_commit",
+    }
+    _expected_fields(document, fields, "Issue #242 receipt")
+    if document["schema_version"] != SCHEMA_VERSION or document["scope"] != ISSUE_242_SCOPE:
+        raise ReceiptError("Issue #242 receipt schema or scope is invalid")
+    if document["issues"] != [242]:
+        raise ReceiptError("Issue #242 receipt issue IDs are invalid")
+    _validate_validation_budget(document["validation_budget"])
+    map_binding = _expected_fields(
+        document["repository_map"], {"path", "sha256"}, "Issue #242 repository map binding"
+    )
+    map_path = _canonical_path(map_binding["path"], "Issue #242 repository map path")
+    map_digest = _require_sha256(map_binding["sha256"], "Issue #242 repository map")
+    if sha256_bytes(map_path.read_bytes()) != map_digest:
+        raise ReceiptError("Issue #242 repository map SHA-256 mismatch")
+    repository_map = load_repository_map(map_path)
+    mapped = {item["name"]: item for item in repository_map["repositories"]}
+
+    central_value = _expected_fields(
+        document["central"],
+        {"base_sha", "candidate_head", "clean", "exact_head", "state"},
+        "Issue #242 central receipt",
+    )
+    central_map = mapped[CENTRAL_NAME]
+    if _require_commit(central_value["base_sha"], "Issue #242 central base") != central_map["base_sha"]:
+        raise ReceiptError("Issue #242 central base SHA mismatch")
+    if _require_commit(central_value["candidate_head"], "Issue #242 central candidate") != central_map["candidate_head"]:
+        raise ReceiptError("Issue #242 central candidate SHA mismatch")
+    if central_value["clean"] is not True or central_value["exact_head"] is not True:
+        raise ReceiptError("Issue #242 central receipt requires clean exact-head state")
+    if central_value["state"] not in STATES:
+        raise ReceiptError("Issue #242 central state is invalid")
+
+    repositories = document["repositories"]
+    if not isinstance(repositories, list) or {item.get("name") for item in repositories if isinstance(item, Mapping)} != set(CATALOG_NAMES):
+        raise ReceiptError("Issue #242 receipt repositories must contain the exact catalog set")
+    if len(repositories) != len(CATALOG_NAMES):
+        raise ReceiptError("Issue #242 receipt repositories must contain the exact catalog set")
+    verified_repositories = []
+    repository_fields = {
+        "name", "role", "origin", "base_ref", "base_sha", "candidate_branch",
+        "candidate_worktree", "candidate_head", "clean", "exact_head", "validation_only", "state",
+    }
+    for item in repositories:
+        value = _expected_fields(item, repository_fields, "Issue #242 repository receipt")
+        name = _require_nonempty_string(value["name"], "Issue #242 repository name")
+        if name not in mapped:
+            raise ReceiptError(f"Issue #242 repository is not in the map: {name}")
+        _validate_worktree_entry(
+            {**value, "canonical_path": value["candidate_worktree"]},
+            Path(repository_map["workspace_root"]),
+        )
+        if value["state"] not in STATES:
+            raise ReceiptError(f"Issue #242 repository state is invalid for {name}")
+        if value["candidate_head"] != mapped[name]["candidate_head"]:
+            raise ReceiptError(f"Issue #242 repository candidate SHA mismatch for {name}")
+        verified_repositories.append(dict(value))
+
+    consumers = document["consumers"]
+    if not isinstance(consumers, list) or len(consumers) != len(ISSUE_242_CONSUMER_NAMES):
+        raise ReceiptError("Issue #242 receipt consumers are incomplete")
+    if {item.get("name") for item in consumers if isinstance(item, Mapping)} != set(ISSUE_242_CONSUMER_NAMES):
+        raise ReceiptError("Issue #242 receipt consumers are incomplete")
+    verified_consumers = [
+        _validate_issue_242_consumer(item, Path(repository_map["workspace_root"]))
+        for item in consumers
+    ]
+
+    cache_root_value = document["evidence_cache_root"]
+    evidence_cache_root = None if cache_root_value is None else _canonical_path(
+        cache_root_value, "Issue #242 evidence cache root"
+    )
+    if evidence_cache_root is not None:
+        if not evidence_cache_root.is_dir() or evidence_cache_root.is_symlink():
+            raise ReceiptError("Issue #242 evidence cache root must be a directory")
+        if evidence_cache_root != path.parent / "cache":
+            raise ReceiptError("Issue #242 evidence cache root is not receipt-bound")
+    _validate_commands(document["commands"], evidence_cache_root)
+    _validate_phases(document["phases"])
+    phase_names = {item["name"] for item in document["phases"]}
+    if "signing-buildsrc" in phase_names or any(
+        isinstance(item, Mapping) and item.get("phase") == "signing-buildsrc"
+        for item in document["commands"]
+    ):
+        raise ReceiptError("Issue #242 receipt contains signing evidence")
+    # Keep the graph contract closed even for non-terminal receipts.  A
+    # discovery/prepared receipt may defer execution, but it must still carry
+    # the complete coordinate inventory so a later phase cannot silently omit
+    # a consumer or artifact.
+    validate_issue_242_graphs({item["name"]: item["graphs"] for item in verified_consumers})
+    manifest = document["candidate_artifact_manifest"]
+    if isinstance(manifest, Mapping):
+        artifact_phase = next(
+            (item for item in document["phases"] if item["name"] == "candidate-bom-artifacts"),
+            None,
+        )
+        if artifact_phase is None:
+            raise ReceiptError("Issue #242 candidate artifact phase is missing")
+        _validate_candidate_artifact_manifest(
+            manifest, central=central_map, artifact_phase=artifact_phase
+        )
+    elif manifest is not None:
+        raise ReceiptError("Issue #242 candidate artifact manifest is invalid")
+    _validate_records(document["failure_record"], "Issue #242 failure record")
+    _validate_records(document["rollback_record"], "Issue #242 rollback record")
+    state = document["current_state"]
+    if state not in STATES:
+        raise ReceiptError("Issue #242 current state is invalid")
+    if state in {"validated", "adopted"}:
+        _validate_issue_242_terminal_evidence(document)
+    if document["evidence_commit"] is not None and state != "adopted":
+        raise ReceiptError("Issue #242 evidence metadata is only valid for adopted state")
+    states = [central_value["state"]] + [item["state"] for item in verified_repositories] + [
+        item["state"] for item in verified_consumers
+    ]
+    if _derive_global_state(states) != state:
+        raise ReceiptError("Issue #242 receipt current state does not match repository states")
+    return {
+        **dict(document),
+        "repository_map": {"path": str(map_path), "sha256": map_digest},
+    }
+
+
 def validate_receipt(path: Path, *, evidence_commit: str | None = None) -> dict[str, Any]:
     """Validate one receipt and return its parsed document."""
     path = _canonical_path(path, "receipt")
     document = _read_json(path, "receipt")
     if not isinstance(document, Mapping):
         raise ReceiptError("receipt must be an object")
+    if document.get("scope") == ISSUE_242_SCOPE:
+        if evidence_commit is not None:
+            raise ReceiptError("Issue #242 receipt does not accept signing evidence commit")
+        return _validate_issue_242_document(path, document)
     return _validate_receipt_document(path, document, evidence_commit=evidence_commit)
 
 

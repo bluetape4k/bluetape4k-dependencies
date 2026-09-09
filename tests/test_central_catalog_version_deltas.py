@@ -103,7 +103,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["publication-pom-verification"]["failures"], 0)
         self.assertEqual(rollout["remote-immutable-ref-verification"], "verified")
 
-    def test_active_authority_rollout_links_verified_evidence(self) -> None:
+    def test_active_authority_rollout_links_current_evidence(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         authority = json.loads(AUTHORITY_LEDGER.read_text(encoding="utf-8"))
         rollout = next(
@@ -112,7 +112,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             if item["rollout"] == authority["rollout"]
         )
 
-        self.assertEqual(rollout["status"], "verified-resolved-graph")
+        self.assertEqual(rollout["status"], authority["status"])
         self.assertEqual(
             rollout["authority-delta-ledger"],
             "config/latest-stable-version-deltas.json",
@@ -121,10 +121,13 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["baseline-catalog-ref"], authority["baseline"]["catalog-ref"])
         self.assertEqual(rollout["audit"], authority["audit"]["path"])
         self.assertEqual(rollout["delta-count"], len(authority["delta"]))
-        self.assertEqual(
-            rollout["resolved-graph-evidence"]["spec-count"],
-            authority["resolved-graph-evidence"]["spec-count"],
-        )
+        if authority["status"] == "verified-resolved-graph":
+            self.assertEqual(
+                rollout["resolved-graph-evidence"]["spec-count"],
+                authority["resolved-graph-evidence"]["spec-count"],
+            )
+        else:
+            self.assertEqual(rollout["resolved-graph-evidence"], [])
         validation = authority.get("candidate-validation-evidence")
         if validation is None:
             self.assertEqual(rollout["downstream-full-builds"]["status"], "pending")

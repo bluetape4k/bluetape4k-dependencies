@@ -50,6 +50,30 @@ PHASES = (
     "consumers",
     "publication-poms",
 )
+SCOPES = ("issues-242-243", "issue-242")
+ISSUE_242_REQUIRED_PHASES = (
+    "candidate-bom-publication",
+    "timefold-graphs-baseline",
+    "timefold-graphs-candidate",
+    "consumers",
+    "publication-poms",
+)
+ISSUE_242_GRAPH_COORDINATES = {
+    "bluetape4k-exposed": (
+        "ai.timefold.solver:timefold-solver-core",
+        "ai.timefold.solver:timefold-solver-benchmark",
+        "ai.timefold.solver:timefold-solver-jackson",
+        "ai.timefold.solver:timefold-solver-spring-boot-starter",
+    ),
+    "timefold-workshop": (
+        "ai.timefold.solver:timefold-solver-core",
+        "ai.timefold.solver:timefold-solver-jackson",
+        "ai.timefold.solver:timefold-solver-spring-boot-starter",
+    ),
+    "clinic-appointment": (
+        "ai.timefold.solver:timefold-solver-benchmark",
+    ),
+}
 EXECUTION_BOUNDARIES = ("persistent-trusted", "disposable-hosted")
 MAX_WORKERS = 2
 CHILD_TIMEOUT_SECONDS = 600
@@ -70,6 +94,11 @@ GRADLE_FLAGS = (
 SIGNING_REPOSITORIES = catalog_candidate.SIGNING_REPOSITORIES
 CATALOG_REPOSITORIES = catalog_candidate.CATALOG_REPOSITORIES
 CONSUMER_REPOSITORIES = ("timefold-workshop", "clinic-appointment")
+ISSUE_242_CONSUMER_REPOSITORIES = (
+    "bluetape4k-exposed",
+    "timefold-workshop",
+    "clinic-appointment",
+)
 CANDIDATE_BOM_VERSION = "2.1.0-issue-242.local"
 CANDIDATE_BOM_ARTIFACTS = (
     f"bluetape4k-dependencies-{CANDIDATE_BOM_VERSION}.pom",
@@ -123,6 +152,36 @@ CONSUMER_TASKS = {
         ":appointment-api:test",
     ),
 }
+
+
+def scoped_phases(scope: str) -> tuple[str, ...]:
+    """Return the ordered phase allowlist for one validation scope."""
+
+    if scope == "issues-242-243":
+        return PHASES
+    if scope == "issue-242":
+        return ISSUE_242_REQUIRED_PHASES
+    raise InputContractError(f"unknown validation scope: {scope}")
+
+
+def validate_scope_phase(scope: str, phase: str) -> None:
+    """Reject phases outside the selected issue's allowlist."""
+
+    if phase not in scoped_phases(scope):
+        if scope == "issue-242" and phase == "signing-buildsrc":
+            raise InputContractError("Issue #242 scope excludes signing-buildsrc")
+        raise InputContractError(f"phase is not allowed for scope {scope}: {phase}")
+
+
+def issue_242_graph_coordinates(repository: str) -> tuple[str, ...]:
+    """Return the exact Timefold graph coordinates required by Issue #242."""
+
+    try:
+        return ISSUE_242_GRAPH_COORDINATES[repository]
+    except KeyError as exc:
+        raise InputContractError(
+            f"Issue #242 graph repository is not allowlisted: {repository}"
+        ) from exc
 
 
 def candidate_arguments(
@@ -1761,10 +1820,11 @@ def _make_timefold_graph_jobs(
     candidate_bom_sha256: Optional[str] = None,
     environment_overrides: Optional[Mapping[str, str]] = None,
     arguments: Sequence[str] = (),
+    coordinates: Optional[Sequence[str]] = None,
     deadline: Optional[float] = None,
 ) -> tuple[ValidationJob, ...]:
     jobs: list[ValidationJob] = []
-    for coordinate in TIMEFOLD_GRAPH_COORDINATES[repository]:
+    for coordinate in coordinates or TIMEFOLD_GRAPH_COORDINATES[repository]:
         jobs.append(
             dataclasses.replace(
                 _make_job(
@@ -1809,10 +1869,12 @@ def build_phase_jobs(
     clinic_baseline_root: Optional[Path] = None,
     candidate_maven_repository: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
+    scope: str = "issues-242-243",
     deadline: Optional[float] = None,
 ) -> tuple[ValidationJob, ...]:
     if phase not in PHASES:
         raise InputContractError(f"unknown validation phase: {phase}")
+    validate_scope_phase(scope, phase)
     entries = _entry_by_name(repository_map)
     central_root = Path(entries["bluetape4k-dependencies"]["candidate_worktree"])
     selected = tuple(repositories) if repositories is not None else None
@@ -1913,6 +1975,11 @@ def build_phase_jobs(
                 central_root=central_root,
                 repository_origin=exposed_origin,
                 repository_branch=exposed_branch,
+                coordinates=(
+                    issue_242_graph_coordinates("bluetape4k-exposed")
+                    if scope == "issue-242"
+                    else None
+                ),
                 deadline=deadline,
             )
         )
@@ -1932,6 +1999,11 @@ def build_phase_jobs(
                     central_root=central_root,
                     repository_origin=origin,
                     repository_branch=branch,
+                    coordinates=(
+                        issue_242_graph_coordinates(name)
+                        if scope == "issue-242"
+                        else None
+                    ),
                     deadline=deadline,
                 )
             )
@@ -1954,6 +2026,11 @@ def build_phase_jobs(
                 candidate_maven_repository=candidate_repository,
                 candidate_catalog_path=candidate_catalog,
                 candidate_bom_sha256=candidate_manifest_sha256,
+                coordinates=(
+                    issue_242_graph_coordinates("bluetape4k-exposed")
+                    if scope == "issue-242"
+                    else None
+                ),
                 environment_overrides={
                     "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": str(candidate_catalog),
                 },
@@ -1977,6 +2054,11 @@ def build_phase_jobs(
                     phase=phase,
                     candidate_maven_repository=candidate_repository,
                     candidate_bom_sha256=candidate_manifest_sha256,
+                    coordinates=(
+                        issue_242_graph_coordinates(name)
+                        if scope == "issue-242"
+                        else None
+                    ),
                     arguments=candidate_arguments(
                         central_root=central_root,
                         candidate_maven_repository=candidate_repository,
@@ -2379,7 +2461,7 @@ def _bound_command_record(
 def _update_consumer_graphs(
     document: dict[str, Any], result: PhaseResult, jobs: Sequence[ValidationJob]
 ) -> None:
-    """Bind parsed graph values to the two external consumer receipt entries."""
+    """Bind parsed graph values to the scoped consumer receipt entries."""
 
     if result.phase not in {
         "timefold-graphs-baseline",
@@ -2389,13 +2471,23 @@ def _update_consumer_graphs(
     consumers = document.get("consumers")
     if not isinstance(consumers, list):
         raise InputContractError("local receipt consumers must be an array")
+    scope = document.get("scope", "issues-242-243")
+    consumer_repositories = (
+        ISSUE_242_CONSUMER_REPOSITORIES
+        if scope == "issue-242"
+        else CONSUMER_REPOSITORIES
+    )
     by_name = {
         item.get("name"): item
         for item in consumers
         if isinstance(item, dict) and isinstance(item.get("name"), str)
     }
-    for repository in CONSUMER_REPOSITORIES:
-        expected = TIMEFOLD_GRAPH_COORDINATES[repository]
+    for repository in consumer_repositories:
+        expected = (
+            issue_242_graph_coordinates(repository)
+            if scope == "issue-242"
+            else TIMEFOLD_GRAPH_COORDINATES[repository]
+        )
         pairs = [
             (job, command_result)
             for job, command_result in zip(jobs, result.jobs)
@@ -2812,10 +2904,12 @@ def run_phase(
     candidate_maven_repository: Optional[Path] = None,
     cache_directory: Optional[Path] = None,
     repositories: Optional[Sequence[str]] = None,
+    scope: str = "issues-242-243",
     dry_run: bool = False,
     execution_boundary: Optional[str] = None,
     reviewed_heads: Sequence[str] = (),
 ) -> PhaseResult:
+    validate_scope_phase(scope, phase)
     # Reject lexical parent/component symlinks before any canonical resolution.
     repository_map_path = _canonical_input_path(repository_map_path, "repository map")
     receipt_path = _canonical_input_path(receipt_path, "local receipt")
@@ -2888,6 +2982,7 @@ def run_phase(
         clinic_baseline_root=clinic_baseline_root,
         candidate_maven_repository=candidate_maven_repository,
         repositories=repositories,
+        scope=scope,
         deadline=deadline,
     )
     if dry_run:
@@ -2971,6 +3066,7 @@ def run_phase(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=PHASES, required=True)
+    parser.add_argument("--scope", choices=SCOPES, default="issues-242-243")
     parser.add_argument("--repository-map", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--workshop-root", type=Path)
@@ -3005,6 +3101,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             candidate_maven_repository=args.candidate_maven_repository,
             cache_directory=args.cache_dir,
             repositories=args.repositories,
+            scope=args.scope,
             dry_run=args.dry_run,
             execution_boundary=args.execution_boundary,
             reviewed_heads=args.reviewed_head,

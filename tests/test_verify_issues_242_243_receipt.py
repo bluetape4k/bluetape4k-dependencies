@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import io
+import json
 import os
 import stat
 import subprocess
@@ -32,6 +33,76 @@ RUNNER_SPEC.loader.exec_module(runner)
 
 
 class Issues242243ReceiptTest(unittest.TestCase):
+    def test_issue_242_scope_defines_consumer_phases_without_signing(self) -> None:
+        self.assertEqual(receipt.ISSUE_242_REQUIRED_PHASES, frozenset({
+            "candidate-bom-publication",
+            "timefold-graphs-baseline",
+            "timefold-graphs-candidate",
+            "consumers",
+            "publication-poms",
+            "candidate-bom-artifacts",
+        }))
+        self.assertEqual(
+            receipt.ISSUE_242_CONSUMER_NAMES,
+            ("bluetape4k-exposed", "timefold-workshop", "clinic-appointment"),
+        )
+        self.assertNotIn("signing-buildsrc", receipt.ISSUE_242_REQUIRED_PHASES)
+        self.assertEqual(
+            receipt.ISSUE_242_GRAPH_COORDINATES["bluetape4k-exposed"],
+            (
+                "ai.timefold.solver:timefold-solver-core",
+                "ai.timefold.solver:timefold-solver-benchmark",
+                "ai.timefold.solver:timefold-solver-jackson",
+                "ai.timefold.solver:timefold-solver-spring-boot-starter",
+            ),
+        )
+
+    def test_issue_242_graph_validation_requires_exact_coordinates_and_reasons(self) -> None:
+        graphs = {
+            "bluetape4k-exposed": [
+                {
+                    "coordinate": coordinate,
+                    "configuration": "testRuntimeClasspath",
+                    "before_version": "2.4.0",
+                    "after_version": "2.6.0",
+                    "selection_reason": "before: stable BOM; after: candidate BOM",
+                    "output_sha256": "a" * 64,
+                }
+                for coordinate in (
+                    "ai.timefold.solver:timefold-solver-core",
+                    "ai.timefold.solver:timefold-solver-benchmark",
+                    "ai.timefold.solver:timefold-solver-jackson",
+                    "ai.timefold.solver:timefold-solver-spring-boot-starter",
+                )
+            ],
+            "timefold-workshop": [
+                {
+                    "coordinate": coordinate,
+                    "configuration": "testRuntimeClasspath",
+                    "before_version": "2.4.0",
+                    "after_version": "2.6.0",
+                    "selection_reason": "before: stable BOM; after: candidate BOM",
+                    "output_sha256": "b" * 64,
+                }
+                for coordinate in receipt.ISSUE_242_GRAPH_COORDINATES["timefold-workshop"]
+            ],
+            "clinic-appointment": [
+                {
+                    "coordinate": coordinate,
+                    "configuration": "testRuntimeClasspath",
+                    "before_version": "2.4.0",
+                    "after_version": "2.6.0",
+                    "selection_reason": "before: stable BOM; after: candidate BOM",
+                    "output_sha256": "c" * 64,
+                }
+                for coordinate in receipt.ISSUE_242_GRAPH_COORDINATES["clinic-appointment"]
+            ],
+        }
+        receipt.validate_issue_242_graphs(graphs)
+        graphs["bluetape4k-exposed"].pop()
+        with self.assertRaisesRegex(receipt.ReceiptError, "coordinates"):
+            receipt.validate_issue_242_graphs(graphs)
+
     def test_repository_inventory_reuses_catalog_candidate_authority(self) -> None:
         candidate = receipt._catalog_candidate_module()
         self.assertEqual(receipt.CATALOG_NAMES, candidate.CATALOG_REPOSITORIES)
@@ -451,6 +522,132 @@ class Issues242243ReceiptTest(unittest.TestCase):
         receipt_path = workspace / "build/issues-242-243/local-receipt.json"
         receipt_path.write_bytes(receipt.canonical_json_bytes(document))
         return workspace, receipt_path, document
+
+    def make_issue_242_fixture(self) -> tuple[Path, Path, dict[str, object]]:
+        workspace, path, original = self.make_fixture()
+        document = json.loads(json.dumps(original))
+        document["scope"] = receipt.ISSUE_242_SCOPE
+        document["issues"] = [242]
+        document.pop("canonical_signing_source")
+        for item in document["repositories"]:
+            item.pop("signing_sha256")
+            item["validation_only"] = item["name"] == "bluetape4k-experimental"
+        central_catalog = Path(
+            next(
+                item
+                for item in document["repositories"]
+                if item["name"] == receipt.CENTRAL_NAME
+            )["candidate_worktree"]
+        ) / "gradle/libs.versions.toml"
+        central_catalog_sha = hashlib.sha256(central_catalog.read_bytes()).hexdigest()
+
+        consumers = []
+        exposed_repository = next(
+            item for item in document["repositories"] if item["name"] == "bluetape4k-exposed"
+        )
+        exposed_consumer = {
+            key: exposed_repository[key]
+            for key in (
+                "name",
+                "origin",
+                "base_ref",
+                "base_sha",
+                "candidate_branch",
+                "candidate_worktree",
+                "candidate_head",
+                "clean",
+                "exact_head",
+            )
+        }
+        exposed_consumer.update(
+            {
+                "role": "consumer",
+                "validation_only": False,
+                "state": "discovered",
+                "catalog_ref": "candidate/catalog",
+                "catalog_sha256": central_catalog_sha,
+                "catalog_source": "local-candidate",
+                "bom_coordinate": "io.github.bluetape4k:bluetape4k-dependencies:2.1.0-issue-242.local",
+                "local_override": "removed",
+                "graphs": [
+                    {
+                        "coordinate": coordinate,
+                        "configuration": "testRuntimeClasspath",
+                        "before_version": "2.4.0",
+                        "after_version": "2.6.0",
+                        "selection_reason": "before: stable BOM; after: candidate BOM",
+                        "output_sha256": "a" * 64,
+                    }
+                    for coordinate in receipt.ISSUE_242_GRAPH_COORDINATES["bluetape4k-exposed"]
+                ],
+            }
+        )
+        consumers.append(exposed_consumer)
+        for item in document["consumers"]:
+            item.pop("signing_sha256")
+            item["validation_only"] = False
+            item["catalog_sha256"] = central_catalog_sha
+            item["graphs"] = [
+                {
+                    "coordinate": coordinate,
+                    "configuration": "testRuntimeClasspath",
+                    "before_version": "2.4.0",
+                    "after_version": "2.6.0",
+                    "selection_reason": "before: stable BOM; after: candidate BOM",
+                    "output_sha256": "b" * 64,
+                }
+                for coordinate in receipt.ISSUE_242_GRAPH_COORDINATES[item["name"]]
+            ]
+            consumers.append(item)
+        document["consumers"] = consumers
+        document["commands"] = []
+        document["phases"] = [
+            {
+                "name": "discover",
+                "result": "pass",
+                "output_sha256": "d" * 64,
+                "elapsed_seconds": 0.0,
+                "reserved_seconds": 0.0,
+                "job_ids": [],
+            }
+        ]
+        document["candidate_artifact_manifest"] = None
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        return workspace, path, document
+
+    def test_issue_242_receipt_accepts_exact_worktrees_without_signing_fields(self) -> None:
+        _workspace, path, document = self.make_issue_242_fixture()
+        validated = receipt.validate_receipt(path)
+        self.assertEqual(validated["scope"], receipt.ISSUE_242_SCOPE)
+        self.assertEqual(validated["issues"], [242])
+        self.assertEqual(
+            {item["name"] for item in validated["consumers"]},
+            set(receipt.ISSUE_242_CONSUMER_NAMES),
+        )
+        self.assertTrue(all("signing_sha256" not in item for item in validated["repositories"]))
+
+    def test_issue_242_receipt_rejects_missing_consumer_coordinate(self) -> None:
+        _workspace, path, document = self.make_issue_242_fixture()
+        document["consumers"][0]["graphs"].pop()
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "coordinates"):
+            receipt.validate_receipt(path)
+
+    def test_issue_242_receipt_rejects_signing_phase(self) -> None:
+        _workspace, path, document = self.make_issue_242_fixture()
+        document["phases"].append(
+            {
+                "name": "signing-buildsrc",
+                "result": "pass",
+                "output_sha256": "e" * 64,
+                "elapsed_seconds": 0.0,
+                "reserved_seconds": 0.0,
+                "job_ids": [],
+            }
+        )
+        path.write_bytes(receipt.canonical_json_bytes(document))
+        with self.assertRaisesRegex(receipt.ReceiptError, "signing"):
+            receipt.validate_receipt(path)
 
     def make_adoptable(self, document: dict[str, object]) -> None:
         workspace = Path(str(document["repository_map"]["path"])).parents[2]

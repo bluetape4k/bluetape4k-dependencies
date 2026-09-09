@@ -599,6 +599,25 @@
       "resolved-graph-evidence": [],
       "rollout": "2026-09-08-issue-197-kotlin-2.4.20",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "baseline-catalog-ref": "develop",
+      "catalog-sha256": "0954ccab87e9bd8380610134f91cf70aa6bcd0799f94a3b43181d7b083efd2e5",
+      "delta-count": 1,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-09-09-issue-242-timefold-2.6.0",
+      "status": "validation-pending"
     }
   ],
   "delta": [
