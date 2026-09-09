@@ -247,11 +247,27 @@ def validate_graph_result(job: ValidationJob, result: CommandResult) -> CommandR
 
     if result.status != "pass" or not job.phase.startswith("timefold-graphs-"):
         return result
-    if not job.coordinate:
+
+    def semantic_failure(diagnostics: str) -> CommandResult:
+        # A successful process can still fail the graph contract (for example,
+        # Gradle exits zero after reporting that no dependency matched).  Its
+        # process output was cached before semantic validation, so clear every
+        # cache attestation when converting that result into a failure.  The
+        # receipt validator must never accept cache evidence for a non-passing
+        # command.
         return dataclasses.replace(
             result,
             status="fail",
-            diagnostics="graph job is missing an exact dependency coordinate",
+            diagnostics=bounded_diagnostics(diagnostics),
+            cached=False,
+            cache_key="",
+            cache_output_path="",
+            candidate_artifact_manifest_bytes=b"",
+        )
+
+    if not job.coordinate:
+        return semantic_failure(
+            "graph job is missing an exact dependency coordinate"
         )
     output = result.stdout + ("\n" if result.stdout and result.stderr else "") + result.stderr
     try:
@@ -265,11 +281,7 @@ def validate_graph_result(job: ValidationJob, result: CommandResult) -> CommandR
                 f"{job.coordinate}"
             )
     except InputContractError as exc:
-        return dataclasses.replace(
-            result,
-            status="fail",
-            diagnostics=bounded_diagnostics(str(exc)),
-        )
+        return semantic_failure(str(exc))
     return result
 
 

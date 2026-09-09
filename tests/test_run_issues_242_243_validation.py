@@ -177,6 +177,39 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertEqual(checked.status, "fail")
         self.assertIn("expected 2.6.0", checked.diagnostics)
 
+    def test_graph_semantic_failure_cannot_retain_success_cache_evidence(self) -> None:
+        coordinate = "ai.timefold.solver:timefold-solver-core"
+        job = mock.Mock(
+            phase="timefold-graphs-candidate",
+            coordinate=coordinate,
+            repository="bluetape4k-exposed",
+        )
+        result = runner.CommandResult(
+            status="pass",
+            returncode=0,
+            stdout=(
+                f"{coordinate}:2.4.0\n"
+                "  Selection reasons:\n"
+                "      - By constraint: stale BOM\n"
+            ),
+            stderr="",
+            elapsed_seconds=0.1,
+            timed_out=False,
+            process_group_terminated=False,
+            termination_signal=None,
+            output_sha256="a" * 64,
+            cached=True,
+            cache_key="b" * 64,
+            cache_output_path="/receipt/cache/b.output",
+        )
+
+        checked = runner.validate_graph_result(job, result)
+
+        self.assertEqual(checked.status, "fail")
+        self.assertFalse(checked.cached)
+        self.assertEqual(checked.cache_key, "")
+        self.assertEqual(checked.cache_output_path, "")
+
     def test_consumer_graph_receipt_records_before_after_and_selection_reasons(self) -> None:
         coordinate = "ai.timefold.solver:timefold-solver-benchmark"
         document = {
