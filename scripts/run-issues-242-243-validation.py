@@ -2934,8 +2934,17 @@ def run_phase(
             raise InputContractError(
                 f"cannot rerun non-tail phase without a new receipt: {phase}"
             )
+    # Keep the historical combined receipt path stable while giving the
+    # Issue #242 standalone train the artifact directory named by its plan.
+    # The path remains receipt-bound in either scope; callers cannot select a
+    # second repository and accidentally mix candidate artifacts.
+    candidate_repository_name = (
+        "issue-242-candidate-maven-repository"
+        if scope == "issue-242"
+        else "candidate-m2"
+    )
     expected_candidate_repository = _absolute_without_following(
-        receipt_path.parent / "candidate-m2"
+        receipt_path.parent / candidate_repository_name
     )
     if candidate_maven_repository is not None:
         requested_candidate_repository = _absolute_without_following(

@@ -560,8 +560,13 @@ def _validate_graph(graph: Any, consumer: str) -> None:
     _require_sha256(value["output_sha256"], f"graph output for {consumer}")
 
 
-def validate_issue_242_graphs(value: Any) -> None:
-    """Require the complete Issue #242 consumer graph and semantic reasons."""
+def validate_issue_242_graphs(value: Any, *, allow_pending: bool = False) -> None:
+    """Require the complete Issue #242 consumer graph and semantic reasons.
+
+    Discovery/prepared receipts may carry the complete coordinate inventory
+    before either Gradle graph has run.  They use explicit pending markers;
+    validated/adopted receipts always take the strict path below.
+    """
 
     if not isinstance(value, Mapping) or set(value) != set(ISSUE_242_CONSUMER_NAMES):
         raise ReceiptError("Issue #242 graph consumers are incomplete")
@@ -581,10 +586,16 @@ def validate_issue_242_graphs(value: Any) -> None:
             _validate_graph(graph, consumer)
             if graph["configuration"] != "testRuntimeClasspath":
                 raise ReceiptError(f"Issue #242 graph configuration mismatch for {consumer}")
-            if graph["before_version"] == "pending-baseline":
+            before_pending = graph["before_version"] == "pending-baseline"
+            after_pending = graph["after_version"] == "pending-candidate"
+            if before_pending and not allow_pending:
                 raise ReceiptError(f"Issue #242 baseline graph is pending for {consumer}")
-            if graph["after_version"] != "2.6.0":
+            if after_pending and not allow_pending:
+                raise ReceiptError(f"Issue #242 candidate graph is pending for {consumer}")
+            if not allow_pending and graph["after_version"] != "2.6.0":
                 raise ReceiptError(f"Issue #242 candidate graph version mismatch for {consumer}")
+            if allow_pending and not (after_pending or graph["after_version"] == "2.6.0"):
+                raise ReceiptError(f"Issue #242 candidate graph version is invalid for {consumer}")
             reason = str(graph["selection_reason"])
             if not reason.startswith("before: ") or "; after: " not in reason:
                 raise ReceiptError(f"Issue #242 selection reason is incomplete for {consumer}")
@@ -1714,7 +1725,11 @@ def _validate_issue_242_document(
     # discovery/prepared receipt may defer execution, but it must still carry
     # the complete coordinate inventory so a later phase cannot silently omit
     # a consumer or artifact.
-    validate_issue_242_graphs({item["name"]: item["graphs"] for item in verified_consumers})
+    state = document["current_state"]
+    validate_issue_242_graphs(
+        {item["name"]: item["graphs"] for item in verified_consumers},
+        allow_pending=state in {"discovered", "prepared"},
+    )
     manifest = document["candidate_artifact_manifest"]
     if isinstance(manifest, Mapping):
         artifact_phase = next(
@@ -1730,7 +1745,6 @@ def _validate_issue_242_document(
         raise ReceiptError("Issue #242 candidate artifact manifest is invalid")
     _validate_records(document["failure_record"], "Issue #242 failure record")
     _validate_records(document["rollback_record"], "Issue #242 rollback record")
-    state = document["current_state"]
     if state not in STATES:
         raise ReceiptError("Issue #242 current state is invalid")
     if state in {"validated", "adopted"}:
