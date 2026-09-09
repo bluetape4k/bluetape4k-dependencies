@@ -3,8 +3,9 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `ai.timefold.solver` 네 좌표를 중앙 `bluetape4k-dependencies` BOM의
-`2.6.0` candidate로 고정하고, `bluetape4k-exposed`, `timefold-workshop`,
-`clinic-appointment`의 동일한 immutable 입력에서 dependency graph, persistence,
+`2.6.0` candidate로 고정하고, 실제 소비자가 선택하는 좌표의 합집합이 네 좌표를
+완전히 덮도록 `bluetape4k-exposed`, `timefold-workshop`, `clinic-appointment`의
+동일한 immutable 입력에서 dependency graph, persistence,
 score/lifecycle, DB, publication POM 계약을 검증한다. 모든 필수 증거가 통과한 뒤에만
 중앙 catalog의 `2.4.0` 보류 상태를 해제할 수 있도록 receipt와 재현 명령을 남긴다.
 
@@ -42,7 +43,7 @@ JSON receipt, GitHub Actions exact-head checks.
 
 | 책임 | 파일 또는 저장소 | 변경 경계 |
 | --- | --- | --- |
-| 중앙 runner | `scripts/run-issues-242-243-validation.py` | Issue #242 scope와 네 좌표 graph |
+| 중앙 runner | `scripts/run-issues-242-243-validation.py` | Issue #242 scope와 소비자별 graph, 네 좌표 합집합 |
 | 중앙 receipt | `scripts/verify-issues-242-243-receipt.py` | issue별 필수 phase 검증 |
 | 중앙 회귀 테스트 | `tests/test_run_issues_242_243_validation.py`, `tests/test_verify_issues_242_243_receipt.py` | 기존 combined mode 보존 |
 | 중앙 catalog | `gradle/libs.versions.toml`, `gradle/libs.versions.toml.sha256` | Timefold ref와 checksum |
@@ -142,9 +143,10 @@ JSON receipt, GitHub Actions exact-head checks.
   `timefold-graphs-candidate`, `consumers`, `publication-poms`만 허용하는지
   검증한다. 인자 없이 실행하는 기존 combined mode는 현재 `PHASES`와 signing
   repository 선택을 그대로 유지해야 한다. `issue-242`에서
-  `bluetape4k-exposed`의 graph coordinate가 `core`, `benchmark`, `jackson`,
-  `spring-boot-starter` 네 개로 생성되는 테스트를 추가한다. 정확한 좌표는
-  다음 네 개로 고정한다.
+  소비자별 실제 graph coordinate 매핑과 전체 네 좌표 합집합을 검증하는 테스트를
+  추가한다. Exposed persistence는 `core`만 직접 소비하고, Workshop은
+  `core`/`jackson`/`spring-boot-starter`, Clinic은 `benchmark`를 소비한다.
+  전체 계약의 정확한 좌표는 다음 네 개로 고정한다.
 
   ```text
   ai.timefold.solver:timefold-solver-core
@@ -159,14 +161,15 @@ JSON receipt, GitHub Actions exact-head checks.
   python3 -m unittest tests/test_run_issues_242_243_validation.py
   ```
 
-  기대 결과: scope parser와 Exposed 네 좌표가 없어 새 테스트가 실패한다.
+  기대 결과: scope parser와 소비자별 graph 매핑이 없어 새 테스트가 실패한다.
 
 - [ ] **Step 3: 최소 구현으로 phase/coordinate 선택을 분리한다.**
 
   parser에 `--scope {issues-242-243,issue-242}`를 추가하고, scope에 따라
   `build_phase_jobs()`가 allowlist를 선택하게 한다. `TIMEFOLD_GRAPH_COORDINATES`
-  를 네 좌표 계약에 맞추고, `parse_dependency_insight()`의 실제 selected
-  version과 비어 있지 않은 `Selection reasons` 검사를 그대로 사용한다.
+  를 소비자별 실제 사용 좌표와 네 좌표 합집합 계약에 맞추고,
+  `parse_dependency_insight()`의 실제 selected version과 비어 있지 않은
+  `Selection reasons` 검사를 그대로 사용한다.
   candidate graph는 모든 좌표가 `2.6.0`이 아니면 실패한다. signing phase를
   Issue #242 scope에서 호출하면 명확한 `InputContractError`를 반환한다.
 
@@ -190,9 +193,10 @@ JSON receipt, GitHub Actions exact-head checks.
 
   `issue-242` 문서가 signing phase를 요구하지 않으며, candidate BOM, baseline
   graph, candidate graph, consumers, publication POM, candidate artifacts를
-  모두 요구하는지 테스트한다. Exposed 네 좌표와 Workshop 세 좌표, Clinic
-  benchmark 좌표 각각에 selected version과 `Selection reasons`가 없으면
-  receipt를 거부하는 케이스를 추가한다. baseline/candidate consumer HEAD가
+  모두 요구하는지 테스트한다. Exposed core, Workshop 세 좌표, Clinic benchmark
+  좌표 각각에 selected version과 `Selection reasons`가 없으면 receipt를
+  거부하는 케이스를 추가하고, 이 합집합이 중앙 네 좌표와 같은지도 고정한다.
+  baseline/candidate consumer HEAD가
   다르면 거부하는 케이스도 고정한다.
 
 - [ ] **Step 2: RED를 확인한다.**
@@ -330,10 +334,11 @@ JSON receipt, GitHub Actions exact-head checks.
 
 - [ ] **Step 1: baseline graph를 먼저 실행한다.**
 
-  clean baseline worktree에서 `:bluetape4k-exposed-timefold-solver-persistence:dependencyInsight`
-  를 `testRuntimeClasspath`와 네 좌표 각각에 실행한다. 각 결과에서 현재
-  선택 version, `Selection reasons`, configuration, output SHA를 receipt에
-  기록한다. baseline에서는 `2.4.0`이 선택되어야 한다.
+  clean baseline worktree에서 각 소비자 task를 `testRuntimeClasspath`와
+  실제 소비자별 좌표(Exposed core, Workshop core/Jackson/starter, Clinic
+  benchmark)에 실행한다. 각 결과에서 현재 선택 version, `Selection reasons`,
+  configuration, output SHA를 receipt에 기록한다. baseline에서는 중앙 관리
+  좌표가 `2.4.0`이어야 한다.
 
 - [ ] **Step 2: candidate catalog/BOM 입력을 주입한다.**
 
@@ -346,9 +351,10 @@ JSON receipt, GitHub Actions exact-head checks.
 
 - [ ] **Step 3: candidate graph RED/GREEN을 확인한다.**
 
-  네 좌표가 모두 `2.6.0`과 non-empty `Selection reasons`를 보이는지 runner로
-  확인한다. 하나라도 `2.4.0`, `No dependencies matching`, 빈 reason, `SKIPPED`이면
-  성공으로 집계하지 않는다. catalog 전달이 실제로 실패하면 Exposed source를
+  소비자별 실제 좌표의 합집합이 모두 `2.6.0`과 non-empty `Selection reasons`를
+  보이는지 runner로 확인한다. 하나라도 `2.4.0`, `No dependencies matching`, 빈
+  reason, `SKIPPED`이면 성공으로 집계하지 않는다. catalog 전달이 실제로 실패하면
+  Exposed source를
   임의로 복제하지 않고 receipt에 blocker를 기록한다.
 
 - [ ] **Step 4: persistence tests를 실행한다.**
@@ -455,8 +461,9 @@ JSON receipt, GitHub Actions exact-head checks.
     --execution-boundary persistent-trusted --summary
   ```
 
-  Exposed 네 좌표, Workshop core/Jackson/starter, Clinic benchmark 결과가 모두
-  실제 `dependencyInsight` output에 존재해야 한다. baseline과 candidate output은
+  Exposed core, Workshop core/Jackson/starter, Clinic benchmark 결과가 모두 실제
+  `dependencyInsight` output에 존재해야 한다. 이 소비자별 결과의 합집합이 네
+  좌표를 덮어야 하며, baseline과 candidate output은
   별도 path와 digest를 가져야 한다.
 
 - [ ] **Step 2: candidate graph phase를 실행한다.**

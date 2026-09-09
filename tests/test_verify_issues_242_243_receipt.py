@@ -51,10 +51,21 @@ class Issues242243ReceiptTest(unittest.TestCase):
             receipt.ISSUE_242_GRAPH_COORDINATES["bluetape4k-exposed"],
             (
                 "ai.timefold.solver:timefold-solver-core",
+            ),
+        )
+
+        covered = set().union(
+            *(set(receipt.ISSUE_242_GRAPH_COORDINATES[name])
+              for name in receipt.ISSUE_242_CONSUMER_NAMES)
+        )
+        self.assertEqual(
+            covered,
+            {
+                "ai.timefold.solver:timefold-solver-core",
                 "ai.timefold.solver:timefold-solver-benchmark",
                 "ai.timefold.solver:timefold-solver-jackson",
                 "ai.timefold.solver:timefold-solver-spring-boot-starter",
-            ),
+            },
         )
 
     def test_issue_242_graph_validation_requires_exact_coordinates_and_reasons(self) -> None:
@@ -68,12 +79,7 @@ class Issues242243ReceiptTest(unittest.TestCase):
                     "selection_reason": "before: stable BOM; after: candidate BOM",
                     "output_sha256": "a" * 64,
                 }
-                for coordinate in (
-                    "ai.timefold.solver:timefold-solver-core",
-                    "ai.timefold.solver:timefold-solver-benchmark",
-                    "ai.timefold.solver:timefold-solver-jackson",
-                    "ai.timefold.solver:timefold-solver-spring-boot-starter",
-                )
+                for coordinate in receipt.ISSUE_242_GRAPH_COORDINATES["bluetape4k-exposed"]
             ],
             "timefold-workshop": [
                 {

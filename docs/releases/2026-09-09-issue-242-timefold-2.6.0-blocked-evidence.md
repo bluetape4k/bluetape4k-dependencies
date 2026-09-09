@@ -2,10 +2,10 @@
 
 - 검증일: 2026-09-09
 - 범위: 중앙 BOM candidate, `bluetape4k-exposed`, `timefold-workshop`, `clinic-appointment`
-- baseline evidence runner HEAD: `dd899e1f49a6aaa582664388915322a5bf553a3b`
-- receipt: `build/issues-242-243/issue-242-receipt.json`
-- receipt state: `blocked`
-- baseline phase output SHA-256: `dd02d3e0d7de28b5017f055113430084d70c439bda1aaf255509edfcb5c34d59`
+- receipt: `build/issues-242-243/issue-242-receipt.json` (중앙 mapping 수정 후 새로 생성)
+- receipt state: `blocked` (최신 phase 결과는 receipt의 output digest를 기준으로 판정)
+- 이전 receipt의 runner HEAD와 baseline output digest는 Exposed mapping 교정 전 증거로
+  보존하며, 최신 receipt가 생성되면 이 문서의 실행 근거를 대체한다.
 
 ## 판정
 
@@ -18,16 +18,12 @@ publication POM phase는 실행하지 않았다.
 
 1. `bluetape4k-exposed`의
    `:bluetape4k-exposed-timefold-solver-persistence:dependencyInsight`
-   `testRuntimeClasspath`에서 다음 좌표가 존재하지 않았다.
-
-   - `ai.timefold.solver:timefold-solver-benchmark`
-   - `ai.timefold.solver:timefold-solver-jackson`
-   - `ai.timefold.solver:timefold-solver-spring-boot-starter`
-
-   Gradle은 해당 `dependencyInsight` 명령을 exit code 0으로 종료했지만,
-   runner의 semantic parser는 `No dependencies matching given input`을 실패로
-   기록했다. 이 결과를 성공 graph로 집계하지 않았다. 각 실패 output digest는
-   receipt의 baseline `failure_record`와 command record에 보존돼 있다.
+   `testRuntimeClasspath`는 `ai.timefold.solver:timefold-solver-core`만 직접
+   소비한다. 기존 runner가 benchmark/Jackson/starter까지 Exposed 필수 graph로
+   요구한 것은 실제 consumer mapping과 불일치했으므로, 이를 성공으로 만들기
+   위해 사용하지 않는 dependency를 추가하지 않고 runner와 receipt 계약을
+   Exposed core로 교정했다. 네 좌표 전체 계약은 Workshop의 core/Jackson/starter와
+   Clinic의 benchmark를 합친 소비자 graph 합집합으로 유지한다.
 
 2. `clinic-appointment` baseline의
    `:appointment-solver:dependencyInsight`가 `temporal-bom:1.38.0`의
@@ -56,13 +52,16 @@ publication POM phase는 실행하지 않았다.
 
 다음 조건을 충족한 뒤 새 receipt에서 baseline부터 다시 실행해야 한다.
 
-1. Exposed에서 네 필수 좌표를 실제 consumer runtime에 매핑하거나, 실제 사용하지
-   않는 좌표를 필수 graph 계약에서 제외하는 설계 결정을 명시한다. 단순히 Gradle
-   exit code 0을 성공으로 바꾸지 않는다.
+1. 소비자별 실제 graph mapping(Exposed core, Workshop core/Jackson/starter,
+   Clinic benchmark)과 그 합집합이 중앙 네 좌표를 덮는지 새 receipt에서
+   확인한다. 단순히 Gradle exit code 0을 성공으로 바꾸지 않는다.
 2. Clinic의 `temporal-bom:1.38.0` verification metadata를 공식 artifact digest로
-   갱신하고, 동일한 clean baseline에서 benchmark graph를 재현한다.
-3. baseline이 통과한 뒤에만 candidate graph가 네 좌표의 `2.6.0` 선택을 보이고,
-   이어서 Exposed/Workshop/Clinic 테스트와 publisher POM 검증을 실행한다.
+   갱신하고, 동일한 clean baseline에서 benchmark graph를 재현한다. 현재 공식
+   digest는 `.module` `b13301f49c3a502d1f7d60a291e8b317e6bfda6fbd80b50b7aaf3fc83adca885`,
+   `.pom` `9f954eccc31c771dbceaa174901f4665e482724e394aaf889dc3a5035fe41435`이다.
+3. baseline이 통과한 뒤에만 candidate graph가 합집합 네 좌표 모두에서 `2.6.0`
+   을 선택하는지 확인하고, 이어서 Exposed/Workshop/Clinic 테스트와 publisher POM
+   검증을 실행한다.
 
 현재 상태는 **BLOCKED**이며, 이 문서는 Issue #242를 닫거나 2.6.0 adoption을
 승인하는 근거가 아니다.
