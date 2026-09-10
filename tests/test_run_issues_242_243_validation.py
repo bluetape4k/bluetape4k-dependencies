@@ -47,6 +47,37 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("--no-configuration-cache", runner.GRADLE_FLAGS)
         self.assertIn("--no-build-cache", runner.GRADLE_FLAGS)
 
+    def test_issue_242_scope_excludes_signing_and_keeps_required_phases(self) -> None:
+        self.assertEqual(
+            runner.ISSUE_242_REQUIRED_PHASES,
+            (
+                "candidate-bom-publication",
+                "timefold-graphs-baseline",
+                "timefold-graphs-candidate",
+                "consumers",
+                "publication-poms",
+            ),
+        )
+        self.assertEqual(runner.scoped_phases("issue-242"), runner.ISSUE_242_REQUIRED_PHASES)
+        self.assertEqual(runner.scoped_phases("issues-242-243"), runner.PHASES)
+        with self.assertRaisesRegex(runner.InputContractError, "signing"):
+            runner.validate_scope_phase("issue-242", "signing-buildsrc")
+
+    def test_issue_242_exposed_graph_contains_only_direct_timefold_coordinate(self) -> None:
+        self.assertEqual(
+            runner.issue_242_graph_coordinates("bluetape4k-exposed"),
+            (
+                "ai.timefold.solver:timefold-solver-core",
+            ),
+        )
+
+    def test_issue_242_graphs_cover_all_required_coordinates_across_consumers(self) -> None:
+        covered = set().union(
+            *(runner.issue_242_graph_coordinates(repository)
+              for repository in runner.ISSUE_242_CONSUMER_REPOSITORIES)
+        )
+        self.assertEqual(covered, set(runner.TIMEFOLD_COORDINATES))
+
     def test_timefold_tasks_use_exact_included_project_names(self) -> None:
         self.assertEqual(
             runner.TIMEFOLD_COORDINATES,
@@ -150,6 +181,39 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertEqual(checked.status, "fail")
         self.assertIn("expected 2.6.0", checked.diagnostics)
 
+    def test_graph_semantic_failure_cannot_retain_success_cache_evidence(self) -> None:
+        coordinate = "ai.timefold.solver:timefold-solver-core"
+        job = mock.Mock(
+            phase="timefold-graphs-candidate",
+            coordinate=coordinate,
+            repository="bluetape4k-exposed",
+        )
+        result = runner.CommandResult(
+            status="pass",
+            returncode=0,
+            stdout=(
+                f"{coordinate}:2.4.0\n"
+                "  Selection reasons:\n"
+                "      - By constraint: stale BOM\n"
+            ),
+            stderr="",
+            elapsed_seconds=0.1,
+            timed_out=False,
+            process_group_terminated=False,
+            termination_signal=None,
+            output_sha256="a" * 64,
+            cached=True,
+            cache_key="b" * 64,
+            cache_output_path="/receipt/cache/b.output",
+        )
+
+        checked = runner.validate_graph_result(job, result)
+
+        self.assertEqual(checked.status, "fail")
+        self.assertFalse(checked.cached)
+        self.assertEqual(checked.cache_key, "")
+        self.assertEqual(checked.cache_output_path, "")
+
     def test_consumer_graph_receipt_records_before_after_and_selection_reasons(self) -> None:
         coordinate = "ai.timefold.solver:timefold-solver-benchmark"
         document = {
@@ -203,6 +267,62 @@ class ValidationRunnerTest(unittest.TestCase):
         self.assertIn("before: By constraint: stable BOM", graph["selection_reason"])
         self.assertIn("after: By constraint: candidate BOM", graph["selection_reason"])
         self.assertEqual(graph["output_sha256"], "b" * 64)
+
+    def test_issue_242_consumer_graph_receipt_includes_exposed_coordinates(self) -> None:
+        document = {
+            "scope": "issue-242",
+            "consumers": [
+                {
+                    "name": name,
+                    "graphs": [],
+                }
+                for name in runner.ISSUE_242_CONSUMER_REPOSITORIES
+            ],
+        }
+        coordinates = runner.issue_242_graph_coordinates("bluetape4k-exposed")
+        jobs = tuple(
+            mock.Mock(
+                repository="bluetape4k-exposed",
+                coordinate=coordinate,
+                configuration="testRuntimeClasspath",
+            )
+            for coordinate in coordinates
+        )
+
+        def phase_result(version: str, digest_prefix: str) -> runner.PhaseResult:
+            results = tuple(
+                runner.CommandResult(
+                    status="pass",
+                    returncode=0,
+                    stdout=(
+                        f"{coordinate}:{version}\n"
+                        "  Selection reasons:\n"
+                        f"      - By constraint: {'candidate' if version == '2.6.0' else 'stable'} BOM\n"
+                    ),
+                    stderr="",
+                    elapsed_seconds=0.1,
+                    timed_out=False,
+                    process_group_terminated=False,
+                    termination_signal=None,
+                    output_sha256=digest_prefix * 64,
+                )
+                for coordinate in coordinates
+            )
+            return runner.PhaseResult(
+                "timefold-graphs-baseline" if version == "2.4.0" else "timefold-graphs-candidate",
+                "pass",
+                digest_prefix * 64,
+                results,
+            )
+
+        runner._update_consumer_graphs(document, phase_result("2.4.0", "c"), jobs)
+        runner._update_consumer_graphs(document, phase_result("2.6.0", "d"), jobs)
+        exposed = next(item for item in document["consumers"] if item["name"] == "bluetape4k-exposed")
+        self.assertEqual(
+            [graph["coordinate"] for graph in exposed["graphs"]],
+            list(coordinates),
+        )
+        self.assertTrue(all(graph["after_version"] == "2.6.0" for graph in exposed["graphs"]))
 
     def test_failed_candidate_phase_keeps_pending_consumer_baseline_without_crashing(self) -> None:
         coordinate = "ai.timefold.solver:timefold-solver-benchmark"
@@ -342,12 +462,26 @@ class ValidationRunnerTest(unittest.TestCase):
         source = {
             "PATH": "/bin",
             "HOME": "/tmp/home",
+            "DOCKER_HOST": "unix:///Users/debop/.colima/default/docker.sock",
+            "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE": "/var/run/docker.sock",
+            "TESTCONTAINERS_REUSE_ENABLE": "true",
+            "TESTCONTAINERS_RYUK_DISABLED": "true",
             "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH": "/candidate/catalog.toml",
             "ISSUES_242_243_CANDIDATE_MAVEN_REPO": "/candidate/m2",
             "CENTRAL_PASSWORD": "secret",
         }
         environment = runner.sanitized_environment(source)
-        self.assertEqual(set(environment), {"PATH", "HOME"})
+        self.assertEqual(
+            set(environment),
+            {
+                "PATH",
+                "HOME",
+                "DOCKER_HOST",
+                "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE",
+                "TESTCONTAINERS_REUSE_ENABLE",
+                "TESTCONTAINERS_RYUK_DISABLED",
+            },
+        )
         job = mock.Mock(
             environment_overrides=(
                 ("BLUETAPE4K_DEPENDENCIES_CATALOG_PATH", "/candidate/catalog.toml"),
@@ -361,6 +495,10 @@ class ValidationRunnerTest(unittest.TestCase):
             {
                 "PATH",
                 "HOME",
+                "DOCKER_HOST",
+                "TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE",
+                "TESTCONTAINERS_REUSE_ENABLE",
+                "TESTCONTAINERS_RYUK_DISABLED",
                 "BLUETAPE4K_DEPENDENCIES_CATALOG_PATH",
                 "ISSUES_242_243_CANDIDATE_MAVEN_REPO",
             },
@@ -1274,9 +1412,13 @@ class ValidationRunnerTest(unittest.TestCase):
         )
         self.assertIn("includeVersion(", script)
         self.assertIn("repositories.exclusiveContent", script)
-        self.assertIn('configuration.name == "testImplementation"', script)
+        self.assertIn("project.afterEvaluate", script)
+        self.assertIn('dependency.group == "ai.timefold.solver"', script)
+        self.assertNotIn('configuration.name == "testImplementation"', script)
         self.assertIn("project.dependencies.enforcedPlatform(candidateBom)", script)
         self.assertIn("details.useVersion(candidateBomVersion)", script)
+        self.assertIn('project.plugins.withId("io.spring.dependency-management")', script)
+        self.assertIn("dependencyManagement.imports", script)
 
     def test_consumer_jobs_bind_canonical_helper_without_generated_copy(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

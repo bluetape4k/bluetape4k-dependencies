@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "audit-latest-stable.py"
 LEDGER = REPO_ROOT / "config" / "central-catalog-version-deltas.json"
 AUTHORITY_LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
-TIMEFOLD_ROLLOUT = "2026-09-06-issue-242-timefold-2.6.0"
+TIMEFOLD_ROLLOUT = "2026-09-09-issue-242-timefold-2.6.0"
 
 
 def load_script():
@@ -22,17 +22,17 @@ def load_script():
 
 
 class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
-    def test_blocked_timefold_rollout_does_not_claim_verified_deltas(self) -> None:
+    def test_pending_timefold_rollout_does_not_claim_verified_deltas(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
-        rollout_names = {
-            item["rollout"] for item in document["subsequent-rollouts"]
-        }
-
-        self.assertNotIn(
-            TIMEFOLD_ROLLOUT,
-            rollout_names,
-            "A blocked candidate must not be recorded as a verified rollout",
+        rollout = next(
+            item
+            for item in document["subsequent-rollouts"]
+            if item["rollout"] == TIMEFOLD_ROLLOUT
         )
+
+        self.assertEqual(rollout["status"], "validation-pending")
+        self.assertEqual(rollout["delta-count"], 1)
+        self.assertEqual(rollout["resolved-graph-evidence"], [])
 
     def test_upsert_catalog_rollout_preserves_history(self) -> None:
         module = load_script()
@@ -103,7 +103,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["publication-pom-verification"]["failures"], 0)
         self.assertEqual(rollout["remote-immutable-ref-verification"], "verified")
 
-    def test_active_authority_rollout_links_verified_evidence(self) -> None:
+    def test_active_authority_rollout_links_current_evidence(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         authority = json.loads(AUTHORITY_LEDGER.read_text(encoding="utf-8"))
         rollout = next(
@@ -112,7 +112,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             if item["rollout"] == authority["rollout"]
         )
 
-        self.assertEqual(rollout["status"], "verified-resolved-graph")
+        self.assertEqual(rollout["status"], authority["status"])
         self.assertEqual(
             rollout["authority-delta-ledger"],
             "config/latest-stable-version-deltas.json",
@@ -121,10 +121,13 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
         self.assertEqual(rollout["baseline-catalog-ref"], authority["baseline"]["catalog-ref"])
         self.assertEqual(rollout["audit"], authority["audit"]["path"])
         self.assertEqual(rollout["delta-count"], len(authority["delta"]))
-        self.assertEqual(
-            rollout["resolved-graph-evidence"]["spec-count"],
-            authority["resolved-graph-evidence"]["spec-count"],
-        )
+        if authority["status"] == "verified-resolved-graph":
+            self.assertEqual(
+                rollout["resolved-graph-evidence"]["spec-count"],
+                authority["resolved-graph-evidence"]["spec-count"],
+            )
+        else:
+            self.assertEqual(rollout["resolved-graph-evidence"], [])
         validation = authority.get("candidate-validation-evidence")
         if validation is None:
             self.assertEqual(rollout["downstream-full-builds"]["status"], "pending")

@@ -218,8 +218,13 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 if rollout["rollout"] == document["rollout"]
             ),
         )
-        self.assertEqual(document["audit-cutoff"], "2026-09-04")
-        self.assertEqual(document["status"], "verified-resolved-graph")
+        status = document["status"]
+        self.assertIn(status, {"validation-pending", "verified-resolved-graph"})
+        if status == "verified-resolved-graph":
+            self.assertEqual(document["audit-cutoff"], "2026-09-04")
+        else:
+            self.assertEqual(status, "validation-pending")
+            self.assertEqual(document["audit-cutoff"], "2026-09-09")
         required_keys = {
                 "schema-version",
                 "rollout",
@@ -229,42 +234,52 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 "candidate",
                 "audit",
                 "delta",
-                "resolved-graph-evidence",
         }
+        if status == "verified-resolved-graph":
+            required_keys.add("resolved-graph-evidence")
         self.assertTrue(required_keys.issubset(document))
         self.assertTrue(
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
-        self.assertEqual(len(document["delta"]), 126)
+        if status == "verified-resolved-graph":
+            self.assertEqual(len(document["delta"]), 126)
+        else:
+            self.assertEqual(len(document["delta"]), 1)
+            self.assertEqual(document["delta"][0]["version-key"], "timefold-solver")
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),
         )
         for entry in document["delta"]:
-            self.assertEqual(
-                set(entry),
-                {
-                    "version-key",
-                    "before",
-                    "after",
-                    "authorities",
-                    "verification",
-                    "reason",
-                    "adoption-evidence",
-                    "resolved-graph-specs",
-                },
-            )
+            expected_entry_keys = {
+                "version-key",
+                "before",
+                "after",
+                "authorities",
+                "verification",
+                "reason",
+                "adoption-evidence",
+            }
+            if status == "verified-resolved-graph":
+                expected_entry_keys.add("resolved-graph-specs")
+            self.assertEqual(set(entry), expected_entry_keys)
             self.assertNotEqual(entry["before"], entry["after"])
             self.assertEqual(entry["after"], versions[entry["version-key"]])
             self.assertTrue(entry["authorities"])
-            self.assertEqual(entry["verification"], "verified-resolved-graph")
-            self.assertTrue(entry["resolved-graph-specs"])
-            self.assertTrue(
-                all(
-                    re.fullmatch(r"[0-9a-f]{64}", spec_id)
-                    for spec_id in entry["resolved-graph-specs"]
-                )
+            expected_verification = (
+                "verified-resolved-graph"
+                if status == "verified-resolved-graph"
+                else "pending-resolved-graph"
             )
+            self.assertEqual(entry["verification"], expected_verification)
+            if status == "verified-resolved-graph":
+                self.assertTrue(entry["resolved-graph-specs"])
+                self.assertTrue(
+                    all(
+                        re.fullmatch(r"[0-9a-f]{64}", spec_id)
+                        for spec_id in entry["resolved-graph-specs"]
+                    )
+                )
             self.assertIn(
                 entry["adoption-evidence"]["classification"],
                 {
@@ -274,29 +289,32 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             )
             self.assertEqual(entry["adoption-evidence"]["version"], entry["after"])
 
-        evidence = document["resolved-graph-evidence"]
-        receipt_path = REPO_ROOT / evidence["path"]
-        receipt_bytes = receipt_path.read_bytes()
-        receipt = json.loads(receipt_bytes)
-        validated_receipt = load_resolver().validate_receipt(document, receipt)
-        self.assertEqual(hashlib.sha256(receipt_bytes).hexdigest(), evidence["sha256"])
-        self.assertEqual(receipt["status"], "verified-resolved-graph")
-        self.assertEqual(receipt["catalog-sha256"], document["candidate"]["catalog-sha256"])
-        self.assertEqual(receipt["spec-count"], evidence["spec-count"])
-        self.assertEqual(receipt["observation-count"], evidence["observation-count"])
-        self.assertEqual(len(receipt["observations"]), evidence["observation-count"])
-        self.assertEqual(len(validated_receipt), evidence["observation-count"])
-        self.assertEqual(
-            {
-                observation["spec_id"]
-                for observation in receipt["observations"]
-            },
-            {
-                spec_id
-                for entry in document["delta"]
-                for spec_id in entry["resolved-graph-specs"]
-            },
-        )
+        if status == "verified-resolved-graph":
+            evidence = document["resolved-graph-evidence"]
+            receipt_path = REPO_ROOT / evidence["path"]
+            receipt_bytes = receipt_path.read_bytes()
+            receipt = json.loads(receipt_bytes)
+            validated_receipt = load_resolver().validate_receipt(document, receipt)
+            self.assertEqual(hashlib.sha256(receipt_bytes).hexdigest(), evidence["sha256"])
+            self.assertEqual(receipt["status"], "verified-resolved-graph")
+            self.assertEqual(receipt["catalog-sha256"], document["candidate"]["catalog-sha256"])
+            self.assertEqual(receipt["spec-count"], evidence["spec-count"])
+            self.assertEqual(receipt["observation-count"], evidence["observation-count"])
+            self.assertEqual(len(receipt["observations"]), evidence["observation-count"])
+            self.assertEqual(len(validated_receipt), evidence["observation-count"])
+            self.assertEqual(
+                {
+                    observation["spec_id"]
+                    for observation in receipt["observations"]
+                },
+                {
+                    spec_id
+                    for entry in document["delta"]
+                    for spec_id in entry["resolved-graph-specs"]
+                },
+            )
+        else:
+            self.assertNotIn("resolved-graph-evidence", document)
 
         candidate_evidence = document.get("candidate-validation-evidence")
         if candidate_evidence is not None:
@@ -318,17 +336,22 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
             self.assertEqual(candidate_receipt["publication-poms"]["files"], 188)
 
-    def test_completed_rollout_keeps_its_original_audit_summary(self) -> None:
+    def test_rollout_audit_summary_matches_its_lifecycle(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
-        # 후속 Kotlin 전환의 최신 조회 결과를 과거 전환의 완료 증거와 혼동하지 않는다.
         audit = document["audit"]
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
-        self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
-        self.assertEqual(audit["summary"]["authority-count"], 515)
-        self.assertEqual(audit["summary"]["line-count"], 549)
-        self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
-        self.assertEqual(audit["summary"]["metadata-verified"], 510)
+        if document["status"] == "verified-resolved-graph":
+            # 완료된 rollout은 후속 audit의 최신 조회 결과로 덮어쓰지 않는다.
+            self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
+            self.assertEqual(audit["summary"]["authority-count"], 515)
+            self.assertEqual(audit["summary"]["line-count"], 549)
+            self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
+            self.assertEqual(audit["summary"]["metadata-verified"], 510)
+        else:
+            current_audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+            self.assertEqual(document["status"], "validation-pending")
+            self.assertEqual(audit["summary"], current_audit["summary"])
 
     def test_kotlin_candidate_is_stable_and_all_plugin_aliases_are_aligned(self) -> None:
         versions = catalog_versions()
