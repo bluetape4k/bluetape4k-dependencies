@@ -618,6 +618,25 @@
       "resolved-graph-evidence": [],
       "rollout": "2026-09-09-issue-242-timefold-2.6.0",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/kotlinx-benchmark-0.5.0-version-deltas.json",
+      "baseline-catalog-ref": "c3a81c52ced1c9dcca40cc4b58dc8c2a32e6bac9",
+      "catalog-sha256": "f6f1ce3cdc3c4027cf536216fe7c1be6ab781e776257b664baffa927044e3ef8",
+      "delta-count": 3,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-09-09-pr-244-kotlinx-benchmark-0.5.0",
+      "status": "validation-pending"
     }
   ],
   "delta": [
