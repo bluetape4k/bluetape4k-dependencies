@@ -351,7 +351,13 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         else:
             current_audit = json.loads(AUDIT.read_text(encoding="utf-8"))
             self.assertEqual(document["status"], "validation-pending")
-            self.assertEqual(audit["summary"], current_audit["summary"])
+            # 후속 catalog rollout은 전역 audit을 갱신할 수 있으므로, 이미
+            # 기록된 pending lifecycle snapshot을 현재 audit과 강제로 동일시하지 않는다.
+            if (
+                document["candidate"]["catalog-sha256"]
+                == current_audit["inputs"]["catalog"]["sha256"]
+            ):
+                self.assertEqual(audit["summary"], current_audit["summary"])
 
     def test_kotlin_candidate_is_stable_and_all_plugin_aliases_are_aligned(self) -> None:
         versions = catalog_versions()
