@@ -14,6 +14,7 @@ import concurrent.futures
 import dataclasses
 import importlib.util
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -157,13 +158,53 @@ def coordinate(dependency: ET.Element) -> str:
     return f"{group_id}:{artifact_id}"
 
 
-def audit_poms(paths: Iterable[Path]) -> AuditResult:
+def jackson_bom_versions(catalog_path: Path) -> dict[str, str]:
+    catalog = catalog_path.read_text(encoding="utf-8")
+
+    def section(name: str) -> str:
+        match = re.search(
+            rf"(?ms)^\[{re.escape(name)}\]\s*\n(.*?)(?=^\[|\Z)", catalog
+        )
+        if match is None:
+            raise ValueError(f"catalog section [{name}] is missing")
+        return match.group(1)
+
+    versions = section("versions")
+    libraries = section("libraries")
+    imports: dict[str, str] = {}
+    for alias in ("jackson2-bom", "jackson3-bom"):
+        entry = re.search(
+            rf"(?ms)^{re.escape(alias)}\s*=\s*\{{([^}}]*)\}}", libraries
+        )
+        if entry is None:
+            raise ValueError(f"catalog alias {alias} is missing")
+        module = re.search(r'\bmodule\s*=\s*"([^"]+)"', entry.group(1))
+        version_ref = re.search(r'\bversion\.ref\s*=\s*"([^"]+)"', entry.group(1))
+        if module is None or version_ref is None:
+            raise ValueError(f"catalog alias {alias} must use a module and version.ref")
+        version_entry = re.search(
+            rf'(?m)^{re.escape(version_ref.group(1))}\s*=\s*"([^"]+)"', versions
+        )
+        if version_entry is None:
+            raise ValueError(f"catalog version {version_ref.group(1)} is missing")
+        version = version_entry.group(1)
+        if not version:
+            raise ValueError(f"catalog alias {alias} has no required version")
+        imports[module.group(1)] = version
+    return imports
+
+
+def audit_poms(
+    paths: Iterable[Path], *, central_catalog: Path | None = None
+) -> AuditResult:
     pom_paths = tuple(sorted(Path(path).resolve() for path in paths))
     if not pom_paths:
         return AuditResult(("no publication POM files found",), 0, 0)
 
     errors: list[str] = []
     dependency_count = 0
+    catalog_path = central_catalog or SCRIPT_ROOT / "gradle" / "libs.versions.toml"
+    jackson_imports: dict[str, str] | None = None
     for path in pom_paths:
         try:
             project = ET.parse(path).getroot()
@@ -180,6 +221,46 @@ def audit_poms(paths: Iterable[Path]) -> AuditResult:
                 errors.append(f"{path}: publication POM profiles are unsupported: {profile_id}")
 
         managed_dependencies = dependencies_at(project, ("dependencyManagement", "dependencies"))
+        if (
+            child_text(project, "groupId") == "io.github.bluetape4k"
+            and child_text(project, "artifactId") == "bluetape4k-dependencies"
+        ):
+            if jackson_imports is None:
+                try:
+                    jackson_imports = jackson_bom_versions(catalog_path)
+                except (OSError, ValueError) as exc:
+                    errors.append(
+                        f"{path}: cannot load Jackson BOM versions from {catalog_path}: {exc}"
+                    )
+                    jackson_imports = {}
+
+            actual_imports: dict[str, list[str]] = {}
+            for dependency in managed_dependencies:
+                if (
+                    child_text(dependency, "type") != "pom"
+                    or child_text(dependency, "scope") != "import"
+                ):
+                    continue
+                actual_imports.setdefault(coordinate(dependency), []).append(
+                    child_text(dependency, "version")
+                )
+
+            for required_coordinate, expected_version in jackson_imports.items():
+                actual_versions = actual_imports.get(required_coordinate, [])
+                if not actual_versions:
+                    errors.append(
+                        f"{path}: missing Jackson BOM import {required_coordinate} "
+                        f"at catalog version {expected_version}"
+                    )
+                elif (
+                    len(actual_versions) != 1 or actual_versions[0] != expected_version
+                ):
+                    errors.append(
+                        f"{path}: Jackson BOM import {required_coordinate} has "
+                        f"version(s) {', '.join(actual_versions)}, expected version "
+                        f"{expected_version} exactly once from the central catalog"
+                    )
+
         managed_coordinates = {
             coordinate(dependency)
             for dependency in managed_dependencies
@@ -861,7 +942,7 @@ def main() -> int:
             if isinstance(path, Path)
         ]
 
-        audit = audit_poms(all_poms)
+        audit = audit_poms(all_poms, central_catalog=central_catalog)
         if audit.errors:
             raise RuntimeError("\n".join(audit.errors))
         validate_maven_models(

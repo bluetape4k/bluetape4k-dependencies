@@ -8,7 +8,7 @@ buildscript {
         .extensions
         .getByType<VersionCatalogsExtension>()
         .named("libs")
-    val jacksonVersion = versionCatalog.findVersion("jackson").get().requiredVersion
+    val jacksonVersion = versionCatalog.findVersion("jackson2").get().requiredVersion
     val jacksonAnnotationsVersion = versionCatalog.findVersion("jackson-annotations").get().requiredVersion
 
     dependencies {
@@ -80,24 +80,19 @@ repositories {
     }
 }
 
-val jacksonVersion = extensions
+val versionCatalog = extensions
     .getByType<VersionCatalogsExtension>()
     .named("libs")
-    .findVersion("jackson")
-    .get()
-    .requiredVersion
-val jacksonAnnotationsVersion = extensions
-    .getByType<VersionCatalogsExtension>()
-    .named("libs")
-    .findVersion("jackson-annotations")
-    .get()
-    .requiredVersion
+val jacksonVersion = versionCatalog.findVersion("jackson2").get().requiredVersion
+// jackson-annotations는 2.22.3 artifact가 없어 중앙의 별도 호환 버전을 유지한다.
+val jacksonAnnotationsVersion = versionCatalog.findVersion("jackson-annotations").get().requiredVersion
+val jsoupVersion = versionCatalog.findVersion("jsoup").get().requiredVersion
 
 configurations.matching { it.name.startsWith("dokka") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jsoup" && requested.name == "jsoup") {
-            useVersion("1.23.1")
-            because("CVE-2026-71497: Dokka tooling must use the first patched jsoup release")
+            useVersion(jsoupVersion)
+            because("Dokka tooling must use the centrally managed jsoup version")
         }
         if (requested.group?.startsWith("com.fasterxml.jackson") == true) {
             useVersion(
@@ -145,6 +140,8 @@ dependencies {
 
     // Sub-BOMs imported as platform: all modules in each repo are version-managed for
     // consumers without requiring individual constraint entries here.
+    api(platform(libs.jackson2.bom))
+    api(platform(libs.jackson3.bom))
     api(platform(libs.bluetape4k.bom))
     api(platform(libs.bluetape4k.aws.bom))
     api(platform(libs.bluetape4k.image.bom))
