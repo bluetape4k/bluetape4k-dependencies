@@ -107,7 +107,7 @@
   - **Failure:** 재발 lesson이 누락되면 final pre-PR proof 전에 추가한다.
 - [x] **CG-10 — 최종 pre-PR proof를 수렴한다.**
   - **Action:** 모든 applicable leaf gate, final diff review, fresh checks를 통과시키고 exact local head를 기록한다.
-  - **Evidence:** 독립 최종 리뷰에서 9개 consumer exact HEAD의 P0/P1/P2/LOW finding이 모두 0이며, Graph 생성 POM DOM 회귀 fixture까지 검증했다. exact map `e6942b9b…`의 전수 POM/Maven 검증은 0 failure로 통과했다. 아래 candidate HEAD 표와 최신 결과가 검토/검증 대상이다.
+  - **Evidence:** 독립 최종 리뷰에서 9개 consumer exact HEAD의 P0/P1/P2/LOW finding이 모두 0이며, Graph 생성 POM DOM 회귀 fixture까지 검증했다. exact map `b32f4d72…`의 전수 POM/Maven 검증은 0 failure로 통과했다. 아래 candidate HEAD 표와 최신 결과가 검토/검증 대상이다.
   - **Failure:** evidence 부족/높은 심각도 finding이 있으면 PR gate를 닫는다.
 
 ### PR과 merge 경계
@@ -220,7 +220,7 @@
   - **Failure:** mismatch면 candidate를 막는다.
 - [x] **POM-02 — 모든 publication POM/model을 검증한다.**
   - **Action:** repository-map의 exact worktree/HEAD와 후보 catalog로 전수 생성·검증한다.
-  - **Evidence:** exact repository-map SHA-256 `e6942b9b0695a5158b3e03e7e864485dbea828634069ca76218088d521284aae`의 최종 후보 실행에서 `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 최초 duplicate model, XML child order, direct dependency 중복, AWS/Image fingerprint 순서, Graph 반복 child 순서, settings/CI pin drift를 consumer 수정과 회귀 테스트로 수리한 뒤 검증했다. 실행 로그는 ignored `build/dependabot-central-catalog-train/pom-verification-current.log`에 보관했다.
+  - **Evidence:** exact repository-map SHA-256 `b32f4d72ad7928bab80e6d4f2ca54f4d1f15e9aaba2ba1b6ef281557fe29f185`의 최종 후보 실행에서 `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 최초 duplicate model, XML child order, direct dependency 중복, AWS/Image fingerprint 순서, Graph 반복 child 순서, settings/CI pin drift를 consumer 수정과 회귀 테스트로 수리한 뒤 검증했다. 실행 로그는 ignored `build/dependabot-central-catalog-train/pom-verification-final.log`에 보관했다.
   - **Failure:** generation/model/POM failure가 하나라도 있으면 차단한다.
 - [x] **POM-03 — Maven version/profile 규칙을 검증한다.**
   - **Action:** dependencyManagement version과 effective model 및 profile 부재를 확인한다.
@@ -247,13 +247,13 @@
 - Exposed `:bluetape4k-exposed-jackson2:test` 및 `:bluetape4k-exposed-jackson3:test`, `--rerun-tasks --no-parallel`: 각각 159/159 및 160/160 test methods 통과, 각각 skipped 17건.
 - Exposed `:bluetape4k-exposed-core:dependencyInsight` 및 Graph `:bluetape4k-graph-core:dependencyInsight`, configuration `dokkaHtmlGeneratorRuntimeResolver~internal`: 둘 다 `org.jsoup:jsoup:1.16.1 -> 1.23.2`이며 각 저장소의 검토된 resolution rule이 선택 사유로 표시된다.
 - 초기 POM 전수 검증은 Projects 3건과 Exposed 5건의 duplicate effective-model 오류로 실패했다. 수정 후 재실행 과정에서 Exposed/Leader의 XML child order 차이와 Image `images-vips-java25`의 직접 의존성 `org.jetbrains.kotlinx:atomicfu-jvm:0.33.0` 중복도 발견해 각 consumer BuildSrc normalizer 및 회귀 테스트로 수리했다. 이 초기 실패는 이력으로 보존하고 아래 최종 전수 결과로 대체한다.
-- 최종 exact-candidate POM/Maven 검증은 깨끗한 central verification checkout에서 실행했다. repository-map SHA-256 `e6942b9b0695a5158b3e03e7e864485dbea828634069ca76218088d521284aae`; 결과 **PASS**, `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 전체 실행 로그는 후보 central worktree의 ignored `build/dependabot-central-catalog-train/pom-verification-current.log`에 있다.
+- 최종 exact-candidate POM/Maven 검증은 깨끗한 candidate checkout에서 실행했다. repository-map SHA-256 `b32f4d72ad7928bab80e6d4f2ca54f4d1f15e9aaba2ba1b6ef281557fe29f185`; 결과 **PASS**, `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 전체 실행 로그는 후보 central worktree의 ignored `build/dependabot-central-catalog-train/pom-verification-final.log`에 있다.
 - Catalog SHA-256: `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`.
 
 | Repository | Base SHA | Candidate branch | Exact HEAD |
 | --- | --- | --- | --- |
 | `bluetape4k-dependencies` | `ef4612ac237550b550dc48eae5ecdfc94b27dab4` | `fix/dependabot-security-catalog-2026-10` | `1c4a99ecc136ba1c410001f2243a10238e38aee4` |
-| `bluetape4k-projects` | `21a8fc4a324e5a293c1c789caa05bf713258bc20` | `chore/dependabot-central-catalog-2026-10` | `a4df103fe3245fd75851d6fc7ec28f2f8b0cf7e2` |
+| `bluetape4k-projects` | `21a8fc4a324e5a293c1c789caa05bf713258bc20` | `chore/dependabot-central-catalog-2026-10` | `115b1ec9622d3d78799e2d78b30ad3b6b715ea39` |
 | `bluetape4k-aws` | `849892b4b469714b5cbedc26811c5dab407c53e8` | `chore/dependabot-central-catalog-2026-10` | `09873d1cce861a27c2aac3e368e99e740a9e9397` |
 | `bluetape4k-experimental` | `5ec15e5cb97ee99947031e1e030c4d57ab516d8b` | `chore/dependabot-central-catalog-2026-10` | `040ef88f0c5d263bbfc8b3bcedf96c8d79534e06` |
 | `bluetape4k-exposed` | `38f4d92c8a78034b2b2f81f343539f3afa615ef3` | `chore/dependabot-central-catalog-2026-10` | `c6ef5fc645201a29f511c9697d00208723077001` |
