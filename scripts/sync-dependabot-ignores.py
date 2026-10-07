@@ -49,6 +49,7 @@ CENTRAL_DEPENDENCY_IGNORES = (
     "com.fasterxml.jackson*",
     "tools.jackson*",
     "org.bouncycastle:*",
+    "org.freemarker:freemarker",
     "com.ongres.scram:*",
     "io.github.classgraph:classgraph",
     "org.apache.tomcat:*",

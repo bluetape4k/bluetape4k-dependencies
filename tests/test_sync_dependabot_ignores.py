@@ -116,6 +116,7 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         self.assertIn('dependency-name: "io.github.bluetape4k*"', synced)
         self.assertIn('dependency-name: "org.slf4j:*"', synced)
         self.assertIn('dependency-name: "org.bouncycastle:*"', synced)
+        self.assertIn('dependency-name: "org.freemarker:freemarker"', synced)
         self.assertIn('dependency-name: "com.ongres.scram:*"', synced)
         self.assertIn('dependency-name: "org.apache.tomcat.embed:*"', synced)
         self.assertIn('dependency-name: "software.amazon.awssdk.crt:*"', synced)

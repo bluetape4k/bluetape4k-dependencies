@@ -642,7 +642,7 @@
       "audit": "config/latest-stable-version-audit.json",
       "authority-delta-ledger": "config/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "ef4612ac237550b550dc48eae5ecdfc94b27dab4",
-      "catalog-sha256": "24ce9b1e729e9dfde8cce6c7d70a1d47c6609836fe80b955a37a3f34e95ffe29",
+      "catalog-sha256": "fe4a4780ab4c7ec52a2ac1168db5f7aeb14d3667d02ddd5f5b0b1609c87ce6a1",
       "delta-count": 6,
       "downstream-full-builds": {
         "repositories": 9,

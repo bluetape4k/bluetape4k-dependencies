@@ -7,7 +7,7 @@
 - 대상 저장소: `bluetape4k/bluetape4k-dependencies`
 - 기준: `develop` / `ef4612ac237550b550dc48eae5ecdfc94b27dab4`
 - 후보 브랜치: `fix/dependabot-security-catalog-2026-10`
-- 후보 head: 중앙 변경 커밋 후 branch read-back으로 exact SHA 기록
+- 후보 head: 변경 커밋의 exact SHA를 workflow receipt와 final DoD에 기록
 - 최신 published BOM: `2.0.0` (2026-09-02)
 - 개발 BOM: `2.1.0-SNAPSHOT` (`baseVersion=2.1.0`, 빈 `snapshotVersion`)
 - Flow/class: `catalog-train-snapshot` / `dependencies-only`
@@ -27,9 +27,10 @@
 | `jackson3` | `3.2.2` | `3.2.3` | 공식 Jackson 3.2 patch list에 2026-09-21 release로 기재 |
 | `netty4` | `4.1.136.Final` | `4.1.139.Final` | Netty 공식 4.1.139.Final release (2026-10-06), security fixes 포함 |
 | `netty` | `4.2.17.Final` | `4.2.19.Final` | Netty 공식 4.2.19.Final release (2026-10-06), security fixes 포함 |
+| `freemarker` | Exposed root의 직접 버전 `2.3.35` | 중앙 alias `2.3.35` | #885 실패 좌표에 포함된 의존성의 버전 기준을 중앙 catalog로 옮긴다. 현재 값은 유지하며 snapshot updater 수리 증거로 보지 않는다. |
 | legacy `jackson` key | `2.22.1` | 유지 | 중앙 authority audit이 추적하는 `jackson2`로 Exposed/Text 소비 코드 이동; legacy key는 별도 alias policy 없이 변경하지 않음 |
 
-공식 근거: [Jackson 2.22 patch list](https://github.com/FasterXML/jackson/wiki/Jackson-Release-2.22), [Jackson 3.2 patch list](https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.2), [Netty 4.1.139 release](https://github.com/netty/netty/releases/tag/netty-4.1.139.Final), [Netty 4.2.19 release](https://github.com/netty/netty/releases/tag/netty-4.2.19.Final).
+공식 근거: [Jackson 2.22 patch list](https://github.com/FasterXML/jackson/wiki/Jackson-Release-2.22), [Jackson 3.2 patch list](https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.2), [Netty 4.1.139 release](https://github.com/netty/netty/releases/tag/netty-4.1.139.Final), [Netty 4.2.19 release](https://github.com/netty/netty/releases/tag/netty-4.2.19.Final), [FreeMarker 2.3.35 release notes](https://freemarker.apache.org/docs/versions_2_3_35.html), [GHSA-27j2-h3m2-8237](https://github.com/advisories/GHSA-27j2-h3m2-8237).
 
 중앙 catalog consumer 9곳: `projects`, `aws`, `experimental`, `exposed`, `graph`, `image`, `javers`, `leader`, `text`. Publisher 8곳은 `experimental`을 제외하며, publisher inventory에는 central dependencies 자체를 포함해 POM 검증 대상 9곳이다. 초기 catalog pins는 projects/leader `0765227c…`, aws/exposed/javers `9698c9d…`, experimental/image/text `850959d…`, graph `55b5269b…`로 관측했다. 후보 SHA 생성 후 실제 consumer worktree와 원격 기준을 재확인한다.
 
@@ -81,7 +82,7 @@
   - **Failure:** dirty/ambiguous 상태를 발견하면 그 상태를 보존하고 별도 경로를 쓴다.
 - [x] **CG-04 — 정책과 독자 경계를 적용한다.**
   - **Action:** reader-facing checklist와 wiki research note는 한국어로, 코드 식별자/명령/URL은 원형으로 유지한다.
-  - **Evidence:** 이 체크리스트는 한국어이며 branch prefix와 Lore commit protocol을 적용한다.
+  - **Evidence:** 이 체크리스트는 한국어이며 branch prefix와 Lore commit protocol을 적용한다. 수정본 SPW-01..05 및 KO-01..05/KO-07을 통과했다. KO-06은 단일 언어 운영 체크리스트라 N/A다. 기본 용어 audit에서 발견한 8개 용례는 Gradle publication/catalog, Dependabot dependency graph, 또는 시점별 guidance/audit record를 가리켜 유지했다.
   - **Failure:** 공개/독자 문서의 언어 계약을 위반하면 수정 전 진행하지 않는다.
 - [x] **CG-05 — ecosystem pattern을 재사용한다.**
   - **Action:** central TOML, checksum, version-delta, immutable consumer SHA 및 기존 sync/POM helpers를 사용한다.
@@ -231,9 +232,8 @@
 - Baseline `python3 -m unittest tests.test_central_catalog_version_deltas`: **PASS** — 6 tests.
 - After repair `python3 -m unittest tests.test_ci_catalog_governance tests.test_central_catalog_version_deltas`: **PASS** — 26 tests.
 - GitHub CI #35380594458, base `ef4612ac…`: failed; Cross-repository Publication POM Contract는 skipped.
-- Candidate `python3.13 -m unittest tests.test_ci_catalog_governance tests.test_central_catalog_version_deltas tests.test_latest_stable_version_deltas tests.test_audit_latest_stable`: **PASS** — 73 tests.
-- Candidate checksum/audit suite `python3.13 -m unittest tests.test_catalog_checksum tests.test_latest_stable_version_deltas tests.test_audit_latest_stable`: **PASS** — 49 tests.
-- `scripts/audit-latest-stable.py --check --check-audit --summary --audit-summary`: **PASS** — 521 authorities (325 managed, 67 policy, 129 catalog); 516 metadata verified, 5 preview-only, 0 unavailable.
-- Catalog baseline: `ef4612ac237550b550dc48eae5ecdfc94b27dab4`; six version deltas; catalog checksum `24ce9b1e729e9dfde8cce6c7d70a1d47c6609836fe80b955a37a3f34e95ffe29`; candidate commit SHA는 검증 후 read-back 예정.
-- Candidate `./gradlew build`: **BUILD SUCCESSFUL** (3 actionable tasks, all up-to-date).
+- Candidate `python3.13 -m unittest tests.test_audit_latest_stable tests.test_catalog_checksum tests.test_sync_dependabot_ignores tests.test_ci_catalog_governance tests.test_central_catalog_version_deltas tests.test_latest_stable_version_deltas`: **PASS** — 87 tests.
+- `scripts/audit-latest-stable.py --check --check-audit --summary --audit-summary`: **PASS** — 522 authorities (325 managed, 67 policy, 130 catalog); 517 metadata verified, 5 preview-only, 0 unavailable.
+- Catalog baseline: `ef4612ac237550b550dc48eae5ecdfc94b27dab4`; six version deltas; catalog checksum `fe4a4780ab4c7ec52a2ac1168db5f7aeb14d3667d02ddd5f5b0b1609c87ce6a1`; candidate commit SHA는 검증 후 read-back 예정.
+- Candidate `./gradlew build --no-daemon`: **BUILD SUCCESSFUL** (9초, buildSrc 작업은 up-to-date; 기존 NMCP publish API deprecation 경고 1건).
 - Candidate PR/push/merge/publication: 실행하지 않음.
