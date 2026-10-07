@@ -22,6 +22,7 @@ SPEC.loader.exec_module(verify)
 def pom(
     artifact_id: str,
     *,
+    group_id: str = "org.example",
     dependencies: str = "",
     dependency_management: str = "",
     packaging: str = "jar",
@@ -29,7 +30,7 @@ def pom(
     return f"""\
 <project xmlns="http://maven.apache.org/POM/4.0.0">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.example</groupId>
+  <groupId>{group_id}</groupId>
   <artifactId>{artifact_id}</artifactId>
   <version>1.0.0</version>
   <packaging>{packaging}</packaging>
@@ -40,6 +41,110 @@ def pom(
 
 
 class VerifyPublicationPomsTest(unittest.TestCase):
+    def test_audit_rejects_central_bom_without_versioned_jackson_imports(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pom.xml"
+            path.write_text(
+                pom(
+                    "bluetape4k-dependencies",
+                    group_id="io.github.bluetape4k",
+                    packaging="pom",
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify.audit_poms([path])
+
+        self.assertEqual(len(result.errors), 2)
+        self.assertTrue(
+            any("com.fasterxml.jackson:jackson-bom" in error for error in result.errors)
+        )
+        self.assertTrue(
+            any("tools.jackson:jackson-bom" in error for error in result.errors)
+        )
+
+    def test_audit_rejects_central_bom_with_stale_jackson_import_versions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pom.xml"
+            path.write_text(
+                pom(
+                    "bluetape4k-dependencies",
+                    group_id="io.github.bluetape4k",
+                    packaging="pom",
+                    dependency_management="""
+<dependencyManagement><dependencies>
+  <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
+    <version>0.0.1</version><type>pom</type><scope>import</scope></dependency>
+  <dependency><groupId>tools.jackson</groupId><artifactId>jackson-bom</artifactId>
+    <version>0.0.1</version><type>pom</type><scope>import</scope></dependency>
+</dependencies></dependencyManagement>
+""",
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify.audit_poms([path])
+
+        self.assertEqual(len(result.errors), 2)
+        self.assertTrue(
+            all("expected version" in error and "0.0.1" in error for error in result.errors)
+        )
+
+    def test_audit_rejects_correct_jackson_bom_import_with_stale_duplicate(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pom.xml"
+            path.write_text(
+                pom(
+                    "bluetape4k-dependencies",
+                    group_id="io.github.bluetape4k",
+                    packaging="pom",
+                    dependency_management="""
+<dependencyManagement><dependencies>
+  <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
+    <version>2.22.3</version><type>pom</type><scope>import</scope></dependency>
+  <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
+    <version>2.22.2</version><type>pom</type><scope>import</scope></dependency>
+  <dependency><groupId>tools.jackson</groupId><artifactId>jackson-bom</artifactId>
+    <version>3.2.3</version><type>pom</type><scope>import</scope></dependency>
+</dependencies></dependencyManagement>
+""",
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify.audit_poms([path])
+
+        self.assertEqual(len(result.errors), 1)
+        self.assertTrue(
+            any("com.fasterxml.jackson:jackson-bom" in error for error in result.errors)
+        )
+
+    def test_audit_accepts_central_bom_with_catalog_jackson_import_versions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "pom.xml"
+            path.write_text(
+                pom(
+                    "bluetape4k-dependencies",
+                    group_id="io.github.bluetape4k",
+                    packaging="pom",
+                    dependency_management="""
+<dependencyManagement><dependencies>
+  <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
+    <version>2.22.3</version><type>pom</type><scope>import</scope></dependency>
+  <dependency><groupId>tools.jackson</groupId><artifactId>jackson-bom</artifactId>
+    <version>3.2.3</version><type>pom</type><scope>import</scope></dependency>
+</dependencies></dependencyManagement>
+""",
+                ),
+                encoding="utf-8",
+            )
+
+            result = verify.audit_poms([path])
+
+        self.assertEqual(result.errors, ())
+
     def test_publisher_matrix_covers_every_library_publisher(self) -> None:
         self.assertEqual(
             set(verify.PUBLISHERS),

@@ -15,6 +15,29 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
+    def test_dokka_repairs_use_tracked_jackson_and_jsoup_versions(self) -> None:
+        build_script = (REPO_ROOT / "build.gradle.kts").read_text(encoding="utf-8")
+
+        self.assertNotIn('findVersion("jackson")', build_script)
+        self.assertIn('findVersion("jackson2")', build_script)
+        self.assertEqual(build_script.count('findVersion("jackson-annotations")'), 2)
+        self.assertIn('findVersion("jsoup")', build_script)
+        self.assertIn("useVersion(jsoupVersion)", build_script)
+        self.assertRegex(
+            build_script,
+            r"useVersion\(\s*if\s*\(requested\.group == \"com\.fasterxml\.jackson\.core\" "
+            r"&& requested\.name == \"jackson-annotations\"\)\s*\{\s*"
+            r"jacksonAnnotationsVersion\s*\}\s*else\s*\{\s*jacksonVersion\s*\},\s*\)",
+        )
+        self.assertIn("jacksonAnnotationsVersion", build_script)
+        self.assertNotIn('useVersion("1.23.1")', build_script)
+
+    def test_dependency_bom_imports_both_tracked_jackson_lines(self) -> None:
+        build_script = (REPO_ROOT / "build.gradle.kts").read_text(encoding="utf-8")
+
+        self.assertIn("api(platform(libs.jackson2.bom))", build_script)
+        self.assertIn("api(platform(libs.jackson3.bom))", build_script)
+
     def test_pinned_catalog_history_fetches_commit_outside_branch_history(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         marker = "      - name: Fetch pinned snapshot catalog history\n"
