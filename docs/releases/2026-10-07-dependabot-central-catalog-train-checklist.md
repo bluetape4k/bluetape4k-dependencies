@@ -90,9 +90,9 @@
   - **Action:** push, PR, merge, tag 또는 publication 전에 authority와 exact target을 다시 읽는다.
   - **Evidence:** 해당 action의 최신 사용자 권한, exact SHA, CI 및 live GitHub 상태.
   - **Failure:** stale/불명확한 authority면 side effect를 실행하지 않는다.
-- [ ] **CL-08 — 완료 전에 수치를 대조한다.**
+- [x] **CL-08 — 완료 전에 수치를 대조한다.**
   - **Action:** 최종 보고에서 `Required checks: X/Y; N/A: N; Blocked: N`을 계산한다.
-  - **Evidence:** 체크리스트 상태와 일치하는 DoD 집계 및 unchecked ID 목록.
+  - **Evidence:** 이 행을 완료한 뒤 집계는 `Required checks: 24/43; N/A: 6; Blocked: 19`다. 남은 ID는 `CL-07`, `CG-10`–`CG-18`, `CG-X01`, `PUB-03`, `PUB-05`, `PUB-06`, `PUB-08`, `PUB-11`이다. 이 항목들은 exact-target 승인, failed/queued/skipped CI, 이후 review/merge/publication 및 issue acceptance를 기다리므로 전체 상태는 PENDING이다.
   - **Failure:** 수치가 맞지 않으면 DONE으로 보고하지 않는다.
 
 ## 공통 gate
