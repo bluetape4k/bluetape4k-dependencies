@@ -637,6 +637,25 @@
       "resolved-graph-evidence": [],
       "rollout": "2026-09-09-pr-244-kotlinx-benchmark-0.5.0",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "baseline-catalog-ref": "ef4612ac237550b550dc48eae5ecdfc94b27dab4",
+      "catalog-sha256": "24ce9b1e729e9dfde8cce6c7d70a1d47c6609836fe80b955a37a3f34e95ffe29",
+      "delta-count": 6,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-10-07-dependabot-central-catalog",
+      "status": "validation-pending"
     }
   ],
   "delta": [

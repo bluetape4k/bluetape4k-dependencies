@@ -1,15 +1,15 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "0f8efeec4cf722e51e181f21659200f85d861bc1a92f1bcb3a9aac78bfa9bda4",
+    "sha256": "1692ecf622878f34f917806f21a2f7851a9e0281cd35f20406d2f81f7fd11eda",
     "summary": {
       "authority-count": 521,
       "line-count": 555,
       "line-dispositions": {
-        "adopt-latest": 25,
-        "current": 421,
-        "defer-breaking-migration": 25,
-        "hold-compatibility": 75,
+        "adopt-latest": 143,
+        "current": 312,
+        "defer-breaking-migration": 23,
+        "hold-compatibility": 68,
         "hold-unavailable": 9
       },
       "metadata-unavailable": 0,
@@ -17,36 +17,203 @@
       "metadata-verified": 516
     }
   },
-  "audit-cutoff": "2026-09-09",
+  "audit-cutoff": "2026-10-07",
   "baseline": {
-    "catalog-ref": "develop",
-    "catalog-sha256": "502affb547e393a81518708a39bfb7f07cf40c6866cb952f1ed6adcd3ae212da"
+    "catalog-ref": "ef4612ac237550b550dc48eae5ecdfc94b27dab4",
+    "catalog-sha256": "f6f1ce3cdc3c4027cf536216fe7c1be6ab781e776257b664baffa927044e3ef8"
   },
   "candidate": {
-    "catalog-sha256": "0954ccab87e9bd8380610134f91cf70aa6bcd0799f94a3b43181d7b083efd2e5"
+    "catalog-sha256": "24ce9b1e729e9dfde8cce6c7d70a1d47c6609836fe80b955a37a3f34e95ffe29"
   },
   "delta": [
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "2.6.0"
+        "version": "2.22.3"
       },
-      "after": "2.6.0",
+      "after": "2.22.3",
       "authorities": [
         {
-          "authority-key": "catalog:library:ai.timefold.solver:timefold-solver-bom",
-          "coordinate-or-plugin-id": "ai.timefold.solver:timefold-solver-bom",
-          "disposition": "defer-breaking-migration",
+          "authority-key": "policy:library:com.fasterxml.jackson:jackson-bom",
+          "coordinate-or-plugin-id": "com.fasterxml.jackson:jackson-bom",
+          "disposition": "current",
           "kind": "library"
         }
       ],
-      "before": "2.4.0",
+      "before": "2.22.2",
       "reason": "Adopt the audited latest stable release within the approved compatibility line.",
       "verification": "pending-resolved-graph",
-      "version-key": "timefold-solver"
+      "version-key": "jackson2"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.2.3"
+      },
+      "after": "3.2.3",
+      "authorities": [
+        {
+          "authority-key": "policy:library:tools.jackson:jackson-bom",
+          "coordinate-or-plugin-id": "tools.jackson:jackson-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.2.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "jackson3"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.22.3"
+      },
+      "after": "2.22.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-jackson-core-h40e274bcba5b",
+          "coordinate-or-plugin-id": "com.fasterxml.jackson.core:jackson-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.22.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "managed-jackson-core-h40e274bcba5b"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.22.3"
+      },
+      "after": "2.22.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-jackson-module-kotlin-ha5b389df3865",
+          "coordinate-or-plugin-id": "com.fasterxml.jackson.module:jackson-module-kotlin",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.22.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "managed-jackson-module-kotlin-ha5b389df3865"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.2.19.Final"
+      },
+      "after": "4.2.19.Final",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.netty:netty-bom",
+          "coordinate-or-plugin-id": "io.netty:netty-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.2.17.Final",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "netty"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-compatibility-alignment",
+        "version": "4.1.139.Final"
+      },
+      "after": "4.1.139.Final",
+      "authorities": [
+        {
+          "authority-key": "policy:library:io.netty:netty-all",
+          "coordinate-or-plugin-id": "io.netty:netty-all",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-buffer",
+          "coordinate-or-plugin-id": "io.netty:netty-buffer",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-codec",
+          "coordinate-or-plugin-id": "io.netty:netty-codec",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-codec-dns",
+          "coordinate-or-plugin-id": "io.netty:netty-codec-dns",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-codec-http",
+          "coordinate-or-plugin-id": "io.netty:netty-codec-http",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-codec-http2",
+          "coordinate-or-plugin-id": "io.netty:netty-codec-http2",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-codec-socks",
+          "coordinate-or-plugin-id": "io.netty:netty-codec-socks",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-common",
+          "coordinate-or-plugin-id": "io.netty:netty-common",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-handler",
+          "coordinate-or-plugin-id": "io.netty:netty-handler",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-handler-proxy",
+          "coordinate-or-plugin-id": "io.netty:netty-handler-proxy",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-resolver",
+          "coordinate-or-plugin-id": "io.netty:netty-resolver",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-resolver-dns",
+          "coordinate-or-plugin-id": "io.netty:netty-resolver-dns",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.netty:netty-transport",
+          "coordinate-or-plugin-id": "io.netty:netty-transport",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "4.1.136.Final",
+      "reason": "Align to the explicitly audited compatibility constraint shared by every governed authority.",
+      "verification": "pending-resolved-graph",
+      "version-key": "netty4"
     }
   ],
-  "rollout": "2026-09-09-issue-242-timefold-2.6.0",
+  "rollout": "2026-10-07-dependabot-central-catalog",
   "schema-version": 3,
   "status": "validation-pending"
 }
