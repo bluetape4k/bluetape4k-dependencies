@@ -91,7 +91,7 @@
   - **Failure:** local override나 새 dependency로 central ownership을 우회하지 않는다.
 - [x] **CG-06 — 공개 및 문서 계약을 증명한다.**
   - **Action:** public artifact/API 영향, POM, public manual scope를 후보 diff로 확인한다.
-  - **Evidence:** 후보 diff는 BuildSrc publication POM 정규화 및 테스트, Projects의 Testcontainers BOM 경계, Image의 중복 직접 의존성만 다룬다. 공개 Kotlin API나 public manual 변경은 없고, 아래 exact 후보 map 기준으로 9 publisher 저장소의 publication POM 192개 및 Maven model 192개가 모두 통과했다.
+  - **Evidence:** consumer diff에는 중앙 SHA pin용 `settings.gradle.kts`, CI catalog/POM contract 갱신, BuildSrc POM 정규화와 회귀 테스트, Projects/Exposed/Graph/Leader의 publication 설정, Image의 중복 직접 의존성 수정이 포함된다. 공개 Kotlin API와 public manual 변경은 없다. 아래 exact 후보 map 기준으로 9 publisher 저장소의 publication POM 192개 및 Maven model 192개가 모두 통과했다.
   - **Failure:** 안정 BOM 또는 public contract 변경이 발견되면 flow를 재분류한다.
 - [x] **CG-07 — 기존 동작을 고정하고 targeted proof를 실행한다.**
   - **Action:** catalog governance CI assertions를 current action pin과 일치시키고 회귀 테스트를 실행한다.
@@ -105,9 +105,9 @@
   - **Action:** 기존 catalog/security workflow 기록과 반복 원인을 대조하고 필요한 연구 note를 보존한다.
   - **Evidence:** `bluetape4k-github`의 #194 및 기존 central checklist, 공식 release source, wiki note를 대조했다. 이번 consumer POM 실패는 중복 declaration 및 XML child order 차이를 BuildSrc 정규화가 처리하지 못한 문제로 분류해 각 저장소의 회귀 테스트와 수정에 반영했다. canonical GNO 갱신은 merge/local sync 뒤 CG-18에서 수행한다.
   - **Failure:** 재발 lesson이 누락되면 final pre-PR proof 전에 추가한다.
-- [ ] **CG-10 — 최종 pre-PR proof를 수렴한다.**
+- [x] **CG-10 — 최종 pre-PR proof를 수렴한다.**
   - **Action:** 모든 applicable leaf gate, final diff review, fresh checks를 통과시키고 exact local head를 기록한다.
-  - **Evidence:** P0=0/P1=0, checklist, checks, branch head SHA.
+  - **Evidence:** 독립 최종 리뷰에서 9개 consumer exact HEAD의 P0/P1/P2/LOW finding이 모두 0이며, Graph 생성 POM DOM 회귀 fixture까지 검증했다. exact map `e6942b9b…`의 전수 POM/Maven 검증은 0 failure로 통과했다. 아래 candidate HEAD 표와 최신 결과가 검토/검증 대상이다.
   - **Failure:** evidence 부족/높은 심각도 finding이 있으면 PR gate를 닫는다.
 
 ### PR과 merge 경계
@@ -220,7 +220,7 @@
   - **Failure:** mismatch면 candidate를 막는다.
 - [x] **POM-02 — 모든 publication POM/model을 검증한다.**
   - **Action:** repository-map의 exact worktree/HEAD와 후보 catalog로 전수 생성·검증한다.
-  - **Evidence:** 최종 exact candidate run에서 `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 최초 Projects/Exposed 중복 model 오류와 후속 Exposed/Leader XML 순서 불일치 및 Image 직접 중복은 각각 consumer BuildSrc 정규화와 회귀 테스트로 수리한 뒤 전수 재검증했다. Exact map SHA-256 및 모든 HEAD는 아래 최신 결과에 있다.
+  - **Evidence:** exact repository-map SHA-256 `e6942b9b0695a5158b3e03e7e864485dbea828634069ca76218088d521284aae`의 최종 후보 실행에서 `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 최초 duplicate model, XML child order, direct dependency 중복, AWS/Image fingerprint 순서, Graph 반복 child 순서, settings/CI pin drift를 consumer 수정과 회귀 테스트로 수리한 뒤 검증했다. 실행 로그는 ignored `build/dependabot-central-catalog-train/pom-verification-current.log`에 보관했다.
   - **Failure:** generation/model/POM failure가 하나라도 있으면 차단한다.
 - [x] **POM-03 — Maven version/profile 규칙을 검증한다.**
   - **Action:** dependencyManagement version과 effective model 및 profile 부재를 확인한다.
@@ -237,6 +237,9 @@
 - Candidate `python3.13 -m unittest tests.test_audit_latest_stable.LatestStableInventoryTest.test_inventory_reconstructs_the_exact_authority_universe tests.test_audit_latest_stable.LatestStableInventoryTest.test_inventory_includes_jsoup_as_catalog_direct_authority -v`: **PASS** — jsoup authority 추가 전 RED, source/test 반영 후 2 tests PASS.
 - Candidate `scripts/audit-latest-stable.py --check --check-audit --summary --audit-summary`: **PASS** — 523 authorities (325 managed, 67 policy, 131 catalog); 518 metadata verified, 5 preview-only, 0 unavailable.
 - 최종 inventory 생성 결과: 523 authorities (325 managed, 67 policy, 131 catalog); 518 metadata verified, 5 preview-only, 0 unavailable. jsoup은 `org.jsoup:jsoup`, version `1.23.2`, 중앙 direct authority이며 audit source는 Maven Central metadata다.
+- 독립 코드 리뷰 첫 결과: P0 0, P1 1, P2 3. P1은 9개 consumer CI checkout pin이 settings immutable SHA `096560faa3384f3b53aa5d0baab9e36fd17eb6fd` 대신 이전 `89e738a3346e410200fe10a175a22aad0f6ecb48`을 사용했고 AWS contract target도 이전 SHA를 기대한 불일치였다. 9개 `ci.yml` (Graph testcontainers contract 포함)과 AWS contract target을 settings와 같은 `096560...`으로 맞췄다. AWS `catalog_pin_contract_test.py` **PASS**, 9/9 settings/CI pin audit **PASS**.
+- 독립 리뷰의 P2 세 건을 수리했다. AWS와 Image는 dependency child fingerprint를 순서 무관하게 정규화하고 reordered-field 회귀 테스트를 추가했다. Graph는 반복 child 요소를 element name이 아닌 전체 canonical fingerprint로 정렬하고 반복 `<exclusion>` 순서 회귀 테스트를 추가했다. 각 신규 테스트는 수리 전 실패, 이후 BuildSrc 테스트 통과를 확인했다.
+- 독립 최종 리뷰: 9개 consumer exact HEAD에서 P0/P1/P2/LOW = 0. 기존 Graph DOM 경로 coverage gap은 `6b88a8d7`의 실제 `GenerateMavenPom` fixture로 닫았고 집중 BuildSrc 테스트가 **BUILD SUCCESSFUL**. LSP diagnostics는 리뷰 lane에 없어 Gradle compile/test 증거로 대체했으며, 원격 GitHub CI는 아직 실행하지 않았다.
 - Catalog baseline: `ef4612ac237550b550dc48eae5ecdfc94b27dab4`; 여섯 기존 version deltas; catalog checksum `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`; jsoup catalog source commit `0db405f89ec5a98e887c28952212adeb9a2ec026`.
 - Candidate `./gradlew build --no-daemon`: **BUILD SUCCESSFUL** (8초; 3 actionable tasks up-to-date; existing NMCP publish API deprecation warning 1건).
 - 중앙 jsoup catalog 변경 커밋: `0db405f89ec5a98e887c28952212adeb9a2ec026`; 이후 이 체크리스트 기록 commit을 거쳐 최종 immutable ref를 소비자 설정에 고정한다. Catalog SHA-256은 `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`로 유지된다.
@@ -244,20 +247,20 @@
 - Exposed `:bluetape4k-exposed-jackson2:test` 및 `:bluetape4k-exposed-jackson3:test`, `--rerun-tasks --no-parallel`: 각각 159/159 및 160/160 test methods 통과, 각각 skipped 17건.
 - Exposed `:bluetape4k-exposed-core:dependencyInsight` 및 Graph `:bluetape4k-graph-core:dependencyInsight`, configuration `dokkaHtmlGeneratorRuntimeResolver~internal`: 둘 다 `org.jsoup:jsoup:1.16.1 -> 1.23.2`이며 각 저장소의 검토된 resolution rule이 선택 사유로 표시된다.
 - 초기 POM 전수 검증은 Projects 3건과 Exposed 5건의 duplicate effective-model 오류로 실패했다. 수정 후 재실행 과정에서 Exposed/Leader의 XML child order 차이와 Image `images-vips-java25`의 직접 의존성 `org.jetbrains.kotlinx:atomicfu-jvm:0.33.0` 중복도 발견해 각 consumer BuildSrc normalizer 및 회귀 테스트로 수리했다. 이 초기 실패는 이력으로 보존하고 아래 최종 전수 결과로 대체한다.
-- 최종 exact-candidate POM/Maven 검증: `python3 scripts/verify-publication-poms.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/fix-dependabot-security-catalog-2026-10/build/dependabot-central-catalog-train/pom-candidate-repositories.json --repository-map-sha256 27b8bffcae8c2c11e8efcf0a0e69be5dea7c679cc061fd11206dd4dd28231d88 --summary` — **PASS**, `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`.
-- POM verifier map SHA-256: `27b8bffcae8c2c11e8efcf0a0e69be5dea7c679cc061fd11206dd4dd28231d88`; catalog SHA-256: `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`.
+- 최종 exact-candidate POM/Maven 검증은 깨끗한 central verification checkout에서 실행했다. repository-map SHA-256 `e6942b9b0695a5158b3e03e7e864485dbea828634069ca76218088d521284aae`; 결과 **PASS**, `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 전체 실행 로그는 후보 central worktree의 ignored `build/dependabot-central-catalog-train/pom-verification-current.log`에 있다.
+- Catalog SHA-256: `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`.
 
 | Repository | Base SHA | Candidate branch | Exact HEAD |
 | --- | --- | --- | --- |
-| `bluetape4k-dependencies` | `ef4612ac237550b550dc48eae5ecdfc94b27dab4` | `fix/dependabot-security-catalog-2026-10` | `096560faa3384f3b53aa5d0baab9e36fd17eb6fd` |
-| `bluetape4k-projects` | `21a8fc4a324e5a293c1c789caa05bf713258bc20` | `chore/dependabot-central-catalog-2026-10` | `0f005024ba7e7f4d8b03f2286c75971cfe6d5f47` |
-| `bluetape4k-aws` | `849892b4b469714b5cbedc26811c5dab407c53e8` | `chore/dependabot-central-catalog-2026-10` | `43bbe20413ce066852103c7276aed5496d430414` |
-| `bluetape4k-experimental` | `5ec15e5cb97ee99947031e1e030c4d57ab516d8b` | `chore/dependabot-central-catalog-2026-10` | `c556fb1590da753998ee5a61f6c0186e4c5bc415` |
-| `bluetape4k-exposed` | `38f4d92c8a78034b2b2f81f343539f3afa615ef3` | `chore/dependabot-central-catalog-2026-10` | `abb8eb639e69259f379c9c70e62488e900c27ef6` |
-| `bluetape4k-graph` | `2b171e1ee9cf2364367188b39babf5864439859e` | `chore/dependabot-central-catalog-2026-10` | `d5c2b254eaae4e31b46aadbf765c10605063f486` |
-| `bluetape4k-image` | `673daf3598ebb6c5afd0e1bf08a4d6ebe5ade0f6` | `chore/dependabot-central-catalog-2026-10` | `4730247ec2122c65f0ef22c0a2e8130e28dd17d3` |
-| `bluetape4k-javers` | `e153dd7e9b02f460728a1b527fab295bf9b2f072` | `chore/dependabot-central-catalog-2026-10` | `4628b2fe4438b153d3b902cb8b5165abdf010451` |
-| `bluetape4k-leader` | `d360a571948af6d2fe189cb1ad4b84ea80928ed8` | `chore/dependabot-central-catalog-2026-10` | `8d7d7336c1c073b6a409d6377a831ae3c54470d1` |
-| `bluetape4k-text` | `1e338c2f75ea08f18bca204a6e017c8033a47582` | `chore/dependabot-central-catalog-2026-10` | `d395cf38c5fc9b23fb1e108bd747104d7f020472` |
+| `bluetape4k-dependencies` | `ef4612ac237550b550dc48eae5ecdfc94b27dab4` | `fix/dependabot-security-catalog-2026-10` | `1c4a99ecc136ba1c410001f2243a10238e38aee4` |
+| `bluetape4k-projects` | `21a8fc4a324e5a293c1c789caa05bf713258bc20` | `chore/dependabot-central-catalog-2026-10` | `a4df103fe3245fd75851d6fc7ec28f2f8b0cf7e2` |
+| `bluetape4k-aws` | `849892b4b469714b5cbedc26811c5dab407c53e8` | `chore/dependabot-central-catalog-2026-10` | `09873d1cce861a27c2aac3e368e99e740a9e9397` |
+| `bluetape4k-experimental` | `5ec15e5cb97ee99947031e1e030c4d57ab516d8b` | `chore/dependabot-central-catalog-2026-10` | `040ef88f0c5d263bbfc8b3bcedf96c8d79534e06` |
+| `bluetape4k-exposed` | `38f4d92c8a78034b2b2f81f343539f3afa615ef3` | `chore/dependabot-central-catalog-2026-10` | `c6ef5fc645201a29f511c9697d00208723077001` |
+| `bluetape4k-graph` | `2b171e1ee9cf2364367188b39babf5864439859e` | `chore/dependabot-central-catalog-2026-10` | `6b88a8d71d5b42105db62e8560ca08d370f445fa` |
+| `bluetape4k-image` | `673daf3598ebb6c5afd0e1bf08a4d6ebe5ade0f6` | `chore/dependabot-central-catalog-2026-10` | `a7ff7f1e50a6a3ad85e9ec5b3cc0e509477a9b19` |
+| `bluetape4k-javers` | `e153dd7e9b02f460728a1b527fab295bf9b2f072` | `chore/dependabot-central-catalog-2026-10` | `996aa041f30c6ca2e69faa1159b718c6ef4e4e92` |
+| `bluetape4k-leader` | `d360a571948af6d2fe189cb1ad4b84ea80928ed8` | `chore/dependabot-central-catalog-2026-10` | `218380a0ff9a5d94f7c2284102fbe2087151ae66` |
+| `bluetape4k-text` | `1e338c2f75ea08f18bca204a6e017c8033a47582` | `chore/dependabot-central-catalog-2026-10` | `02a7719368ec9559c17b68b8e060a97ff608678b` |
 
 - Candidate PR/push/merge/publication: 실행하지 않음.
