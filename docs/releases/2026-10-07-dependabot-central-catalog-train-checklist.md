@@ -1,13 +1,14 @@
 # 2026-10-08 중앙 Dependabot catalog train 체크리스트
 
-상태: **PENDING / 중앙 verifier 수정 로컬 검증 완료; exact 교차 저장소 gate와 원격 CI 대기**
+상태: **PENDING / 중앙 verifier와 9개 publisher POM/model 검증 완료; exact-head 원격 CI와 이슈 acceptance 대기**
 
 ## 고정 범위와 중단 조건
 
 - 대상 저장소: `bluetape4k/bluetape4k-dependencies`
 - 기준: `develop` / `ef4612ac237550b550dc48eae5ecdfc94b27dab4`
 - 후보 브랜치: `fix/dependabot-security-catalog-2026-10`
-- 후보 head: 기준 remote head `036b7aeb2e36882fd49ac0938a218d0e8498b202`; verifier·회귀 테스트 및 lesson/checklist 변경은 아직 미커밋
+- 로컬 후보 코드 head: `639ba393ae3d21792f0c20e4dcf6bb71bc0fd2f9` (`출판 검증에서 중앙 BOM import의 오래된 중복을 차단한다`)
+- 현재 원격 PR #257 head: `036b7aeb2e36882fd49ac0938a218d0e8498b202`; 로컬 후보 `639ba393…`은 아직 push하지 않았다. 원격의 6개 성공 check는 새 verifier 변경을 포함하지 않는다.
 - 최신 published BOM: `2.0.0` (2026-09-02)
 - 개발 BOM: `2.1.0-SNAPSHOT` (`baseVersion=2.1.0`, 빈 `snapshotVersion`)
 - Flow/class: `catalog-train-snapshot` / `dependencies-only`
@@ -24,13 +25,13 @@
 
 | Repository / PR | Exact remote head | Checks | 현재 상태 |
 | --- | --- | ---: | --- |
-| Dependencies #257 | `036b7aeb2e36882fd49ac0938a218d0e8498b202` | 6 | 실패/대기 없음. 아래 네 구현/테스트 파일은 이 head에 아직 없음 |
+| Dependencies #257 | `036b7aeb2e36882fd49ac0938a218d0e8498b202` | 6 | 원격 check는 성공했으나 로컬 후보 `639ba393…`보다 이전 head |
 | Projects #1819 | `768a44c8297c3b8bc58538b00cc47c7beebd696e` | 27 | 실패/대기 없음 |
 | AWS #658 | `09873d1cce861a27c2aac3e368e99e740a9e9397` | 19 | 실패/대기 없음 |
 | Experimental #104 | `040ef88f0c5d263bbfc8b3bcedf96c8d79534e06` | 6 | 실패/대기 없음 |
 | Exposed #899 | `bf01557457460b26da49a7299965469682ef83c8` | 13 | `CI Status` 실패, `Coverage Report` queued, Docs-only validation skipped |
 | Graph #655 | `da98381342bb90d219f15cc00cb2f1f7bcdf9373` | 21 | 실패/대기 없음 |
-| Image #697 | `14034f53c03405655cce37fa9ac27461ea013e50` | 30 | 실패/대기 없음. PaddleOCR native acceptance는 skipped |
+| Image #697 | `14034f53c03405655cce37fa9ac27461ea013e50` | 30 | PaddleOCR native acceptance skipped; 해당 검증은 미완료 |
 | JaVers #396 | `eb02a1897366e2bb773371f2d0b18537b511419d` | 15 | 실패/대기 없음 |
 | Leader #955 | `218380a0ff9a5d94f7c2284102fbe2087151ae66` | 46 | 실패/대기 없음 |
 | Text #342 | `02a7719368ec9559c17b68b8e060a97ff608678b` | 13 | 실패/대기 없음 |
@@ -38,7 +39,8 @@
 - Exposed #899 run [37640362574](https://github.com/bluetape4k/bluetape4k-exposed/actions/runs/37640362574)은 exact head `bf015574…`에서 consumer matrix job들이 runner를 시작하지 못한 채 `abandoned`로 기록되어 `Require activated consumer tests`가 실패했다. 같은 head의 build와 benchmark는 성공했다. 비교 run [37400878284](https://github.com/bluetape4k/bluetape4k-exposed/actions/runs/37400878284)은 PR #896의 다른 head `80e77f3fef66671423fa3345ab648ac49bb17620`에서 consumer job을 실행했다. 두 실행 차이는 hosted scheduler 문제라는 추론을 뒷받침할 뿐 원인을 입증하지 않으므로, 최종 head에서 전체 workflow 재실행이 필요하다. #899 run에서 assertion/test 실패 로그는 확인되지 않았다.
 - Exposed 진단 PR #896 head `80e77f3fef66671423fa3345ab648ac49bb17620` 본문은 `Closes #885`를 포함하면서 동시에 이슈를 닫지 않는다고 적었다. 이 PR은 merge하지 않는다. 이슈를 닫을 주 해결 PR은 #899 하나로 유지한다.
 - 기존 POM map/receipt는 현재 exact checkout과 불일치한다. map의 9개 worktree 경로가 사라졌고 receipt의 central/consumer SHA가 live PR head와 다르다. 기록된 `192` POM / `50,516` dependency / `192` Maven model PASS는 이전 후보의 역사 기록이며 현재 exact candidate 증거로 사용하지 않는다.
-- 현재 중앙 후보는 remote head `036b7aeb…` 위에서 네 구현/테스트 파일과 이 체크리스트·lesson을 수정 중이다. verifier는 Jackson 2/3 BOM import가 central version catalog의 정확한 버전으로 각각 한 번 존재하는지 검사한다. 변경 후 local central publication POM 1개/88 dependency 구조 감사와 Maven effective model은 통과했으나, 9개 publisher 전체의 exact-map 재실행은 아직 필요하다.
+- 현재 로컬 중앙 후보는 코드 commit `639ba393ae3d21792f0c20e4dcf6bb71bc0fd2f9`이며 PR #257 원격 head는 이전 `036b7aeb…`다. verifier는 Jackson 2/3 BOM import가 central version catalog의 정확한 버전으로 각각 한 번 존재하는지 검사한다. 중앙 catalog 파일의 raw SHA-256은 `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`로 유지되고, 해당 catalog content commit은 `096560faa3384f3b53aa5d0baab9e36fd17eb6fd`다. 9개 consumer pin은 이 immutable content SHA와 일치한다.
+- 새 exact repository map `/private/tmp/dependabot-train-20261008-l0l_zrd0/repository-map-central-639ba39.json`의 SHA-256은 `c37e075e3b588ceae487769f4be8639b3482f8284fcf692d7d66f942f0953a8d`다. 이 map은 central code SHA `639ba393…`와 현재 9개 consumer PR head를 고정한다. `sync-shared-versions.py --check --summary`는 **central catalog adoption is clean**을 반환했다. 전체 POM gate는 `failures=0 repositories=9 files=192 dependencies=50518 maven_models=192`로 통과했다. PR #899의 CI 재실행과 나머지 원격 검증이 남아 전체 후보 및 issue 완료는 아직 보류다.
 - Merge, SNAPSHOT dispatch/publication은 보류 상태다. 특히 `develop` merge가 `Publish Snapshot`을 자동 실행할 수 있으므로 merge 직전 hold와 별도 exact-head 승인을 적용한다.
 
 ## 현재 소유권과 후보 변경
@@ -95,7 +97,7 @@
 
 - [x] **CG-01 — 권한과 현재 상태를 재확인한다.**
   - **Action:** 상위/저장소 지침, workflow, release skill, Kotlin/catalog 패턴, worktree 상태를 확인한다.
-  - **Evidence:** 작업 격리 worktree는 base `ef4612ac…`에서 분리됐다. 중앙 후보 branch `fix/dependabot-security-catalog-2026-10`는 remote head `036b7aeb…`이며 구현/테스트 4개와 문서 2개만 수정 중이다. canonical checkout과 다른 기존 worktree는 보존한다.
+  - **Evidence:** 작업 격리 worktree는 base `ef4612ac…`에서 분리됐다. 중앙 후보 branch `fix/dependabot-security-catalog-2026-10`의 local code head는 `639ba393ae3d21792f0c20e4dcf6bb71bc0fd2f9`, remote PR head는 `036b7aeb2e36882fd49ac0938a218d0e8498b202`다. canonical checkout과 다른 기존 worktree는 보존한다.
   - **Failure:** 권한 또는 대상이 달라지면 변경 전에 중단한다.
 - [x] **CG-02 — 과거 및 현재 증거를 조회한다.**
   - **Action:** GNO의 github/docs/wiki를 검색하고 live GitHub issue, PR, release, CI, alert를 읽는다.
@@ -131,7 +133,7 @@
   - **Failure:** 재발 lesson이 누락되면 final pre-PR proof 전에 추가한다.
 - [ ] **CG-10 — 최종 pre-PR proof를 수렴한다.**
   - **Action:** 모든 applicable leaf gate, final diff review, fresh checks를 통과시키고 exact local head를 기록한다.
-  - **Evidence:** central 변경의 독립 코드 리뷰는 P0/P1/P2/LOW finding 0이며 targeted suite 54개가 통과했다. 이전 exact map은 stale이고 #899 exact-head CI는 실패했으므로 최종 cross-repo review, POM gate, CI 및 새 local head 기록이 남았다.
+  - **Evidence:** central 변경의 독립 코드 리뷰는 P0/P1/P2/LOW finding 0이며 targeted suite 54개가 통과했다. 새 exact map의 POM gate도 통과했다. 그러나 #899 exact-head CI는 실패했고 PR #257에는 local code head `639ba393…`이 아직 없으므로 final exact-head remote CI/review와 PR progression은 남았다.
   - **Failure:** evidence 부족/높은 심각도 finding이 있으면 PR gate를 닫는다.
 
 ### PR과 merge 경계
@@ -189,7 +191,7 @@
 
 - [x] **PUB-01 — release identity와 authority를 고정한다.**
   - **Action:** flow, versions, class, branches/SHAs, artifact matrix, consumers, side-effect authority를 확정한다.
-  - **Evidence:** 이 체크리스트와 아래 candidate map에 `catalog-train-snapshot` / `dependencies-only`, `2.1.0-SNAPSHOT`, candidate SHAs, 9 consumers 및 현재 허용된 local-only 범위가 고정되어 있다. 원격 side effect는 아직 실행하지 않았다.
+  - **Evidence:** 이 체크리스트와 exact repository map에 `catalog-train-snapshot` / `dependencies-only`, `2.1.0-SNAPSHOT`, central code SHA `639ba393…`, catalog content SHA `096560faa3384f3b53aa5d0baab9e36fd17eb6fd`, 9 consumers 및 현재 허용된 local-only 범위가 고정되어 있다. 원격 side effect는 아직 실행하지 않았다.
   - **Failure:** 불명확한 identity면 validation/publish를 멈춘다.
 - [x] **PUB-02 — live planning/topology gap을 닫는다.**
   - **Action:** issue, PR, release, CI, catalog consumers와 GNO evidence를 분류한다.
@@ -197,7 +199,7 @@
   - **Failure:** release-affecting issue 또는 topology mismatch가 있으면 candidate를 막는다.
 - [ ] **PUB-03 — exact candidate state를 증명한다.**
   - **Action:** catalog, checksum, version-delta, cross-repo POM, downstream builds를 exact SHA에서 검증한다.
-  - **Evidence:** 이전 candidate map은 사라진 worktree roots와 stale SHA를 포함해 사용할 수 없다. 현재 remote PR heads 기반의 새 map과 전체 POM/Maven model 검증, consumer 범위 read-back이 남았다.
+  - **Evidence:** catalog SHA-256 `7e45e458…`와 content commit `096560faa3384f3b53aa5d0baab9e36fd17eb6fd`를 확인했다. 새 map SHA-256 `c37e075e3b588ceae487769f4be8639b3482f8284fcf692d7d66f942f0953a8d`는 central code `639ba393…`와 9개 consumer PR head를 고정하며, POM-02/03 전수 검증은 통과했다. 그러나 Exposed #899 exact-head CI가 실패/대기 상태이고 Image #697 native acceptance는 skipped여서 downstream CI 범위가 닫히지 않았다. 이 gate는 unchecked다.
   - **Failure:** source, generated Maven model, graph가 다르면 promote하지 않는다.
 - **N/A — PUB-04 — stable preflight:** 안정 release/dispatch가 범위에 없고 stable artifact/version을 변경하지 않는다.
 - [ ] **PUB-05 — irreversible hold를 갱신한다.**
@@ -211,7 +213,7 @@
 - **N/A — PUB-07 — GitHub release closeout:** 이 train은 stable release/tag를 만들지 않는다.
 - [ ] **PUB-08 — downstream consumers를 동기화한다.**
   - **Action:** 9개 consumer pin을 후보 immutable SHA로 동기화하고 영향 모듈을 검증한다.
-  - **Evidence:** 현재 원격 PR head의 실패/대기 상태는 위 표와 같다. 기존 local consumer test/POM evidence는 현재 exact branch map과 일치하는지 아직 입증되지 않았고 Exposed #899 CI가 실패했으므로 새 exact map과 CI read-back이 필요하다.
+  - **Evidence:** `sync-shared-versions.py --check --summary`는 현재 9개 consumer가 immutable catalog content SHA `096560faa3384f3b53aa5d0baab9e36fd17eb6fd`를 사용함을 확인했고, 전체 POM/model proof는 POM-02/03에서 통과했다. 중앙 `./gradlew build --no-daemon --no-parallel` 및 Exposed Jackson 2/3 targeted test는 성공했다. 다만 Exposed #899 CI Status 실패/Coverage queued와 Image #697 native acceptance skipped가 남아 consumer CI gate는 미완료다.
   - **Failure:** stale branch, missing consumer, `help`만의 검증이면 candidate-ready가 아니다.
 - **N/A — PUB-09 — 다음 development line 열기:** 이미 `2.1.0-SNAPSHOT`이 설정되어 있고 stable release 후속 line을 바꾸지 않는다.
 - **N/A — PUB-10 — public manual handoff:** 외부 dependency catalog만 바뀌며 public API/manual/release baseline은 바뀌지 않는다.
@@ -242,13 +244,13 @@
   - **Action:** verifier registry와 live publish workflow 9곳을 대조한다.
   - **Evidence:** verifier registry 및 map 기준 9곳은 `bluetape4k-dependencies`, `bluetape4k-projects`, `bluetape4k-aws`, `bluetape4k-exposed`, `bluetape4k-graph`, `bluetape4k-image`, `bluetape4k-javers`, `bluetape4k-leader`, `bluetape4k-text`이며 `experimental`은 catalog-only라 publisher에서 제외했다.
   - **Failure:** mismatch면 candidate를 막는다.
-- [ ] **POM-02 — 모든 publication POM/model을 검증한다.**
+- [x] **POM-02 — 모든 publication POM/model을 검증한다.**
   - **Action:** repository-map의 exact worktree/HEAD와 후보 catalog로 전수 생성·검증한다.
-  - **Evidence:** 이전 repository-map SHA-256 `e8523d677cc0f899d25c092880fa748b23dc291265686ea07f89467971388f24`가 가리킨 9개 root를 찾을 수 없어 이전 `192`/`50,516` 결과는 historical evidence다. 새 map을 현재 exact PR heads 및 central candidate SHA로 구성해 전체 gate를 재실행한다.
+  - **Evidence:** repository-map `/private/tmp/dependabot-train-20261008-l0l_zrd0/repository-map-central-639ba39.json`, SHA-256 `c37e075e3b588ceae487769f4be8639b3482f8284fcf692d7d66f942f0953a8d`; central code SHA `639ba393ae3d21792f0c20e4dcf6bb71bc0fd2f9`; 현재 9개 consumer PR head 포함. `sync-shared-versions.py --check --summary`는 **central catalog adoption is clean**. `verify-publication-poms.py --workspace /private/tmp/dependabot-train-20261008-l0l_zrd0 --repository-map <map> --repository-map-sha256 c37e075e3b588ceae487769f4be8639b3482f8284fcf692d7d66f942f0953a8d --summary` 결과 **PASS**, `failures=0 repositories=9 files=192 dependencies=50518 maven_models=192`. Publisher별 파일 수: central 1, Projects 82, AWS 6, Exposed 46, Graph 16, Image 11, JaVers 7, Leader 17, Text 6.
   - **Failure:** generation/model/POM failure가 하나라도 있으면 차단한다.
-- [ ] **POM-03 — Maven version/profile 규칙을 검증한다.**
+- [x] **POM-03 — Maven version/profile 규칙을 검증한다.**
   - **Action:** dependencyManagement version과 effective model 및 profile 부재를 확인한다.
-  - **Evidence:** 현재 central candidate POM에서는 Jackson BOM import 좌표별 정확히 1개와 catalog 버전 일치를 구조 검사한다. 전체 192개 예상 publisher POM의 Maven effective-model 결과는 새 map 재실행 뒤 기록한다.
+  - **Evidence:** 위 exact map/source에서 192개 publication POM을 생성하고 structural audit 및 Maven effective model을 모두 실행했다. Jackson 2/3 import cardinality/current-catalog-version 회귀 검증은 central verifier targeted suite 54개 PASS에 포함된다. 최종 summary는 `failures=0 repositories=9 files=192 dependencies=50518 maven_models=192`; versionless/unmanaged model, duplicate model, or publication-profile failure는 0건이다.
   - **Failure:** unmanaged dependency 또는 profile이 있으면 차단한다.
 
 ## 2026-10-07 과거 실행 기록 (현재 exact-map gate 근거 아님)
