@@ -1,6 +1,6 @@
 # 2026-10-07 중앙 Dependabot catalog train 체크리스트
 
-상태: **PENDING / 중앙 후보와 소비처 로컬 검증 진행 중**
+상태: **PENDING / 로컬 후보 검증 완료; 원격 push·PR·merge 승인 대기**
 
 ## 고정 범위와 중단 조건
 
@@ -89,9 +89,9 @@
   - **Action:** central TOML, checksum, version-delta, immutable consumer SHA 및 기존 sync/POM helpers를 사용한다.
   - **Evidence:** 기존 `sync-shared-versions.py`, `sync-dependabot-ignores.py`, `verify-publication-poms.py`가 지정되었다.
   - **Failure:** local override나 새 dependency로 central ownership을 우회하지 않는다.
-- [ ] **CG-06 — 공개 및 문서 계약을 증명한다.**
+- [x] **CG-06 — 공개 및 문서 계약을 증명한다.**
   - **Action:** public artifact/API 영향, POM, public manual scope를 후보 diff로 확인한다.
-  - **Evidence:** 최종 diff와 9-publisher POM 결과.
+  - **Evidence:** 후보 diff는 BuildSrc publication POM 정규화 및 테스트, Projects의 Testcontainers BOM 경계, Image의 중복 직접 의존성만 다룬다. 공개 Kotlin API나 public manual 변경은 없고, 아래 exact 후보 map 기준으로 9 publisher 저장소의 publication POM 192개 및 Maven model 192개가 모두 통과했다.
   - **Failure:** 안정 BOM 또는 public contract 변경이 발견되면 flow를 재분류한다.
 - [x] **CG-07 — 기존 동작을 고정하고 targeted proof를 실행한다.**
   - **Action:** catalog governance CI assertions를 current action pin과 일치시키고 회귀 테스트를 실행한다.
@@ -101,9 +101,9 @@
   - **Action:** central `./gradlew build`와 Exposed Testcontainers 검증을 다른 container suite와 동시에 실행하지 않는다.
   - **Evidence:** 중앙 `./gradlew build` **BUILD SUCCESSFUL**. consumer sync 후 Exposed Jackson 2/3 테스트를 `--no-parallel`로 순차 재실행해 각각 159/159, 160/160 test methods 성공, skipped 17건.
   - **Failure:** 미완료/failed test를 성공으로 계산하지 않는다.
-- [ ] **CG-09 — 재발 방지 lesson을 평가한다.**
+- [x] **CG-09 — 재발 방지 lesson을 평가한다.**
   - **Action:** 기존 catalog/security workflow 기록과 반복 원인을 대조하고 필요한 연구 note를 보존한다.
-  - **Evidence:** `bluetape4k-github`의 #194 및 기존 central checklist, 공식 release source, wiki note.
+  - **Evidence:** `bluetape4k-github`의 #194 및 기존 central checklist, 공식 release source, wiki note를 대조했다. 이번 consumer POM 실패는 중복 declaration 및 XML child order 차이를 BuildSrc 정규화가 처리하지 못한 문제로 분류해 각 저장소의 회귀 테스트와 수정에 반영했다. canonical GNO 갱신은 merge/local sync 뒤 CG-18에서 수행한다.
   - **Failure:** 재발 lesson이 누락되면 final pre-PR proof 전에 추가한다.
 - [ ] **CG-10 — 최종 pre-PR proof를 수렴한다.**
   - **Action:** 모든 applicable leaf gate, final diff review, fresh checks를 통과시키고 exact local head를 기록한다.
@@ -163,17 +163,17 @@
 
 ## Type P / topology / publication-POM
 
-- [ ] **PUB-01 — release identity와 authority를 고정한다.**
+- [x] **PUB-01 — release identity와 authority를 고정한다.**
   - **Action:** flow, versions, class, branches/SHAs, artifact matrix, consumers, side-effect authority를 확정한다.
-  - **Evidence:** 이 체크리스트 및 candidate head SHA.
+  - **Evidence:** 이 체크리스트와 아래 candidate map에 `catalog-train-snapshot` / `dependencies-only`, `2.1.0-SNAPSHOT`, candidate SHAs, 9 consumers 및 현재 허용된 local-only 범위가 고정되어 있다. 원격 side effect는 아직 실행하지 않았다.
   - **Failure:** 불명확한 identity면 validation/publish를 멈춘다.
 - [x] **PUB-02 — live planning/topology gap을 닫는다.**
   - **Action:** issue, PR, release, CI, catalog consumers와 GNO evidence를 분류한다.
   - **Evidence:** #194/#101 closed, #256 unrelated open, #254/#255 unrelated open, latest release `2.0.0`, 9 consumers/8 downstream publishers.
   - **Failure:** release-affecting issue 또는 topology mismatch가 있으면 candidate를 막는다.
-- [ ] **PUB-03 — exact candidate state를 증명한다.**
+- [x] **PUB-03 — exact candidate state를 증명한다.**
   - **Action:** catalog, checksum, version-delta, cross-repo POM, downstream builds를 exact SHA에서 검증한다.
-  - **Evidence:** central/consumer SHAs, POM counts, test/build results.
+  - **Evidence:** 아래 exact candidate map SHA-256, central/consumer HEAD 표, catalog checksum, cross-repository POM/Maven model 결과 및 consumer 검증 결과를 기록했다.
   - **Failure:** source, generated Maven model, graph가 다르면 promote하지 않는다.
 - **N/A — PUB-04 — stable preflight:** 안정 release/dispatch가 범위에 없고 stable artifact/version을 변경하지 않는다.
 - [ ] **PUB-05 — irreversible hold를 갱신한다.**
@@ -185,9 +185,9 @@
   - **Evidence:** workflow URL/conclusion 및 artifact matrix.
   - **Failure:** 별도 승인 전에는 실행하지 않는다.
 - **N/A — PUB-07 — GitHub release closeout:** 이 train은 stable release/tag를 만들지 않는다.
-- [ ] **PUB-08 — downstream consumers를 동기화한다.**
+- [x] **PUB-08 — downstream consumers를 동기화한다.**
   - **Action:** 9개 consumer pin을 후보 immutable SHA로 동기화하고 영향 모듈을 검증한다.
-  - **Evidence:** per-repo diff/ref, resolution/build 결과 및 8개 publisher POM.
+  - **Evidence:** 9개 consumer 설정이 central catalog immutable SHA `096560faa3384f3b53aa5d0baab9e36fd17eb6fd`를 참조한다. 전 consumer의 `./gradlew help`가 BUILD SUCCESSFUL, Exposed Jackson 2/3 테스트는 159/159 및 160/160 통과했고, Exposed/Graph jsoup resolution과 8개 downstream publisher의 POM 검증도 통과했다.
   - **Failure:** stale branch, missing consumer, `help`만의 검증이면 candidate-ready가 아니다.
 - **N/A — PUB-09 — 다음 development line 열기:** 이미 `2.1.0-SNAPSHOT`이 설정되어 있고 stable release 후속 line을 바꾸지 않는다.
 - **N/A — PUB-10 — public manual handoff:** 외부 dependency catalog만 바뀌며 public API/manual/release baseline은 바뀌지 않는다.
@@ -196,17 +196,17 @@
   - **Evidence:** 최종 DoD 집계와 이 문서.
   - **Failure:** 검증되지 않은 publication/merge 주장을 하지 않는다.
 
-- [ ] **TOP-01 — 모든 repo를 분류한다.**
+- [x] **TOP-01 — 모든 repo를 분류한다.**
   - **Action:** central dependencies, 8 stable publishers, experimental, consumers를 구분한다.
-  - **Evidence:** consumer/publisher inventory 표와 제외 이유.
+  - **Evidence:** consumer는 `projects`, `aws`, `experimental`, `exposed`, `graph`, `image`, `javers`, `leader`, `text` 9곳이다. Publisher 검증은 central dependencies 및 8 downstream publisher(`experimental` 제외) 총 9곳이다.
   - **Failure:** 미분류 repo를 누락하거나 stable train에 넣지 않는다.
-- [ ] **TOP-02 — 모든 edge를 분류한다.**
+- [x] **TOP-02 — 모든 edge를 분류한다.**
   - **Action:** catalog management와 publication validation edge를 구분한다.
-  - **Evidence:** `dependencies -> 8 publisher POM/build validation`, `experimental -> catalog-only consumer`.
+  - **Evidence:** `dependencies -> 8 downstream publisher POM/build validation`; `experimental -> central catalog-only consumer`. 내부 Bluetape artifact 승격 edge는 없다.
   - **Failure:** catalog/test edge를 stable release order로 오해하지 않는다.
-- [ ] **TOP-03 — 실행 DAG가 비순환임을 증명한다.**
+- [x] **TOP-03 — 실행 DAG가 비순환임을 증명한다.**
   - **Action:** central candidate부터 consumer 검증까지 dependency order를 고정한다.
-  - **Evidence:** central catalog -> immutable consumer pins -> consumer/POM verification.
+  - **Evidence:** 실행 순서는 central catalog -> immutable consumer pins -> consumer/POM verification이다. cross-repository verification은 최종 consumer SHAs에서 통과했고 internal unpublished artifact edge는 확인되지 않았다.
   - **Failure:** cycle 또는 unpublished internal artifact edge가 있으면 차단한다.
 - [x] **TOP-04 — 단일 flow/class를 선택한다.**
   - **Action:** catalog-train-snapshot flow와 dependencies-only class를 선택한다.
@@ -214,17 +214,17 @@
   - **Failure:** internal version changes 발견 시 재분류한다.
 - **N/A — TOP-05 — incremental internal train:** internal BOM/artifact version을 승격하지 않는다.
 
-- [ ] **POM-01 — publisher inventory를 대조한다.**
+- [x] **POM-01 — publisher inventory를 대조한다.**
   - **Action:** verifier registry와 live publish workflow 9곳을 대조한다.
-  - **Evidence:** 9 publisher repo 목록 및 inventory 결과.
+  - **Evidence:** verifier registry 및 map 기준 9곳은 `bluetape4k-dependencies`, `bluetape4k-projects`, `bluetape4k-aws`, `bluetape4k-exposed`, `bluetape4k-graph`, `bluetape4k-image`, `bluetape4k-javers`, `bluetape4k-leader`, `bluetape4k-text`이며 `experimental`은 catalog-only라 publisher에서 제외했다.
   - **Failure:** mismatch면 candidate를 막는다.
-- [ ] **POM-02 — 모든 publication POM/model을 검증한다.**
+- [x] **POM-02 — 모든 publication POM/model을 검증한다.**
   - **Action:** repository-map의 exact worktree/HEAD와 후보 catalog로 전수 생성·검증한다.
-  - **Evidence:** verifier는 Projects 3건, Exposed 5건의 duplicate effective-model dependency 오류를 보고했다. 동일 baseline에서도 같은 오류 집합을 재현했으며, 후보의 신규 catalog 변경으로 생긴 차이는 확인하지 못했다. 그래도 zero-failure 기준은 충족하지 않아 보류한다.
+  - **Evidence:** 최종 exact candidate run에서 `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`. 최초 Projects/Exposed 중복 model 오류와 후속 Exposed/Leader XML 순서 불일치 및 Image 직접 중복은 각각 consumer BuildSrc 정규화와 회귀 테스트로 수리한 뒤 전수 재검증했다. Exact map SHA-256 및 모든 HEAD는 아래 최신 결과에 있다.
   - **Failure:** generation/model/POM failure가 하나라도 있으면 차단한다.
-- [ ] **POM-03 — Maven version/profile 규칙을 검증한다.**
+- [x] **POM-03 — Maven version/profile 규칙을 검증한다.**
   - **Action:** dependencyManagement version과 effective model 및 profile 부재를 확인한다.
-  - **Evidence:** duplicate effective-model 오류 때문에 verifier zero-failure 결과가 없어 보류한다.
+  - **Evidence:** 최종 verifier에서 192개의 Maven effective model이 모두 성공했고 duplicate/conflicting dependency failure가 0건이다. Candidate POM들의 managed version/profile 검증이 완료됐다.
   - **Failure:** unmanaged dependency 또는 profile이 있으면 차단한다.
 
 ## 최신 결과 기록
@@ -243,5 +243,21 @@
 - 9개 consumer의 중앙 catalog 경로 override `./gradlew help --no-daemon --no-configuration-cache --console=plain` **BUILD SUCCESSFUL**: `projects`, `aws`, `experimental`, `exposed`, `graph`, `image`, `javers`, `leader`, `text`.
 - Exposed `:bluetape4k-exposed-jackson2:test` 및 `:bluetape4k-exposed-jackson3:test`, `--rerun-tasks --no-parallel`: 각각 159/159 및 160/160 test methods 통과, 각각 skipped 17건.
 - Exposed `:bluetape4k-exposed-core:dependencyInsight` 및 Graph `:bluetape4k-graph-core:dependencyInsight`, configuration `dokkaHtmlGeneratorRuntimeResolver~internal`: 둘 다 `org.jsoup:jsoup:1.16.1 -> 1.23.2`이며 각 저장소의 검토된 resolution rule이 선택 사유로 표시된다.
-- POM verifier: Projects 3건 + Exposed 5건의 duplicate effective-model 오류. Baseline에서도 같은 오류 집합을 재현했으나 zero-failure 조건은 여전히 미충족.
+- 초기 POM 전수 검증은 Projects 3건과 Exposed 5건의 duplicate effective-model 오류로 실패했다. 수정 후 재실행 과정에서 Exposed/Leader의 XML child order 차이와 Image `images-vips-java25`의 직접 의존성 `org.jetbrains.kotlinx:atomicfu-jvm:0.33.0` 중복도 발견해 각 consumer BuildSrc normalizer 및 회귀 테스트로 수리했다. 이 초기 실패는 이력으로 보존하고 아래 최종 전수 결과로 대체한다.
+- 최종 exact-candidate POM/Maven 검증: `python3 scripts/verify-publication-poms.py --workspace /Users/debop/work/bluetape4k --repository-map /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/fix-dependabot-security-catalog-2026-10/build/dependabot-central-catalog-train/pom-candidate-repositories.json --repository-map-sha256 27b8bffcae8c2c11e8efcf0a0e69be5dea7c679cc061fd11206dd4dd28231d88 --summary` — **PASS**, `failures=0 repositories=9 files=192 dependencies=50516 maven_models=192`.
+- POM verifier map SHA-256: `27b8bffcae8c2c11e8efcf0a0e69be5dea7c679cc061fd11206dd4dd28231d88`; catalog SHA-256: `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`.
+
+| Repository | Base SHA | Candidate branch | Exact HEAD |
+| --- | --- | --- | --- |
+| `bluetape4k-dependencies` | `ef4612ac237550b550dc48eae5ecdfc94b27dab4` | `fix/dependabot-security-catalog-2026-10` | `096560faa3384f3b53aa5d0baab9e36fd17eb6fd` |
+| `bluetape4k-projects` | `21a8fc4a324e5a293c1c789caa05bf713258bc20` | `chore/dependabot-central-catalog-2026-10` | `0f005024ba7e7f4d8b03f2286c75971cfe6d5f47` |
+| `bluetape4k-aws` | `849892b4b469714b5cbedc26811c5dab407c53e8` | `chore/dependabot-central-catalog-2026-10` | `43bbe20413ce066852103c7276aed5496d430414` |
+| `bluetape4k-experimental` | `5ec15e5cb97ee99947031e1e030c4d57ab516d8b` | `chore/dependabot-central-catalog-2026-10` | `c556fb1590da753998ee5a61f6c0186e4c5bc415` |
+| `bluetape4k-exposed` | `38f4d92c8a78034b2b2f81f343539f3afa615ef3` | `chore/dependabot-central-catalog-2026-10` | `abb8eb639e69259f379c9c70e62488e900c27ef6` |
+| `bluetape4k-graph` | `2b171e1ee9cf2364367188b39babf5864439859e` | `chore/dependabot-central-catalog-2026-10` | `d5c2b254eaae4e31b46aadbf765c10605063f486` |
+| `bluetape4k-image` | `673daf3598ebb6c5afd0e1bf08a4d6ebe5ade0f6` | `chore/dependabot-central-catalog-2026-10` | `4730247ec2122c65f0ef22c0a2e8130e28dd17d3` |
+| `bluetape4k-javers` | `e153dd7e9b02f460728a1b527fab295bf9b2f072` | `chore/dependabot-central-catalog-2026-10` | `4628b2fe4438b153d3b902cb8b5165abdf010451` |
+| `bluetape4k-leader` | `d360a571948af6d2fe189cb1ad4b84ea80928ed8` | `chore/dependabot-central-catalog-2026-10` | `8d7d7336c1c073b6a409d6377a831ae3c54470d1` |
+| `bluetape4k-text` | `1e338c2f75ea08f18bca204a6e017c8033a47582` | `chore/dependabot-central-catalog-2026-10` | `d395cf38c5fc9b23fb1e108bd747104d7f020472` |
+
 - Candidate PR/push/merge/publication: 실행하지 않음.
