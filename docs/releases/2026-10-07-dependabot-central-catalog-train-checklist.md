@@ -97,9 +97,9 @@
   - **Action:** catalog governance CI assertions를 current action pin과 일치시키고 회귀 테스트를 실행한다.
   - **Evidence:** baseline 재현은 `tests.test_ci_catalog_governance` 20개 중 failure 1, error 1이었다. download-artifact 기대를 v8.0.1로 맞추고 setup-java 순서 검증을 action prefix로 고쳤다. 전체 governance/audit suite 73 tests PASS, checksum/audit 재검증 suite 49 tests PASS.
   - **Failure:** targeted suite가 통과하지 않으면 다음 gate로 가지 않는다.
-- [ ] **CG-08 — 무거운 검증을 순차 실행한다.**
+- [x] **CG-08 — 무거운 검증을 순차 실행한다.**
   - **Action:** central `./gradlew build`와 Exposed Testcontainers 검증을 다른 container suite와 동시에 실행하지 않는다.
-  - **Evidence:** 중앙 `./gradlew build` **BUILD SUCCESSFUL**. Exposed Testcontainers 검증은 consumer sync 후 실행 대기.
+  - **Evidence:** 중앙 `./gradlew build` **BUILD SUCCESSFUL**. consumer sync 후 Exposed Jackson 2/3 테스트를 `--no-parallel`로 순차 재실행해 각각 159/159, 160/160 test methods 성공, skipped 17건.
   - **Failure:** 미완료/failed test를 성공으로 계산하지 않는다.
 - [ ] **CG-09 — 재발 방지 lesson을 평가한다.**
   - **Action:** 기존 catalog/security workflow 기록과 반복 원인을 대조하고 필요한 연구 note를 보존한다.
@@ -220,11 +220,11 @@
   - **Failure:** mismatch면 candidate를 막는다.
 - [ ] **POM-02 — 모든 publication POM/model을 검증한다.**
   - **Action:** repository-map의 exact worktree/HEAD와 후보 catalog로 전수 생성·검증한다.
-  - **Evidence:** repositories/files/dependencies/models/failures 요약.
+  - **Evidence:** verifier는 Projects 3건, Exposed 5건의 duplicate effective-model dependency 오류를 보고했다. 동일 baseline에서도 같은 오류 집합을 재현했으며, 후보의 신규 catalog 변경으로 생긴 차이는 확인하지 못했다. 그래도 zero-failure 기준은 충족하지 않아 보류한다.
   - **Failure:** generation/model/POM failure가 하나라도 있으면 차단한다.
 - [ ] **POM-03 — Maven version/profile 규칙을 검증한다.**
   - **Action:** dependencyManagement version과 effective model 및 profile 부재를 확인한다.
-  - **Evidence:** verifier의 zero-failure structural/effective-model output.
+  - **Evidence:** duplicate effective-model 오류 때문에 verifier zero-failure 결과가 없어 보류한다.
   - **Failure:** unmanaged dependency 또는 profile이 있으면 차단한다.
 
 ## 최신 결과 기록
@@ -237,7 +237,11 @@
 - Candidate `python3.13 -m unittest tests.test_audit_latest_stable.LatestStableInventoryTest.test_inventory_reconstructs_the_exact_authority_universe tests.test_audit_latest_stable.LatestStableInventoryTest.test_inventory_includes_jsoup_as_catalog_direct_authority -v`: **PASS** — jsoup authority 추가 전 RED, source/test 반영 후 2 tests PASS.
 - Candidate `scripts/audit-latest-stable.py --check --check-audit --summary --audit-summary`: **PASS** — 523 authorities (325 managed, 67 policy, 131 catalog); 518 metadata verified, 5 preview-only, 0 unavailable.
 - 최종 inventory 생성 결과: 523 authorities (325 managed, 67 policy, 131 catalog); 518 metadata verified, 5 preview-only, 0 unavailable. jsoup은 `org.jsoup:jsoup`, version `1.23.2`, 중앙 direct authority이며 audit source는 Maven Central metadata다.
-- Catalog baseline: `ef4612ac237550b550dc48eae5ecdfc94b27dab4`; 여섯 기존 version deltas; catalog checksum `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`; 중앙 후보 commit SHA는 검증 후 기록한다.
-- Candidate `./gradlew build --no-daemon`: **BUILD SUCCESSFUL** (9초, buildSrc 작업은 up-to-date; 기존 NMCP publish API deprecation 경고 1건).
+- Catalog baseline: `ef4612ac237550b550dc48eae5ecdfc94b27dab4`; 여섯 기존 version deltas; catalog checksum `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`; jsoup catalog source commit `0db405f89ec5a98e887c28952212adeb9a2ec026`.
 - Candidate `./gradlew build --no-daemon`: **BUILD SUCCESSFUL** (8초; 3 actionable tasks up-to-date; existing NMCP publish API deprecation warning 1건).
+- 중앙 jsoup catalog 변경 커밋: `0db405f89ec5a98e887c28952212adeb9a2ec026`; 이후 이 체크리스트 기록 commit을 거쳐 최종 immutable ref를 소비자 설정에 고정한다. Catalog SHA-256은 `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`로 유지된다.
+- 9개 consumer의 중앙 catalog 경로 override `./gradlew help --no-daemon --no-configuration-cache --console=plain` **BUILD SUCCESSFUL**: `projects`, `aws`, `experimental`, `exposed`, `graph`, `image`, `javers`, `leader`, `text`.
+- Exposed `:bluetape4k-exposed-jackson2:test` 및 `:bluetape4k-exposed-jackson3:test`, `--rerun-tasks --no-parallel`: 각각 159/159 및 160/160 test methods 통과, 각각 skipped 17건.
+- Exposed `:bluetape4k-exposed-core:dependencyInsight` 및 Graph `:bluetape4k-graph-core:dependencyInsight`, configuration `dokkaHtmlGeneratorRuntimeResolver~internal`: 둘 다 `org.jsoup:jsoup:1.16.1 -> 1.23.2`이며 각 저장소의 검토된 resolution rule이 선택 사유로 표시된다.
+- POM verifier: Projects 3건 + Exposed 5건의 duplicate effective-model 오류. Baseline에서도 같은 오류 집합을 재현했으나 zero-failure 조건은 여전히 미충족.
 - Candidate PR/push/merge/publication: 실행하지 않음.
