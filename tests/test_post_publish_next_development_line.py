@@ -188,12 +188,12 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         self.assertEqual(
             policy["snapshot-catalog-ref-overrides"],
             {
-                "bluetape4k-projects": "f16b29a0da64481c19443f76476e8166dbc57618",
+                "bluetape4k-projects": "0765227c19024a86732b23a4911da7a80521a814",
                 "bluetape4k-aws": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
                 "bluetape4k-exposed": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
                 "bluetape4k-graph": "55b5269bddd2bd041d5f282abcd0238dc242c171",
                 "bluetape4k-javers": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
-                "bluetape4k-leader": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
+                "bluetape4k-leader": "0765227c19024a86732b23a4911da7a80521a814",
             },
         )
         self.assertEqual(
