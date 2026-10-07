@@ -28,6 +28,7 @@
 | `netty4` | `4.1.136.Final` | `4.1.139.Final` | Netty 공식 4.1.139.Final release (2026-10-06), security fixes 포함 |
 | `netty` | `4.2.17.Final` | `4.2.19.Final` | Netty 공식 4.2.19.Final release (2026-10-06), security fixes 포함 |
 | `freemarker` | Exposed root의 직접 버전 `2.3.35` | 중앙 alias `2.3.35` | #885 실패 좌표에 포함된 의존성의 버전 기준을 중앙 catalog로 옮긴다. 현재 값은 유지하며 snapshot updater 수리 증거로 보지 않는다. |
+| `jsoup` | 중앙 version authority 없음; Graph `1.23.1`, Exposed Dokka resolution floor `1.23.1` | 중앙 alias `1.23.2` | Exposed Dependabot alert #180의 patched version이며 [공식 1.23.2 release](https://jsoup.org/news/release-1.23.2)로 확인했다. Exposed와 Graph의 repo-local authority를 중앙 `bt4kVersion("jsoup")`로 합친다. |
 | legacy `jackson` key | `2.22.1` | 유지 | 중앙 authority audit이 추적하는 `jackson2`로 Exposed/Text 소비 코드 이동; legacy key는 별도 alias policy 없이 변경하지 않음 |
 
 공식 근거: [Jackson 2.22 patch list](https://github.com/FasterXML/jackson/wiki/Jackson-Release-2.22), [Jackson 3.2 patch list](https://github.com/FasterXML/jackson/wiki/Jackson-Release-3.2), [Netty 4.1.139 release](https://github.com/netty/netty/releases/tag/netty-4.1.139.Final), [Netty 4.2.19 release](https://github.com/netty/netty/releases/tag/netty-4.2.19.Final), [FreeMarker 2.3.35 release notes](https://freemarker.apache.org/docs/versions_2_3_35.html), [GHSA-27j2-h3m2-8237](https://github.com/advisories/GHSA-27j2-h3m2-8237).
@@ -232,8 +233,11 @@
 - Baseline `python3 -m unittest tests.test_central_catalog_version_deltas`: **PASS** — 6 tests.
 - After repair `python3 -m unittest tests.test_ci_catalog_governance tests.test_central_catalog_version_deltas`: **PASS** — 26 tests.
 - GitHub CI #35380594458, base `ef4612ac…`: failed; Cross-repository Publication POM Contract는 skipped.
-- Candidate `python3.13 -m unittest tests.test_audit_latest_stable tests.test_catalog_checksum tests.test_sync_dependabot_ignores tests.test_ci_catalog_governance tests.test_central_catalog_version_deltas tests.test_latest_stable_version_deltas`: **PASS** — 87 tests.
-- `scripts/audit-latest-stable.py --check --check-audit --summary --audit-summary`: **PASS** — 522 authorities (325 managed, 67 policy, 130 catalog); 517 metadata verified, 5 preview-only, 0 unavailable.
-- Catalog baseline: `ef4612ac237550b550dc48eae5ecdfc94b27dab4`; six version deltas; catalog checksum `fe4a4780ab4c7ec52a2ac1168db5f7aeb14d3667d02ddd5f5b0b1609c87ce6a1`; candidate commit SHA는 검증 후 read-back 예정.
+- Candidate `python3.13 -m unittest tests.test_audit_latest_stable tests.test_catalog_checksum tests.test_sync_dependabot_ignores tests.test_ci_catalog_governance tests.test_central_catalog_version_deltas tests.test_latest_stable_version_deltas`: **PASS** — 88 tests.
+- Candidate `python3.13 -m unittest tests.test_audit_latest_stable.LatestStableInventoryTest.test_inventory_reconstructs_the_exact_authority_universe tests.test_audit_latest_stable.LatestStableInventoryTest.test_inventory_includes_jsoup_as_catalog_direct_authority -v`: **PASS** — jsoup authority 추가 전 RED, source/test 반영 후 2 tests PASS.
+- Candidate `scripts/audit-latest-stable.py --check --check-audit --summary --audit-summary`: **PASS** — 523 authorities (325 managed, 67 policy, 131 catalog); 518 metadata verified, 5 preview-only, 0 unavailable.
+- 최종 inventory 생성 결과: 523 authorities (325 managed, 67 policy, 131 catalog); 518 metadata verified, 5 preview-only, 0 unavailable. jsoup은 `org.jsoup:jsoup`, version `1.23.2`, 중앙 direct authority이며 audit source는 Maven Central metadata다.
+- Catalog baseline: `ef4612ac237550b550dc48eae5ecdfc94b27dab4`; 여섯 기존 version deltas; catalog checksum `7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed`; 중앙 후보 commit SHA는 검증 후 기록한다.
 - Candidate `./gradlew build --no-daemon`: **BUILD SUCCESSFUL** (9초, buildSrc 작업은 up-to-date; 기존 NMCP publish API deprecation 경고 1건).
+- Candidate `./gradlew build --no-daemon`: **BUILD SUCCESSFUL** (8초; 3 actionable tasks up-to-date; existing NMCP publish API deprecation warning 1건).
 - Candidate PR/push/merge/publication: 실행하지 않음.
