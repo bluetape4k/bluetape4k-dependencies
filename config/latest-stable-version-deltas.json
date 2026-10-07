@@ -1,20 +1,20 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "1692ecf622878f34f917806f21a2f7851a9e0281cd35f20406d2f81f7fd11eda",
+    "sha256": "968d6327423e250dbd9cd82234667b2c60ee7727ce81190191a65a5d6cf55e68",
     "summary": {
-      "authority-count": 521,
-      "line-count": 555,
+      "authority-count": 522,
+      "line-count": 556,
       "line-dispositions": {
         "adopt-latest": 143,
-        "current": 312,
+        "current": 313,
         "defer-breaking-migration": 23,
         "hold-compatibility": 68,
         "hold-unavailable": 9
       },
       "metadata-unavailable": 0,
       "metadata-preview-only": 5,
-      "metadata-verified": 516
+      "metadata-verified": 517
     }
   },
   "audit-cutoff": "2026-10-07",
@@ -23,7 +23,7 @@
     "catalog-sha256": "f6f1ce3cdc3c4027cf536216fe7c1be6ab781e776257b664baffa927044e3ef8"
   },
   "candidate": {
-    "catalog-sha256": "24ce9b1e729e9dfde8cce6c7d70a1d47c6609836fe80b955a37a3f34e95ffe29"
+    "catalog-sha256": "fe4a4780ab4c7ec52a2ac1168db5f7aeb14d3667d02ddd5f5b0b1609c87ce6a1"
   },
   "delta": [
     {

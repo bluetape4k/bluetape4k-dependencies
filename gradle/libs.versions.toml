@@ -70,6 +70,7 @@ aws2              = "2.54.12"  # https://mvnrepository.com/artifact/software.ama
 aws2-crt          = "0.48.4"  # AWS SDK Java 2.54.x parent-tested CRT compatibility version
 aws-kotlin        = "1.8.46"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.8.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
+freemarker        = "2.3.35"  # https://freemarker.apache.org/docs/versions_2_3_35.html
 ktor              = "3.5.2"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
 netty4            = "4.1.139.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
 netty             = "4.2.19.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
@@ -591,6 +592,7 @@ exposed-spring-boot4-starter                  = { module = "org.jetbrains.expose
 fabric8-kubernetes-client                     = { module = "io.fabric8:kubernetes-client", version.ref = "fabric8-kubernetes-client" }
 fabric8-kubernetes-client-bom                 = { module = "io.fabric8:kubernetes-client-bom", version.ref = "fabric8-kubernetes-client" }
 flyway-core                                   = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+freemarker                                    = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
 fory-core                                     = { module = "org.apache.fory:fory-core", version.ref = "fory" }
 fory-kotlin                                   = { module = "org.apache.fory:fory-kotlin", version.ref = "fory-kotlin" }
 gatling-app                                   = { module = "io.gatling:gatling-app", version.ref = "gatling" }
