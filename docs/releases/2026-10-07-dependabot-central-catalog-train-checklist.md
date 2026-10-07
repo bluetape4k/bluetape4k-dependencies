@@ -21,6 +21,8 @@
 ## 2026-10-08 live state
 
 - `gh issue list --repo bluetape4k/bluetape4k-exposed --state open`: 열린 이슈는 #885 하나다. 담당자 `debop`, milestone `2.1.0`, labels `ci`/`dependencies`/`tech-debt`다. 이슈 완료에는 Dependabot 보안 업데이트 성공 run을 확인하거나 해당 경고가 현재 graph에 적용되지 않는다는 live 증거가 필요하다.
+- 2026-10-08 `gh api repos/bluetape4k/bluetape4k-exposed/dependabot/alerts?state=open&per_page=100` 결과 열린 alert는 19건이다. 대상 family인 Jackson, Bouncy Castle, FreeMarker, MariaDB alert가 여전히 열려 있고, #885 완료 조건을 만족하는 후속 성공 run도 확인되지 않았다.
+- PR #899의 현재 본문은 `Closes #885`를 포함하고 DoD를 merge 후 Dependency Submission/Dependabot 결과 대기로 기록한다. PR #257의 원격 본문은 이전 map 결과 `192/192, dependency 50,516개`와 PR 생성 후 CI 대기를 담고 있다. local head `013ac5e4105b259a6a5ef120f1734b36202c6cd8`을 push하기 전까지는 그대로 두며, push 승인 시 새 exact-map 결과 `192 files / 50,518 dependencies / 192 models`와 현재 CI 상태로 본문을 갱신한다.
 - live 조회 기준 원격 consumer/catalog PR은 아래 exact head다. 표의 체크 수는 현재 GitHub PR head의 상태 집계이며 리뷰는 모두 0건이다.
 
 | Repository / PR | Exact remote head | Checks | 현재 상태 |
