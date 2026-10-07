@@ -71,6 +71,7 @@ aws2-crt          = "0.48.4"  # AWS SDK Java 2.54.x parent-tested CRT compatibil
 aws-kotlin        = "1.8.46"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.8.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
 freemarker        = "2.3.35"  # https://freemarker.apache.org/docs/versions_2_3_35.html
+jsoup             = "1.23.2"  # CVE-2026-71497 패치 기준 (Dependabot alert #180).
 ktor              = "3.5.2"  # https://mvnrepository.com/artifact/io.ktor/ktor-bom
 netty4            = "4.1.139.Final"  # Netty 4.1 compatibility line for Vert.x 4/Fabric8
 netty             = "4.2.19.Final"  # https://mvnrepository.com/artifact/io.netty/netty-bom
@@ -612,6 +613,7 @@ httpcore5-reactive                            = { module = "org.apache.httpcompo
 jakarta-activation-api                        = { module = "jakarta.activation:jakarta.activation-api", version.ref = "jakarta-activation" }
 jakarta-xml-bind                              = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jakarta-xml-bind" }
 javamoney-moneta                              = { module = "org.javamoney:moneta", version.ref = "javamoney-moneta" }
+jsoup                                         = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 kafka-clients                                 = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka3" }
 kafka-generator                               = { module = "org.apache.kafka:generator", version.ref = "kafka3" }
 kafka-metadata                                = { module = "org.apache.kafka:kafka-metadata", version.ref = "kafka3" }

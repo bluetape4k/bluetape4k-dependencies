@@ -615,26 +615,30 @@ class LatestStableInventoryTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("authority=522", result.stdout)
+        self.assertIn("authority=523", result.stdout)
 
     def test_inventory_reconstructs_the_exact_authority_universe(self) -> None:
         module = load_script()
         inventory = module.build_inventory(CATALOG, POLICY)
 
         self.assertEqual(inventory["schema-version"], 1)
-        self.assertEqual(inventory["summary"]["authority-count"], 522)
-        self.assertEqual(inventory["summary"]["catalog-direct"], 130)
+        self.assertEqual(inventory["summary"]["authority-count"], 523)
+        self.assertEqual(inventory["summary"]["catalog-direct"], 131)
         self.assertEqual(inventory["summary"]["managed-generated"], 325)
         self.assertEqual(inventory["summary"]["policy-subjects"], 67)
-        self.assertEqual(inventory["summary"]["audit-pending"], 522)
-        self.assertEqual(len(inventory["records"]), 522)
+        self.assertEqual(inventory["summary"]["audit-pending"], 523)
+        self.assertEqual(len(inventory["records"]), 523)
         self.assertIn(
             "catalog:library:org.freemarker:freemarker",
             {record["authority-key"] for record in inventory["records"]},
         )
+        self.assertIn(
+            "catalog:library:org.jsoup:jsoup",
+            {record["authority-key"] for record in inventory["records"]},
+        )
         self.assertEqual(
             len({record["authority-key"] for record in inventory["records"]}),
-            522,
+            523,
         )
         self.assertNotIn("bluetape4k-workshop", inventory["scope"]["repositories"])
         self.assertIn("bluetape4k-workshop", inventory["scope"]["excluded"])
@@ -663,6 +667,22 @@ class LatestStableInventoryTest(unittest.TestCase):
             line = record["current-lines"][0]
             self.assertEqual(line["version-key"], version_key)
             self.assertEqual(line["current"], catalog_versions[version_key])
+
+    def test_inventory_includes_jsoup_as_catalog_direct_authority(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        catalog_versions = module.parse_versions(CATALOG.read_text(encoding="utf-8"))
+        record = next(
+            record
+            for record in inventory["records"]
+            if record["coordinate-or-plugin-id"] == "org.jsoup:jsoup"
+        )
+
+        self.assertEqual(record["authority-key"], "catalog:library:org.jsoup:jsoup")
+        self.assertEqual(record["authority-source"], "catalog-direct")
+        self.assertEqual(record["aliases"], ["jsoup"])
+        self.assertEqual(record["current-lines"][0]["version-key"], "jsoup")
+        self.assertEqual(record["current-lines"][0]["current"], catalog_versions["jsoup"])
 
     def test_committed_inventory_is_canonical_and_current(self) -> None:
         module = load_script()
