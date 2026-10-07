@@ -224,7 +224,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(document["audit-cutoff"], "2026-09-04")
         else:
             self.assertEqual(status, "validation-pending")
-            self.assertEqual(document["audit-cutoff"], "2026-09-09")
+            self.assertEqual(document["audit-cutoff"], "2026-10-07")
         required_keys = {
                 "schema-version",
                 "rollout",
@@ -244,8 +244,18 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         if status == "verified-resolved-graph":
             self.assertEqual(len(document["delta"]), 126)
         else:
-            self.assertEqual(len(document["delta"]), 1)
-            self.assertEqual(document["delta"][0]["version-key"], "timefold-solver")
+            expected_deltas = {
+                "jackson2",
+                "jackson3",
+                "managed-jackson-core-h40e274bcba5b",
+                "managed-jackson-module-kotlin-ha5b389df3865",
+                "netty",
+                "netty4",
+            }
+            self.assertEqual(
+                {entry["version-key"] for entry in document["delta"]},
+                expected_deltas,
+            )
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
             len(document["delta"]),

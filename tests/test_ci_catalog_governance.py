@@ -242,7 +242,7 @@ gh() {
         )
         self.assertIn("actions: read", snapshot_workflow)
         self.assertIn("ci_run_id:", snapshot_workflow)
-        self.assertIn("actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7", snapshot_workflow)
+        self.assertIn("actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1", snapshot_workflow)
         self.assertIn("name: snapshot-consumer-inputs", snapshot_workflow)
         self.assertIn("run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.ci_run_id }}", snapshot_workflow)
         self.assertIn('gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}"', snapshot_workflow)
@@ -558,7 +558,7 @@ gh() {
         compile_step = workflow.split(
             "      - name: Compile generated signing helpers\n", 1
         )[1].split("      - name:", 1)[0]
-        setup_java = workflow.index("      - uses: actions/setup-java@v6.0.0")
+        setup_java = workflow.index("      - uses: actions/setup-java@v6.0.1")
         setup_gradle = workflow.index(
             "      - uses: gradle/actions/setup-gradle@v6.3.0"
         )
