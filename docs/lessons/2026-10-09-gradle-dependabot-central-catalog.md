@@ -28,7 +28,11 @@ Exposed에는 Gradle entry를 추가해 제출된 그래프를 유지하고, `op
 - 공식 Maven Central metadata에서 1.12.0을 확인했고 SHA-256은 `3c49b392085b9101077f67020a871cab5a90994ea9c49013012497fe9d80fbe2`였다.
 - Exposed 설정은 YAML로 읽었으며 Gradle PR 한도 `0`, `target-branch` 미지정, GitHub Actions 항목 보존을 확인했다.
 - LZ4 `dependencyInsight`는 `1.12.0`을 선택했고, `CompressedBlobColumnTypeTest`는 H2/PostgreSQL/MySQL에서 6/6 통과했다. `:bluetape4k-exposed-core:test`는 287개 통과, 13개 대기, UUID v7 millisecond timestamp 동등성 1건 실패였다. 이 테스트를 분리 재실행하자 세 DB에서 3/3 통과했지만 전체 suite를 깨끗한 상태로 다시 통과시킨 것은 아니다. 이 타이밍성 실패는 LZ4 변경 범위와 분리해 기록한다.
-- 중앙 후보의 9개 publisher POM/effective model 검증은 아직 끝나지 않았다. 9개 소비자 후보의 설정은 동일 catalog SHA를 가리키도록 준비 중이며, 6개 LZ4 직접 소비자의 dependency resolution도 확인 대상이다. 중앙 후보 SHA를 원격에서 사용할 수 있게 하고 소비자 pin을 반영한 뒤 새 Dependabot 실행 및 보안 alert를 재조회해야 한다. 따라서 이 기록은 #885 완료를 주장하지 않는다.
+- 중앙 PR #258의 CI run `37935913572`는 두 검증을 실패했다. `Verify catalog scripts`는 검증 대기 ledger cutoff가 `2026-10-07`이라고 고정한 테스트 때문에 실패했다. 실제 ledger와 audit evidence는 `2026-10-09`였고, 현재 pending delta에는 `at-yawk-lz4`만 있으므로 테스트의 날짜와 예상 키 집합을 갱신했다.
+- 같은 CI run의 publication POM 검증은 2026-09-08/09에 고정된 publisher commit들을 사용해 실패했다. Projects의 오래된 commit `d6e4a8be...`로 생성한 82개 POM에서 256개의 중복 dependency-management 항목을 재현했고, `idgenerators` POM에서 CI와 같은 `reactor-bom`, `kotlin-stdlib`, `kotlin-reflect` 중복을 확인했다. 검증을 약화하지 않고 `config/catalog-publisher-repository-refs.json`을 현재 소비자 후보의 정확한 SHA로 갱신했다.
+- 수정 후 영향 범위 Python 테스트 35개와 latest-stable audit/checksum 검사가 통과했다. Python 3.13 전체 suite는 477개 중 475개가 통과했고 2개 workspace 통합 테스트는 실패했다. 실패는 이 개발 workspace에 존재하는 sibling checkout들을 직접 읽는 검사에서 나왔다. `test_real_workspace_has_approved_hard_coded_candidate_baseline`은 9 대신 16개를 보고했고, `test_real_workspace_has_no_downstream_explicit_external_authority`는 Graph checkout의 명시 authority 2건을 보고했다. 이 검사는 테스트 코드 변경과 무관한 현재 로컬 checkout 상태에 의존하므로 전체 suite는 완전 통과로 기록하지 않는다. 기본 Python 3.9에서는 `tomllib`가 없어 해당 전체 실행을 검증 근거로 쓰지 않았다.
+- 최신 소비자 후보 SHA를 고정한 map `a16d6692435d6733c5f9b431dc748199f1e00991de1bc32f0152e41254c12ff5`로 publisher 검증을 재실행했다. 9개 저장소, POM 192개, 의존성 50,518개, Maven effective model 192개가 검사됐고 `failures=0`이었다.
+- 검증 시점에 GitHub PR #258은 기존 head `ef161acbdbad93376ce01846c646cf1d15e8d7c9`에서 계속 열려 있었으므로, 위 결과는 수정된 로컬 후보의 검증이다. 새 head를 push하고 hosted CI를 다시 실행하기 전까지 원격 CI 통과나 #885 완료를 주장하지 않는다. consumer dependency submission, Dependabot 재실행 및 남은 보안 alert 조회도 중앙 catalog 변경이 병합된 뒤 확인해야 한다.
 
 ## 재발 방지
 
