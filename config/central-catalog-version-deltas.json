@@ -656,6 +656,25 @@
       "resolved-graph-evidence": [],
       "rollout": "2026-10-07-dependabot-central-catalog",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "baseline-catalog-ref": "eccbc6d86374bd5402f04b1100dc3df99945df7a",
+      "catalog-sha256": "7aa400efd6f27a34b927dbff00b7197b3a843c2ae8e6b01e28ea03c846b97484",
+      "delta-count": 1,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-10-09-issue-885-central-catalog",
+      "status": "validation-pending"
     }
   ],
   "delta": [

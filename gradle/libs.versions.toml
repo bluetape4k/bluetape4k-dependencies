@@ -136,7 +136,7 @@ random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.bena
 sudachi           = "0.8.0"
 # <generated-central-authority-versions by scripts/promote-catalog-authority.py>
 aspectj-post-compile-weaving = "9.5.0"
-at-yawk-lz4 = "1.11.2"
+at-yawk-lz4 = "1.12.0"
 avro-kotlin = "2.12.0"
 brave = "6.3.1"
 clickhouse-jdbc = "0.9.9"
