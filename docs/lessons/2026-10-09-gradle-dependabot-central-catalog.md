@@ -36,7 +36,7 @@ Exposed에는 Gradle entry를 추가해 제출된 그래프를 유지하고, `op
 
 ## 재발 방지
 
-Dependabot 문제를 조사할 때 dependency submission과 updater run의 상태를 따로 확인한다. 실패 좌표를 라이브 Dependabot alert와 중앙 catalog에 대조하고, 중앙 버전을 먼저 수정한다. 다음으로 정확한 catalog SHA를 소비자에게 동기화하고, 실제 Dependabot 실행 결과와 보안 경고를 다시 조회한다. 검증 인벤토리의 기존 저장소 소유 metadata가 누락되면 임의로 issue/review를 만들어 채우지 말고 해당 catalog promotion 경로를 보류한다.
+Dependabot 문제를 조사할 때 dependency submission과 updater run의 상태를 따로 확인한다. 실패 좌표를 라이브 Dependabot alert와 중앙 catalog에 대조하고, 중앙 버전을 먼저 수정한다. 소비자 `settings.gradle.kts`와 CI pin을 바꿀 때는 central `snapshot-catalog-ref-overrides`와 계약 테스트도 같은 exact SHA로 갱신하고, 중앙 원격에서 해당 SHA를 fetch할 수 있는지 확인한다. 그 뒤 실제 Dependabot 실행 결과와 보안 경고를 다시 조회한다. 검증 인벤토리의 기존 저장소 소유 metadata가 누락되면 임의로 issue/review를 만들어 채우지 말고 해당 catalog promotion 경로를 보류한다.
 
 ## 출처
 
