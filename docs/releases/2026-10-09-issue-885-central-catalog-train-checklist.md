@@ -1,16 +1,16 @@
 # 2026-10-09 Exposed #885 중앙 catalog train 체크리스트
 
-상태: **PENDING / 중앙 후보 및 6개 소비자 검증 진행 중; 원격 적용과 live Dependabot 재확인 대기**
+상태: **PENDING / 중앙 후보 및 9개 소비자 SHA 준비 중; 전체 publisher POM, remote 적용, live Dependabot 재확인 대기**
 
 ## 고정 범위와 중단 조건
 
 - 분류: Type P `catalog-train-snapshot`; 이슈 #885의 Dependabot manifest에서 좌표를 찾지 못하는 실패와 중앙 버전 소유권을 함께 해결한다.
 - 중앙 저장소: `bluetape4k/bluetape4k-dependencies`; 기준 `develop` / `eccbc6d86374bd5402f04b1100dc3df99945df7a`; 후보 `chore/issue-885-central-catalog`.
-- 소비자 범위: 직접 LZ4 alias를 사용하는 Exposed, Projects, Experimental, Graph, JaVers, Leader. 변경할 catalog 값은 중앙 한 곳에서만 소유한다.
+- 소비자 범위: 현재 열린 catalog 소비자 PR 9곳(Exposed, Projects, Experimental, Graph, JaVers, Leader, AWS, Image, Text)을 동일한 중앙 SHA로 고정한다. LZ4를 직접 사용하는 저장소는 앞의 6곳이다. 변경할 catalog 값은 중앙 한 곳에서만 소유한다.
 - 대상 버전: `at.yawk.lz4:lz4-java` `1.11.2` → `1.12.0`. 공식 Maven Central metadata는 2026-10-09에 확인했으며 최신 안정 버전은 `1.12.0`, metadata SHA-256은 `3c49b392085b9101077f67020a871cab5a90994ea9c49013012497fe9d80fbe2`다. URL: <https://repo.maven.apache.org/maven2/at/yawk/lz4/lz4-java/maven-metadata.xml>.
 - Exposed live issue: #885 OPEN, milestone `2.1.0`. 진단 PR #896은 OPEN / head `80e77f3fef66671423fa3345ab648ac49bb17620`; latest develop `a12896750f3130841ac4cf142fc63e438228312d`와 결합해 검증한다. #899는 이미 merge되어 #885를 끝내지 못했다. Dependency Submission #37914457800은 이 SHA에서 성공했지만 바로 뒤 Dependabot Updates #37914573273은 같은 SHA에서 9개 좌표 모두 `dependency_not_found`로 실패했고 `ignore-conditions`는 비어 있었다.
-- 소비자 PR 후보 기준 head: Projects #1819 `768a44c8297c3b8bc58538b00cc47c7beebd696e`; Experimental #104 `040ef88f0c5d263bbfc8b3bcedf96c8d79534e06`; Graph #655 `da98381342bb90d219f15cc00cb2f1f7bcdf9373`; JaVers #396 `eb02a1897366e2bb773371f2d0b18537b511419d`; Leader #955 `218380a0ff9a5d94f7c2284102fbe2087151ae66`.
-- 산출물 범위: catalog/authority/audit/delta, 중앙 Dependabot ignore generator, Exposed Gradle ignore 설정, 6개 소비자 catalog SHA pin. BOM version, Maven artifact, stable release, tag, workflow dispatch, `snapshot publication`은 변경하지 않는다.
+- 소비자 PR 후보 기준 head: Exposed #896 `80e77f3fef66671423fa3345ab648ac49bb17620`; Projects #1819 `768a44c8297c3b8bc58538b00cc47c7beebd696e`; Experimental #104 `040ef88f0c5d263bbfc8b3bcedf96c8d79534e06`; Graph #655 `da98381342bb90d219f15cc00cb2f1f7bcdf9373`; JaVers #396 `eb02a1897366e2bb773371f2d0b18537b511419d`; Leader #955 `218380a0ff9a5d94f7c2284102fbe2087151ae66`; AWS #658 `09873d1cce861a27c2aac3e368e99e740a9e9397`; Image #697 `14034f53c03405655cce37fa9ac27461ea013e50`; Text #342 `02a7719368ec9559c17b68b8e060a97ff608678b`.
+- 산출물 범위: catalog/authority/audit/delta, 중앙 Dependabot ignore generator, Exposed Gradle ignore 설정, 9개 소비자 catalog SHA pin. BOM version, Maven artifact, stable release, tag, workflow dispatch, `snapshot publication`은 변경하지 않는다.
 - 승인 범위: issue 해결과 로컬 구현·검증·소비자 동기화는 승인됨. 아래 exact candidate가 확정되기 전에는 push, PR 생성/갱신, merge, tag, dispatch, publication, branch/worktree 삭제를 실행하지 않는다.
 - 중단 조건: resolved dependency가 `1.12.0`이 아니거나, catalog/audit/checksum이 불일치하거나, Dependabot ignore가 GitHub Actions 업데이트를 바꾸거나, affected build/POM 검증이 실패하면 후보를 진행하지 않는다.
 
@@ -30,7 +30,7 @@
   - **Failure:** 뒤 행을 먼저 완료했다고 앞 gate를 생략하지 않는다.
 - [x] **CL-04 — 증거 즉시 기록**
   - **Action:** 완료하는 각 행에 fresh evidence를 함께 적는다.
-  - **Evidence:** central lesson 및 workspace research note를 추가하고 Markdown/용어 감사와 `git diff --check`를 실행했다. 후보·실패 run SHA, run ID, 9개 좌표, catalog version/checksum이 문서에 기록되어 있다.
+  - **Evidence:** central lesson과 workspace research note를 기록하고 Markdown/용어 감사 및 `git diff --check`를 수행했다. 후보·실패 run SHA, run ID, 9개 좌표, catalog version/checksum이 문서에 기록되어 있다.
   - **Failure:** 근거 없는 체크는 해제한다.
 - [x] **CL-05 — fail-closed 진행**
   - **Action:** PENDING/FAIL 행 아래의 종속 작업을 보류한다.
@@ -53,7 +53,6 @@
 
 신규 중앙 lesson `docs/lessons/2026-10-09-gradle-dependabot-central-catalog.md`에만 적용한다.
 
-- [ ] **SPW-01 — 독자·목적·근거 고정:** Korean lesson; #885의 원인과 중앙 소유권 결정. 근거는 이 checklist, GitHub workflow runs, Exposed alert 조회, catalog/audit 산출물, 공식 GitHub/Maven Central 문서다. 라이브 원격 재검증은 미확정으로 표시한다.
 - [x] **SPW-01 — 독자·목적·근거 고정:** Korean lesson; #885의 원인과 중앙 소유권 결정. 근거는 이 checklist, GitHub workflow runs, Exposed alert 조회, catalog/audit 산출물, 공식 GitHub/Maven Central 문서다. 라이브 원격 재검증은 미확정으로 표시한다.
 - [x] **SPW-02 — lesson 구조:** Context, Root cause, Decision, Outcome, Verification, Future guidance를 읽고 근거와 미완료점을 대조했다.
 - [x] **SPW-03 — 한국어 기술 문체:** `korean-naturalness-checklist.md` KO-01..07을 수행했다.
@@ -92,7 +91,7 @@
   - **Failure:** 미로드 실행 계약이 있으면 편집을 멈춘다.
 - [x] **CG-01 — 기준 정보 재확인**
   - **Action:** 권한, 지침, 후보 경로와 현재 status를 재확인한다.
-  - **Evidence:** 사용자 승인과 8개 저장소 mutation-check 통과; 후보는 별도 worktree다.
+  - **Evidence:** 사용자 승인과 9개 소비 저장소 mutation-check 통과; 후보는 별도 worktree다.
   - **Failure:** 통합 checkout이나 unrelated dirty state를 변경하지 않는다.
 - [x] **CG-02 — 역사 및 현재 증거 조회**
   - **Action:** GNO와 live GitHub에서 이슈/PR/CI 및 과거 결정 확인.
@@ -100,7 +99,7 @@
   - **Failure:** stale GNO/PR 상태만으로 원인을 단정하지 않는다.
 - [x] **CG-03 — 사용자 작업과 경계 보호**
   - **Action:** 수정 중인 worktree와 미추적 파일을 보존하고 후보를 격리한다.
-  - **Evidence:** 중앙 후보 worktree와 Exposed candidate worktree를 별도 생성했다. Exposed 기본 checkout의 `scripts/ci/__pycache__/`는 보존한다.
+  - **Evidence:** 중앙 후보, Exposed candidate, 9개 소비자 후보 worktree를 분리했다. Exposed 기본 checkout의 `scripts/ci/__pycache__/`와 기존 PR worktree의 dirty state는 보존한다.
   - **Failure:** 기존 dirty worktree를 수정하거나 제거하지 않는다.
 - [x] **CG-04 — 정책과 독자 경계 적용**
   - **Action:** 한국어 reader-facing 기록과 영어 agent-facing 지침을 분리한다.
@@ -182,23 +181,23 @@
 
 - [x] **PUB-01 — catalog train identity 고정**
   - **Action:** 대상, 버전, consumer scope, publication/dispatch authority를 고정한다.
-  - **Evidence:** 위 중앙 `develop` base SHA, `lz4-java` 1.11.2→1.12.0, 6 consumers, BOM version 변화 없음, remote publication/dispatch 보류.
+  - **Evidence:** 위 중앙 `develop` base SHA, `lz4-java` 1.11.2→1.12.0, 9 catalog consumers(이 중 LZ4 direct consumer 6곳), BOM version 변화 없음, remote publication/dispatch 보류.
   - **Failure:** version/ref/authority가 달라지면 checklist를 갱신한다.
 - [x] **PUB-02 — live issue/PR/topology 확인**
   - **Action:** issue/PR/tag/release 및 consumer edge를 확인한다.
-  - **Evidence:** #885/#896 및 6 consumer PR/head를 위에서 고정했고 central open PR #254/#255와 issue #256은 별도 소유 작업으로 제외한다.
+  - **Evidence:** #885/#896 및 9 consumer PR/head를 위에서 고정했고 central open PR #254/#255와 issue #256은 별도 소유 작업으로 제외한다.
   - **Failure:** stale consumer candidate는 retarget 전 검증하지 않는다.
 - [ ] **PUB-03 — exact catalog candidate proof**
   - **Action:** policy/audit/checksum/delta, consumers, publishers를 후보 SHA에서 확인한다.
-  - **Evidence:** exact catalog SHA-256, version resolution, 9 publisher POM/model 결과, 6 consumer validation.
+  - **Evidence:** exact catalog SHA-256, version resolution, 9 publisher POM/model 결과, 9 consumer SHA pin 검토 및 6개 LZ4 consumer resolution.
   - **Failure:** representative-only POM/build 결과로 후보 완료를 주장하지 않는다.
 - **N/A — PUB-04 — stable release preflight:** 이 범위는 stable artifact/version을 변경하거나 출판하지 않는다.
 - **N/A — PUB-05 — publication dispatch hold:** `snapshot`/stable dispatch는 요청·승인 범위 밖이다. 새 승인이 오면 해당 시점에 다시 확인한다.
 - **N/A — PUB-06 — artifact publication:** 이 train은 Maven artifact를 발행하지 않는다.
 - **N/A — PUB-07 — GitHub Release:** tag/release를 만들지 않는다.
 - [ ] **PUB-08 — consumer catalog sync**
-  - **Action:** 6개 direct consumer가 exact candidate catalog ref/SHA를 쓰게 준비하고 확인한다.
-  - **Evidence:** per-repository diff, catalog SHA, LZ4 dependencyInsight 및 relevant test/build.
+  - **Action:** 9개 열린 catalog consumer가 exact candidate catalog ref/SHA를 쓰게 준비하고 확인한다.
+  - **Evidence:** 9개 저장소의 per-repository diff와 catalog SHA, 6개 LZ4 direct consumer의 dependencyInsight 및 relevant test/build.
   - **Failure:** user dirty worktree를 수정하거나 Gradle `help`만으로 PASS 처리하지 않는다.
 - **N/A — PUB-09 — next development line:** stable release가 없고 BOM line을 바꾸지 않는다.
 - **N/A — PUB-10 — public manual handoff:** public API/manual 변경이 없는 dependency governance 작업이다.
@@ -207,7 +206,7 @@
   - **Evidence:** DoD의 X/Y, N/A 수, PENDING 사유와 최신 live URL.
   - **Failure:** #885 acceptance가 확인되기 전 DONE/closeout으로 보고하지 않는다.
 - [ ] **TOP-01 — 저장소 class 분류**
-  - **Action:** central Dependencies, 6 consumers, publication 대상 9곳을 분류한다.
+  - **Action:** central Dependencies, 9 catalog consumers(이 중 LZ4 direct consumer 6곳), publication 대상 9곳을 분류한다.
   - **Evidence:** central catalog source와 experimental catalog-only 여부를 live workflows로 확인한다.
   - **Failure:** 분류되지 않은 repository를 candidate map에 넣지 않는다.
 - [ ] **TOP-02 — edge 종류 확정**
