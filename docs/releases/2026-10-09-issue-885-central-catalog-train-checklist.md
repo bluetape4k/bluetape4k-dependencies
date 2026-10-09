@@ -1,0 +1,243 @@
+# 2026-10-09 Exposed #885 중앙 catalog train 체크리스트
+
+상태: **PENDING / 중앙 후보와 9개 소비자 SHA의 로컬 준비 완료; Experimental BOM 해석, 원격 반영, live Dependabot 재검증 대기**
+
+## 고정 범위와 중단 조건
+
+- 분류: Type P `catalog-train-snapshot`; 이슈 #885의 Dependabot manifest에서 좌표를 찾지 못하는 실패와 중앙 버전 소유권을 함께 해결한다.
+- 중앙 저장소: `bluetape4k/bluetape4k-dependencies`; 기준 `develop` / `eccbc6d86374bd5402f04b1100dc3df99945df7a`; 후보 `chore/issue-885-central-catalog`.
+- 소비자 범위: 현재 열린 catalog 소비자 PR 9곳(Exposed, Projects, Experimental, Graph, JaVers, Leader, AWS, Image, Text)을 동일한 중앙 SHA로 고정한다. LZ4를 직접 사용하는 저장소는 앞의 6곳이다. 변경할 catalog 값은 중앙 한 곳에서만 소유한다.
+- 대상 버전: `at.yawk.lz4:lz4-java` `1.11.2` → `1.12.0`. 공식 Maven Central metadata는 2026-10-09에 확인했으며 최신 안정 버전은 `1.12.0`, metadata SHA-256은 `3c49b392085b9101077f67020a871cab5a90994ea9c49013012497fe9d80fbe2`다. URL: <https://repo.maven.apache.org/maven2/at/yawk/lz4/lz4-java/maven-metadata.xml>.
+- Exposed live issue: #885 OPEN, milestone `2.1.0`. 진단 PR #896은 OPEN / head `80e77f3fef66671423fa3345ab648ac49bb17620`; latest develop `a12896750f3130841ac4cf142fc63e438228312d`와 결합해 검증한다. #899는 이미 merge되어 #885를 끝내지 못했다. Dependency Submission #37914457800은 이 SHA에서 성공했지만 바로 뒤 Dependabot Updates #37914573273은 같은 SHA에서 9개 좌표 모두 `dependency_not_found`로 실패했고 `ignore-conditions`는 비어 있었다. 2026-10-09 live 재조회에서도 #885와 22개 경보(9개 좌표)가 OPEN이며 최신 Dependabot 실행은 실패 상태다.
+- 소비자 PR 후보 기준 head: Exposed #896 `80e77f3fef66671423fa3345ab648ac49bb17620`; Projects #1819 `768a44c8297c3b8bc58538b00cc47c7beebd696e`; Experimental #104 `040ef88f0c5d263bbfc8b3bcedf96c8d79534e06`; Graph #655 `da98381342bb90d219f15cc00cb2f1f7bcdf9373`; JaVers #396 `eb02a1897366e2bb773371f2d0b18537b511419d`; Leader #955 `218380a0ff9a5d94f7c2284102fbe2087151ae66`; AWS #658 `09873d1cce861a27c2aac3e368e99e740a9e9397`; Image #697 `14034f53c03405655cce37fa9ac27461ea013e50`; Text #342 `02a7719368ec9559c17b68b8e060a97ff608678b`.
+- 산출물 범위: catalog/authority/audit/delta, 중앙 Dependabot ignore generator, Exposed Gradle ignore 설정, 9개 소비자 catalog SHA pin. BOM version, Maven artifact, stable release, tag, workflow dispatch, `snapshot publication`은 변경하지 않는다.
+- 승인 범위: issue 해결과 로컬 구현·검증·소비자 동기화는 승인됨. 아래 exact candidate가 확정되기 전에는 push, PR 생성/갱신, merge, tag, dispatch, publication, branch/worktree 삭제를 실행하지 않는다.
+- 중단 조건: resolved dependency가 `1.12.0`이 아니거나, catalog/audit/checksum이 불일치하거나, Dependabot ignore가 GitHub Actions 업데이트를 바꾸거나, affected build/POM 검증이 실패하면 후보를 진행하지 않는다.
+
+## Checklist integrity
+
+- [x] **CL-01 — mutation 전 checklist 생성**
+  - **Action:** implementation 파일을 수정하기 전에 router/common/leaf 행을 생성한다.
+  - **Evidence:** 이 체크리스트는 구현 파일 편집 전에 생성되었다. 앞서 만든 두 worktree는 코드/문서 diff 없는 격리 준비 단계였다.
+  - **Failure:** checklist를 새 구현 뒤늦게 만들지 않는다.
+- [x] **CL-02 — 적용 행 분류**
+  - **Action:** 모든 행을 required, conditional, N/A로 분류한다.
+  - **Evidence:** PR/consumer/POM 행은 required, stable release/publication/manual 행은 scope evidence와 함께 N/A로 표시했다.
+  - **Failure:** 미분류 행을 required로 취급한다.
+- [x] **CL-03 — 의존 순서 유지**
+  - **Action:** 표의 위에서 아래 순서로 증거를 모은다.
+  - **Evidence:** preflight → implementation → consumer/POM validation → PR/merge gates 순서다.
+  - **Failure:** 뒤 행을 먼저 완료했다고 앞 gate를 생략하지 않는다.
+- [x] **CL-04 — 증거 즉시 기록**
+  - **Action:** 완료하는 각 행에 fresh evidence를 함께 적는다.
+  - **Evidence:** central lesson과 workspace research note를 기록하고 Markdown/용어 감사 및 `git diff --check`를 수행했다. 후보·실패 run SHA, run ID, 9개 좌표, catalog version/checksum이 문서에 기록되어 있다.
+  - **Failure:** 근거 없는 체크는 해제한다.
+- [x] **CL-05 — fail-closed 진행**
+  - **Action:** PENDING/FAIL 행 아래의 종속 작업을 보류한다.
+  - **Evidence:** 9개 소비자 후보가 동일한 중앙 SHA를 로컬에서 가리킴을 확인했다. 전체 POM은 9개 publisher에서 통과했다. Experimental의 `:benchmarks` 의존성 해석은 중앙 `2.1.0` BOM이 Maven Central/Google/Central snapshots에 없어 통과로 표시하지 않았고, 원격 PR/Dependabot은 갱신하지 않았다.
+  - **Failure:** 미완료 prerequisite를 건너뛰지 않는다.
+- [x] **CL-06 — 누락/순서 gate 복구**
+  - **Action:** 누락이 발견되면 checklist를 복구하고 영향받은 증거를 다시 실행한다.
+  - **Evidence:** CL 행을 Router/Common gates 앞에 재배치하고 Writer DoD를 별도 절로 두었다. 최종 순서 확인과 `git diff --check` 통과.
+  - **Failure:** 수리가 끝나지 않으면 BLOCKED/PENDING 상태를 유지한다.
+- [ ] **CL-07 — irreversible hold 갱신**
+  - **Action:** remote push/PR/merge/dispatch 전에 exact target과 authority를 새로 읽는다.
+  - **Evidence:** 아직 remote mutation을 하지 않았다. 각 대상 작업 직전에 live ref와 명시적 authority를 새로 읽는다.
+  - **Failure:** stale/unknown 상태면 side effect를 실행하지 않는다.
+- [ ] **CL-08 — 완료 전 항목 집계**
+  - **Action:** 적용 행을 PASS/N/A/PENDING으로 재집계한다.
+  - **Evidence:** 완료 보고 시 적용 행과 unchecked ID를 재집계한다.
+  - **Failure:** 합계가 맞지 않으면 DONE을 주장하지 않는다.
+
+## Writer DoD
+
+신규 중앙 lesson `docs/lessons/2026-10-09-gradle-dependabot-central-catalog.md`에만 적용한다.
+
+- [x] **SPW-01 — 독자·목적·근거 고정:** Korean lesson; #885의 원인과 중앙 소유권 결정. 근거는 이 checklist, GitHub workflow runs, Exposed alert 조회, catalog/audit 산출물, 공식 GitHub/Maven Central 문서다. 라이브 원격 재검증은 미확정으로 표시한다.
+- [x] **SPW-02 — lesson 구조:** Context, Root cause, Decision, Outcome, Verification, Future guidance를 읽고 근거와 미완료점을 대조했다.
+- [x] **SPW-03 — 한국어 기술 문체:** `korean-naturalness-checklist.md` KO-01..07을 수행했다.
+- [x] **SPW-04 — 기술적 추적성:** 버전, SHA-256, run ID, 의존성 좌표, 동작 설명을 checklist·audit·GitHub run evidence와 대조했다.
+- [x] **SPW-05 — 최종 read-back:** Markdown 구조와 링크/목록/코드 토큰을 재검토했다. contextual terminology audit는 사용 가능한 `clinic-appointment` 규칙으로 실행해 최종 2개 파일에서 0건을 확인했다. 이 규칙 집합은 소프트웨어 용어사전이 아니므로 본문은 별도로 용어 일관성과 의미를 검토했다.
+
+- [x] **KO-01 — 근거 의미 고정:** 사실·식별자·링크·불확실성을 source와 대조했다.
+- [x] **KO-02 — 근거 없는 강조 제거:** 일반 강조 없이 실제 동작과 검증 결과를 기술했다.
+- [x] **KO-03 — 번역투/형식적 문장 제거:** 기술 한국어와 직접적인 문장을 확인했다.
+- [x] **KO-04 — 용어와 문법:** 동일 개념의 용어를 통일하고 주어·서술어를 대조했다.
+- [x] **KO-05 — 비유와 말투:** 비유나 판단을 흐리는 구어체가 없다.
+- [x] **KO-06 — 모든 독자 표면:** 제목, 본문, 목록, 출처와 링크를 확인했다.
+- [x] **KO-07 — 문맥 용어 감사:** 첫 audit에서 checklist의 일반 `snapshot` 표현 세 곳을 발견해 구체적인 실패 서술 또는 정확한 code span으로 고쳤다. 뒤이은 감사에서 lesson의 정확한 GitHub 오류 문구가 추가로 잡혀 오류 전문을 code span으로 보존했다. 최종 audit 결과는 2 files / 0 findings다. 사용 가능한 규칙은 `clinic-appointment` 전용이므로 별도로 소프트웨어 용어와 사실을 검토했다.
+
+## Router / Common gates
+
+- [x] **WF-00 — AGENTS 계층 읽기**
+  - **Action:** user/workspace/저장소 지침을 적용한다.
+  - **Evidence:** `/Users/debop/.codex/AGENTS.md`, workspace `AGENTS.md`, Exposed 및 Dependencies `AGENTS.md`를 읽었고 현재 작업 범위를 적용했다.
+  - **Failure:** 누락된 기준 정보가 있으면 변경을 멈춘다.
+- [x] **WF-01 — 작업 분류**
+  - **Action:** 가장 좁은 위험 적합 분류를 고른다.
+  - **Evidence:** 중앙 catalog 값과 여러 소비자 pin 변경이므로 Type P `catalog-train-snapshot`이다.
+  - **Failure:** scope가 내부 artifact release를 포함하면 새 flow로 재분류한다.
+- [x] **WF-02 — 첫 계획 작성**
+  - **Action:** 순서와 DoD를 사용자에게 제시한다.
+  - **Evidence:** 4단계 계획을 현재 대화에 제시했다.
+  - **Failure:** 불명확한 실행 범위는 승인 전에 편집하지 않는다.
+- [x] **WF-03 — 계획 승인**
+  - **Action:** 첫 구체 계획에 대한 명시적 승인을 확인한다.
+  - **Evidence:** 사용자의 `승인` 응답을 받았다.
+  - **Failure:** 나중 단계 승인을 앞 단계에 소급하지 않는다.
+- [x] **WF-04 — 실행 계약 로드**
+  - **Action:** workflow, publish, Python, maintenance 및 검증 지침을 읽는다.
+  - **Evidence:** `bluetape-workflow`, `bluetape-publish-jvm`, `bluetape-py-patterns`, `bluetape-maintenance`, `test-driven-development`와 checklist/common-gates/POM 참조를 읽었다.
+  - **Failure:** 미로드 실행 계약이 있으면 편집을 멈춘다.
+- [x] **CG-01 — 기준 정보 재확인**
+  - **Action:** 권한, 지침, 후보 경로와 현재 status를 재확인한다.
+  - **Evidence:** 사용자 승인과 9개 소비 저장소 mutation-check 통과; 후보는 별도 worktree다.
+  - **Failure:** 통합 checkout이나 unrelated dirty state를 변경하지 않는다.
+- [x] **CG-02 — 역사 및 현재 증거 조회**
+  - **Action:** GNO와 live GitHub에서 이슈/PR/CI 및 과거 결정 확인.
+  - **Evidence:** #885 OPEN, #896 OPEN, #899 MERGED. Dependency Submission `37914457800`은 `a12896750f3130841ac4cf142fc63e438228312d`에서 성공했고, 직후 Dependabot Updates `37914573273`은 같은 SHA에서 9개 좌표에 대해 실패했다. 실패 updater payload는 `ignore-conditions=[]`였다.
+  - **Failure:** stale GNO/PR 상태만으로 원인을 단정하지 않는다.
+- [x] **CG-03 — 사용자 작업과 경계 보호**
+  - **Action:** 수정 중인 worktree와 미추적 파일을 보존하고 후보를 격리한다.
+  - **Evidence:** 중앙 후보, Exposed candidate, 9개 소비자 후보 worktree를 분리했다. Exposed 기본 checkout의 `scripts/ci/__pycache__/`와 기존 PR worktree의 dirty state는 보존한다.
+  - **Failure:** 기존 dirty worktree를 수정하거나 제거하지 않는다.
+- [x] **CG-04 — 정책과 독자 경계 적용**
+  - **Action:** 한국어 reader-facing 기록과 영어 agent-facing 지침을 분리한다.
+  - **Evidence:** 체크리스트/연구/lesson은 한국어, 코드·좌표·URL은 원형 유지.
+  - **Failure:** 불필요하게 운영 지침이나 전역 권한을 변경하지 않는다.
+- [x] **CG-05 — 기존 패턴 재사용**
+  - **Action:** central ignore generator와 catalog/audit 도구를 먼저 활용한다.
+  - **Evidence:** `scripts/sync-dependabot-ignores.py`, `audit-latest-stable.py`, `sync-shared-versions.py`의 기존 계약을 확인했다.
+  - **Failure:** 중복 새 abstraction을 추가하지 않는다.
+- [x] **CG-06 — public/documentation 계약 확인**
+  - **Action:** 연구 기록·lesson·PR metadata와 링크를 검증한다.
+  - **Evidence:** Wiki research note 및 central lesson을 추가했다. lesson 출처 URL을 확인했고 두 문서의 contextual terminology audit는 2 files / 0 findings, `git diff --check`는 통과했다.
+  - **Failure:** 출처가 없는 운영 규칙을 남기지 않는다.
+- [x] **CG-07 — 동작 고정 및 targeted proof**
+  - **Action:** ignore generator의 RED/GREEN과 catalog/dependency-resolution 테스트를 실행한다.
+  - **Evidence:** 중앙 ignore test RED에서 2 failures, GREEN에서 13/13; 관련 중앙 unittest 67 passed; audit/checksum check와 중앙 Gradle build 통과. Exposed `dependencyInsight`는 LZ4 1.12.0, `CompressedBlobColumnTypeTest`는 H2/PostgreSQL/MySQL 6/6 통과. Core 전체 suite는 287 passed, 13 pending, UUID v7 timestamp 비교 1건 실패 후 분리 재실행 3/3 통과했다. 전체 suite clean rerun은 별도 미완료로 기록한다.
+  - **Failure:** 테스트가 의도한 실패를 보이지 않으면 구현을 시작하지 않는다.
+- [x] **CG-08 — 무거운 검증 직렬화**
+  - **Action:** JVM builds/Testcontainers/POM 검증을 서로 다른 저장소에서 겹치지 않게 실행한다.
+  - **Evidence:** 저장소별 Gradle 의존성 해석을 순차 실행했다. Exposed, Projects, Graph, JaVers, Leader는 `at.yawk.lz4:lz4-java:1.12.0`을 선택했다. Experimental은 미게시 `io.github.bluetape4k:bluetape4k-dependencies:2.1.0` 때문에 구성 단계에서 실패했으며 그 결과를 PUB-03에 남겼다. 게시 POM 검증은 별도 작업이 겹치지 않게 순차 완료했다.
+  - **Failure:** 겹친 실행 결과는 버리고 순차 재실행한다.
+- [x] **CG-09 — 재발 방지 lesson 평가**
+  - **Action:** 동적 중앙 catalog와 Dependabot parser graph 차이에 대한 반복 방지 규칙을 남긴다.
+  - **Evidence:** central `docs/lessons/2026-10-09-gradle-dependabot-central-catalog.md`에 same-SHA successful submission + failed updater, ignored `.gradle` catalog cache, `ignore-conditions=[]`, 중앙 버전 소유권, 미완료 live proof를 기록했다.
+  - **Failure:** lesson이 없거나 단순 작업 일지면 pre-PR proof를 통과시키지 않는다.
+- [ ] **CG-10 — 최종 pre-PR 증거 수렴**
+  - **Action:** 변경·리뷰·검증을 수렴하고 exact local commit을 고정한다.
+  - **Evidence:** 최종 diff, test/POM/build/consumer 결과, P0/P1 판정, local SHA.
+  - **Failure:** 실패 또는 누락이 있으면 PR head 준비 상태로 보고하지 않는다.
+- [ ] **CG-11 — PR 전달 authority 확인**
+  - **Action:** repository/base/head를 명시한 계획과 승인 여부를 확인한다.
+  - **Evidence:** push/PR 승인 경계는 exact candidate SHA 확정 후 재평가한다.
+  - **Failure:** exact remote target 없이 push/PR하지 않는다.
+- [ ] **CG-12 — exact head push**
+  - **Action:** 별도 승인된 branch만 push하고 remote SHA를 읽는다.
+  - **Evidence:** push/read-back SHA가 일치해야 한다.
+  - **Failure:** force push나 다른 head를 사용하지 않는다.
+- [ ] **CG-12A — PR 전 지침 재확인**
+  - **Action:** PR 생성/갱신 직전에 AGENTS·skill·issue metadata를 다시 읽는다.
+  - **Evidence:** exact repo/base/head와 현재 지침 hash 또는 read-back.
+  - **Failure:** drift를 수렴하기 전 PR을 만들지 않는다.
+- [ ] **CG-13 — PR 생성/갱신과 본문 확인**
+  - **Action:** 별도 승인된 target만 PR 처리하고 `Closes #885` 및 `## DoD Status`를 검증한다.
+  - **Evidence:** live PR metadata와 body read-back.
+  - **Failure:** `Refs #885`로 완료 처리하지 않는다.
+- [ ] **CG-14 — exact-head CI와 review**
+  - **Action:** 필요한 CI와 현재 리뷰/thread를 exact head에서 확인한다.
+  - **Evidence:** green checks, unresolved thread 없음, 독립 코드 검토 증거.
+  - **Failure:** 이전 head CI를 재사용하지 않는다.
+- [ ] **CG-15 — merge-ready 보고**
+  - **Action:** 필수/N/A/대기 gate를 집계하고 merge-ready 여부를 보고한다.
+  - **Evidence:** exact PR/head, `Required checks: X/Y`, Blocked=0 또는 PENDING 사유.
+  - **Failure:** 미검증 PR을 merge-ready로 부르지 않는다.
+- [ ] **CG-16 — exact-head merge 승인**
+  - **Action:** merge 전에 사용자에게 정확한 PR/head 승인을 새로 받는다.
+  - **Evidence:** merge-ready 보고 이후 승인과 fresh hold.
+  - **Failure:** 이전 작업 승인으로 merge하지 않는다.
+- [ ] **CG-17 — merge 검증**
+  - **Action:** 승인된 전략으로만 merge하고 SHA/state를 읽는다.
+  - **Evidence:** live merged state와 merge commit.
+  - **Failure:** 승인 전 merge하지 않는다.
+- [ ] **CG-17A — canonical checkout 동기화**
+  - **Action:** merge 이후 canonical checkout을 base branch와 동기화한다.
+  - **Evidence:** local/upstream SHA·ancestry·preserved state.
+  - **Failure:** dirty state를 버리지 않는다.
+- [ ] **CG-17B — 승인된 task cleanup**
+  - **Action:** merge proof 이후 안전한 task work만 정리한다.
+  - **Evidence:** 삭제 대상이 없음/merged 증거가 확인될 때만 체크한다.
+  - **Failure:** 아직 PR에 필요한 worktree/branch는 보존한다.
+- [ ] **CG-18 — canonical GNO lesson 인덱싱**
+  - **Action:** integration 및 cleanup 이후 lesson을 GNO에 반영한다.
+  - **Evidence:** `gno update`, embed, representative search 결과.
+  - **Failure:** feature worktree에서 인덱싱하지 않는다.
+- [ ] **CG-X01 — 다른 irreversible action 승인**
+  - **Action:** 이 local phase에 선언되지 않은 irreversible action이 필요한지 판단한다.
+  - **Evidence:** push/PR/merge/tag/dispatch/publication을 실행하지 않으며 별도 exact-target 승인까지 보류한다.
+  - **Failure:** 이 행을 PR/merge 승인 대체로 사용하지 않는다.
+## Publish / topology / POM gates
+
+- [x] **PUB-01 — catalog train identity 고정**
+  - **Action:** 대상, 버전, consumer scope, publication/dispatch authority를 고정한다.
+  - **Evidence:** 위 중앙 `develop` base SHA, `lz4-java` 1.11.2→1.12.0, 9 catalog consumers(이 중 LZ4 direct consumer 6곳), BOM version 변화 없음, remote publication/dispatch 보류.
+  - **Failure:** version/ref/authority가 달라지면 checklist를 갱신한다.
+- [x] **PUB-02 — live issue/PR/topology 확인**
+  - **Action:** issue/PR/tag/release 및 consumer edge를 확인한다.
+  - **Evidence:** #885/#896 및 9 consumer PR/head를 위에서 고정했고 central open PR #254/#255와 issue #256은 별도 소유 작업으로 제외한다.
+  - **Failure:** stale consumer candidate는 retarget 전 검증하지 않는다.
+- [ ] **PUB-03 — exact catalog candidate proof**
+  - **Action:** policy/audit/checksum/delta, consumers, publishers를 후보 SHA에서 확인한다.
+  - **Evidence:** `sync-shared-versions.py --check --summary` 통과, 9 publisher POM/model 결과 `files=192 dependencies=50518 maven_models=192 failures=0`, 후보 pin map 검증 통과. LZ4 직접 소비자 6곳 중 5곳은 1.12.0 해석을 확인했으나 Experimental은 중앙 BOM `2.1.0` 미게시로 해석을 완료하지 못했다.
+  - **Failure:** representative-only POM/build 결과로 후보 완료를 주장하지 않는다.
+- **N/A — PUB-04 — stable release preflight:** 이 범위는 stable artifact/version을 변경하거나 출판하지 않는다.
+- **N/A — PUB-05 — publication dispatch hold:** `snapshot`/stable dispatch는 요청·승인 범위 밖이다. 새 승인이 오면 해당 시점에 다시 확인한다.
+- **N/A — PUB-06 — artifact publication:** 이 train은 Maven artifact를 발행하지 않는다.
+- **N/A — PUB-07 — GitHub Release:** tag/release를 만들지 않는다.
+- [x] **PUB-08 — consumer catalog sync**
+  - **Action:** 9개 열린 catalog consumer가 exact candidate catalog ref/SHA를 쓰게 준비하고 확인한다.
+  - **Evidence:** 9개 열린 소비자 PR 후보의 로컬 worktree에서 동일한 중앙 SHA pin과 저장소별 diff를 확인했다. 원격 PR head는 그대로 보존했다. LZ4 직접 소비자 중 5/6의 `dependencyInsight`는 1.12.0을 선택했고 Exposed 압축 테스트는 H2/PostgreSQL/MySQL 6/6 통과했다. Experimental 해석은 PUB-03의 미게시 BOM 대기로 남는다.
+  - **Failure:** user dirty worktree를 수정하거나 Gradle `help`만으로 PASS 처리하지 않는다.
+- **N/A — PUB-09 — next development line:** stable release가 없고 BOM line을 바꾸지 않는다.
+- **N/A — PUB-10 — public manual handoff:** public API/manual 변경이 없는 dependency governance 작업이다.
+- [ ] **PUB-11 — 최종 release/issue truth 보고**
+  - **Action:** 모든 row, exact SHAs, CI/alert/issue 상태와 미완료 항목을 집계한다.
+  - **Evidence:** DoD의 X/Y, N/A 수, PENDING 사유와 최신 live URL.
+  - **Failure:** #885 acceptance가 확인되기 전 DONE/closeout으로 보고하지 않는다.
+- [x] **TOP-01 — 저장소 class 분류**
+  - **Action:** central Dependencies, 9 catalog consumers(이 중 LZ4 direct consumer 6곳), publication 대상 9곳을 분류한다.
+  - **Evidence:** central catalog source와 consumer map을 대조했다. `verify-publication-poms.py`의 `NON_PUBLISHING_CATALOG_CONSUMERS`는 `bluetape4k-experimental`을 catalog-only로 분류하며 게시 inventory는 central + 8개 downstream publisher다.
+  - **Failure:** 분류되지 않은 repository를 candidate map에 넣지 않는다.
+- [x] **TOP-02 — edge 종류 확정**
+  - **Action:** catalog-managed 및 POM/build-validation edge를 구분한다.
+  - **Evidence:** 중앙 SHA pin은 9개 consumer edge, Maven POM/effective model 검증은 central + 8개 publisher validation edge로 분리했다. Experimental은 POM publisher edge에 포함하지 않는다.
+  - **Failure:** catalog edge를 stable publication order로 승격하지 않는다.
+- [x] **TOP-03 — 비순환 DAG 확인**
+  - **Action:** 중앙 후보 후 consumer/POM 검증 순서를 고정한다.
+  - **Evidence:** 중앙 catalog 후보 → consumer SHA pin → 9 publisher POM/effective model 순서이며 internal artifact promotion edge가 없어 cycle이 없다.
+  - **Failure:** 누락 topology나 cycle이 있으면 중단한다.
+- [x] **TOP-04 — 단일 flow/class 고정**
+  - **Action:** 이 변경에 맞는 catalog train flow/class를 고정한다.
+  - **Evidence:** `catalog-train-snapshot` / `dependencies-only`; BOM version `2.1.0`은 유지했다.
+  - **Failure:** internal artifact version도 바뀌면 재분류한다.
+- **N/A — TOP-05 — internal incremental stable transition:** stable release 또는 internal BOM version 변경이 없다.
+- [x] **POM-01 — publisher inventory 대조**
+  - **Action:** verifier registry와 live publish workflows를 대조한다.
+  - **Evidence:** exact candidate map 기반 verifier 출력에 central + 8개 downstream publisher, 총 9개 저장소가 포함됐다. Experimental catalog-only consumer는 publisher inventory에서 제외됨을 스크립트 상수와 대조했다.
+  - **Failure:** registry/workflow drift는 보정될 때까지 blocker다.
+- [x] **POM-02 — 전체 publication POM/effective model 생성**
+  - **Action:** exact candidate map에서 모든 publisher의 POM을 생성하고 Maven effective model을 만든다.
+  - **Evidence:** `publication-poms: failures=0 repositories=9 files=192 dependencies=50518 maven_models=192`.
+  - **Failure:** 실패나 누락 publisher가 있으면 candidate-ready가 아니다.
+- [x] **POM-03 — POM 구조와 dependencyManagement 검사**
+  - **Action:** version completeness, duplicate/unmanaged coordinates, profiles, XML/model 상태를 검사한다.
+  - **Evidence:** exact candidate map에서 192개 POM의 구조 및 Maven effective-model 검사 결과가 모두 0 failure다.
+  - **Failure:** representative-only 또는 stale generated POM으로 PASS 처리하지 않는다.
+
+## 연구 출처
+
+- GitHub Gradle 지원: <https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories#gradle>
+- Dependabot ignore 동작: <https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/manage-your-dependency-security/controlling-dependencies-updated>
+- Security update 설정: <https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/configure-security-updates>
+- Workspace research note: `bluetape4k-wiki/research/2026-10-09-exposed-885-dependabot-gradle-catalog.md`

@@ -117,6 +117,11 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         self.assertIn('dependency-name: "org.slf4j:*"', synced)
         self.assertIn('dependency-name: "org.bouncycastle:*"', synced)
         self.assertIn('dependency-name: "org.freemarker:freemarker"', synced)
+        self.assertIn('dependency-name: "at.yawk.lz4:lz4-java"', synced)
+        self.assertIn('dependency-name: "org.jsoup:jsoup"', synced)
+        self.assertIn(
+            'dependency-name: "org.mariadb.jdbc:mariadb-java-client"', synced
+        )
         self.assertIn('dependency-name: "com.ongres.scram:*"', synced)
         self.assertIn('dependency-name: "org.apache.tomcat.embed:*"', synced)
         self.assertIn('dependency-name: "software.amazon.awssdk.crt:*"', synced)
@@ -127,6 +132,15 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
         self.assertIn(
             "software.amazon.awssdk.crt:*",
             sync.CENTRAL_DEPENDENCY_IGNORES,
+        )
+
+    def test_issue_885_dependencies_are_governed_centrally(self) -> None:
+        self.assertTrue(
+            {
+                "at.yawk.lz4:lz4-java",
+                "org.jsoup:jsoup",
+                "org.mariadb.jdbc:mariadb-java-client",
+            }.issubset(sync.CENTRAL_DEPENDENCY_IGNORES)
         )
 
     def test_sync_text_adds_ignore_section_when_missing(self) -> None:
