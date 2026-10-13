@@ -186,16 +186,10 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             },
         )
         self.assertEqual(
-            policy["snapshot-catalog-ref-overrides"],
-            {
-                "bluetape4k-projects": "0765227c19024a86732b23a4911da7a80521a814",
-                "bluetape4k-aws": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
-                "bluetape4k-exposed": "096560faa3384f3b53aa5d0baab9e36fd17eb6fd",
-                "bluetape4k-graph": "55b5269bddd2bd041d5f282abcd0238dc242c171",
-                "bluetape4k-javers": "9698c9d66bea6fcba373143ee8fa5bfbd9812d4b",
-                "bluetape4k-leader": "0765227c19024a86732b23a4911da7a80521a814",
-            },
+            policy["snapshot-catalog-ref"],
+            "198147fd6ca2992fae32e175bd5f3d396c497096",
         )
+        self.assertEqual(policy.get("snapshot-catalog-ref-overrides", {}), {})
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
             set(),
@@ -239,7 +233,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertEqual(
             module.snapshot_candidate_branch(document),
-            "chore/snapshot-catalog-850959d",
+            "chore/snapshot-catalog-198147f",
         )
 
     def test_manifest_rejects_source_snapshot_suffix(self) -> None:

@@ -39,6 +39,15 @@ catalog ref도 live 상태에 맞는 명시적 override로 기록했다.
 3. 후보 변경은 별도 worktree로 덮어쓴 임시 workspace에서 검증한다.
 4. 사용자가 상태를 정정하면 같은 작업의 lesson과 회귀 테스트에 반영한다.
 
+중앙 catalog를 쓰는 라이브러리 저장소가 모두 같은 commit으로 수렴한 뒤에도
+`snapshot-catalog-ref-overrides`를 남기면 정책 manifest와 실제 소비 상태가
+불일치한다. 2026-10-13 점검에서 9개 라이브러리의 `settings.gradle.kts`와 CI가
+모두 `198147fd6ca2992fae32e175bd5f3d396c497096`을 가리켰지만, manifest에는
+이전 기본 ref와 저장소별 override 6개가 남아 있었다. 수렴이 확인되면 공통
+commit을 `snapshot-catalog-ref`로 설정하고 override를 비운다. 회귀 테스트는
+공통 ref와 빈 override를 함께 고정한다. 저장소 하나라도 다른 ref를 쓰는 동안은
+그 차이를 명시적으로 유지하고 전체 수렴으로 보고하지 않는다.
+
 ## 후속 CI 실패: signing 고정 ref와 개발선 checkout의 혼용
 
 [PR #247의 CI](https://github.com/bluetape4k/bluetape4k-dependencies/actions/runs/34183939370)는
