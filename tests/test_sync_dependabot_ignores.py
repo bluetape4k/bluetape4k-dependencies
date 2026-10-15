@@ -134,6 +134,19 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
             sync.CENTRAL_DEPENDENCY_IGNORES,
         )
 
+    def test_rabbitmq_amqp_client_is_generated_as_a_central_ignore(self) -> None:
+        text = sync.sync_text(
+            "version: 2\n"
+            "updates:\n"
+            '  - package-ecosystem: "gradle"\n'
+            '    directory: "/"\n'
+        )
+
+        self.assertIn(
+            '      - dependency-name: "com.rabbitmq:amqp-client"',
+            text,
+        )
+
     def test_issue_885_dependencies_are_governed_centrally(self) -> None:
         self.assertTrue(
             {
