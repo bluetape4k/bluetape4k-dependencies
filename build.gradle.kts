@@ -1,3 +1,4 @@
+import io.bluetape4k.gradle.VerifyDokkaFreemarkerResolutionTask
 import nmcp.NmcpExtension
 import org.gradle.api.artifacts.VersionCatalogsExtension
 
@@ -86,13 +87,32 @@ val versionCatalog = extensions
 val jacksonVersion = versionCatalog.findVersion("jackson2").get().requiredVersion
 // jackson-annotations는 2.22.3 artifact가 없어 중앙의 별도 호환 버전을 유지한다.
 val jacksonAnnotationsVersion = versionCatalog.findVersion("jackson-annotations").get().requiredVersion
+val freemarkerVersion = versionCatalog.findVersion("freemarker").get().requiredVersion
 val jsoupVersion = versionCatalog.findVersion("jsoup").get().requiredVersion
+
+val dokkaResolvableConfigurations = configurations
+    .toList()
+    .filter { it.name.startsWith("dokka") && it.isCanBeResolved }
+val verifyDokkaFreemarkerResolution = tasks.register<VerifyDokkaFreemarkerResolutionTask>("verifyDokkaFreemarkerResolution") {
+    group = "verification"
+    description = "Checks Dokka configurations resolve the centrally managed FreeMarker version."
+    expectedVersion.set(freemarkerVersion)
+    dokkaRuntimeClasspath.from(dokkaResolvableConfigurations)
+}
+
+tasks.named("check") {
+    dependsOn(verifyDokkaFreemarkerResolution)
+}
 
 configurations.matching { it.name.startsWith("dokka") }.configureEach {
     resolutionStrategy.eachDependency {
         if (requested.group == "org.jsoup" && requested.name == "jsoup") {
             useVersion(jsoupVersion)
             because("Dokka tooling must use the centrally managed jsoup version")
+        }
+        if (requested.group == "org.freemarker" && requested.name == "freemarker") {
+            useVersion(freemarkerVersion)
+            because("Dokka 도구의 FreeMarker를 중앙 보안 버전에 맞춘다.")
         }
         if (requested.group?.startsWith("com.fasterxml.jackson") == true) {
             useVersion(
@@ -127,6 +147,12 @@ dependencies {
                         }
                         add("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
                         add("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:$jacksonVersion")
+                        if (dokkaModule == "dokka-base") {
+                            removeAll { dependency ->
+                                dependency.group == "org.freemarker" && dependency.name == "freemarker"
+                            }
+                            add("org.freemarker:freemarker:$freemarkerVersion")
+                        }
                     }
                     withDependencyConstraints {
                         removeAll { dependency ->
