@@ -683,12 +683,24 @@
       "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b",
       "delta-count": 1,
       "downstream-full-builds": {
+        "status": "pending",
         "repositories": 9,
-        "status": "pending"
+        "failures": null,
+        "assemble": {
+          "status": "verified",
+          "repositories": 9,
+          "failures": 0,
+          "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
+        }
       },
       "publication-pom-verification": {
+        "status": "verified-local-candidate",
         "repositories": 9,
-        "status": "pending"
+        "files": 192,
+        "dependencies": 50543,
+        "maven-models": 192,
+        "failures": 0,
+        "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
       },
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": [],

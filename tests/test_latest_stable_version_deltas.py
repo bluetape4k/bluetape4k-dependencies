@@ -354,7 +354,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(len(candidate_receipt["full-builds"]["repositories"]), 9)
             self.assertEqual(candidate_receipt["full-builds"]["assemble"]["failures"], 0)
             self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
-            self.assertEqual(candidate_receipt["publication-poms"]["files"], 188)
+            self.assertEqual(candidate_receipt["publication-poms"]["files"], 192)
 
     def test_rollout_audit_summary_matches_its_lifecycle(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))

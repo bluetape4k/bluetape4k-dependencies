@@ -1,0 +1,139 @@
+{
+  "schema-version": 1,
+  "status": "verified-local-candidate",
+  "verified-at": "2026-10-18",
+  "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
+  "catalog": {
+    "carrier-head": "bd3c06ec52e2a075a54ce62ff7790956477c5863",
+    "content-commit": "bd3c06ec52e2a075a54ce62ff7790956477c5863",
+    "sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b"
+  },
+  "candidate-manifest": {
+    "path": "build/issue-1832/repository-map.json",
+    "sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789",
+    "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
+  },
+  "scope": {
+    "included": [
+      "bluetape4k-projects",
+      "bluetape4k-aws",
+      "bluetape4k-experimental",
+      "bluetape4k-exposed",
+      "bluetape4k-graph",
+      "bluetape4k-image",
+      "bluetape4k-javers",
+      "bluetape4k-leader",
+      "bluetape4k-text"
+    ],
+    "excluded": [
+      "bluetape4k-workshop",
+      "clinic-appointment",
+      "exposed-r2dbc-workshop",
+      "exposed-workshop",
+      "timefold-workshop"
+    ]
+  },
+  "resolved-graphs": {
+    "status": "pending-exhaustive-receipt",
+    "targeted-consumer": {
+      "repository": "bluetape4k-projects",
+      "head": "d78baa47c6b60bd8e931d61539c2fe939f8cc3f5",
+      "configuration": ":bluetape4k-testcontainers:testRuntimeClasspath",
+      "coordinate": "com.rabbitmq:amqp-client",
+      "selected": "5.37.0",
+      "selection-reasons": [
+        "Selected by rule",
+        "By constraint"
+      ]
+    }
+  },
+  "publication-poms": {
+    "status": "verified-local-candidate",
+    "repositories": 9,
+    "files": 192,
+    "dependencies": 50543,
+    "maven-models": 192,
+    "failures": 0,
+    "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
+  },
+  "full-builds": {
+    "status": "pending",
+    "failures": null,
+    "repositories": {
+      "bluetape4k-projects": {
+        "head": "d78baa47c6b60bd8e931d61539c2fe939f8cc3f5",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-aws": {
+        "head": "152db969c6a873e33fd0e85ac07a989b474326fe",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-experimental": {
+        "head": "af2373cb515543cf6839fae8fe323518be557cec",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-exposed": {
+        "head": "37fc877beea70f777e25bf19053599de4cc6df29",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-graph": {
+        "head": "e61a47359f418d4eb5932ecda8764c604b3c282b",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-image": {
+        "head": "002d76a33db51b02c5cf90f31c716d2c903249a4",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-javers": {
+        "head": "cd035207b7b01ff1b9ad55d43591557fb454ef42",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-leader": {
+        "head": "cee9a5c851075403155e54aec1e94cf7f46e46f2",
+        "status": "assemble-verified"
+      },
+      "bluetape4k-text": {
+        "head": "a9ec070ab240ee2245ecf0568ee055e44c836136",
+        "status": "assemble-verified"
+      }
+    },
+    "assemble": {
+      "status": "verified",
+      "repositories": 9,
+      "failures": 0,
+      "command": "./gradlew assemble -Pbluetape4kDependenciesCatalogPath=<candidate>/gradle/libs.versions.toml --no-parallel --max-workers=1 --console=plain"
+    },
+    "projects-full-build": {
+      "status": "timed-out-without-terminal-result",
+      "repository": "bluetape4k-projects",
+      "head": "d78baa47c6b60bd8e931d61539c2fe939f8cc3f5",
+      "command": "./gradlew build -Pbluetape4kDependenciesCatalogPath=<candidate>/gradle/libs.versions.toml --continue --no-parallel --max-workers=1 --console=plain",
+      "tool-timeout-seconds": 300,
+      "observed-cache-lettuce-test-failure": {
+        "executed": 407,
+        "failed": 43
+      },
+      "baseline-isolated-reruns": {
+        "runs": 2,
+        "passed-tests-per-run": 464,
+        "failed-tests-per-run": 0,
+        "max-workers": [
+          1,
+          4
+        ]
+      },
+      "baseline-lettuce-detekt-findings": 69,
+      "cause": "not-established"
+    }
+  },
+  "affected-tests": {
+    "status": "verified",
+    "repository": "bluetape4k-projects",
+    "head": "d78baa47c6b60bd8e931d61539c2fe939f8cc3f5",
+    "module": "bluetape4k-testcontainers",
+    "test": "io.bluetape4k.testcontainers.mq.RabbitMQServerTest",
+    "passed": 3,
+    "failed": 0
+  },
+  "remote-immutable-ref-verification": "pending-candidate-commit-and-push"
+}
