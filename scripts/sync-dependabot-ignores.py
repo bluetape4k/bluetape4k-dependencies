@@ -87,6 +87,7 @@ CENTRAL_DEPENDENCY_IGNORES = (
     "org.springdoc:*",
     "org.postgresql:postgresql",
     "org.mariadb.jdbc:mariadb-java-client",
+    "com.rabbitmq:amqp-client",
     "com.mysql:mysql-connector-j",
     "io.r2dbc:r2dbc-h2",
     "io.projectreactor:reactor-bom",
