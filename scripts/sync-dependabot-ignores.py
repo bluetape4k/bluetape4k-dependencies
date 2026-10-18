@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Sync downstream Dependabot ignores for centrally managed dependencies.
+"""Sync downstream Dependabot ignores for centrally managed version updates.
 
-Downstream repositories should not receive Dependabot PRs for dependency
-versions owned by bluetape4k-dependencies. Those versions must be changed in
-this repository first, then propagated with sync-shared-versions.py.
+Downstream repositories that request version-update PRs should not receive
+Dependabot PRs for dependency versions owned by bluetape4k-dependencies. Those
+versions must be changed in this repository first, then propagated with
+sync-shared-versions.py. A zero open-pull-requests-limit disables version
+updates, but generated ignores are omitted only when the Gradle update block
+opts in to security updates without central ignores.
 """
 
 from __future__ import annotations
@@ -33,6 +36,9 @@ MARKER_START = (
     "      # <central-dependency-ignore by scripts/sync-dependabot-ignores.py>"
 )
 MARKER_END = "      # </central-dependency-ignore>"
+SECURITY_UPDATES_OPT_IN = (
+    "    # bluetape4k-dependabot-security-updates: enabled"
+)
 
 CENTRAL_DEPENDENCY_IGNORES = (
     "dev.openfga:*",
@@ -147,9 +153,8 @@ def remove_existing_block(lines: list[str]) -> list[str]:
     return result
 
 
-def sync_text(text: str) -> str:
-    lines = remove_existing_block(text.splitlines())
-    gradle_update_start = next(
+def gradle_update_bounds(lines: list[str]) -> tuple[int, int] | None:
+    start = next(
         (
             index
             for index, line in enumerate(lines)
@@ -157,17 +162,85 @@ def sync_text(text: str) -> str:
         ),
         None,
     )
-    if gradle_update_start is None:
-        return "\n".join(lines) + "\n"
+    if start is None:
+        return None
 
-    next_update = next(
+    end = next(
         (
             index
-            for index in range(gradle_update_start + 1, len(lines))
+            for index in range(start + 1, len(lines))
             if lines[index].startswith("  - package-ecosystem: ")
         ),
         len(lines),
     )
+    return start, end
+
+
+def has_zero_open_pull_requests_limit(
+    lines: list[str], start: int, end: int
+) -> bool:
+    for line in lines[start:end]:
+        key, separator, value = line.strip().partition(":")
+        if not separator or key != "open-pull-requests-limit":
+            continue
+
+        value = value.split("#", maxsplit=1)[0].strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        return value == "0"
+    return False
+
+
+def has_security_updates_opt_in(
+    lines: list[str], start: int, end: int
+) -> bool:
+    return SECURITY_UPDATES_OPT_IN in lines[start:end]
+
+
+def ignore_section_has_children(
+    lines: list[str], ignore_index: int, end: int
+) -> bool:
+    ignore_indent = len(lines[ignore_index]) - len(lines[ignore_index].lstrip())
+    return any(
+        line.strip()
+        and len(line) - len(line.lstrip()) > ignore_indent
+        for line in lines[ignore_index + 1 : end]
+    )
+
+
+def sync_text(text: str) -> str:
+    lines = text.splitlines()
+    bounds = gradle_update_bounds(lines)
+    if bounds is None:
+        return "\n".join(lines) + "\n"
+
+    original_start, original_end = bounds
+    had_generated_block = MARKER_START in lines[original_start:original_end]
+    lines = remove_existing_block(lines)
+    bounds = gradle_update_bounds(lines)
+    if bounds is None:
+        return "\n".join(lines) + "\n"
+    gradle_update_start, next_update = bounds
+
+    if has_zero_open_pull_requests_limit(
+        lines, gradle_update_start, next_update
+    ) and has_security_updates_opt_in(lines, gradle_update_start, next_update):
+        ignore_index = next(
+            (
+                index
+                for index in range(gradle_update_start, next_update)
+                if lines[index] == "    ignore:"
+            ),
+            None,
+        )
+        if (
+            had_generated_block
+            and ignore_index is not None
+            and not ignore_section_has_children(lines, ignore_index, next_update)
+        ):
+            del lines[ignore_index]
+        return "\n".join(lines) + "\n"
+
     ignore_index = next(
         (
             index

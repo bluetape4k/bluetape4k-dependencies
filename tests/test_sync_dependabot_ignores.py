@@ -177,6 +177,120 @@ class SyncDependabotIgnoresTest(unittest.TestCase):
             synced.index('  - package-ecosystem: "github-actions"'),
         )
 
+    def test_sync_text_keeps_generated_ignores_when_limit_is_zero_without_opt_in(
+        self,
+    ) -> None:
+        text = "\n".join(
+            [
+                "version: 2",
+                "updates:",
+                '  - package-ecosystem: "gradle"',
+                '    directory: "/"',
+                "    open-pull-requests-limit: 0",
+                '  - package-ecosystem: "github-actions"',
+                '    directory: "/"',
+                "",
+            ],
+        )
+
+        synced = sync.sync_text(text)
+
+        self.assertIn("    ignore:", synced)
+        self.assertIn(sync.MARKER_START, synced)
+
+    def test_sync_text_does_not_add_ignore_with_security_update_opt_in(self) -> None:
+        text = "\n".join(
+            [
+                "version: 2",
+                "updates:",
+                '  - package-ecosystem: "gradle"',
+                '    directory: "/"',
+                "    # bluetape4k-dependabot-security-updates: enabled",
+                "    open-pull-requests-limit: 0",
+                '  - package-ecosystem: "github-actions"',
+                '    directory: "/"',
+                "",
+            ],
+        )
+
+        synced = sync.sync_text(text)
+
+        self.assertEqual(synced, text)
+        self.assertNotIn("    ignore:", synced)
+        self.assertNotIn(sync.MARKER_START, synced)
+
+    def test_sync_text_removes_generated_ignore_with_security_update_opt_in(
+        self,
+    ) -> None:
+        text = "\n".join(
+            [
+                "version: 2",
+                "updates:",
+                '  - package-ecosystem: "gradle"',
+                '    directory: "/"',
+                "    # bluetape4k-dependabot-security-updates: enabled",
+                "    open-pull-requests-limit: 0",
+                "    ignore:",
+                *sync.generated_block(),
+                '  - package-ecosystem: "github-actions"',
+                '    directory: "/"',
+                "",
+            ],
+        )
+
+        synced = sync.sync_text(text)
+
+        self.assertNotIn(sync.MARKER_START, synced)
+        self.assertNotIn("    ignore:", synced)
+        self.assertEqual(sync.sync_text(synced), synced)
+
+    def test_sync_text_preserves_manual_ignores_with_security_update_opt_in(
+        self,
+    ) -> None:
+        text = "\n".join(
+            [
+                "version: 2",
+                "updates:",
+                '  - package-ecosystem: "gradle"',
+                '    directory: "/"',
+                "    # bluetape4k-dependabot-security-updates: enabled",
+                "    open-pull-requests-limit: 0",
+                "    ignore:",
+                '      - dependency-name: "org.example:manual"',
+                "        update-types:",
+                '          - "version-update:semver-major"',
+                *sync.generated_block(),
+                '  - package-ecosystem: "github-actions"',
+                '    directory: "/"',
+                "",
+            ],
+        )
+
+        synced = sync.sync_text(text)
+
+        self.assertNotIn(sync.MARKER_START, synced)
+        self.assertIn('      - dependency-name: "org.example:manual"', synced)
+        self.assertIn("    ignore:", synced)
+
+    def test_sync_text_keeps_generated_ignores_when_gradle_limit_is_positive(
+        self,
+    ) -> None:
+        text = "\n".join(
+            [
+                "version: 2",
+                "updates:",
+                '  - package-ecosystem: "gradle"',
+                '    directory: "/"',
+                "    open-pull-requests-limit: 10",
+                "",
+            ],
+        )
+
+        synced = sync.sync_text(text)
+
+        self.assertIn(sync.MARKER_START, synced)
+        self.assertIn("    ignore:", synced)
+
     def test_sync_text_leaves_actions_only_config_unchanged(self) -> None:
         text = "\n".join(
             [
