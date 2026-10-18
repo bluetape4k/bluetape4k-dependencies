@@ -1,6 +1,6 @@
 # 2026-10-18 Issue #1832 RabbitMQ 카탈로그 train 체크리스트
 
-상태: **PENDING / resolved graph·후보 POM·9개 assemble 검증 통과; Projects 후보 전체 build 재실행 성공, 첫 32개 실패는 재현되지 않음; 기록 당시 PR head `65fcd8b`의 CI run `39135032477` 7/7 통과; checklist freshness 수정 후 새 head CI와 review read-back, immutable ref, Projects 반영, 실제 alert 재시도 대기**
+상태: **PENDING / resolved graph·후보 POM·9개 assemble 검증 통과; Projects 후보 전체 build 재실행 성공, 첫 32개 실패는 재현되지 않음; 기록 기준 head `9ac4173`의 CI run `39136787363` 7/7 통과, checklist freshness finding 해소; immutable ref, Projects 반영, 실제 alert 재시도 대기. 현재 PR head와 검사는 live PR 상태를 기준으로 확인한다.**
 
 ## 고정 범위와 중단 조건
 
@@ -23,7 +23,7 @@
 - [x] **REL-07 — 전체 build / 테스트 완료:** Projects 후보 전체 build 첫 실행은 24분 36초 뒤 `BUILD FAILED`로 끝났고 32개 task가 실패했다. Testcontainers 472개 중 10개가 fixed host-port 충돌로 실패하고 22개가 skip됐으며, 여러 task가 Gradle binary test-result 파일의 `NoSuchFileException`/`EOFException`으로 실패했다. 이 실패는 변경 없는 Projects `develop` head `d78baa47c6b60bd8e931d61539c2fe939f8cc3f5`와 baseline catalog `5.35.0`으로 전체 build를 실행했을 때 재현되지 않았다: 4분 56초, 1,102 actionable tasks, 170 executed, 0 failed. 동일 Projects head에서 후보 catalog `5.37.0`으로 전체 build를 재실행한 결과도 성공했다: 8분 55초, 1,102 actionable tasks, 97 executed, 2 from cache, 1,003 up-to-date, 0 failed. 재실행 Testcontainers는 472개 중 0 failed, 22 skipped였고 `NoSuchFileException`, `EOFException`, fixed-port 충돌은 없었다. 기준 log SHA-256 `f8960b753682b97b1c882ca96edbcd7f1ab8e47b322b9bda8b256f8dc49e53d5`; 후보 재실행 log SHA-256 `b2d466570d6f9100cd31be54b918fbfc13a9261e3822e9f755b96e6e5c6e053e`. 첫 실패의 원인은 확정되지 않았으나 새 후보 실행에서 재현되지 않았다. 9개 downstream 전체 테스트는 실행하지 않았으며 각 저장소의 assemble만 검증했다.
 - [x] **REL-08 — 전후 resolved graph:** `scripts/verify-latest-stable-resolved-graphs.py --promote`가 1개 authority의 before/after 그래프를 각각 resolve했다. RabbitMQ는 5.35.0 → 5.37.0, 함께 선택된 Netty 모듈은 4.2.17.Final → 4.2.18.Final이다. 영수증 `docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json`, SHA-256 `160fa169c5369bae53bfd38b4e797169e7c99c73225039ee6794751c8ebfdcd9`이며 원장과 중앙 롤업이 같은 hash를 가리킨다.
 - [x] **REL-09 — PR 브랜치/메타데이터:** [Dependencies PR #267](https://github.com/bluetape4k/bluetape4k-dependencies/pull/267)은 base `develop`, head `fix/issue-1832-amqp-client-5-37-0`이다. 기록 당시 head `65fcd8b42bfdf8a571b8b4dd47f6228b6ec8a884`에서 live read-back한 결과는 `OPEN`, `MERGEABLE`, assignee `debop`, labels `ci`/`security`, milestone `2.1.0`이었다.
-- [ ] **REL-10 — exact-head CI와 리뷰:** 기록 당시 head `65fcd8b42bfdf8a571b8b4dd47f6228b6ec8a884`의 CI run `39135032477`에서 7개 check가 모두 통과했다. 7개 관점 inline fallback과 독립 코드 리뷰를 완료했고 P0/P1 결함은 없지만, 독립 리뷰가 이 checklist의 이전 head/run 표기를 P2 freshness finding으로 지적했다. GitHub review/thread는 없다. 이 freshness 수정은 새 head를 만들므로 새 exact-head checks와 review/thread read-back이 끝날 때까지 이 항목은 미완료다.
+- [x] **REL-10 — exact-head CI와 리뷰:** 기록 기준 head `9ac41731cd3105240cc7433b6ef659c17ea69f2d`의 CI run `39136787363`에서 7개 check가 모두 통과했다. 7개 관점 inline fallback과 독립 최종 코드 리뷰를 완료했고 P0/P1/P2 결함은 없다. GitHub review/comment/thread read-back은 비어 있었다. 이 체크리스트는 시점 기록이며, 더 최신 PR head와 그 CI는 live PR 상태에서 확인한다.
 - [ ] **REL-11 — immutable catalog ref:** `catalog/2026-10-18-01` 생성은 PR 병합 뒤 fresh approval을 받은 후 진행한다. 현 단계에서 tag는 만들지 않는다.
 - [ ] **REL-12 — Projects 기본 브랜치 반영:** immutable ref를 고정한 Projects 변경을 병합한 뒤 Projects default-branch Dependency Submission을 확인한다.
 - [ ] **REL-13 — 실제 Dependabot 재시도:** Projects Dependency Submission 이후 alert #267 페이지에서 `Try again`을 실행한다. `dependency_not_found`가 계속되면 오류 미해소로 기록하고 Issue #1832를 열린 상태로 유지한다.
@@ -41,13 +41,13 @@
 - Resolved graph 증거: `docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json`은 `spec-count=1`, `observation-count=2`, RabbitMQ `5.35.0` → `5.37.0`, 전이 Netty `4.2.17.Final` → `4.2.18.Final`을 기록한다. SHA-256 `160fa169c5369bae53bfd38b4e797169e7c99c73225039ee6794751c8ebfdcd9`.
 - 전체 build 판정: Projects 후보 root `build --continue --no-parallel --max-workers=1` 첫 실행은 24분 36초 후 32개 failed task로 끝났다(1,025 actionable, 190 executed, 835 up-to-date). Testcontainers 472개 중 10개 fixed host-port 실패와 22개 skip이 있었고, 여러 task가 Gradle binary test-result 파일 쓰기 중 `NoSuchFileException`/`EOFException`을 보고했다. 같은 Projects head의 baseline catalog 전체 build는 4분 56초, 1,102 task, 실패 0으로 성공했다. 후보 catalog 재실행도 8분 55초, 1,102 task, 실패 0으로 성공했으며 Testcontainers 472개 중 0 failed/22 skipped였다. 기준 log `build/issue-1832/projects-baseline.log` SHA-256 `f8960b753682b97b1c882ca96edbcd7f1ab8e47b322b9bda8b256f8dc49e53d5`; 후보 rerun log `build/issue-1832/projects-candidate-rerun.log` SHA-256 `b2d466570d6f9100cd31be54b918fbfc13a9261e3822e9f755b96e6e5c6e053e`. 첫 후보 실행 오류는 재현되지 않았지만 원인은 확인하지 않았다. 이전 `:bluetape4k-cache-lettuce:test` 43/407 실패는 baseline worker 1/4 재실행에서 각각 464/464 통과했고, baseline `:bluetape4k-lettuce:detektTest`는 변경되지 않은 테스트에서 69건을 보고했다.
 - Dependencies 거버넌스: `python3.13 -m unittest discover -s tests`는 483개 통과, snapshot artifact 조회에서 HTTP 403을 받은 검사 2개는 skip됐다. latest-stable, central-rollup, resolved-graph 집중 테스트 28개가 통과했고 `git diff --check` 및 후보/graph receipt SHA-256 검증도 통과했다.
-- Exact-head PR 증거: Dependencies PR #267은 기록 당시 `65fcd8b42bfdf8a571b8b4dd47f6228b6ec8a884`였고 run `39135032477`의 check 7개가 모두 통과했다. GitHub review/comment/thread는 없었다. 이 checklist 갱신은 새 head를 만들므로 새 exact-head CI와 review/thread read-back은 대기 상태다. Projects Issue #1832와 Dependabot alert #267은 마지막 live 확인에서 OPEN이다.
+- Exact-head PR 증거: Dependencies PR #267의 기록 기준 head `9ac41731cd3105240cc7433b6ef659c17ea69f2d`에서 run `39136787363`의 check 7개가 모두 통과했다. GitHub review/comment/thread는 없었다. 현재 head와 CI는 live PR checks에서 다시 확인한다. Projects Issue #1832와 Dependabot alert #267은 마지막 live 확인에서 OPEN이다.
 - 7개 관점 inline fallback 리뷰: 보안 좌표/버전, 변경 정합성, 구조, Kotlin 공개 API/ABI, 테스트/호출자, 성능, 문서/CI/릴리스 증거를 확인했다. 발견 사항과 미완료 검증은 PR `Review Notes`와 `DoD Status`에 기록한다. 독립 reviewer의 GitHub 승인은 확보되지 않았다.
 - 교훈 검토: 새 규칙을 만들지 않았다. 기존 `docs/lessons/2026-10-09-gradle-dependabot-central-catalog.md`가 중앙 catalog 수정, consumer 고정 참조, 실제 alert 확인을 이미 다루므로 별도 lesson은 N/A다.
 - Projects 전체 build: baseline 전체 실행 성공, 후보 전체 재실행 성공. 첫 후보 실행의 32개 실패는 재현되지 않았으며 원인은 미확정.
 - Resolved graph: authority 1개와 before/after observation 2개 검증 완료.
-- Dependencies PR #267: 기록 당시 `65fcd8b`에서 OPEN/MERGEABLE; 해당 head의 CI 7/7 통과. checklist freshness 수정 후 새 head 검증 필요.
+- Dependencies PR #267: 기록 기준 `9ac4173`에서 OPEN/MERGEABLE; 해당 head의 CI 7/7 통과. 현재 head와 검사는 live PR 상태에서 확인.
 - Catalog tag `catalog/2026-10-18-01`: 미완료; 병합 후 별도 승인 뒤 생성.
 - Projects pin과 기본 브랜치 Dependency Submission: 미완료.
 - Dependabot alert #267 `Try again`: 미실행; alert는 OPEN.
-- 현재 체크리스트 집계: **8/12 통과, 1 N/A, 4 대기**.
+- 현재 체크리스트 집계: **9/12 통과, 1 N/A, 3 대기**.
