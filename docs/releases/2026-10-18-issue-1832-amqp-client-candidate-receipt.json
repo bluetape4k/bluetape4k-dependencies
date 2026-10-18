@@ -34,7 +34,7 @@
     ]
   },
   "resolved-graphs": {
-    "status": "pending-exhaustive-receipt",
+    "status": "verified",
     "targeted-consumer": {
       "repository": "bluetape4k-projects",
       "head": "d78baa47c6b60bd8e931d61539c2fe939f8cc3f5",
@@ -45,6 +45,12 @@
         "Selected by rule",
         "By constraint"
       ]
+    },
+    "evidence": {
+      "path": "docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json",
+      "sha256": "160fa169c5369bae53bfd38b4e797169e7c99c73225039ee6794751c8ebfdcd9",
+      "spec-count": 1,
+      "observation-count": 2
     }
   },
   "publication-poms": {
@@ -104,14 +110,37 @@
       "command": "./gradlew assemble -Pbluetape4kDependenciesCatalogPath=<candidate>/gradle/libs.versions.toml --no-parallel --max-workers=1 --console=plain"
     },
     "projects-full-build": {
-      "status": "timed-out-without-terminal-result",
+      "status": "completed-with-failures",
       "repository": "bluetape4k-projects",
       "head": "d78baa47c6b60bd8e931d61539c2fe939f8cc3f5",
       "command": "./gradlew build -Pbluetape4kDependenciesCatalogPath=<candidate>/gradle/libs.versions.toml --continue --no-parallel --max-workers=1 --console=plain",
-      "tool-timeout-seconds": 300,
-      "observed-cache-lettuce-test-failure": {
-        "executed": 407,
-        "failed": 43
+      "elapsed": "24m 36s",
+      "actionable-tasks": 1025,
+      "executed-tasks": 190,
+      "up-to-date-tasks": 835,
+      "failed-tasks": 32,
+      "failure-observations": [
+        "10 Testcontainers cases failed because fixed host ports were already allocated.",
+        "Multiple test tasks printed successful test execution but failed while Gradle wrote binary test-result files with NoSuchFileException or EOFException.",
+        "Additional Kover and Kotlin compiler/cache tasks failed; the causal relationship to the catalog change is not established."
+      ],
+      "testcontainers": {
+        "task": ":bluetape4k-testcontainers:test",
+        "executed": 472,
+        "failed": 10,
+        "skipped": 22,
+        "host-port-bind-failures": 10
+      },
+      "isolated-reruns": {
+        "science": {
+          "task": ":bluetape4k-science:test",
+          "status": "BUILD SUCCESSFUL",
+          "tests-executed": 283,
+          "tests-failed": 0,
+          "command": "./gradlew :bluetape4k-science:test --rerun-tasks --no-build-cache --no-configuration-cache --no-parallel --max-workers=1 --stacktrace --console=plain -Pbluetape4kDependenciesCatalogPath=<candidate>/gradle/libs.versions.toml",
+          "log-path": "build/issue-1832/science-rerun.log",
+          "log-sha256": "f0df8cb20ed8a979c2383aec947f0d4b4bd8cccebca115f00a18102e070c863c"
+        }
       },
       "baseline-isolated-reruns": {
         "runs": 2,
@@ -123,7 +152,17 @@
         ]
       },
       "baseline-lettuce-detekt-findings": 69,
-      "cause": "not-established"
+      "historical-tool-timeout-run": {
+        "status": "timed-out-without-terminal-result",
+        "tool-timeout-seconds": 300,
+        "observed-cache-lettuce-test-failure": {
+          "executed": 407,
+          "failed": 43
+        }
+      },
+      "cause": "not-established",
+      "log-path": "build/issue-1832/projects-full-build.log",
+      "log-sha256": "55a7442871b560fdbcffc93b411cb14d2951a420656f0f8bc9ab3aef73026450"
     }
   },
   "affected-tests": {
