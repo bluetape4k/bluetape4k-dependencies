@@ -683,29 +683,34 @@
       "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b",
       "delta-count": 1,
       "downstream-full-builds": {
-        "status": "pending",
-        "repositories": 9,
-        "failures": null,
         "assemble": {
-          "status": "verified",
-          "repositories": 9,
           "failures": 0,
-          "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
-        }
+          "repositories": 9,
+          "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789",
+          "status": "verified"
+        },
+        "failures": null,
+        "repositories": 9,
+        "status": "pending"
       },
       "publication-pom-verification": {
-        "status": "verified-local-candidate",
-        "repositories": 9,
-        "files": 192,
         "dependencies": 50543,
-        "maven-models": 192,
         "failures": 0,
-        "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
+        "files": 192,
+        "maven-models": 192,
+        "repositories": 9,
+        "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789",
+        "status": "verified-local-candidate"
       },
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-      "resolved-graph-evidence": [],
+      "resolved-graph-evidence": {
+        "observation-count": 2,
+        "path": "docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json",
+        "sha256": "160fa169c5369bae53bfd38b4e797169e7c99c73225039ee6794751c8ebfdcd9",
+        "spec-count": 1
+      },
       "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
-      "status": "validation-pending"
+      "status": "verified-resolved-graph"
     }
   ],
   "delta": [

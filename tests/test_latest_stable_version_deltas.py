@@ -16,6 +16,7 @@ CENTRAL_LEDGER = REPO_ROOT / "config" / "central-catalog-version-deltas.json"
 AUDIT = REPO_ROOT / "config" / "latest-stable-version-audit.json"
 BUILD = REPO_ROOT / "build.gradle.kts"
 GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
+ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
 
 
 def load_script():
@@ -220,10 +221,12 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         )
         status = document["status"]
         self.assertIn(status, {"validation-pending", "verified-resolved-graph"})
-        if status == "verified-resolved-graph":
+        if (
+            status == "verified-resolved-graph"
+            and document["rollout"] != ISSUE_1832_ROLLOUT
+        ):
             self.assertEqual(document["audit-cutoff"], "2026-09-04")
         else:
-            self.assertEqual(status, "validation-pending")
             self.assertEqual(document["audit-cutoff"], "2026-10-18")
         required_keys = {
                 "schema-version",
@@ -241,7 +244,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertTrue(
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
-        if status == "verified-resolved-graph":
+        if (
+            status == "verified-resolved-graph"
+            and document["rollout"] != ISSUE_1832_ROLLOUT
+        ):
             self.assertEqual(len(document["delta"]), 126)
         else:
             expected_deltas = {
@@ -355,13 +361,35 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(candidate_receipt["full-builds"]["assemble"]["failures"], 0)
             self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
             self.assertEqual(candidate_receipt["publication-poms"]["files"], 192)
+            self.assertEqual(candidate_receipt["resolved-graphs"]["status"], "verified")
+            graph_evidence = candidate_receipt["resolved-graphs"]["evidence"]
+            self.assertEqual(graph_evidence["spec-count"], 1)
+            graph_receipt_path = REPO_ROOT / graph_evidence["path"]
+            graph_receipt_bytes = graph_receipt_path.read_bytes()
+            self.assertEqual(
+                hashlib.sha256(graph_receipt_bytes).hexdigest(),
+                graph_evidence["sha256"],
+            )
+            self.assertEqual(
+                graph_evidence["path"], document["resolved-graph-evidence"]["path"]
+            )
+            projects_build = candidate_receipt["full-builds"]["projects-full-build"]
+            self.assertEqual(projects_build["status"], "completed-with-failures")
+            self.assertEqual(projects_build["failed-tasks"], 32)
+            self.assertEqual(projects_build["testcontainers"]["failed"], 10)
+            self.assertEqual(
+                projects_build["isolated-reruns"]["science"]["tests-failed"], 0
+            )
 
     def test_rollout_audit_summary_matches_its_lifecycle(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         audit = document["audit"]
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
-        if document["status"] == "verified-resolved-graph":
+        if (
+            document["status"] == "verified-resolved-graph"
+            and document["rollout"] != ISSUE_1832_ROLLOUT
+        ):
             # 완료된 rollout은 후속 audit의 최신 조회 결과로 덮어쓰지 않는다.
             self.assertNotIn("adopt-latest", audit["summary"]["line-dispositions"])
             self.assertEqual(audit["summary"]["authority-count"], 515)
@@ -370,14 +398,23 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(audit["summary"]["metadata-verified"], 510)
         else:
             current_audit = json.loads(AUDIT.read_text(encoding="utf-8"))
-            self.assertEqual(document["status"], "validation-pending")
-            # 후속 catalog rollout은 전역 audit을 갱신할 수 있으므로, 이미
-            # 기록된 pending lifecycle snapshot을 현재 audit과 강제로 동일시하지 않는다.
-            if (
-                document["candidate"]["catalog-sha256"]
-                == current_audit["inputs"]["catalog"]["sha256"]
-            ):
+            if document["rollout"] == ISSUE_1832_ROLLOUT:
+                self.assertEqual(document["audit-cutoff"], "2026-10-18")
                 self.assertEqual(audit["summary"], current_audit["summary"])
+                self.assertEqual(audit["summary"]["authority-count"], 523)
+                self.assertEqual(audit["summary"]["line-count"], 557)
+                self.assertEqual(
+                    audit["summary"]["line-dispositions"]["adopt-latest"], 197
+                )
+            else:
+                self.assertEqual(document["status"], "validation-pending")
+                # 후속 catalog rollout은 전역 audit을 갱신할 수 있으므로, 이미
+                # 기록된 pending lifecycle snapshot을 현재 audit과 강제로 동일시하지 않는다.
+                if (
+                    document["candidate"]["catalog-sha256"]
+                    == current_audit["inputs"]["catalog"]["sha256"]
+                ):
+                    self.assertEqual(audit["summary"], current_audit["summary"])
 
     def test_kotlin_candidate_is_stable_and_all_plugin_aliases_are_aligned(self) -> None:
         versions = catalog_versions()

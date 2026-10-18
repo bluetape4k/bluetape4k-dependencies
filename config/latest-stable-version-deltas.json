@@ -12,8 +12,8 @@
         "hold-compatibility": 64,
         "hold-unavailable": 9
       },
-      "metadata-unavailable": 0,
       "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
       "metadata-verified": 518
     }
   },
@@ -24,6 +24,31 @@
   },
   "candidate": {
     "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b"
+  },
+  "candidate-validation-evidence": {
+    "downstream-full-builds": {
+      "assemble": {
+        "failures": 0,
+        "repositories": 9,
+        "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789",
+        "status": "verified"
+      },
+      "failures": null,
+      "repositories": 9,
+      "status": "pending"
+    },
+    "path": "docs/releases/2026-10-18-issue-1832-amqp-client-candidate-receipt.json",
+    "publication-poms": {
+      "dependencies": 50543,
+      "failures": 0,
+      "files": 192,
+      "maven-models": 192,
+      "repositories": 9,
+      "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789",
+      "status": "verified-local-candidate"
+    },
+    "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+    "sha256": "28d4cacfb8e26fbdb912eabafadc43d3c0704457450938e717e6a728b83212dd"
   },
   "delta": [
     {
@@ -42,36 +67,20 @@
       ],
       "before": "5.35.0",
       "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "verification": "pending-resolved-graph",
+      "resolved-graph-specs": [
+        "8c1e5f326a58cd3714154f150e70c98e1d68864fc8904ebdb30fff8f2ed21e58"
+      ],
+      "verification": "verified-resolved-graph",
       "version-key": "managed-amqp-client-h639dbc3b57d0"
     }
   ],
+  "resolved-graph-evidence": {
+    "observation-count": 2,
+    "path": "docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json",
+    "sha256": "160fa169c5369bae53bfd38b4e797169e7c99c73225039ee6794751c8ebfdcd9",
+    "spec-count": 1
+  },
   "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
   "schema-version": 3,
-  "status": "validation-pending",
-  "candidate-validation-evidence": {
-    "path": "docs/releases/2026-10-18-issue-1832-amqp-client-candidate-receipt.json",
-    "sha256": "40d6e8d790ec6344b11d66a5bc9fcb09ad3d605fa29d314df236d8e4fd6f7a40",
-    "downstream-full-builds": {
-      "status": "pending",
-      "repositories": 9,
-      "failures": null,
-      "assemble": {
-        "status": "verified",
-        "repositories": 9,
-        "failures": 0,
-        "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
-      }
-    },
-    "publication-poms": {
-      "status": "verified-local-candidate",
-      "repositories": 9,
-      "files": 192,
-      "dependencies": 50543,
-      "maven-models": 192,
-      "failures": 0,
-      "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789"
-    },
-    "remote-immutable-ref-verification": "pending-candidate-commit-and-push"
-  }
+  "status": "verified-resolved-graph"
 }
