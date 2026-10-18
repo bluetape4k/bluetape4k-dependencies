@@ -264,7 +264,7 @@ jobs:
             --repository-map "$RUNNER_TEMP/issues-242-243-repository-map.json" \
             --check --summary
 
-      - uses: actions/setup-java@v6.0.1
+      - uses: actions/setup-java@v6.1.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
@@ -569,7 +569,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GIT_LFS_SKIP_SMUDGE: "1"
         run: bash scripts/checkout-catalog-publishers.sh "$RUNNER_TEMP/catalog-workspace"
-      - uses: actions/setup-java@v6.0.1
+      - uses: actions/setup-java@v6.1.0
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
