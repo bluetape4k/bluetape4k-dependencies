@@ -1,15 +1,15 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "b578a58155ad510d35c12fff080a7fabfabcda44cee7983c8cd65d365f791df1",
+    "sha256": "8d660cdd523bbaf5866a90390e39aa40e085723919c9c7958b332c7dbdef3bb6",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
-        "adopt-latest": 164,
-        "current": 293,
+        "adopt-latest": 197,
+        "current": 264,
         "defer-breaking-migration": 23,
-        "hold-compatibility": 68,
+        "hold-compatibility": 64,
         "hold-unavailable": 9
       },
       "metadata-unavailable": 0,
@@ -17,36 +17,36 @@
       "metadata-verified": 518
     }
   },
-  "audit-cutoff": "2026-10-09",
+  "audit-cutoff": "2026-10-18",
   "baseline": {
-    "catalog-ref": "eccbc6d86374bd5402f04b1100dc3df99945df7a",
-    "catalog-sha256": "7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed"
+    "catalog-ref": "develop",
+    "catalog-sha256": "7aa400efd6f27a34b927dbff00b7197b3a843c2ae8e6b01e28ea03c846b97484"
   },
   "candidate": {
-    "catalog-sha256": "7aa400efd6f27a34b927dbff00b7197b3a843c2ae8e6b01e28ea03c846b97484"
+    "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b"
   },
   "delta": [
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "1.12.0"
+        "version": "5.37.0"
       },
-      "after": "1.12.0",
+      "after": "5.37.0",
       "authorities": [
         {
-          "authority-key": "policy:library:at.yawk.lz4:lz4-java",
-          "coordinate-or-plugin-id": "at.yawk.lz4:lz4-java",
+          "authority-key": "managed:managed-amqp-client-h639dbc3b57d0",
+          "coordinate-or-plugin-id": "com.rabbitmq:amqp-client",
           "disposition": "current",
           "kind": "library"
         }
       ],
-      "before": "1.11.2",
+      "before": "5.35.0",
       "reason": "Adopt the audited latest stable release within the approved compatibility line.",
       "verification": "pending-resolved-graph",
-      "version-key": "at-yawk-lz4"
+      "version-key": "managed-amqp-client-h639dbc3b57d0"
     }
   ],
-  "rollout": "2026-10-09-issue-885-central-catalog",
+  "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
   "schema-version": 3,
   "status": "validation-pending"
 }
