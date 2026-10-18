@@ -675,6 +675,25 @@
       "resolved-graph-evidence": [],
       "rollout": "2026-10-09-issue-885-central-catalog",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "baseline-catalog-ref": "develop",
+      "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b",
+      "delta-count": 1,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
+      "status": "validation-pending"
     }
   ],
   "delta": [

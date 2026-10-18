@@ -224,7 +224,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(document["audit-cutoff"], "2026-09-04")
         else:
             self.assertEqual(status, "validation-pending")
-            self.assertEqual(document["audit-cutoff"], "2026-10-09")
+            self.assertEqual(document["audit-cutoff"], "2026-10-18")
         required_keys = {
                 "schema-version",
                 "rollout",
@@ -245,11 +245,26 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(len(document["delta"]), 126)
         else:
             expected_deltas = {
-                "at-yawk-lz4",
+                "managed-amqp-client-h639dbc3b57d0",
             }
             self.assertEqual(
                 {entry["version-key"] for entry in document["delta"]},
                 expected_deltas,
+            )
+            self.assertEqual(len(document["delta"]), 1)
+            candidate = document["delta"][0]
+            self.assertEqual(candidate["before"], "5.35.0")
+            self.assertEqual(candidate["after"], "5.37.0")
+            self.assertEqual(
+                candidate["authorities"][0]["coordinate-or-plugin-id"],
+                "com.rabbitmq:amqp-client",
+            )
+            self.assertEqual(
+                candidate["adoption-evidence"],
+                {
+                    "classification": "verified-latest-compatible",
+                    "version": "5.37.0",
+                },
             )
         self.assertEqual(
             len({entry["version-key"] for entry in document["delta"]}),
