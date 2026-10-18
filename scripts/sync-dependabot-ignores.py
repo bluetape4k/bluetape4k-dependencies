@@ -5,8 +5,8 @@ Downstream repositories that request version-update PRs should not receive
 Dependabot PRs for dependency versions owned by bluetape4k-dependencies. Those
 versions must be changed in this repository first, then propagated with
 sync-shared-versions.py. A zero open-pull-requests-limit disables version
-updates while leaving security updates eligible, so generated ignores are
-omitted from those Gradle update blocks.
+updates, but generated ignores are omitted only when the Gradle update block
+opts in to security updates without central ignores.
 """
 
 from __future__ import annotations
@@ -36,6 +36,9 @@ MARKER_START = (
     "      # <central-dependency-ignore by scripts/sync-dependabot-ignores.py>"
 )
 MARKER_END = "      # </central-dependency-ignore>"
+SECURITY_UPDATES_OPT_IN = (
+    "    # bluetape4k-dependabot-security-updates: enabled"
+)
 
 CENTRAL_DEPENDENCY_IGNORES = (
     "dev.openfga:*",
@@ -188,6 +191,12 @@ def has_zero_open_pull_requests_limit(
     return False
 
 
+def has_security_updates_opt_in(
+    lines: list[str], start: int, end: int
+) -> bool:
+    return SECURITY_UPDATES_OPT_IN in lines[start:end]
+
+
 def ignore_section_has_children(
     lines: list[str], ignore_index: int, end: int
 ) -> bool:
@@ -215,7 +224,7 @@ def sync_text(text: str) -> str:
 
     if has_zero_open_pull_requests_limit(
         lines, gradle_update_start, next_update
-    ):
+    ) and has_security_updates_opt_in(lines, gradle_update_start, next_update):
         ignore_index = next(
             (
                 index
