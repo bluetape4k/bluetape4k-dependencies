@@ -30,12 +30,13 @@
 | P1 | Projects CI가 필수 parser receipt를 자기 runner에서 만들지 않아 generator --check가 실패할 수 있었다. | Projects에 full SHA pinned upstream parser checkout 및 contract 실행을 추가했다. contract 테스트 RED 후 수정했고 8개 테스트/actionlint가 통과했다. |
 | P2 | Projects catalog split 뒤 Central push-only downstream audit가 생성 catalog를 authority source로 읽을 수 있었다. | Projects의 libs.project.versions.toml이 있으면 Projects만 source catalog 선택자를 쓰고 나머지 저장소는 기본 catalog를 읽도록 분기했다. regression test RED 후 수정하고 전체 Central suite를 실행했다. |
 | P1 | Central PR parser job에서 `ruby/setup-ruby`가 `dependabot-core/vendor/bundle`에 설치한 `toml-rb`를 저장소 루트의 일반 `ruby` 프로세스가 불러오지 못했다. run log는 `cannot load such file -- toml-rb (LoadError)`로 끝났다. | workflow parser step의 작업 디렉터리를 `dependabot-core`로 지정하고 `bundle exec ruby "$GITHUB_WORKSPACE/tests/fixtures/project-dependabot-catalog/dependabot-parser-contract.rb"`를 실행한다. 새 workflow 회귀 테스트는 이전 구성에서 RED, 변경 후 GREEN이다. 로컬 `actionlint`와 CI 거버넌스 테스트 24개는 통과했다. 수정 후보 exact-head CI는 아직 대기 중이다. |
+| P2 | Projects `develop`의 #1837 커밋 `34c84a6`은 중앙 catalog ref `e9946b1`을 고정하지만 Central consumer policy는 모든 저장소에 `198147f`를 적용했다. run `39285492069`는 `Verify catalog scripts`에서 두 값의 불일치를 보고했고 Gradle `Build BOM` 단계는 건너뛰었다. | 검증 경계를 약화하지 않고 `bluetape4k-projects` 전용 immutable ref override를 추가한다. 설정 계약 테스트는 수정 전 RED, 수정 후 21 PASS이며, 실제 workspace verifier에서 publisher 8개와 소비자 경계를 통과했다. 새 Central exact-head CI는 확인 대기다. |
 
-세 건의 발견을 현재 수정 후보에서 고쳤으며 미해결 finding 수에 포함하지 않는다. 후속 CI가 새 수정 후보를 통과하는지 확인해야 한다.
+네 건의 발견을 현재 수정 후보에서 고쳤으며 미해결 finding 수에 포함하지 않는다. 후속 CI가 새 수정 후보를 통과하는지 확인해야 한다.
 
 ## 검증 증거와 남은 제한
 
-- 전체 Central unittest: 514 PASS, 2 SKIP, 221.538초.
+- 전체 Central unittest: 515 PASS, 2 SKIP, 182.553초.
 - 두 skip: real-workspace inventory 검사에서 managed sibling repositories unavailable. 이는 isolated worktree 범위의 제한이다.
 - verify-managed-artifacts의 1.9.2-SNAPSHOT 좌표 bluetape4k-core → io.github.bluetape4k:bluetape4k-core:1.9.2-SNAPSHOT 검사는 HTTP 403으로 건너뛰었다. 이를 테스트 실패나 제품 통과로 분류하지 않는다.
 - Central actionlint: PASS. py_compile 및 git diff --check: PASS.
@@ -43,8 +44,11 @@
 - 로컬 Ruby 2.6.10/Bundler 1.17.2로 exact pinned parser를 실행하지 않았다. PR CI에서 pinned Ruby action과 upstream commit으로 확인한다.
 - 최초 PR exact-head run `39285492069`의 parser job은 `toml-rb` `LoadError`로 실패했다. `ruby/setup-ruby`는 Dependabot Core bundle에 gem을 설치했으나 parser script가 Bundler 실행 문맥 밖에서 구동된 것이 원인이다. 공식 [ruby/setup-ruby 사용법](https://github.com/ruby/setup-ruby#usage)은 의존성 설치 뒤 `bundle exec`로 명령을 실행한다.
 - workflow 회귀 테스트: 기존 구성에서 RED. 수정 후 `python3.13 -m unittest tests.test_ci_catalog_governance` 24 PASS, `actionlint .github/workflows/ci.yml`, py_compile, git diff --check 통과. Ruff는 수정된 테스트 파일의 기준/후보에서 기존 진단이 각각 3건이며 새 진단은 없다.
-- [GitHub 공식 상태 API](https://www.githubstatus.com/api/v2/incidents/unresolved.json)는 Actions component가 `degraded_performance`이며 workflow 상태 업데이트가 지연될 수 있다고 알렸다. 같은 시점에 세 job의 step API는 모두 success지만 job conclusion이 늦게 반영됐다. 공지와 관찰은 일치하지만 개별 run의 원인까지 증명하지 않는다.
-- GNO/로컬 comparison receipt, 수정 후보 Central remote exact-head CI, review/thread read-back은 아직 완료되지 않았다.
+- 소비자 pin 회귀 테스트: 수정 전 manifest 계약 테스트 RED, 수정 후 `python3.13 -m unittest tests.test_post_publish_next_development_line` 21 PASS. 전체 Central suite 515 PASS, 2 SKIP이며 실제 workspace 검증기는 publisher 8개, 중앙 catalog를 사용하는 저장소 9개, 개발 버전 catalog 예제 5개를 통과했다. artifact 검사 중 `1.9.2-SNAPSHOT` 조회는 HTTP 403으로 건너뛰었다.
+- `ruff check tests/test_post_publish_next_development_line.py`는 I001로 실패했으며 `HEAD`의 같은 파일에서도 동일하게 재현돼 기존 진단이다. py_compile과 `git diff --check`는 통과했다.
+- 후속 run `39288320776`의 parser contract는 통과했지만 `Build BOM`과 POM contract가 in progress여서 이 run은 아직 exact-head 결론이 아니다.
+- [GitHub 공식 상태 API](https://www.githubstatus.com/api/v2/incidents/unresolved.json)는 incident `8tzbpcnl75jp`에서 Actions 성능 저하와 workflow status update 지연이 계속될 수 있다고 보고했다. 활성 job log 조회는 HTTP 404였다. 이 상태는 관찰된 지연과 맞지만 개별 workflow 실행이 지연된 원인이라고 단정하지 않는다.
+- GNO/로컬 comparison receipt, 정책 수정 후보의 새 Central remote exact-head CI, 해당 head의 review/thread read-back은 아직 완료되지 않았다.
 - Central merge와 signed tag 발행은 별도 승인 경계다. 이 이후 Projects pin/PR/merge, exact-SHA Dependency Submission, hosted Try again을 진행한다.
 
 ## Writer DoD

@@ -69,7 +69,9 @@
   ],
   "consumer-policy": {
     "snapshot-catalog-ref": "198147fd6ca2992fae32e175bd5f3d396c497096",
-    "snapshot-catalog-ref-overrides": {},
+    "snapshot-catalog-ref-overrides": {
+      "bluetape4k-projects": "e9946b18bdb0022f52cd5dc8994d859d470e7bab"
+    },
     "snapshot-catalog-repositories": [
       "bluetape4k-projects",
       "bluetape4k-aws",
