@@ -85,6 +85,7 @@ def _repository_fingerprint(repository: object) -> Tuple[str, ...]:
         str(getattr(repository, "name", "")),
         str(getattr(repository, "root", "")),
         str(getattr(repository, "catalog", "")),
+        str(getattr(repository, "authority_catalog", "")),
         str(getattr(repository, "origin", "")),
         str(getattr(repository, "branch", "")),
         str(getattr(repository, "base_sha", "")),
@@ -118,7 +119,7 @@ def _load_repository_map_snapshot(
 ) -> Tuple[Tuple[object, ...], RepositoryMapSnapshot]:
     try:
         repositories = tuple(
-            catalog_candidate.load_repository_map_v1(repository_map, workspace)
+            catalog_candidate.load_repository_map(repository_map, workspace)
         )
     except Exception as exc:
         if isinstance(exc, SyncError):

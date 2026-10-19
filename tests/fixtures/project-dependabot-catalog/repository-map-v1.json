@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "central": {
+    "root": "/workspace/bluetape4k-dependencies",
+    "catalog": "/workspace/bluetape4k-dependencies/gradle/libs.versions.toml",
+    "origin": "git@github.com:bluetape4k/bluetape4k-dependencies.git",
+    "branch": "candidate",
+    "base_sha": "1111111111111111111111111111111111111111",
+    "expected_head": "1111111111111111111111111111111111111111",
+    "clean": true
+  },
+  "repositories": {
+    "projects": {},
+    "aws": {},
+    "experimental": {},
+    "exposed": {},
+    "graph": {},
+    "image": {},
+    "javers": {},
+    "leader": {},
+    "text": {}
+  }
+}

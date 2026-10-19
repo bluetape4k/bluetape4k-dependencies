@@ -1,0 +1,16 @@
+[versions]
+jackson2 = "2.22.3"
+jackson3 = "3.2.3"
+netty = "4.2.19.Final"
+managed-amqp-client-h639dbc3b57d0 = "5.37.0"
+bouncycastle-bcprov = "1.85.2"
+bouncycastle-bcprov-lts8on = "2.73.12.1"
+freemarker = "2.3.35"
+jsoup = "1.23.2"
+
+[libraries]
+amqp-client = { module = "com.rabbitmq:amqp-client", version.ref = "managed-amqp-client-h639dbc3b57d0" }
+bouncycastle-bcprov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle-bcprov" }
+bouncycastle-bcprov-lts8on = { module = "org.bouncycastle:bcprov-lts8on", version.ref = "bouncycastle-bcprov-lts8on" }
+freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }

@@ -410,6 +410,48 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             2,
         )
 
+    def test_authority_inventory_reads_the_selected_project_source_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            central = root / "central.toml"
+            central.write_text("[versions]\n", encoding="utf-8")
+            project = root / "bluetape4k-projects"
+            gradle = project / "gradle"
+            gradle.mkdir(parents=True)
+            generated = gradle / "libs.versions.toml"
+            generated.write_text("[libraries]\n", encoding="utf-8")
+            authority = gradle / "libs.project.versions.toml"
+            authority.write_text(
+                '[libraries]\nexternal-lib = { module = "org.example:external-lib", version = "1.2.3" }\n',
+                encoding="utf-8",
+            )
+
+            records = sync.catalog_authority_records(
+                root,
+                central,
+                ("bluetape4k-projects",),
+                {"bluetape4k-projects": project},
+                repository_catalogs={"bluetape4k-projects": authority},
+            )
+
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["alias"], "external-lib")
+        self.assertEqual(records[0]["source-path"], "gradle/libs.project.versions.toml")
+
+    def test_project_catalog_filename_requires_projects_only(self) -> None:
+        sync.validate_catalog_filename(
+            "libs.project.versions.toml", ("bluetape4k-projects",)
+        )
+        with self.assertRaisesRegex(RuntimeError, "exactly --repo"):
+            sync.validate_catalog_filename(
+                "libs.project.versions.toml", sync.DEFAULT_REPOSITORIES
+            )
+        with self.assertRaisesRegex(RuntimeError, "exactly --repo"):
+            sync.validate_catalog_filename(
+                "libs.project.versions.toml",
+                ("bluetape4k-projects", "bluetape4k-aws"),
+            )
+
     def test_authority_lines_reject_duplicate_and_unused_selectors(self) -> None:
         record = {
             "repository": "bluetape4k-projects",
@@ -1119,7 +1161,7 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             ):
                 sync.target_catalogs(Path(tmp), ("bluetape4k-projects",))
 
-    def test_repository_map_uses_shared_strict_v1_loader(self) -> None:
+    def test_repository_map_uses_shared_normalized_loader(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp).resolve()
             invalid = root / "invalid.json"
@@ -1137,6 +1179,7 @@ h2-v2 = { module = "com.h2database:h2", version.ref = "h2-v2" }
             "bluetape4k-projects": sync.RepositoryTarget(
                 "bluetape4k-projects",
                 catalog,
+                catalog.with_name("libs.project.versions.toml"),
                 "issue/168-central-catalog-authority",
                 "a" * 40,
             )

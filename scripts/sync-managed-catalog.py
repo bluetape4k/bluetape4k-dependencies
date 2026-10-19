@@ -945,7 +945,7 @@ def main() -> int:
     repository_roots = None
     if args.repository_map:
         try:
-            loaded = catalog_candidate.load_repository_map_v1(
+            loaded = catalog_candidate.load_repository_map(
                 args.repository_map, workspace_root
             )
         except RuntimeError as exc:
