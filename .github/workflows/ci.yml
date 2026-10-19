@@ -536,6 +536,7 @@ jobs:
           working-directory: dependabot-core
           bundler-cache: true
       - name: Run pinned Gradle parser contract
+        working-directory: dependabot-core
         env:
           DEPENDABOT_CORE_ROOT: ${{ github.workspace }}/dependabot-core
           MAPPING_PATH: ${{ github.workspace }}/config/projects-dependabot-catalog.toml
@@ -544,7 +545,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C "$DEPENDABOT_CORE_ROOT" rev-parse HEAD)" = "${{ steps.dependabot-pin.outputs.commit }}"
-          ruby tests/fixtures/project-dependabot-catalog/dependabot-parser-contract.rb
+          bundle exec ruby "$GITHUB_WORKSPACE/tests/fixtures/project-dependabot-catalog/dependabot-parser-contract.rb"
 
   publication-pom-contract:
     name: Cross-repository Publication POM Contract
