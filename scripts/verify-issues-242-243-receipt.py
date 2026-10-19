@@ -438,13 +438,13 @@ def _validate_worktree_entry(
 
 
 def load_repository_map(path: Path) -> dict[str, Any]:
-    """Reuse the catalog candidate strict-v1 loader for the ten catalog repos."""
+    """Reuse the normalized catalog candidate loader for the ten catalog repos."""
     path = _canonical_path(path, "repository map")
     document = _read_json(path, "repository map")
     workspace_root = _strict_map_workspace(document)
     candidate = _catalog_candidate_module()
     try:
-        repositories = candidate.load_repository_map_v1(path, workspace_root)
+        repositories = candidate.load_repository_map(path, workspace_root)
     except RuntimeError as exc:
         raise ReceiptError(f"strict repository map validation failed: {exc}") from exc
     verified = [

@@ -193,6 +193,7 @@ class AdoptionGap:
 class RepositoryTarget:
     repository: str
     catalog: Path
+    authority_catalog: Path
     branch: str
     expected_head: str
 
@@ -643,7 +644,7 @@ def load_repository_map(
     workspace: Path,
     allowed_repositories: tuple[str, ...],
 ) -> dict[str, RepositoryTarget]:
-    loaded = catalog_candidate.load_repository_map_v1(path, workspace)
+    loaded = catalog_candidate.load_repository_map(path, workspace)
     executing_root = Path(__file__).resolve().parents[1]
     if loaded[0].root != executing_root:
         raise RuntimeError(
@@ -652,7 +653,11 @@ def load_repository_map(
     allowed = set(allowed_repositories)
     targets = {
         item.name: RepositoryTarget(
-            item.name, item.catalog, item.branch, item.expected_head
+            item.name,
+            item.catalog,
+            item.authority_catalog,
+            item.branch,
+            item.expected_head,
         )
         for item in loaded
         if item.key != "central" and item.name in allowed
@@ -895,6 +900,8 @@ def catalog_authority_records(
     repositories: tuple[str, ...],
     repository_roots: dict[str, Path] | None = None,
     *,
+    repository_catalogs: dict[str, Path] | None = None,
+    catalog_filename: str = "libs.versions.toml",
     authority_lines: dict[tuple[str, str, str, str], str] | None = None,
     used_authority_lines: set[tuple[str, str, str, str]] | None = None,
 ) -> list[dict[str, Any]]:
@@ -907,7 +914,9 @@ def catalog_authority_records(
         repository_root = (repository_roots or {}).get(
             repository, workspace / repository
         )
-        catalog = repository_root / "gradle" / "libs.versions.toml"
+        catalog = (repository_catalogs or {}).get(
+            repository, repository_root / "gradle" / catalog_filename
+        )
         data = read_catalog(catalog)
         library_source_lines = _section_source_lines(catalog, "libraries")
         for alias, library in data.libraries.items():
@@ -931,7 +940,7 @@ def catalog_authority_records(
                 library.module,
                 alias,
             )
-            source_path = "gradle/libs.versions.toml"
+            source_path = str(catalog.relative_to(repository_root))
             source_line = library_source_lines.get(alias)
             if source_line is None:
                 raise RuntimeError(
@@ -1313,6 +1322,20 @@ def print_default_repositories() -> None:
         print(repo)
 
 
+def validate_catalog_filename(catalog_filename: str, repositories: tuple[str, ...]) -> None:
+    if catalog_filename == "libs.versions.toml":
+        return
+    if (
+        catalog_filename == "libs.project.versions.toml"
+        and repositories == ("bluetape4k-projects",)
+    ):
+        return
+    raise RuntimeError(
+        "--catalog-filename libs.project.versions.toml requires exactly "
+        "--repo bluetape4k-projects"
+    )
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1326,6 +1349,12 @@ def main() -> int:
         action="append",
         dest="repositories",
         help="Repository name to sync. May be repeated. Defaults to governed bluetape4k-* repos.",
+    )
+    parser.add_argument(
+        "--catalog-filename",
+        choices=("libs.versions.toml", "libs.project.versions.toml"),
+        default="libs.versions.toml",
+        help="Authority catalog filename; the project-specific name is Projects-only.",
     )
     parser.add_argument(
         "--repository-map",
@@ -1392,6 +1421,11 @@ def main() -> int:
     repositories = (
         tuple(args.repositories) if args.repositories else DEFAULT_REPOSITORIES
     )
+    try:
+        validate_catalog_filename(args.catalog_filename, repositories)
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     unknown_repositories = sorted(set(repositories) - set(DEFAULT_REPOSITORIES))
     if unknown_repositories:
         print(
@@ -1402,6 +1436,7 @@ def main() -> int:
     source_catalog = repo_root / "gradle" / "libs.versions.toml"
     mapped: dict[str, RepositoryTarget] | None = None
     mapped_repository_roots: dict[str, Path] | None = None
+    repository_catalogs: dict[str, Path] | None = None
     if args.repository_map:
         try:
             mapped = load_repository_map(
@@ -1411,6 +1446,27 @@ def main() -> int:
             print(str(exc), file=sys.stderr)
             return 2
         mapped_repository_roots = repository_roots(mapped)
+        repository_catalogs = {
+            repository: mapped[repository].authority_catalog
+            for repository in repositories
+        }
+    else:
+        repository_catalogs = {
+            repository: (workspace / repository / "gradle" / args.catalog_filename)
+            for repository in repositories
+        }
+    if args.catalog_filename != "libs.versions.toml":
+        expected_catalog = (
+            mapped["bluetape4k-projects"].root
+            if mapped is not None
+            else workspace / "bluetape4k-projects"
+        ) / "gradle" / args.catalog_filename
+        if repository_catalogs["bluetape4k-projects"] != expected_catalog:
+            print(
+                "selected catalog filename does not match the repository map authority catalog",
+                file=sys.stderr,
+            )
+            return 2
     if bool(args.inventory_out) != bool(args.summary_out):
         print(
             "--inventory-out and --summary-out must be supplied together",
@@ -1429,6 +1485,8 @@ def main() -> int:
                 source_catalog,
                 repositories,
                 mapped_repository_roots,
+                repository_catalogs=repository_catalogs,
+                catalog_filename=args.catalog_filename,
                 authority_lines=authority_lines,
                 used_authority_lines=used_authority_lines,
             )
@@ -1503,12 +1561,13 @@ def main() -> int:
                     f"repository map is missing managed repositories: {', '.join(missing)}"
                 )
             catalog_entries = [
-                (repository, mapped[repository].catalog) for repository in repositories
+                (repository, mapped[repository].authority_catalog)
+                for repository in repositories
             ]
         else:
             catalog_entries = [
-                (catalog.parents[1].name, catalog)
-                for catalog in target_catalogs(workspace, repositories)
+                (repository, repository_catalogs[repository])
+                for repository in repositories
             ]
     except RuntimeError as exc:
         print(str(exc), file=sys.stderr)

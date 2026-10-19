@@ -1,0 +1,72 @@
+schema_version = 1
+dependabot_core_commit = "de71a59f11cc8373d39bbf5b7af5e8b73f45ca0a"
+
+[[projection]]
+alias = "jackson-core"
+module = "com.fasterxml.jackson.core:jackson-core"
+source_type = "version"
+source_name = "jackson2"
+version_key = "dependabot-jackson2"
+
+[[projection]]
+alias = "jackson-databind"
+module = "com.fasterxml.jackson.core:jackson-databind"
+source_type = "version"
+source_name = "jackson2"
+version_key = "dependabot-jackson2"
+
+[[projection]]
+alias = "amqp-client"
+module = "com.rabbitmq:amqp-client"
+source_type = "library"
+source_name = "amqp-client"
+version_key = "dependabot-amqp-client"
+
+[[projection]]
+alias = "netty-handler"
+module = "io.netty:netty-handler"
+source_type = "version"
+source_name = "netty"
+version_key = "dependabot-netty"
+
+[[projection]]
+alias = "bouncycastle-bcprov"
+module = "org.bouncycastle:bcprov-jdk18on"
+source_type = "library"
+source_name = "bouncycastle-bcprov"
+version_key = "dependabot-bouncycastle-bcprov"
+
+[[projection]]
+alias = "bouncycastle-bcprov-lts8on"
+module = "org.bouncycastle:bcprov-lts8on"
+source_type = "library"
+source_name = "bouncycastle-bcprov-lts8on"
+version_key = "dependabot-bouncycastle-bcprov-lts8on"
+
+[[projection]]
+alias = "freemarker"
+module = "org.freemarker:freemarker"
+source_type = "library"
+source_name = "freemarker"
+version_key = "dependabot-freemarker"
+
+[[projection]]
+alias = "jsoup"
+module = "org.jsoup:jsoup"
+source_type = "library"
+source_name = "jsoup"
+version_key = "dependabot-jsoup"
+
+[[projection]]
+alias = "jackson3-core"
+module = "tools.jackson.core:jackson-core"
+source_type = "version"
+source_name = "jackson3"
+version_key = "dependabot-jackson3"
+
+[[projection]]
+alias = "jackson3-databind"
+module = "tools.jackson.core:jackson-databind"
+source_type = "version"
+source_name = "jackson3"
+version_key = "dependabot-jackson3"

@@ -1295,23 +1295,6 @@ def apply_plan(plan: MigrationPlan) -> None:
 
 def _load_repository_map(path: Path, workspace: Path) -> dict[str, tuple[Path, Path]]:
     _canonical_file(path, "repository map")
-    raw = _read_json(path, "repository map")
-    if (
-        not isinstance(raw, dict)
-        or set(raw) != {"schema_version", "central", "repositories"}
-        or raw["schema_version"] != 1
-    ):
-        raise MigrationError("invalid repository map schema")
-    central = raw["central"]
-    repos = raw["repositories"]
-    if (
-        not isinstance(central, dict)
-        or not isinstance(repos, dict)
-        or set(repos) != set(REPOSITORY_KEYS)
-    ):
-        raise MigrationError(
-            "repository map must contain the canonical nine repositories"
-        )
     candidate = _candidate_module()
     if (
         not workspace.is_absolute()
@@ -1323,10 +1306,13 @@ def _load_repository_map(path: Path, workspace: Path) -> dict[str, tuple[Path, P
             f"workspace must be an absolute regular directory: {workspace}"
         )
     try:
-        loaded = candidate.load_repository_map_v1(path, workspace)
+        loaded = candidate.load_repository_map(path, workspace)
     except (RuntimeError, OSError) as exc:
         raise MigrationError(str(exc)) from exc
-    return {item.key: (item.root, item.catalog) for item in loaded[1:]}
+    return {
+        item.key: (item.root, item.authority_catalog)
+        for item in loaded
+    }
 
 
 def _central_aliases(path: Path) -> CentralAliases:
@@ -1423,12 +1409,7 @@ def main(argv: list[str] | None = None) -> int:
         dispositions = _read_json(args.dispositions, "dispositions")
         repository_map = _load_repository_map(args.repository_map, args.workspace)
         central_catalog = _canonical_file(args.central_catalog, "central catalog")
-        expected_central = _canonical_file(
-            Path(
-                _read_json(args.repository_map, "repository map")["central"]["catalog"]
-            ),
-            "mapped central catalog",
-        )
+        expected_central = repository_map["central"][1]
         if expected_central != central_catalog:
             raise MigrationError("central catalog does not match repository map")
         aliases = _central_aliases(central_catalog)

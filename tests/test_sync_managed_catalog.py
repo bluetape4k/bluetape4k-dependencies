@@ -20,7 +20,7 @@ SPEC.loader.exec_module(sync)
 
 class SyncManagedCatalogTest(unittest.TestCase):
     def test_cli_exposes_shared_strict_repository_map(self) -> None:
-        self.assertTrue(callable(sync.catalog_candidate.load_repository_map_v1))
+        self.assertTrue(callable(sync.catalog_candidate.load_repository_map))
         result = __import__("subprocess").run(
             [sys.executable, str(SCRIPT_PATH), "--help"],
             check=True,

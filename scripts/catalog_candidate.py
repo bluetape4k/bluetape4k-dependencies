@@ -47,9 +47,10 @@ PUBLISHER_REPOSITORIES = tuple(
     if name != REPOSITORY_NAMES["central"]
 )
 TOP_LEVEL_FIELDS = frozenset({"schema_version", "central", "repositories"})
-REPOSITORY_FIELDS = frozenset(
+REPOSITORY_FIELDS_V1 = frozenset(
     {"root", "catalog", "origin", "branch", "base_sha", "expected_head", "clean"}
 )
+REPOSITORY_FIELDS_V2 = REPOSITORY_FIELDS_V1 | {"authority_catalog"}
 GIT_OBJECT = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 ANSI_RE = re.compile(r"\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07]*(?:\x07|\x1b\\))")
@@ -143,6 +144,7 @@ class CandidateRepository:
     name: str
     root: Path
     catalog: Path
+    authority_catalog: Path
     origin: str
     branch: str
     base_sha: str
@@ -755,9 +757,16 @@ def inspect_repository_for_map(
         raise RuntimeError(f"base SHA does not peel for {name}")
     if _git(resolved_root, "status", "--porcelain=v1", "--untracked-files=all"):
         raise RuntimeError(f"worktree is dirty for {name}")
+    catalog = resolved_root / "gradle" / "libs.versions.toml"
+    authority_catalog = catalog
+    if name == REPOSITORY_NAMES["projects"]:
+        project_authority = resolved_root / "gradle" / "libs.project.versions.toml"
+        if project_authority.exists() or project_authority.is_symlink():
+            authority_catalog = project_authority
     return {
         "root": str(resolved_root),
-        "catalog": str(resolved_root / "gradle" / "libs.versions.toml"),
+        "catalog": str(catalog),
+        "authority_catalog": str(authority_catalog),
         "origin": origin,
         "branch": branch,
         "base_sha": base_sha,
@@ -766,27 +775,49 @@ def inspect_repository_for_map(
     }
 
 
-def _validate_repository(key: str, value: Any, workspace: Path) -> CandidateRepository:
-    if not isinstance(value, dict) or set(value) != REPOSITORY_FIELDS:
+def _validate_repository(
+    key: str, value: Any, workspace: Path, *, schema_version: int
+) -> CandidateRepository:
+    if schema_version == 1:
+        allowed_fields = (REPOSITORY_FIELDS_V1,)
+    elif key == "projects":
+        allowed_fields = (REPOSITORY_FIELDS_V2,)
+    else:
+        allowed_fields = (REPOSITORY_FIELDS_V1, REPOSITORY_FIELDS_V2)
+    if not isinstance(value, dict) or set(value) not in allowed_fields:
         raise RuntimeError(f"repository map fields are invalid for {key}")
+    has_authority_catalog = "authority_catalog" in value
+    fields = REPOSITORY_FIELDS_V2 if has_authority_catalog else REPOSITORY_FIELDS_V1
     if value["clean"] is not True:
         raise RuntimeError(f"repository map must require clean state for {key}")
-    for field in REPOSITORY_FIELDS - {"clean"}:
+    for field in fields - {"clean"}:
         if not isinstance(value[field], str) or not value[field]:
             raise RuntimeError(f"repository map {field} is invalid for {key}")
 
     root = Path(value["root"])
     catalog = Path(value["catalog"])
-    if not root.is_absolute() or not catalog.is_absolute():
-        raise RuntimeError(f"repository root and catalog must be absolute for {key}")
+    authority_catalog = (
+        Path(value["authority_catalog"])
+        if has_authority_catalog
+        else catalog
+    )
+    if not root.is_absolute() or not catalog.is_absolute() or not authority_catalog.is_absolute():
+        raise RuntimeError(f"repository root and catalog paths must be absolute for {key}")
     resolved_root = root.resolve()
     resolved_catalog = catalog.resolve()
-    if root != resolved_root or catalog != resolved_catalog:
+    resolved_authority_catalog = authority_catalog.resolve()
+    if (
+        root != resolved_root
+        or catalog != resolved_catalog
+        or authority_catalog != resolved_authority_catalog
+    ):
         raise RuntimeError(
             f"repository paths must be canonical and non-symlinked for {key}"
         )
-    if not _is_relative_to(resolved_root, workspace) or not _is_relative_to(
-        resolved_catalog, resolved_root
+    if (
+        not _is_relative_to(resolved_root, workspace)
+        or not _is_relative_to(resolved_catalog, resolved_root)
+        or not _is_relative_to(resolved_authority_catalog, resolved_root)
     ):
         raise RuntimeError(
             f"repository and catalog paths must stay inside workspace for {key}"
@@ -796,6 +827,22 @@ def _validate_repository(key: str, value: Any, workspace: Path) -> CandidateRepo
     _regular_nonsymlink(resolved_catalog, f"catalog for {key}")
     if resolved_catalog != resolved_root / "gradle" / "libs.versions.toml":
         raise RuntimeError(f"catalog path is not canonical for {key}")
+    if not has_authority_catalog:
+        expected_authority_catalog = resolved_catalog
+    elif key == "projects":
+        split_catalog = resolved_root / "gradle" / "libs.project.versions.toml"
+        expected_authority_catalog = (
+            split_catalog
+            if split_catalog.exists() or split_catalog.is_symlink()
+            else resolved_catalog
+        )
+    else:
+        expected_authority_catalog = resolved_catalog
+    if resolved_authority_catalog != expected_authority_catalog:
+        raise RuntimeError(f"authority catalog path is not canonical for {key}")
+    _regular_nonsymlink(
+        resolved_authority_catalog, f"authority catalog for {key}"
+    )
 
     origin = value["origin"]
     if (
@@ -835,6 +882,7 @@ def _validate_repository(key: str, value: Any, workspace: Path) -> CandidateRepo
         REPOSITORY_NAMES[key],
         resolved_root,
         resolved_catalog,
+        resolved_authority_catalog,
         origin,
         branch,
         base_sha,
@@ -842,10 +890,10 @@ def _validate_repository(key: str, value: Any, workspace: Path) -> CandidateRepo
     )
 
 
-def load_repository_map_v1(
+def load_repository_map(
     path: Path, workspace: Path
 ) -> tuple[CandidateRepository, ...]:
-    """Load the exact central plus nine-repository candidate envelope."""
+    """Load and normalize a strict v1 or full-map v2 candidate envelope."""
     if not path.is_absolute() or path.resolve() != path:
         raise RuntimeError("repository map path must be absolute and canonical")
     _regular_nonsymlink(path, "repository map")
@@ -855,8 +903,9 @@ def load_repository_map_v1(
         raise RuntimeError("invalid repository map JSON") from exc
     if not isinstance(document, dict) or set(document) != TOP_LEVEL_FIELDS:
         raise RuntimeError("repository map top-level fields are invalid")
-    if document["schema_version"] != 1:
-        raise RuntimeError("repository map schema_version must be 1")
+    schema_version = document["schema_version"]
+    if type(schema_version) is not int or schema_version not in {1, 2}:
+        raise RuntimeError("repository map schema_version must be 1 or 2")
     repositories = document["repositories"]
     if not isinstance(repositories, dict) or set(repositories) != set(REPOSITORY_KEYS):
         raise RuntimeError(
@@ -864,36 +913,93 @@ def load_repository_map_v1(
         )
     workspace_root = workspace.resolve()
     return (
-        _validate_repository("central", document["central"], workspace_root),
+        _validate_repository(
+            "central", document["central"], workspace_root,
+            schema_version=schema_version,
+        ),
         *(
-            _validate_repository(key, repositories[key], workspace_root)
+            _validate_repository(
+                key, repositories[key], workspace_root,
+                schema_version=schema_version,
+            )
             for key in REPOSITORY_KEYS
         ),
     )
 
 
+def load_repository_map_v1(
+    path: Path, workspace: Path
+) -> tuple[CandidateRepository, ...]:
+    """Backward-compatible name for the normalized v1/v2 repository-map loader."""
+    return load_repository_map(path, workspace)
+
+
+def build_project_map(projects_root: Path, central_root: Path, output: Path) -> None:
+    """Write the separate two-repository v2 map used by the projection generator."""
+    roots = (projects_root, central_root)
+    resolved_roots = tuple(root.resolve() for root in roots)
+    if any(not root.is_absolute() or root != resolved for root, resolved in zip(roots, resolved_roots)):
+        raise RuntimeError("project map roots must be absolute and canonical")
+    if resolved_roots[0].name != REPOSITORY_NAMES["projects"]:
+        raise RuntimeError("project map Projects root has the wrong repository name")
+    if resolved_roots[1].name != REPOSITORY_NAMES["central"]:
+        raise RuntimeError("project map central root has the wrong repository name")
+    if not output.is_absolute() or output.resolve() != output:
+        raise RuntimeError("project map output must be absolute and canonical")
+    if output.is_symlink():
+        raise RuntimeError("project map output must not be a symlink")
+    if not _git(resolved_roots[0], "branch", "--show-current") or not _git(
+        resolved_roots[1], "branch", "--show-current"
+    ):
+        raise RuntimeError("project map worktrees must have attached branches")
+    document = {
+        "schema_version": 2,
+        "central": inspect_repository_for_map(
+            REPOSITORY_NAMES["central"], resolved_roots[1]
+        ),
+        "repositories": {
+            "projects": inspect_repository_for_map(
+                REPOSITORY_NAMES["projects"], resolved_roots[0]
+            )
+        },
+    }
+    write_atomic(output, canonical_json_bytes(document))
+
+
 def create_catalog_lock(
     repositories: tuple[CandidateRepository, ...],
 ) -> dict[str, Any]:
-    return {
-        "schema_version": 1,
-        "catalogs": {
-            item.key: {
-                "path": str(item.catalog),
-                "root": str(item.root),
-                "origin": item.origin,
-                "branch": item.branch,
-                "base_sha": item.base_sha,
-                "repository_head": item.expected_head,
-                "declared_ref": item.expected_head,
-                "peeled_commit": _git(
-                    item.root, "rev-parse", f"{item.expected_head}^{{commit}}"
-                ),
-                "sha256": sha256_bytes(item.catalog.read_bytes()),
-            }
-            for item in repositories
-        },
+    catalogs = {
+        item.key: {
+            "path": str(item.catalog),
+            "root": str(item.root),
+            "origin": item.origin,
+            "branch": item.branch,
+            "base_sha": item.base_sha,
+            "repository_head": item.expected_head,
+            "declared_ref": item.expected_head,
+            "peeled_commit": _git(
+                item.root, "rev-parse", f"{item.expected_head}^{{commit}}"
+            ),
+            "sha256": sha256_bytes(item.catalog.read_bytes()),
+        }
+        for item in repositories
     }
+    authority_catalogs = {
+        item.key: {
+            "path": str(item.authority_catalog),
+            "sha256": sha256_bytes(item.authority_catalog.read_bytes()),
+        }
+        for item in repositories
+        if item.authority_catalog != item.catalog
+    }
+    lock = {
+        "schema_version": 1,
+        "catalogs": catalogs,
+    }
+    if authority_catalogs:
+        lock["authority_catalogs"] = authority_catalogs
+    return lock
 
 
 def create_candidate_manifest(
@@ -1006,7 +1112,7 @@ def verify_candidate_manifest(path: Path) -> dict[str, Any]:
         != machine_ledger["genesis_record_sha256"]
     ):
         raise RuntimeError("machine ledger genesis mismatch")
-    repositories = load_repository_map_v1(repository_map, workspace)
+    repositories = load_repository_map(repository_map, workspace)
     if repositories[0].root != central_root:
         raise RuntimeError("candidate central root mismatch")
     catalog_lock = create_catalog_lock(repositories)
@@ -1149,13 +1255,21 @@ def main() -> int:
     prepare.add_argument("--ledger", type=Path, required=True)
     verify = subparsers.add_parser("verify")
     verify.add_argument("--manifest", type=Path, required=True)
+    build_map = subparsers.add_parser("build-project-map")
+    build_map.add_argument("--projects-root", type=Path, required=True)
+    build_map.add_argument("--central-root", type=Path, required=True)
+    build_map.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.command == "verify":
         verify_candidate_manifest(args.manifest)
         print(sha256_bytes(args.manifest.read_bytes()))
         return 0
+    if args.command == "build-project-map":
+        build_project_map(args.projects_root, args.central_root, args.output)
+        print(sha256_bytes(args.output.read_bytes()))
+        return 0
 
-    repositories = load_repository_map_v1(args.repository_map, args.workspace)
+    repositories = load_repository_map(args.repository_map, args.workspace)
     if repositories[0].root != args.central.resolve():
         raise RuntimeError("central worktree does not match repository map")
     disposition = (

@@ -557,7 +557,46 @@ class CatalogCandidateTest(unittest.TestCase):
         path.write_text(json.dumps(document), encoding="utf-8")
         return path, document
 
-    def test_load_repository_map_v1_returns_canonical_order(self) -> None:
+    def make_v2_map(self, workspace: Path) -> tuple[Path, dict[str, object]]:
+        path, document = self.make_map(workspace)
+        projects_root = Path(document["repositories"]["projects"]["root"])
+        authority = projects_root / "gradle" / "libs.project.versions.toml"
+        authority.write_text('[libraries]\nlocal = { module = "org.example:local" }\n', encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(projects_root), "add", "gradle/libs.project.versions.toml"],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(projects_root),
+                "-c",
+                "user.name=Test",
+                "-c",
+                "user.email=test@example.invalid",
+                "commit",
+                "-m",
+                "split project catalogs",
+            ],
+            check=True,
+            capture_output=True,
+        )
+        projects_head = subprocess.check_output(
+            ["git", "-C", str(projects_root), "rev-parse", "HEAD"], text=True
+        ).strip()
+        document["repositories"]["projects"] = candidate.inspect_repository_for_map(
+            "bluetape4k-projects", projects_root, projects_head
+        )
+        document["schema_version"] = 2
+        for entry in (document["central"], *document["repositories"].values()):
+            entry["authority_catalog"] = entry.get(
+                "authority_catalog", entry["catalog"]
+            )
+        path.write_text(json.dumps(document), encoding="utf-8")
+        return path, document
+
+    def test_load_repository_map_v1_normalizes_authority_catalog(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp).resolve()
             path, _ = self.make_map(workspace)
@@ -565,6 +604,157 @@ class CatalogCandidateTest(unittest.TestCase):
         self.assertEqual(
             tuple(item.key for item in loaded), ("central", *candidate.REPOSITORY_KEYS)
         )
+        projects = next(item for item in loaded if item.key == "projects")
+        self.assertEqual(projects.authority_catalog, projects.catalog)
+
+    def test_load_repository_map_rejects_boolean_schema_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_map(workspace)
+            document["schema_version"] = True
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            with self.assertRaisesRegex(RuntimeError, "schema_version must be 1 or 2"):
+                candidate.load_repository_map(path, workspace)
+
+    def test_load_repository_map_v2_separates_projects_authority_and_default_catalogs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, _ = self.make_v2_map(workspace)
+            loaded = candidate.load_repository_map(path, workspace)
+
+        projects = next(item for item in loaded if item.key == "projects")
+        self.assertEqual(projects.catalog, projects.root / "gradle" / "libs.versions.toml")
+        self.assertEqual(
+            projects.authority_catalog,
+            projects.root / "gradle" / "libs.project.versions.toml",
+        )
+        central = next(item for item in loaded if item.key == "central")
+        self.assertEqual(central.authority_catalog, central.catalog)
+
+    def test_v2_map_in_catalog_migration_window_allows_shared_authority_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_map(workspace)
+            for entry in (document["central"], *document["repositories"].values()):
+                entry["authority_catalog"] = entry["catalog"]
+            document["schema_version"] = 2
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            loaded = candidate.load_repository_map(path, workspace)
+
+        projects = next(item for item in loaded if item.key == "projects")
+        self.assertEqual(projects.authority_catalog, projects.catalog)
+
+    def test_v2_map_normalizes_omitted_non_projects_authority_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_v2_map(workspace)
+            for key, entry in document["repositories"].items():
+                if key != "projects":
+                    entry.pop("authority_catalog")
+            document["central"].pop("authority_catalog")
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            loaded = candidate.load_repository_map(path, workspace)
+
+        self.assertTrue(
+            all(
+                item.authority_catalog == item.catalog
+                for item in loaded
+                if item.key != "projects"
+            )
+        )
+
+    def test_v2_map_rejects_noncanonical_projects_authority_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_v2_map(workspace)
+            document["repositories"]["projects"]["authority_catalog"] = str(
+                Path(document["repositories"]["projects"]["root"])
+                / "gradle"
+                / "other.versions.toml"
+            )
+            path.write_text(json.dumps(document), encoding="utf-8")
+
+            with self.assertRaisesRegex(RuntimeError, "authority catalog path is not canonical"):
+                candidate.load_repository_map(path, workspace)
+
+    def test_v2_map_rejects_symlinked_projects_authority_catalog(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, document = self.make_v2_map(workspace)
+            projects_root = Path(document["repositories"]["projects"]["root"])
+            authority = projects_root / "gradle" / "libs.project.versions.toml"
+            authority.unlink()
+            target = projects_root / "gradle" / "authority-target.toml"
+            target.write_text("[libraries]\n", encoding="utf-8")
+            authority.symlink_to(target)
+
+            with self.assertRaisesRegex(RuntimeError, "non-symlinked"):
+                candidate.load_repository_map(path, workspace)
+
+    def test_v2_catalog_lock_binds_generated_and_authority_catalogs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            path, _ = self.make_v2_map(workspace)
+            repositories = candidate.load_repository_map(path, workspace)
+            lock = candidate.create_catalog_lock(repositories)
+            projects = next(item for item in repositories if item.key == "projects")
+            self.assertEqual(
+                lock["catalogs"]["projects"]["path"], str(projects.catalog)
+            )
+            self.assertEqual(
+                lock["catalogs"]["projects"]["sha256"],
+                hashlib.sha256(projects.catalog.read_bytes()).hexdigest(),
+            )
+            self.assertEqual(
+                lock["authority_catalogs"]["projects"]["path"],
+                str(projects.authority_catalog),
+            )
+            self.assertEqual(
+                lock["authority_catalogs"]["projects"]["sha256"],
+                hashlib.sha256(projects.authority_catalog.read_bytes()).hexdigest(),
+            )
+
+    def test_project_map_builder_emits_generator_only_v2_envelope(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp).resolve()
+            projects, _, _ = self.make_repository(workspace, "projects")
+            central, _, _ = self.make_repository(workspace, "central")
+            source = projects / "gradle" / "libs.project.versions.toml"
+            source.write_text('[libraries]\nlocal = { module = "org.example:local" }\n')
+            subprocess.run(
+                ["git", "-C", str(projects), "add", str(source.relative_to(projects))],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git", "-C", str(projects), "-c", "user.name=Test",
+                    "-c", "user.email=test@example.invalid", "commit", "-m", "source",
+                ],
+                check=True,
+                capture_output=True,
+            )
+            output = workspace / "evidence" / "project-map.json"
+
+            candidate.build_project_map(projects, central, output)
+            payload = output.read_bytes()
+            document = json.loads(payload)
+
+            self.assertEqual(payload, candidate.canonical_json_bytes(document))
+            self.assertEqual(document["schema_version"], 2)
+            self.assertEqual(set(document["repositories"]), {"projects"})
+            self.assertEqual(
+                document["repositories"]["projects"]["catalog"],
+                str(projects / "gradle" / "libs.versions.toml"),
+            )
+            self.assertEqual(
+                document["repositories"]["projects"]["authority_catalog"],
+                str(source),
+            )
+            with self.assertRaisesRegex(RuntimeError, "canonical nine-entry"):
+                candidate.load_repository_map(output, workspace)
 
     def test_legacy_flat_map_and_unknown_fields_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -572,14 +762,14 @@ class CatalogCandidateTest(unittest.TestCase):
             path, document = self.make_map(workspace)
             path.write_text(json.dumps(document["repositories"]), encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "schema|fields"):
-                candidate.load_repository_map_v1(path, workspace)
+                candidate.load_repository_map(path, workspace)
             document["unexpected"] = True
             path.write_text(json.dumps(document), encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "fields"):
-                candidate.load_repository_map_v1(path, workspace)
+                candidate.load_repository_map(path, workspace)
 
             with self.assertRaisesRegex(RuntimeError, "absolute"):
-                candidate.load_repository_map_v1(Path("relative.json"), workspace)
+                candidate.load_repository_map(Path("relative.json"), workspace)
 
     def test_traversal_dirty_and_symlink_inputs_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -590,30 +780,31 @@ class CatalogCandidateTest(unittest.TestCase):
             )
             path.write_text(json.dumps(document), encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "workspace|catalog|canonical"):
-                candidate.load_repository_map_v1(path, workspace)
+                candidate.load_repository_map(path, workspace)
 
             path, document = self.make_map(workspace / "fresh")
             projects = Path(document["repositories"]["projects"]["root"])
             (projects / "dirty.txt").write_text("dirty", encoding="utf-8")
             with self.assertRaisesRegex(RuntimeError, "clean"):
-                candidate.load_repository_map_v1(path, workspace / "fresh")
+                candidate.load_repository_map(path, workspace / "fresh")
 
             link = workspace / "map-link.json"
             link.symlink_to(path)
             with self.assertRaisesRegex(RuntimeError, "symlink|canonical"):
-                candidate.load_repository_map_v1(link, workspace / "fresh")
+                candidate.load_repository_map(link, workspace / "fresh")
 
     def test_catalog_lock_binds_raw_catalog_bytes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp).resolve()
             path, _ = self.make_map(workspace)
-            repositories = candidate.load_repository_map_v1(path, workspace)
+            repositories = candidate.load_repository_map(path, workspace)
             lock = candidate.create_catalog_lock(repositories)
             for item in repositories:
                 self.assertEqual(
                     lock["catalogs"][item.key]["sha256"],
                     hashlib.sha256(item.catalog.read_bytes()).hexdigest(),
                 )
+            self.assertNotIn("authority_catalogs", lock)
 
     def test_base_sha_must_be_the_origin_develop_fork_point(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -663,7 +854,7 @@ class CatalogCandidateTest(unittest.TestCase):
             path.write_text(json.dumps(document), encoding="utf-8")
 
             with self.assertRaisesRegex(RuntimeError, "fork point"):
-                candidate.load_repository_map_v1(path, workspace)
+                candidate.load_repository_map(path, workspace)
 
     def test_map_producer_round_trips_a_diverged_exact_head(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -746,8 +937,11 @@ class CatalogCandidateTest(unittest.TestCase):
                     "bluetape4k-projects", projects, candidate_head
                 )
             )
+            document["schema_version"] = 2
+            for entry in (document["central"], *document["repositories"].values()):
+                entry.setdefault("authority_catalog", entry["catalog"])
             path.write_text(json.dumps(document), encoding="utf-8")
-            loaded = candidate.load_repository_map_v1(path, workspace)
+            loaded = candidate.load_repository_map(path, workspace)
 
             projects_entry = next(item for item in loaded if item.key == "projects")
             self.assertEqual(projects_entry.base_sha, fork_point)
@@ -877,7 +1071,7 @@ class CatalogCandidateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             workspace = Path(tmp).resolve()
             repository_map, _ = self.make_map(workspace)
-            repositories = candidate.load_repository_map_v1(repository_map, workspace)
+            repositories = candidate.load_repository_map(repository_map, workspace)
             disposition = workspace / "disposition.json"
             cache = workspace / "cache.json"
             human_ledger = workspace / "ledger.md"

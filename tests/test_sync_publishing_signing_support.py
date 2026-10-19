@@ -74,6 +74,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
                     name=name,
                     root=root,
                     catalog=root / "gradle" / "libs.versions.toml",
+                    authority_catalog=root / "gradle" / "libs.versions.toml",
                     origin=f"git@github.com:bluetape4k/{name}.git",
                     branch="feat/test",
                     base_sha="a" * 40,
@@ -97,7 +98,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
     def _load_map(self):
         return mock.patch.object(
             sync.catalog_candidate,
-            "load_repository_map_v1",
+            "load_repository_map",
             return_value=self.repositories,
         )
 
@@ -229,7 +230,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
         )
         with mock.patch.object(
             sync.catalog_candidate,
-            "load_repository_map_v1",
+            "load_repository_map",
             return_value=repositories,
         ):
             with self.assertRaises(sync.SyncError):
@@ -268,7 +269,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
         self._write_targets()
         with mock.patch.object(
             sync.catalog_candidate,
-            "load_repository_map_v1",
+            "load_repository_map",
             return_value=self.repositories,
         ) as loader:
             sync.synchronize(
@@ -534,7 +535,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
         )
         with mock.patch.object(
             sync.catalog_candidate,
-            "load_repository_map_v1",
+            "load_repository_map",
             side_effect=[self.repositories, changed],
         ) as loader:
             with self.assertRaisesRegex(sync.SyncError, "repository map changed"):
@@ -565,7 +566,7 @@ class SyncPublishingSigningSupportTest(unittest.TestCase):
 
         with mock.patch.object(
             sync.catalog_candidate,
-            "load_repository_map_v1",
+            "load_repository_map",
             side_effect=mutate_map_on_live_load,
         ):
             with self.assertRaisesRegex(sync.SyncError, "repository map changed"):

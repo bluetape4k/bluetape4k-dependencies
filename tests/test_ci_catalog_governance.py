@@ -463,6 +463,34 @@ gh() {
             "sync-dependabot-ignores.py --workspace .. --check --summary", audit_step
         )
 
+    def test_full_workspace_audit_uses_projects_authority_catalog_after_split(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        audit_step = workflow.split(
+            "      - name: Verify downstream repository sync\n",
+            1,
+        )[1].split("      - uses:", 1)[0]
+
+        self.assertIn(
+            'projects_authority_catalog="../bluetape4k-projects/gradle/libs.project.versions.toml"',
+            audit_step,
+        )
+        self.assertIn('if [[ -f "$projects_authority_catalog" ]]; then', audit_step)
+        self.assertIn(
+            'if [[ "$repository" != "bluetape4k-projects" ]]; then', audit_step
+        )
+        self.assertIn(
+            "--catalog-filename libs.project.versions.toml",
+            audit_step,
+        )
+        self.assertIn(
+            "--repo bluetape4k-projects",
+            audit_step,
+        )
+        self.assertIn(
+            "scripts/sync-shared-versions.py --workspace .. --check --summary",
+            audit_step,
+        )
+
     def test_ci_runs_cross_repository_publication_pom_contract(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         job = workflow.split("  publication-pom-contract:\n", 1)[1].split(
@@ -545,6 +573,7 @@ gh() {
             "      - name: Build exact catalog repository map\n", 1
         )[1].split("      - name:", 1)[0]
         self.assertIn("inspect_repository_for_map", map_step)
+        self.assertIn('"schema_version": 2', map_step)
         self.assertIn("issues-242-243-repository-map.json", map_step)
 
         candidate_source = (REPO_ROOT / "scripts" / "catalog_candidate.py").read_text(
