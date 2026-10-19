@@ -15,6 +15,19 @@ GUARD = REPO_ROOT / "scripts" / "sync-shared-versions.py"
 
 
 class CatalogGovernanceCiTest(unittest.TestCase):
+    def test_pinned_gradle_parser_contract_activates_dependabot_bundle(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        marker = "      - name: Run pinned Gradle parser contract\n"
+        self.assertIn(marker, workflow)
+        step = workflow.split(marker, 1)[1].split("      - name:", 1)[0]
+        run = textwrap.dedent(step.split("        run: |\n", 1)[1])
+
+        self.assertIn("        working-directory: dependabot-core\n", step)
+        self.assertIn(
+            'bundle exec ruby "$GITHUB_WORKSPACE/tests/fixtures/project-dependabot-catalog/dependabot-parser-contract.rb"',
+            run,
+        )
+
     def test_dokka_repairs_use_tracked_jackson_and_jsoup_versions(self) -> None:
         build_script = (REPO_ROOT / "build.gradle.kts").read_text(encoding="utf-8")
 
