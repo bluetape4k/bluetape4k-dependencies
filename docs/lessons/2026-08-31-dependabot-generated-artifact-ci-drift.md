@@ -51,7 +51,16 @@ ledger SHA 검사 `7` tests가 통과했다. 전체 Python suite `516` tests도 
 `-SNAPSHOT` artifact 조회에서 HTTP `403`을 받은 항목은 verifier가 별도로 건너뛰었다.
 suite 자체의 `skipped=2`는 managed sibling
 repositories를 찾지 못한 workspace-wide 검증 두 건이며, 새 PR head의 hosted CI 결과는 아직
-대기 중이다.
+대기 중이었다. 이후 PR head `3c7a47bf335fbc543f7dbc1f33f9bf5f5134bedd`의 CI run
+[39627022926](https://github.com/bluetape4k/bluetape4k-dependencies/actions/runs/39627022926)은
+9개 job이 통과했다. 다만 PR 이벤트에서는 downstream consumer 동기화가 조건상 실행되지 않아
+아홉 저장소의 catalog SHA 일치는 증명하지 못했다. 이 실패를 고치며 중앙 policy의 Projects
+override를 현재 consumer pin에 맞췄지만, 기본 ref와 override가 다른 전환 상태가 남았다.
+2026-10-22 live `develop` read-back에서 Projects settings/CI는
+`dcc7fa7557d3c0548b9e3fc28c48877827ea2f74`를 사용하고 기존 tag
+`catalog/2026-10-20-01`도 그 commit을 가리킨다. AWS, Experimental, Exposed, Graph, Image,
+JaVers, Leader, Text의 settings/CI는 `198147fd6ca2992fae32e175bd5f3d396c497096`를 사용한다.
+따라서 저장소 내부 pin 일치와 아홉 저장소 간 단일 SHA 수렴은 별도 조건이다.
 
 audit 요약 pointer는 갱신했지만 resolved dependency graph는 바뀌지 않아
 `central-catalog-version-deltas.json`에 새 delta를 추가하지 않았다.
@@ -72,3 +81,11 @@ receipt를 재검증하고 candidate receipt의 nested SHA 및 `latest-stable-ve
 실행한다. 두 ledger가 기록한 receipt SHA와 실제 파일 digest가 일치하는지도 검사한다.
 `central-catalog-version-deltas.json`에는 실제 resolved graph가 달라진 경우에만 delta를
 추가한다. 검증이 빠진 PR은 후속 PR에 섞지 않고 prerequisite fix로 먼저 복구한다.
+
+여러 consumer가 중앙 catalog를 사용할 때 policy override로 개별 ref drift를 맞추는 작업은
+전환 상태로 기록한다. 단일 SHA 수렴이 요구되면 중앙 catalog train의 tag가 확정된 뒤 각
+consumer의 `settings.gradle.kts`와 CI pin을 같은 40자리 commit SHA로 갱신한다. 모든 consumer가
+그 SHA로 수렴한 다음 중앙 `snapshot-catalog-ref`도 같은 값으로 바꾸고
+`snapshot-catalog-ref-overrides`를 비운다. 마지막으로 consumer policy verifier를 다시 실행해
+모든 저장소와 중앙 policy가 같은 ref를 사용함을 확인한다. PR 이벤트에서 downstream sync job이
+skip되면 CI 녹색만으로 이 조건을 통과 처리하지 않는다.
