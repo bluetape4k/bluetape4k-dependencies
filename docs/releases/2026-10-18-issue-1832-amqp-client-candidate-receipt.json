@@ -48,7 +48,7 @@
     },
     "evidence": {
       "path": "docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json",
-      "sha256": "160fa169c5369bae53bfd38b4e797169e7c99c73225039ee6794751c8ebfdcd9",
+      "sha256": "395a2dc1a7d1fbc47bc4ceed16df8247e11109704d0fd9f28eb0b09e61ff7fe4",
       "spec-count": 1,
       "observation-count": 2
     }

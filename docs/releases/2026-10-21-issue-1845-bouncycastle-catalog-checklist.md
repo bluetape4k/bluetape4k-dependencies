@@ -1,6 +1,6 @@
 # 2026-10-21 Issue #1845 Bouncy Castle 카탈로그 train 체크리스트
 
-상태: **PENDING / 중앙 후보 catalog SHA-256 `11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30`에서 Projects 두 resolved graph 모두 `bcprov-lts8on:2.73.10`으로 유지된다. 중앙 PR은 generated catalog freshness 오류를 겨냥하며 runtime dependency를 수정했다고 주장하지 않는다. PR 생성·정확한 head CI 확인까지만 승인됐다. 병합, immutable catalog ref 생성, 소비자 동기화와 publication은 별도 승인을 기다린다.**
+상태: **PENDING / 중앙 후보 catalog SHA-256 `11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30`에서 Projects 두 resolved graph 모두 `bcprov-lts8on:2.73.10`으로 유지된다. 초기 PR head `b3c02b3d83b41d2ed4357ad2233b1549d07a81b4`의 CI `39601336675`는 generated inventory/audit SHA 불일치로 실패했다. inventory, 영향받은 audit line, latest-stable audit pointer, 중앙·latest-stable graph receipt SHA pointer, graph contract 및 candidate nested receipt SHA를 일치시켰다. 집중 audit/delta 테스트 48개, central ledger 테스트 7개와 전체 Python suite 516개가 통과했다. suite의 `skipped=2`는 managed sibling repositories를 찾지 못한 workspace-wide 검사 두 건이며, 별도로 `-SNAPSHOT` artifact 조회 한 건은 HTTP 403으로 verifier가 건너뛰었다. 새 hosted CI는 대기 중이다. 중앙 PR은 generated catalog freshness 오류를 다루며 runtime dependency나 Dependabot alert가 해결됐다고 주장하지 않는다. 병합, immutable catalog ref 생성, 소비자 동기화와 publication은 별도 승인을 기다린다.**
 
 ## 목표와 고정 범위
 
@@ -10,7 +10,7 @@
 - 원인/소비자: Projects Issue #1845는 generated catalog 거버넌스 실패를 추적한다. Projects PR #1844의 exact head `6e23291a78d8fdf3528057a5451773d271acb7ee`가 해당 alias를 `2.73.13`으로 올렸지만, `Central Catalog Governance`가 “generated catalog is stale”로 실패했다. 중앙 catalog가 `2.73.13`을 제공하면 두 카탈로그의 버전이 일치한다.
 - 공식 버전 근거: [Maven Central artifact record](https://central.sonatype.com/artifact/org.bouncycastle/bcprov-lts8on), [Bouncy Castle Java LTS 2.73.13 announcement](https://github.com/bcgit/bc-java/discussions/2460). 기존 catalog 주석은 `io.nats:jnats`의 전이 의존성 보안 override임을 명시한다.
 - PR 생성 권한: 사용자 승인으로 `bluetape4k/bluetape4k-dependencies`, base `develop`, head `fix/issue-1845-bouncycastle-lts8on` PR 생성 및 검증까지 허용됐다. 병합·tag·release·소비자 PR/기본 브랜치 변경은 승인 범위에 포함되지 않는다.
-- 변경 대상: catalog, checksum sidecar, 실제 resolved-version 변화가 확인될 때만 delta ledger, 본 체크리스트. Projects 등 형제 저장소 파일은 이 PR에서 수정하지 않는다.
+- 변경 대상: catalog, checksum sidecar, latest-stable inventory/audit, latest-stable ledger의 audit SHA/summary pointer, central/latest-stable ledger의 resolved-graph receipt SHA pointer, resolved-graph receipt의 ledger-contract SHA와 후보 receipt의 nested SHA, 재발 방지 lesson, 본 체크리스트. resolved graph 관찰이 바뀌지 않아 새 delta는 추가하지 않으며, Projects 등 형제 저장소 파일은 이 PR에서 수정하지 않는다.
 - 정지 조건: PR 메타데이터와 exact-head CI/read-back을 보고한 뒤 멈춘다. Projects #1844는 이 중앙 PR만으로 닫거나 성공 처리하지 않는다.
 
 ## 기준선: 실제 resolved graph
@@ -56,7 +56,7 @@
   - **Failure:** 승인 대기 중 dependent side effect를 실행하면 관련 proof를 무효화한다.
 - [x] **CL-06 — 누락/순서 오류 복구**
   - **Action:** 누락되거나 순서를 어긴 증거를 복구하고 영향을 받은 후속 proof를 갱신한다.
-  - **Evidence:** 첫 POM 호출은 수정 중인 publisher source를 감지해 `publisher repository is dirty: bluetape4k-dependencies`로 중단됐다. 후보 `1c98f1c84fda8e86f8b85b7af815168f9c32592f`를 커밋한 뒤 clean detached worktree에서 다시 실행해 `failures=0`을 확인했다.
+  - **Evidence:** 첫 POM 호출은 수정 중인 publisher source를 감지해 `publisher repository is dirty: bluetape4k-dependencies`로 중단됐다. 후보 `1c98f1c84fda8e86f8b85b7af815168f9c32592f`를 커밋한 뒤 clean detached worktree에서 다시 실행해 `failures=0`을 확인했다. 초기 PR CI `39601336675`는 515 Python tests에서 failures 16, errors 1, skipped 4를 기록했다. 원인은 catalog SHA `11255a5e…` 이후에도 inventory `96a177ff…`와 audit catalog SHA `32887e90…`가 이전 값인 점이었다. inventory `4e775dd271b9464595e70ff1425acc4668d233b321b20262098a5bdccedac9ec`를 만들고 Bouncy Castle line만 `2.73.13`/`current`로 갱신했다. audit SHA `46e9cb8ca1457982cf6c26d9d0d93a010efa4046b9439f93f330154666962205`와 summary를 `latest-stable-version-deltas.json`에 반영했다. 첫 전체 Python suite는 515 tests에서 ledger lifecycle 검사 1건이 실패했고 skipped=2였다. graph 관찰은 바뀌지 않았지만 ledger-contract SHA가 달라져 candidate nested SHA와 central/latest-stable ledger의 graph receipt SHA pointer를 일치시켰다. 집중 audit/delta 테스트 48개와 central ledger SHA 테스트 7개가 통과했다. 전체 Python suite는 516 tests 통과, skipped=2이며 managed sibling workspace checks unavailable 사유를 재확인했다. `-SNAPSHOT` artifact 조회 한 건은 별도로 HTTP 403으로 건너뛰었다. 새 exact-head CI는 대기 중이다.
   - **Failure:** 복구 전에는 완료를 주장하지 않는다.
 - [x] **CL-07 — irreversible hold 갱신**
   - **Action:** PR 생성 직전 지침/issue를 재확인하고, 병합/tag/release 전에는 별도 fresh 승인과 hold를 다시 확인한다.
@@ -95,7 +95,7 @@
   - **Failure:** source/API 변경이 발견되면 해당 문서 검증을 추가한다.
 - [x] **CG-07 — 대상 검증 실행**
   - **Action:** checksum, catalog 거버넌스와 영향받는 build/테스트 검증을 수행한다.
-  - **Evidence:** checksum 대조 통과; `python3.13 -m unittest tests.test_catalog_checksum tests.test_central_catalog_version_deltas tests.test_ci_catalog_governance tests.test_project_dependabot_catalog tests.test_sync_shared_versions tests.test_sync_dependabot_ignores` 116 tests OK, skipped=2; 중앙 `./gradlew --console=plain build`는 9초/4 tasks로 `BUILD SUCCESSFUL`; clean candidate에서 POM 192개와 Maven model 192개, dependency 50,518개를 검사해 `failures=0`.
+  - **Evidence:** 기존 checksum 대조 통과; `python3.13 -m unittest tests.test_catalog_checksum tests.test_central_catalog_version_deltas tests.test_ci_catalog_governance tests.test_project_dependabot_catalog tests.test_sync_shared_versions tests.test_sync_dependabot_ignores` 116 tests OK, skipped=2; 중앙 `./gradlew --console=plain build`는 9초/4 tasks로 `BUILD SUCCESSFUL`; clean candidate에서 POM 192개와 Maven model 192개, dependency 50,518개를 검사해 `failures=0`. CI repair 후 `scripts/audit-latest-stable.py --check --summary --check-audit --audit-summary`는 523 authorities/557 lines, metadata 518 verified·5 preview-only·0 unavailable로 통과했고 audit/delta 집중 검증은 48 tests, central ledger SHA 테스트는 7 tests OK다. 전체 Python suite는 516 tests OK, skipped=2이며 `tests.test_sync_shared_versions`에서 managed sibling repositories를 찾지 못해 workspace-wide 검사 2건이 skip됨을 확인했다. `-SNAPSHOT` artifact 조회 한 건은 별도로 HTTP 403으로 건너뛰었다.
   - **Failure:** 실패 원인을 분류하고 해결 전에는 PR 생성으로 진행하지 않는다.
 - [x] **CG-08 — 무거운 검증 직렬화**
   - **Action:** 중앙 build, publisher POM 생성과 Testcontainers/DB/native 검증을 저장소별로 직렬 실행한다.
@@ -103,8 +103,8 @@
   - **Failure:** 병렬 shared-state 결과는 버리고 안전하게 다시 실행한다.
 - [x] **CG-09 — lesson gate**
   - **Action:** 변경·diff·오류 복구를 검토하고 재사용 가능한 새 lesson 필요성을 결정한다.
-  - **Evidence:** 기존 `docs/lessons/2026-10-09-gradle-dependabot-central-catalog.md`와 대조했다. 이번 변경은 중앙 catalog freshness 오류를 해결하며 새 재발 원인은 없다. dirty source를 거부한 verifier 동작은 의도된 게이트였고 clean checkout 재실행으로 복구했다.
-  - **Failure:** 새 재발 방지 규칙이 필요하면 pre-PR commit에 lesson을 추가한다.
+  - **Evidence:** 기존 `docs/lessons/2026-08-31-dependabot-generated-artifact-ci-drift.md`에 같은 종류의 실패가 이미 기록됐지만 PR #270에서 재발했다. 기존 lesson에 2026-10-21 run `39601336675`의 원인, audit pointer 연동, 사전 검증 명령을 추가했다. `--refresh-audit` 전체 metadata 재조회 없이 현재 `2.73.13` metadata를 보존하고 변경한 record만 재기준화한다. lesson/checklist의 writer 검증 후 이 변경을 pre-merge commit에 포함한다.
+  - **Failure:** lesson 보강이 커밋되기 전에는 재사용 규칙 반영 게이트를 닫지 않는다.
 - [x] **CG-10 — 최종 pre-PR proof 수렴**
   - **Action:** Type P/POM 검증과 diff review를 마치고 P0/P1을 해결한 exact commit을 만든다.
   - **Evidence:** catalog, checksum, checklist의 exact diff와 전체 POM map/ref/count를 재대조했다. 후보 commit은 `1c98f1c84fda8e86f8b85b7af815168f9c32592f`다. 후속 reviewer 응답을 받지 못해 독립 최종 리뷰는 확보하지 못했다. main session의 inline fallback 검토에서 P0/P1을 찾지 못했으며, 이를 독립 리뷰로 계산하지 않는다. exact-head live review는 CG-14에서 확인한다.
@@ -274,7 +274,7 @@
   - **Failure:** 불일치는 의존하는 gate 전에 수정한다.
 - [x] **SPW-05 — 렌더링 read-back/DoD 기록**
   - **Action:** 최종 Markdown을 다시 읽고 모든 SPW 결과를 기록한다.
-  - **Evidence:** `docs/releases/2026-10-21-issue-1845-bouncycastle-catalog-checklist.md`를 다시 읽었다. 제목/목록/code fence가 정상이고 용어 audit은 1개 파일, 0 findings였다. 설치된 contextual rule set은 `clinic-appointment` 하나라 해당 범위 밖의 catalog 용어는 수동 검토했다.
+  - **Evidence:** checklist와 lesson 변경분을 다시 읽고 문장·숫자·artifact 경로를 현재 결과와 대조했다. 제목/목록/code fence가 정상이며 최종 용어 audit은 2개 파일, 0 findings다. 설치된 contextual rule set은 `clinic-appointment` 하나라 해당 범위 밖의 catalog 용어는 수동 검토했다.
   - **Failure:** read-back 전에는 문서 gate를 닫지 않는다.
 - [x] **KO-01 — 근거/수치 보존**
   - **Action:** 사실·identifier·URL·uncertainty를 원문 증거와 대조한다.
@@ -302,7 +302,7 @@
   - **Failure:** 누락된 표면을 확인한다.
 - [x] **KO-07 — 맥락 용어 audit 실행**
   - **Action:** `node ~/.codex/skills/bluetape-writer/scripts/audit-korean-terms.mjs`로 변경 파일을 검사한다.
-  - **Evidence:** `node /Users/debop/.codex/skills/bluetape-writer/scripts/audit-korean-terms.mjs --json docs/releases/2026-10-21-issue-1845-bouncycastle-catalog-checklist.md` 결과 `files=1`, `findings=[]`; 한국어 기술 문장과 변경된 POM evidence는 수동으로 read-back했다.
+  - **Evidence:** `node /Users/debop/.codex/skills/bluetape-writer/scripts/audit-korean-terms.mjs --json docs/lessons/2026-08-31-dependabot-generated-artifact-ci-drift.md docs/releases/2026-10-21-issue-1845-bouncycastle-catalog-checklist.md` 결과 `files=2`, `findings=[]`. 한국어 기술 문장과 새 test evidence도 수동으로 read-back했다.
   - **Failure:** 설명되지 않은 finding이 있으면 문서 gate를 열어 둔다.
 
 ## 현재 집계

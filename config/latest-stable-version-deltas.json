@@ -1,13 +1,13 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "8d660cdd523bbaf5866a90390e39aa40e085723919c9c7958b332c7dbdef3bb6",
+    "sha256": "46e9cb8ca1457982cf6c26d9d0d93a010efa4046b9439f93f330154666962205",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
-        "adopt-latest": 197,
-        "current": 264,
+        "adopt-latest": 196,
+        "current": 265,
         "defer-breaking-migration": 23,
         "hold-compatibility": 64,
         "hold-unavailable": 9
@@ -48,7 +48,7 @@
       "status": "verified-local-candidate"
     },
     "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-    "sha256": "28d4cacfb8e26fbdb912eabafadc43d3c0704457450938e717e6a728b83212dd"
+    "sha256": "86b72e90a8c64df73b3584be1ed40086e496f7fcc2d47e865af856b66a63bbff"
   },
   "delta": [
     {
@@ -77,7 +77,7 @@
   "resolved-graph-evidence": {
     "observation-count": 2,
     "path": "docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json",
-    "sha256": "160fa169c5369bae53bfd38b4e797169e7c99c73225039ee6794751c8ebfdcd9",
+    "sha256": "395a2dc1a7d1fbc47bc4ceed16df8247e11109704d0fd9f28eb0b09e61ff7fe4",
     "spec-count": 1
   },
   "rollout": "2026-10-18-issue-1832-amqp-client-catalog",

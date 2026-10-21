@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import unittest
@@ -154,6 +155,20 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
                 rollout["remote-immutable-ref-verification"],
                 "pending-candidate-commit-and-push",
             )
+
+    def test_issue_1832_resolved_graph_evidence_sha256_matches_receipt(self) -> None:
+        document = json.loads(LEDGER.read_text(encoding="utf-8"))
+        rollout = next(
+            item
+            for item in document["subsequent-rollouts"]
+            if item["rollout"] == "2026-10-18-issue-1832-amqp-client-catalog"
+        )
+        evidence = rollout["resolved-graph-evidence"]
+        receipt = REPO_ROOT / evidence["path"]
+
+        self.assertEqual(
+            hashlib.sha256(receipt.read_bytes()).hexdigest(), evidence["sha256"]
+        )
 
     def test_compatibility_lines_are_not_issue_168_adoption_deltas(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
