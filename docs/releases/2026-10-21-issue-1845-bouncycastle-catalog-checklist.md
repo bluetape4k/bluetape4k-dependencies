@@ -42,25 +42,25 @@
   - **Action:** 각 게이트를 필수, 조건부, N/A, 승인 대기로 분류한다.
   - **Evidence:** 아래 항목의 상태와 N/A 근거; 미분류 항목은 없다.
   - **Failure:** 미분류 게이트는 필수 미완료로 유지한다.
-- [ ] **CL-03 — 의존 순서 준수**
+- [x] **CL-03 — 의존 순서 준수**
   - **Action:** 아래 행을 문서 순서로 진행하고 선행 게이트 이후에만 다음 단계로 간다.
-  - **Evidence:** 단계별 명령·timestamp·결과를 해당 행에 기록한다.
+  - **Evidence:** `DELTA-01` 기준/후보 graph 확인, `POM-02/03` 전체 publisher 검증을 차례로 마쳤다. 원격 PR/CI는 후속 단계다.
   - **Failure:** 순서가 어긋나면 영향받은 하위 검증을 다시 실행한다.
-- [ ] **CL-04 — evidence 즉시 기록**
+- [x] **CL-04 — evidence 즉시 기록**
   - **Action:** 결과를 확인한 직후 해당 행에 기록한다.
-  - **Evidence:** 명령, 파일, URL, SHA, count와 결과가 행에 있다.
+  - **Evidence:** graph 명령과 stdout hash, publisher ref map hash, POM 명령 및 repository/POM/dependency/model count를 해당 행에 기록했다.
   - **Failure:** evidence 없는 행은 미완료로 남긴다.
-- [ ] **CL-05 — 대기 상태에서 fail-closed**
+- [x] **CL-05 — 대기 상태에서 fail-closed**
   - **Action:** 사용자 승인 또는 원격 CI 대기는 `PENDING`으로 남기고 종속 행동을 멈춘다.
-  - **Evidence:** 대기 대상과 중지된 행동을 이 문서에 적는다.
+  - **Evidence:** PR 생성·원격 CI는 진행 대상이다. merge, tag, release, consumer 동기화는 별도 승인을 기다리며 현재 실행하지 않는다.
   - **Failure:** 승인 대기 중 dependent side effect를 실행하면 관련 proof를 무효화한다.
-- [ ] **CL-06 — 누락/순서 오류 복구**
+- [x] **CL-06 — 누락/순서 오류 복구**
   - **Action:** 누락되거나 순서를 어긴 증거를 복구하고 영향을 받은 후속 proof를 갱신한다.
-  - **Evidence:** 복구 명령과 fresh 결과.
+  - **Evidence:** 첫 POM 호출은 수정 중인 publisher source를 감지해 `publisher repository is dirty: bluetape4k-dependencies`로 중단됐다. 후보 `1c98f1c84fda8e86f8b85b7af815168f9c32592f`를 커밋한 뒤 clean detached worktree에서 다시 실행해 `failures=0`을 확인했다.
   - **Failure:** 복구 전에는 완료를 주장하지 않는다.
-- [ ] **CL-07 — irreversible hold 갱신**
+- [x] **CL-07 — irreversible hold 갱신**
   - **Action:** PR 생성 직전 지침/issue를 재확인하고, 병합/tag/release 전에는 별도 fresh 승인과 hold를 다시 확인한다.
-  - **Evidence:** 각 행동 직전의 target, authority, 현재 상태.
+  - **Evidence:** live Projects #1845/#1844와 alert #234를 재확인했다. 승인된 PR 대상은 중앙 저장소의 `develop ← fix/issue-1845-bouncycastle-lts8on`이다. 병합/tag/release는 별도 승인을 기다린다.
   - **Failure:** 오래된 승인이나 상태로 side effect를 하지 않는다.
 - [ ] **CL-08 — 완료 전 집계**
   - **Action:** `Required checks: X/Y; N/A: N; Blocked: N`와 모든 미완료 ID를 보고한다.
@@ -89,27 +89,27 @@
   - **Action:** 중앙 alias, Projects generated mapping, checksum 및 기존 sync/check scripts를 검토하고 같은 구조를 쓴다.
   - **Evidence:** `gradle/libs.versions.toml` alias와 `config/projects-dependabot-catalog.toml` mapping을 유지하고 sidecar만 갱신했다. 7개 non-Projects repo와 Projects `libs.project.versions.toml`에서 `sync-shared-versions --check --summary`가 clean; `sync-dependabot-ignores --check --summary`와 `sync-managed-catalog --check --summary`도 통과했다. 기본 Projects `libs.versions.toml` 검사는 7개 Dependabot-generated duplicate를 보고했으며 동일 workspace의 central `develop`에서도 같은 7개가 재현됐다. CI/정상 Projects authority 검사는 `libs.project.versions.toml`을 사용한다.
   - **Failure:** 새 generator나 의존성을 도입하지 않는다.
-- [ ] **CG-06 — 공개/문서 계약 검증**
+- [x] **CG-06 — 공개/문서 계약 검증**
   - **Action:** 공개 API/ABI 변경 여부와 필요한 reader-facing 문서를 판정한다.
   - **Evidence:** catalog 데이터 변경만 있으므로 API/KDoc/README 계약은 N/A; 이 release checklist는 작성한다.
   - **Failure:** source/API 변경이 발견되면 해당 문서 검증을 추가한다.
-- [ ] **CG-07 — 대상 검증 실행**
+- [x] **CG-07 — 대상 검증 실행**
   - **Action:** checksum, catalog 거버넌스와 영향받는 build/테스트 검증을 수행한다.
-  - **Evidence:** checksum 대조 통과; `python3.13 -m unittest tests.test_catalog_checksum tests.test_central_catalog_version_deltas tests.test_ci_catalog_governance tests.test_project_dependabot_catalog tests.test_sync_shared_versions tests.test_sync_dependabot_ignores` 116 tests OK, skipped=2; 중앙 `./gradlew --console=plain build`는 9초/4 tasks로 `BUILD SUCCESSFUL`. POM/effective-model gate는 clean exact candidate commit에서 실행 대기.
+  - **Evidence:** checksum 대조 통과; `python3.13 -m unittest tests.test_catalog_checksum tests.test_central_catalog_version_deltas tests.test_ci_catalog_governance tests.test_project_dependabot_catalog tests.test_sync_shared_versions tests.test_sync_dependabot_ignores` 116 tests OK, skipped=2; 중앙 `./gradlew --console=plain build`는 9초/4 tasks로 `BUILD SUCCESSFUL`; clean candidate에서 POM 192개와 Maven model 192개, dependency 50,518개를 검사해 `failures=0`.
   - **Failure:** 실패 원인을 분류하고 해결 전에는 PR 생성으로 진행하지 않는다.
-- [ ] **CG-08 — 무거운 검증 직렬화**
+- [x] **CG-08 — 무거운 검증 직렬화**
   - **Action:** 중앙 build, publisher POM 생성과 Testcontainers/DB/native 검증을 저장소별로 직렬 실행한다.
-  - **Evidence:** 실제 실행 순서와 결과; 실행하지 않은 범위는 근거와 함께 N/A 또는 PENDING으로 분류한다.
+  - **Evidence:** 중앙 Gradle build 후 9개 publisher POM/effective-model gate를 순차 실행했다. catalog metadata 변경으로 Testcontainers/DB/native 검증은 적용되지 않는다.
   - **Failure:** 병렬 shared-state 결과는 버리고 안전하게 다시 실행한다.
-- [ ] **CG-09 — lesson gate**
+- [x] **CG-09 — lesson gate**
   - **Action:** 변경·diff·오류 복구를 검토하고 재사용 가능한 새 lesson 필요성을 결정한다.
-  - **Evidence:** 기존 `docs/lessons/2026-10-09-gradle-dependabot-central-catalog.md`와 대조하고, 새 원인/가드가 없으면 N/A 근거를 기록한다.
+  - **Evidence:** 기존 `docs/lessons/2026-10-09-gradle-dependabot-central-catalog.md`와 대조했다. 이번 변경은 중앙 catalog freshness 오류를 해결하며 새 재발 원인은 없다. dirty source를 거부한 verifier 동작은 의도된 게이트였고 clean checkout 재실행으로 복구했다.
   - **Failure:** 새 재발 방지 규칙이 필요하면 pre-PR commit에 lesson을 추가한다.
-- [ ] **CG-10 — 최종 pre-PR proof 수렴**
+- [x] **CG-10 — 최종 pre-PR proof 수렴**
   - **Action:** Type P/POM 검증과 diff review를 마치고 P0/P1을 해결한 exact commit을 만든다.
-  - **Evidence:** 변경 파일, checks, 리뷰 결과, 최종 SHA.
+  - **Evidence:** catalog, checksum, checklist의 exact diff와 전체 POM map/ref/count를 재대조했다. 후보 commit은 `1c98f1c84fda8e86f8b85b7af815168f9c32592f`다. 후속 reviewer 응답을 받지 못해 독립 최종 리뷰는 확보하지 못했다. main session의 inline fallback 검토에서 P0/P1을 찾지 못했으며, 이를 독립 리뷰로 계산하지 않는다. exact-head live review는 CG-14에서 확인한다.
   - **Failure:** 미완료 proof가 있으면 PR 생성을 보류한다.
-- [ ] **CG-11 — PR 생성 권한 확인**
+- [x] **CG-11 — PR 생성 권한 확인**
   - **Action:** 승인된 repository/base/head를 확인하고 pre-PR 게이트 완료를 확인한다.
   - **Evidence:** 이 문서의 사용자 승인과 exact branch.
   - **Failure:** 목표가 바뀌면 PR을 만들지 않는다.
@@ -119,7 +119,7 @@
   - **Failure:** force push 없이 stale/rejected head를 진단한다.
 - [ ] **CG-12A — PR 생성 직전 지침 갱신**
   - **Action:** user/workspace/repo `AGENTS.md`, leaf/common skill, PR template, issue metadata를 재확인한다.
-  - **Evidence:** 확인 시각·경로·hash와 변경 없음 또는 영향 gate 재실행 기록.
+  - **Evidence:** 2026-10-21 PR 생성 전 user/workspace/repo 지침, workflow/publish skill, 공통 checklist contract, PR body 규칙과 live issue metadata를 재확인했다. 지침 hash는 user `1a01da6a…`, workspace `80ced310…`, repo `c0a38dee…`, workflow `39d5cbc3…`, publish `c725546b…`, common gates `886bb554…`, checklist contract `9c0e28b7…`, PR body `1d35161a…`다. PR template는 저장소에 없다. 중앙 label `security`/`ci`와 milestone `2.1.0`이 존재한다.
   - **Failure:** drift가 있으면 PR 생성 전에 checklist와 proof를 갱신한다.
 - [ ] **CG-13 — PR 생성 및 read-back**
   - **Action:** 한국어 본문으로 PR을 만들고 assignee/milestone/labels를 issue와 맞춘 뒤 live query한다.
@@ -156,35 +156,35 @@
 
 ## Type P와 topology 게이트
 
-- [ ] **PUB-01 — train identity와 authority 고정**
+- [x] **PUB-01 — train identity와 authority 고정**
   - **Action:** `catalog-train-snapshot` / `dependencies-only`, target version, refs, consumer와 side-effect 범위를 고정한다.
-  - **Evidence:** 위 고정 범위 및 fresh GitHub state.
+  - **Evidence:** 위 고정 범위 및 2026-10-21 live GitHub read-back. 사용자는 중앙 저장소의 base/head로 PR을 만들고 검증하는 데 동의했으며, 병합/tag/release는 승인 범위에서 제외했다.
   - **Failure:** identity가 달라지면 검증을 멈추고 다시 pin한다.
-- [ ] **PUB-02 — live planning/topology 공백 해소**
+- [x] **PUB-02 — live planning/topology 공백 해소**
   - **Action:** catalog train의 issue/PR/workflow/consumer 범위를 조회하고 release topology를 분류한다.
-  - **Evidence:** #1845와 #1844는 열려 있음; 중앙 alias가 source of truth이고 Projects 생성 alias는 별도 소비자 상태다.
+  - **Evidence:** Projects #1845와 #1844는 열려 있고 중앙 저장소에는 같은 head의 PR이 없다. 중앙 alias가 원본 catalog에 있고 Projects generated alias와 resolved graph는 별도의 소비자 상태다.
   - **Failure:** 열린 선행 작업이 있으면 downstream 단계는 대기한다.
-- [ ] **TOP-01 — 저장소 분류**
+- [x] **TOP-01 — 저장소 분류**
   - **Action:** 중앙 dependencies repo, 8개 stable publisher와 Projects consumer를 구분한다.
   - **Evidence:** verifier의 현재 9개 publisher inventory 및 consumer map.
   - **Failure:** 미분류 publisher는 POM gate를 막는다.
-- [ ] **TOP-02 — 관계 유형 지정**
+- [x] **TOP-02 — 관계 유형 지정**
   - **Action:** 각 영향 관계를 `catalogManagedBy`, publication 검증 또는 consumer/handoff로 분류한다.
   - **Evidence:** source alias와 9개 publisher 검증 map.
   - **Failure:** 카탈로그 의존을 stable release 순서로 잘못 승격하지 않는다.
-- [ ] **TOP-03 — release DAG 검증**
+- [x] **TOP-03 — release DAG 검증**
   - **Action:** 실제 내부 artifact publication이 있는지 판단하고 필요한 경우 DAG를 계산한다.
   - **Evidence:** 이 PR은 외부 catalog metadata만 바꾸므로 artifact dispatch DAG는 N/A; POM gate는 별도로 필수다.
   - **Failure:** publication 영향이 확인되면 DAG와 order를 추가한다.
-- [ ] **TOP-04 — flow/class 선택**
+- [x] **TOP-04 — flow/class 선택**
   - **Action:** flow를 `catalog-train-snapshot`, class를 `dependencies-only`로 확정한다.
   - **Evidence:** 변경 좌표는 외부 dependency이고 내부 BOM/library 버전은 바뀌지 않는다.
   - **Failure:** 내부 release version 변경이 발견되면 재분류한다.
-- [ ] **TOP-05 — train 전환 검증**
+- [x] **TOP-05 — train 전환 검증**
   - **Action:** internal upstream artifact 변경과 consumer pin 순서를 판정한다.
   - **Evidence:** internal artifact release는 이 변경에 포함되지 않으며 immutable catalog ref/Projects sync는 승인 대기다.
   - **Failure:** 미래 ref나 미발행 artifact를 참조하지 않는다.
-- [ ] **PUB-03a — catalog 후보 고정**
+- [x] **PUB-03a — catalog 후보 고정**
   - **Action:** 변경 전/후 catalog SHA, sidecar와 branch HEAD를 고정한다.
   - **Evidence:** catalog SHA-256, Git commit SHA, checksum check.
   - **Failure:** 입력이 바뀌면 전체 후보 proof를 무효화한다.
@@ -213,15 +213,15 @@
   - **Action:** 9개 실제 publisher와 `verify-publication-poms.py` inventory를 대조한다.
   - **Evidence:** `PUBLISHERS` 및 current CI `publication-pom-contract` inventory가 central, Projects, AWS, Exposed, Graph, Image, JaVers, Leader, Text 9개로 일치한다.
   - **Failure:** missing/extra publisher가 있으면 inventory를 설명하기 전까지 gate를 막는다.
-- [ ] **POM-02 — exact candidate repository map**
+- [x] **POM-02 — exact candidate repository map**
   - **Action:** 중앙 catalog 후보와 각 publisher의 exact path/branch/HEAD를 담은 map을 만든다.
-  - **Evidence:** map 경로·SHA-256 및 source refs.
+  - **Evidence:** central clean worktree `.worktrees/verify/issue-1845-bouncycastle-lts8on`의 commit `1c98f1c84fda8e86f8b85b7af815168f9c32592f`; candidate catalog SHA-256 `11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30`. publisher ref map `config/catalog-publisher-repository-refs.json` SHA-256 `094c6430ead2ee0c227df4963eff26b924255d91e4a7b4b90095c94e4c227191`; 8개 downstream checkout은 detached pinned commit이며 전부 clean이다: AWS `db7b21d4188ab015dea8ae54e4e63407117be648`, Exposed `69f130f5f3951a1c378d930a8001cf87313fcb10`, Graph `df7ed62484a4be98b17df11cdc93d749141451c1`, Image `b1f9a66ab87846df6335c9abae82591bcf0f0ac2`, JaVers `a3ea67f683b47885bfc6740e1f8b22ffc3b3aa26`, Leader `e8ec1d3fe4f3af0fef52a4a0e4d9283068f980b4`, Projects `61cef7cd4073409617ac84d4cb8826f6e0be4db5`, Text `cadd3e603c5f7860486bce6ba8ecf81733ab364c`.
   - **Failure:** mutable branch 이름만으로 후보를 식별하지 않는다.
-- [ ] **POM-03 — 전체 publication POM/effective model**
+- [x] **POM-03 — 전체 publication POM/effective model**
   - **Action:** map으로 9개 publisher의 POM을 생성하고 구조 및 Maven effective model을 전부 검증한다.
-  - **Evidence:** repository/POM/dependency/model/failure counts와 `failures=0`.
+  - **Evidence:** `scripts/verify-publication-poms.py --workspace /Users/debop/work/bluetape4k/bluetape4k-dependencies/.worktrees/fix/issue-1845-bouncycastle-lts8on/build/issue-1845-20261021-publishers --summary`를 clean central candidate에서 실행했다. central/Projects/AWS/Exposed/Graph/Image/JaVers/Leader/Text POM 수는 각각 1/82/6/46/16/11/7/17/6; 총 `repositories=9 files=192 dependencies=50518 maven_models=192 failures=0`.
   - **Failure:** `--skip-generation`이나 대표 POM만으로 통과 처리하지 않는다.
-- [ ] **PUB-04 — stable release preflight**
+- [x] **PUB-04 — stable release preflight**
   - **Action:** stable Maven release preflight 적용 여부를 판단한다.
   - **Evidence:** catalog-only `dependencies-only` PR이며 stable Maven artifact dispatch가 없어 N/A.
   - **Failure:** release dispatch가 scope에 들어오면 전체 preflight를 새로 연다.
@@ -229,11 +229,11 @@
   - **Action:** `catalog/YYYY-MM-DD-NN` ref 생성 직전 fresh authority/hold를 수행한다.
   - **Evidence:** tag는 별도 승인 대상이므로 현재 PENDING.
   - **Failure:** PR 승인으로 tag를 생성하지 않는다.
-- [ ] **PUB-06 — artifact dispatch/publication 확인**
+- [x] **PUB-06 — artifact dispatch/publication 확인**
   - **Action:** 승인된 artifact가 있을 때만 dispatch 후 공개 artifact를 독립 검증한다.
   - **Evidence:** 현재 변경은 Maven artifact를 publish하지 않으며 dispatch도 승인되지 않아 N/A.
   - **Failure:** workflow dispatch를 실행하지 않는다.
-- [ ] **PUB-07 — GitHub release closeout**
+- [x] **PUB-07 — GitHub release closeout**
   - **Action:** 승인된 GitHub Release와 milestone 상태를 확인한다.
   - **Evidence:** 별도 GitHub Release가 없고 현재 PR scope 밖이므로 N/A.
   - **Failure:** 이 PR에서 issue를 닫거나 release를 만들지 않는다.
@@ -241,11 +241,11 @@
   - **Action:** immutable catalog ref가 승인된 뒤 Projects consumer pin/PR/CI를 정렬한다.
   - **Evidence:** Projects #1844는 OPEN이며 central merge와 새 consumer 단계가 대기 중이다.
   - **Failure:** 현재 central PR만으로 Projects issue/PR을 완료 처리하지 않는다.
-- [ ] **PUB-09 — next development line**
+- [x] **PUB-09 — next development line**
   - **Action:** 다음 SNAPSHOT line 요구 여부를 판단한다.
   - **Evidence:** 외부 library metadata만 갱신하고 internal version line을 바꾸지 않아 N/A.
   - **Failure:** 실제 internal version을 바꾸면 이 row를 다시 분류한다.
-- [ ] **PUB-10 — publication documentation handoff**
+- [x] **PUB-10 — publication documentation handoff**
   - **Action:** public install/release docs가 실제 published version을 반영하는지 판단한다.
   - **Evidence:** API/library release가 없어 public install docs 변경은 N/A; 이 checklist만 남긴다.
   - **Failure:** stable publication이 추가되면 해당 문서 handoff를 실행한다.
@@ -264,45 +264,45 @@
   - **Action:** 계획, 경계, 게이트, 실패 처리, DoD와 승인 정지를 담는다.
   - **Evidence:** 이 문서의 identity/plan/checklist sections.
   - **Failure:** 빠진 검증 또는 권한 경계를 채우기 전 실행을 보류한다.
-- [ ] **SPW-03 — Korean 기술 문체**
+- [x] **SPW-03 — Korean 기술 문체**
   - **Action:** facts를 고정한 뒤 자연스러움/용어 점검을 완료한다.
-  - **Evidence:** KO-01..KO-07과 `audit-korean-terms.mjs` 결과.
+  - **Evidence:** 근거를 고정한 뒤 한국어 문장 자연스러움 점검 기준을 적용하고 KO-01..KO-07을 확인했다. 문서는 근거·범위·대기 상태를 직접 서술하며 광고성 표현이나 번역투가 없다.
   - **Failure:** 의미를 바꾸는 번역이나 모호한 표현을 수정한다.
-- [ ] **SPW-04 — 기술 의미와 추적성 확인**
+- [x] **SPW-04 — 기술 의미와 추적성 확인**
   - **Action:** 문장별 기술 주장과 issue/catalog/source를 대조한다.
-  - **Evidence:** version, SHA, URL, approval, N/A/PENDING 근거의 일치.
+  - **Evidence:** catalog SHA/checksum, 8개 publisher pin, POM counts, Projects issue/PR 및 alert 상태를 각각 source와 대조했다. 실제 resolved graph가 `2.73.10`인 점과 PR의 제한된 목적을 구분했다.
   - **Failure:** 불일치는 의존하는 gate 전에 수정한다.
-- [ ] **SPW-05 — 렌더링 read-back/DoD 기록**
+- [x] **SPW-05 — 렌더링 read-back/DoD 기록**
   - **Action:** 최종 Markdown을 다시 읽고 모든 SPW 결과를 기록한다.
-  - **Evidence:** 최종 경로, audit 결과와 남은 gap.
+  - **Evidence:** `docs/releases/2026-10-21-issue-1845-bouncycastle-catalog-checklist.md`를 다시 읽었다. 제목/목록/code fence가 정상이고 용어 audit은 1개 파일, 0 findings였다. 설치된 contextual rule set은 `clinic-appointment` 하나라 해당 범위 밖의 catalog 용어는 수동 검토했다.
   - **Failure:** read-back 전에는 문서 gate를 닫지 않는다.
-- [ ] **KO-01 — 근거/수치 보존**
+- [x] **KO-01 — 근거/수치 보존**
   - **Action:** 사실·identifier·URL·uncertainty를 원문 증거와 대조한다.
   - **Evidence:** issue `#1845`, PR `#1844`, version, SHA와 상태 대조.
   - **Failure:** 의미가 달라지면 수정한다.
-- [ ] **KO-02 — 일반화 주장 제거**
+- [x] **KO-02 — 일반화 주장 제거**
   - **Action:** 근거 없는 중요성/효과 표현을 구체 행동으로 바꾼다.
   - **Evidence:** checklist 문장 검토.
   - **Failure:** 입증되지 않은 표현을 삭제하거나 한정한다.
-- [ ] **KO-03 — 번역투/형식 문장 제거**
+- [x] **KO-03 — 번역투/형식 문장 제거**
   - **Action:** 번역투와 기계적인 문장 구조를 점검한다.
   - **Evidence:** 문장 단위 naturalness review.
   - **Failure:** 부자연스러운 문장을 다듬고 재검토한다.
-- [ ] **KO-04 — 용어/문체 확인**
+- [x] **KO-04 — 용어/문체 확인**
   - **Action:** identifier는 보존하고 일반 기술어는 일관되게 쓴다.
   - **Evidence:** `catalog`, `consumer`, `resolved graph`, `PENDING` 사용이 문맥에 맞는지 검토한다.
   - **Failure:** 잘못된 의미 차이를 만드는 용어를 고친다.
-- [ ] **KO-05 — 유머와 말투 제한**
+- [x] **KO-05 — 유머와 말투 제한**
   - **Action:** checklist register를 유지하고 모호한 비유를 제거한다.
   - **Evidence:** 문서에 비유나 홍보 문구가 없다.
   - **Failure:** 직접적인 표현으로 바꾼다.
-- [ ] **KO-06 — 모든 reader-facing 면 확인**
+- [x] **KO-06 — 모든 reader-facing 면 확인**
   - **Action:** 제목, 본문, 목록, 링크와 metadata를 확인한다.
   - **Evidence:** 단일 Korean release checklist이며 locale parity/diagram은 범위 밖이다.
   - **Failure:** 누락된 표면을 확인한다.
-- [ ] **KO-07 — 맥락 용어 audit 실행**
+- [x] **KO-07 — 맥락 용어 audit 실행**
   - **Action:** `node ~/.codex/skills/bluetape-writer/scripts/audit-korean-terms.mjs`로 변경 파일을 검사한다.
-  - **Evidence:** 결과와 모든 finding 처리 내역.
+  - **Evidence:** `node /Users/debop/.codex/skills/bluetape-writer/scripts/audit-korean-terms.mjs --json docs/releases/2026-10-21-issue-1845-bouncycastle-catalog-checklist.md` 결과 `files=1`, `findings=[]`; 한국어 기술 문장과 변경된 POM evidence는 수동으로 read-back했다.
   - **Failure:** 설명되지 않은 finding이 있으면 문서 gate를 열어 둔다.
 
 ## 현재 집계
