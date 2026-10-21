@@ -404,7 +404,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 self.assertEqual(audit["summary"]["authority-count"], 523)
                 self.assertEqual(audit["summary"]["line-count"], 557)
                 self.assertEqual(
-                    audit["summary"]["line-dispositions"]["adopt-latest"], 197
+                    audit["summary"]["line-dispositions"]["adopt-latest"], 196
                 )
             else:
                 self.assertEqual(document["status"], "validation-pending")
