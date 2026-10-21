@@ -1,6 +1,6 @@
 # 2026-10-21 Issue #1845 Bouncy Castle 카탈로그 train 체크리스트
 
-상태: **PENDING / 중앙 후보 catalog SHA-256 `11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30`에서 Projects 두 resolved graph 모두 `bcprov-lts8on:2.73.10`으로 유지된다. 초기 PR head `b3c02b3d83b41d2ed4357ad2233b1549d07a81b4`의 CI `39601336675`는 generated inventory/audit SHA 불일치로 실패했다. inventory, 영향받은 audit line, latest-stable audit pointer, 중앙·latest-stable graph receipt SHA pointer, graph contract 및 candidate nested receipt SHA를 일치시켰다. 집중 audit/delta 테스트 48개, central ledger 테스트 7개와 전체 Python suite 516개가 통과했다. suite의 `skipped=2`는 managed sibling repositories를 찾지 못한 workspace-wide 검사 두 건이며, 별도로 `-SNAPSHOT` artifact 조회 한 건은 HTTP 403으로 verifier가 건너뛰었다. 새 hosted CI는 대기 중이다. 중앙 PR은 generated catalog freshness 오류를 다루며 runtime dependency나 Dependabot alert가 해결됐다고 주장하지 않는다. 병합, immutable catalog ref 생성, 소비자 동기화와 publication은 별도 승인을 기다린다.**
+상태: **PENDING / 2026-10-21 PR #270 head `3c7a47bf335fbc543f7dbc1f33f9bf5f5134bedd`의 CI run `39627022926`에서 9개 job이 통과했다. PR 이벤트에서는 consumer 동기화 job이 실행되지 않아 아홉 저장소의 catalog SHA 일치를 증명하지 못했다. 현재 정책은 기본 ref `198147fd6ca2992fae32e175bd5f3d396c497096`와 Projects override `dcc7fa7557d3c0548b9e3fc28c48877827ea2f74`가 공존하는 전환 상태다. 사용자는 아홉 consumer가 같은 중앙 catalog commit SHA를 사용하도록 요구했고, 해당 SHA는 중앙 변경 통합과 별도 승인된 immutable catalog train에서 확정한다. 소비자 PR 생성은 승인됐지만 tag와 merge는 각각 별도 승인 대상이다. 이 중앙 변경만으로 resolved dependency graph나 Dependabot alert가 해결됐다고 주장하지 않는다. 이 문서 변경은 새 PR head의 exact-head CI/read-back을 요구한다.**
 
 ## 목표와 고정 범위
 
@@ -9,9 +9,29 @@
 - 대상: `org.bouncycastle:bcprov-lts8on`, 중앙 alias `bouncycastle-bcprov-lts8on`; `2.73.12.1`에서 `2.73.13`으로 변경한다.
 - 원인/소비자: Projects Issue #1845는 generated catalog 거버넌스 실패를 추적한다. Projects PR #1844의 exact head `6e23291a78d8fdf3528057a5451773d271acb7ee`가 해당 alias를 `2.73.13`으로 올렸지만, `Central Catalog Governance`가 “generated catalog is stale”로 실패했다. 중앙 catalog가 `2.73.13`을 제공하면 두 카탈로그의 버전이 일치한다.
 - 공식 버전 근거: [Maven Central artifact record](https://central.sonatype.com/artifact/org.bouncycastle/bcprov-lts8on), [Bouncy Castle Java LTS 2.73.13 announcement](https://github.com/bcgit/bc-java/discussions/2460). 기존 catalog 주석은 `io.nats:jnats`의 전이 의존성 보안 override임을 명시한다.
-- PR 생성 권한: 사용자 승인으로 `bluetape4k/bluetape4k-dependencies`, base `develop`, head `fix/issue-1845-bouncycastle-lts8on` PR 생성 및 검증까지 허용됐다. 병합·tag·release·소비자 PR/기본 브랜치 변경은 승인 범위에 포함되지 않는다.
-- 변경 대상: catalog, checksum sidecar, latest-stable inventory/audit, latest-stable ledger의 audit SHA/summary pointer, central/latest-stable ledger의 resolved-graph receipt SHA pointer, resolved-graph receipt의 ledger-contract SHA와 후보 receipt의 nested SHA, 재발 방지 lesson, 본 체크리스트. resolved graph 관찰이 바뀌지 않아 새 delta는 추가하지 않으며, Projects 등 형제 저장소 파일은 이 PR에서 수정하지 않는다.
-- 정지 조건: PR 메타데이터와 exact-head CI/read-back을 보고한 뒤 멈춘다. Projects #1844는 이 중앙 PR만으로 닫거나 성공 처리하지 않는다.
+- PR 생성 권한: 사용자는 `bluetape4k/bluetape4k-dependencies`, base `develop`, head `fix/issue-1845-bouncycastle-lts8on` PR 생성·검증과 아래 아홉 consumer PR 생성을 승인했다. consumer PR은 중앙 catalog train에서 SHA를 고정한 뒤 각 저장소 `develop ← chore/issue-1845-catalog-sha`로 준비한다. 병합과 `catalog/YYYY-MM-DD-NN` tag 생성은 각각 fresh 승인이 필요하며 publication은 현재 범위 밖이다.
+- 변경 대상: catalog, checksum sidecar, latest-stable inventory/audit, latest-stable ledger의 audit SHA/summary pointer, central/latest-stable ledger의 resolved-graph receipt SHA pointer, resolved-graph receipt의 ledger-contract SHA와 후보 receipt의 nested SHA, 재발 방지 lesson, 본 체크리스트. resolved graph 관찰이 바뀌지 않아 새 delta는 추가하지 않는다. 아홉 consumer 저장소는 각각 승인된 후속 PR에서 `settings.gradle.kts`와 `.github/workflows/ci.yml`의 catalog SHA를 동일하게 갱신한다.
+- 종료 조건: 중앙 catalog train tag의 commit SHA를 아홉 저장소의 settings/CI가 모두 사용하고, 중앙 policy의 `snapshot-catalog-ref`도 같은 SHA이며 `snapshot-catalog-ref-overrides`가 비어 있어야 한다. 아홉 consumer 검증과 중앙 verifier가 모두 통과해야 consumer train을 닫는다. Projects #1844는 이 중앙 PR만으로 닫거나 성공 처리하지 않는다.
+
+## 현재 consumer SHA 기준선
+
+2026-10-22 GitHub `develop` branch의 settings와 CI catalog pin을 직접 읽었다. 각 저장소의 settings/CI 값은 서로 일치하지만, consumer 간에는 Projects와 나머지 여덟 저장소가 다른 SHA를 사용한다.
+
+Projects와 여덟 저장소는 `settings.gradle.kts`의 SHA 기본값과 CI의 `BLUETAPE4K_DEPENDENCIES_CATALOG_REF`가 같다. Exposed CI는 settings 기본값을 읽어 workflow ref와 일치하는지 검사한다.
+
+| 저장소 | `develop` HEAD | 중앙 catalog commit SHA |
+|---|---|---|
+| `bluetape4k-projects` | `e6a090a0812ddc207d4d7193798799b2ead4afce` | `dcc7fa7557d3c0548b9e3fc28c48877827ea2f74` |
+| `bluetape4k-aws` | `e7ac7102bebd2f024148be8239b9dd3ad0cbeb39` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+| `bluetape4k-experimental` | `af2373cb515543cf6839fae8fe323518be557cec` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+| `bluetape4k-exposed` | `37fc877beea70f777e25bf19053599de4cc6df29` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+| `bluetape4k-graph` | `929a7b1b89e7cc11f109cc84a03767d8040263dc` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+| `bluetape4k-image` | `002d76a33db51b02c5cf90f31c716d2c903249a4` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+| `bluetape4k-javers` | `cd035207b7b01ff1b9ad55d43591557fb454ef42` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+| `bluetape4k-leader` | `cee9a5c851075403155e54aec1e94cf7f46e46f2` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+| `bluetape4k-text` | `a9ec070ab240ee2245ecf0568ee055e44c836136` | `198147fd6ca2992fae32e175bd5f3d396c497096` |
+
+Projects CI also identifies its existing tag `catalog/2026-10-20-01`, whose peeled catalog commit is `dcc7fa7557d3c0548b9e3fc28c48877827ea2f74`. This existing pin is not the target of the approved consumer train; all nine consumer PRs must use the one catalog commit fixed after the central PR is integrated and the new train tag is separately approved.
 
 ## 기준선: 실제 resolved graph
 
@@ -28,7 +48,10 @@
 2. 격리 worktree에서 이 체크리스트를 먼저 확정하고 catalog/checksum만 수정한다.
 3. resolved graph 영향, catalog 거버넌스, 9개 publisher의 POM/effective model과 중앙 build를 검증한다.
 4. exact diff를 리뷰하고 Korean Lore commit을 만든 뒤 승인된 branch만 push한다.
-5. 지침과 issue metadata를 재확인하고 PR을 생성한다. exact PR head의 CI, reviews, threads, labels, milestone, assignee를 다시 읽는다.
+5. 지침과 issue metadata를 재확인하고 중앙 PR을 만든다. exact PR head의 CI, reviews, threads, labels, milestone, assignee를 다시 읽는다.
+6. 중앙 PR merge 승인을 받은 뒤 통합 SHA를 확인한다. immutable catalog tag는 새 승인과 hold를 거쳐 만든다.
+7. tag가 가리키는 commit SHA를 고정해 아홉 consumer PR을 만든다. 각 PR에서 settings와 CI pin이 같은 SHA인지 검증한다.
+8. consumer PR merge가 각각 승인·검증된 뒤 중앙 policy를 단일 SHA로 수렴시키고 override를 제거한다. 이 policy 변경에 별도 PR이 필요하면 생성 전에 저장소/base/head authority를 확인한다.
 
 실행 위치: `.worktrees/fix/issue-1845-bouncycastle-lts8on`.
 
@@ -52,17 +75,17 @@
   - **Failure:** evidence 없는 행은 미완료로 남긴다.
 - [x] **CL-05 — 대기 상태에서 fail-closed**
   - **Action:** 사용자 승인 또는 원격 CI 대기는 `PENDING`으로 남기고 종속 행동을 멈춘다.
-  - **Evidence:** PR 생성·원격 CI는 진행 대상이다. merge, tag, release, consumer 동기화는 별도 승인을 기다리며 현재 실행하지 않는다.
+  - **Evidence:** 아홉 consumer PR 생성은 승인됐으나 목표 SHA가 아직 확정되지 않았다. tag와 PR merge는 각각 별도 승인을 기다리므로 해당 종속 행동은 `PENDING`이다.
   - **Failure:** 승인 대기 중 dependent side effect를 실행하면 관련 proof를 무효화한다.
 - [x] **CL-06 — 누락/순서 오류 복구**
   - **Action:** 누락되거나 순서를 어긴 증거를 복구하고 영향을 받은 후속 proof를 갱신한다.
-  - **Evidence:** 첫 POM 호출은 수정 중인 publisher source를 감지해 `publisher repository is dirty: bluetape4k-dependencies`로 중단됐다. 후보 `1c98f1c84fda8e86f8b85b7af815168f9c32592f`를 커밋한 뒤 clean detached worktree에서 다시 실행해 `failures=0`을 확인했다. 초기 PR CI `39601336675`는 515 Python tests에서 failures 16, errors 1, skipped 4를 기록했다. 원인은 catalog SHA `11255a5e…` 이후에도 inventory `96a177ff…`와 audit catalog SHA `32887e90…`가 이전 값인 점이었다. inventory `4e775dd271b9464595e70ff1425acc4668d233b321b20262098a5bdccedac9ec`를 만들고 Bouncy Castle line만 `2.73.13`/`current`로 갱신했다. audit SHA `46e9cb8ca1457982cf6c26d9d0d93a010efa4046b9439f93f330154666962205`와 summary를 `latest-stable-version-deltas.json`에 반영했다. 첫 전체 Python suite는 515 tests에서 ledger lifecycle 검사 1건이 실패했고 skipped=2였다. graph 관찰은 바뀌지 않았지만 ledger-contract SHA가 달라져 candidate nested SHA와 central/latest-stable ledger의 graph receipt SHA pointer를 일치시켰다. 집중 audit/delta 테스트 48개와 central ledger SHA 테스트 7개가 통과했다. 전체 Python suite는 516 tests 통과, skipped=2이며 managed sibling workspace checks unavailable 사유를 재확인했다. `-SNAPSHOT` artifact 조회 한 건은 별도로 HTTP 403으로 건너뛰었다. 새 exact-head CI는 대기 중이다.
+  - **Evidence:** 첫 POM 호출은 수정 중인 publisher source를 감지해 `publisher repository is dirty: bluetape4k-dependencies`로 중단됐다. 후보 `1c98f1c84fda8e86f8b85b7af815168f9c32592f`를 커밋한 뒤 clean detached worktree에서 다시 실행해 `failures=0`을 확인했다. 초기 PR CI `39601336675`는 515 Python tests에서 failures 16, errors 1, skipped 4를 기록했다. 원인은 catalog SHA `11255a5e…` 이후에도 inventory `96a177ff…`와 audit catalog SHA `32887e90…`가 이전 값인 점이었다. inventory `4e775dd271b9464595e70ff1425acc4668d233b321b20262098a5bdccedac9ec`를 만들고 Bouncy Castle line만 `2.73.13`/`current`로 갱신했다. audit SHA `46e9cb8ca1457982cf6c26d9d0d93a010efa4046b9439f93f330154666962205`와 summary를 `latest-stable-version-deltas.json`에 반영했다. 첫 전체 Python suite는 515 tests에서 ledger lifecycle 검사 1건이 실패했고 skipped=2였다. graph 관찰은 바뀌지 않았지만 ledger-contract SHA가 달라져 candidate nested SHA와 central/latest-stable ledger의 graph receipt SHA pointer를 일치시켰다. 집중 audit/delta 테스트 48개와 central ledger SHA 테스트 7개가 통과했다. 전체 Python suite는 516 tests 통과, skipped=2이며 managed sibling workspace checks unavailable 사유를 재확인했다. `-SNAPSHOT` artifact 조회 한 건은 별도로 HTTP 403으로 건너뛰었다. 후속 exact-head CI `39627022926`은 9/9 job이 통과했으나 PR 이벤트에서는 downstream consumer 동기화가 실행되지 않았다.
   - **Failure:** 복구 전에는 완료를 주장하지 않는다.
 - [x] **CL-07 — irreversible hold 갱신**
   - **Action:** PR 생성 직전 지침/issue를 재확인하고, 병합/tag/release 전에는 별도 fresh 승인과 hold를 다시 확인한다.
   - **Evidence:** live Projects #1845/#1844와 alert #234를 재확인했다. 승인된 PR 대상은 중앙 저장소의 `develop ← fix/issue-1845-bouncycastle-lts8on`이다. 병합/tag/release는 별도 승인을 기다린다.
   - **Failure:** 오래된 승인이나 상태로 side effect를 하지 않는다.
-- [ ] **CL-08 — 완료 전 집계**
+- [x] **CL-08 — 완료 전 집계**
   - **Action:** `Required checks: X/Y; N/A: N; Blocked: N`와 모든 미완료 ID를 보고한다.
   - **Evidence:** 아래 집계와 개별 상태가 일치한다.
   - **Failure:** 집계가 맞지 않으면 완료 보고를 보류한다.
@@ -71,11 +94,11 @@
 
 - [x] **CG-01 — authority 재확인**
   - **Action:** 사용자·workspace·중앙 저장소 지침, Type P skill, 현재 git 상태와 승인 내용을 읽었다.
-  - **Evidence:** base `dcc7fa7557d3c0548b9e3fc28c48877827ea2f74`, 승인된 중앙 PR target과 병합/tag/release 제외 범위.
+  - **Evidence:** base `dcc7fa7557d3c0548b9e3fc28c48877827ea2f74`, central PR #270 target, 아홉 consumer PR target, merge/tag/release hold.
   - **Failure:** authority 또는 target 불일치 시 변경을 멈춘다.
 - [x] **CG-02 — 과거/현재 근거 조회**
   - **Action:** GNO `bluetape4k-github`, `bluetape4k-docs`, `bluetape4k-wiki`를 저장소/보안 catalog 용어로 조회하고 live GitHub를 확인했다.
-  - **Evidence:** 기존 Dependencies catalog train 체크리스트와 Issue #1845, PR #1844의 live state를 참고한다. 직접 `gh` 결과를 최종 authority로 사용한다.
+  - **Evidence:** GNO 세 collection에 Issue #1845, catalog train, consumer SHA 검색을 실행했으나 결과가 없었다. context-mode 대체 검색도 issue-specific 결과를 주지 않았다. live GitHub와 현재 저장소 파일을 직접 확인해 근거를 기록한다.
   - **Failure:** index와 live state가 다르면 live state로 다시 판정하고 문서를 고친다.
 - [x] **CG-03 — 사용자 변경과 경계 보호**
   - **Action:** clean `develop`에서 승인된 semantic branch의 격리 worktree를 만들었다.
@@ -127,7 +150,7 @@
   - **Failure:** 메타데이터나 본문 오류를 고치고 다시 읽는다.
 - [ ] **CG-14 — exact-head CI와 live review**
   - **Action:** PR head의 필수 CI를 기다리고 reviews/threads를 재확인하며 독립 final review를 완료한다.
-  - **Evidence:** green checks, P0=0/P1=0, unresolved thread 없음; human reviewer subgate는 단일 개발자 lane으로 입증될 때만 N/A.
+  - **Evidence:** 2026-10-21 head `3c7a47bf335fbc543f7dbc1f33f9bf5f5134bedd`의 CI `39627022926`은 9/9 job이 통과했고 downstream sync는 PR event 조건으로 skip됐다. independent code-reviewer는 유효한 verdict를 내지 못해 이 문서의 inline fallback review를 기록했으며, architect 결과는 `WATCH`다. 이 문서 revision의 새 head CI, reviews/threads read-back과 workflow receipt resolution은 PR #270의 후속 검증으로 기록한다. human-review subgate는 단일 개발자 lane 근거에 따라 N/A다.
   - **Failure:** CI 실패는 해당 exact head에서 수리하고 다시 확인한다.
 - [ ] **CG-15 — merge-ready 보고**
   - **Action:** 완료된 scope의 evidence와 남은 승인 게이트를 수량화해 사용자에게 보고한다.
@@ -135,7 +158,7 @@
   - **Failure:** 근거가 부족하면 merge-ready라고 부르지 않는다.
 - [ ] **CG-16 — fresh merge approval**
   - **Action:** CG-15 보고 뒤 exact PR/head 병합 승인을 받는다.
-  - **Evidence:** 승인 대기. 현재 승인은 PR 생성까지만 허용한다.
+  - **Evidence:** PR #270 exact head의 merge approval이 대기 중이다. consumer PR 생성 승인은 merge 승인을 대신하지 않는다.
   - **Failure:** 승인 전 병합하지 않는다.
 - [ ] **CG-17 — 병합 및 확인**
   - **Action:** 승인 후 지정 전략으로 병합하고 merge SHA를 확인한다.
@@ -158,11 +181,11 @@
 
 - [x] **PUB-01 — train identity와 authority 고정**
   - **Action:** `catalog-train-snapshot` / `dependencies-only`, target version, refs, consumer와 side-effect 범위를 고정한다.
-  - **Evidence:** 위 고정 범위 및 2026-10-21 live GitHub read-back. 사용자는 중앙 저장소의 base/head로 PR을 만들고 검증하는 데 동의했으며, 병합/tag/release는 승인 범위에서 제외했다.
+  - **Evidence:** 위 고정 범위 및 2026-10-22 live GitHub read-back. 사용자는 중앙 PR 생성·검증 및 아홉 consumer PR 생성을 승인했다. consumer target SHA는 중앙 통합/tag 뒤 정하며, merge와 tag는 별도 승인을 기다린다.
   - **Failure:** identity가 달라지면 검증을 멈추고 다시 pin한다.
 - [x] **PUB-02 — live planning/topology 공백 해소**
   - **Action:** catalog train의 issue/PR/workflow/consumer 범위를 조회하고 release topology를 분류한다.
-  - **Evidence:** Projects #1845와 #1844는 열려 있고 중앙 저장소에는 같은 head의 PR이 없다. 중앙 alias가 원본 catalog에 있고 Projects generated alias와 resolved graph는 별도의 소비자 상태다.
+  - **Evidence:** Projects #1845와 #1844, Dependencies #271은 열려 있으며 중앙 PR #270은 `develop ← fix/issue-1845-bouncycastle-lts8on`으로 열려 있다. 중앙 alias가 원본 catalog에 있고 Projects generated alias와 resolved graph는 별도의 소비자 상태다.
   - **Failure:** 열린 선행 작업이 있으면 downstream 단계는 대기한다.
 - [x] **TOP-01 — 저장소 분류**
   - **Action:** 중앙 dependencies repo, 8개 stable publisher와 Projects consumer를 구분한다.
@@ -238,9 +261,9 @@
   - **Evidence:** 별도 GitHub Release가 없고 현재 PR scope 밖이므로 N/A.
   - **Failure:** 이 PR에서 issue를 닫거나 release를 만들지 않는다.
 - [ ] **PUB-08 — consumer synchronization**
-  - **Action:** immutable catalog ref가 승인된 뒤 Projects consumer pin/PR/CI를 정렬한다.
-  - **Evidence:** Projects #1844는 OPEN이며 central merge와 새 consumer 단계가 대기 중이다.
-  - **Failure:** 현재 central PR만으로 Projects issue/PR을 완료 처리하지 않는다.
+  - **Action:** 중앙 PR을 승인된 뒤 병합하고, 별도 승인받은 immutable catalog tag가 가리키는 commit SHA 하나로 아홉 consumer의 pin/PR/CI를 정렬한다. 각 PR은 `develop ← chore/issue-1845-catalog-sha`를 사용한다. 아홉 PR이 병합된 뒤 중앙 policy의 `snapshot-catalog-ref`를 같은 SHA로 바꾸고 `snapshot-catalog-ref-overrides`를 비운 다음 9개 consumer 검증을 다시 실행한다.
+  - **Evidence:** consumer 저장소는 Projects, AWS, Experimental, Exposed, Graph, Image, JaVers, Leader, Text다. 각 저장소에서 `settings.gradle.kts`와 `.github/workflows/ci.yml`이 같은 40자리 SHA를 가리키고, 아홉 저장소의 SHA와 중앙 policy가 모두 일치해야 한다. PR #270 merge, tag 생성, 각 consumer PR merge는 각각 별도 승인 대상이며 현재 대기 중이다.
+  - **Failure:** 하나라도 SHA가 다르거나 검증이 빠지면 train을 `PENDING`으로 둔다. Projects #1844나 다른 consumer PR을 중앙 catalog CI만으로 완료 처리하지 않는다.
 - [x] **PUB-09 — next development line**
   - **Action:** 다음 SNAPSHOT line 요구 여부를 판단한다.
   - **Evidence:** 외부 library metadata만 갱신하고 internal version line을 바꾸지 않아 N/A.
@@ -305,10 +328,70 @@
   - **Evidence:** `node /Users/debop/.codex/skills/bluetape-writer/scripts/audit-korean-terms.mjs --json docs/lessons/2026-08-31-dependabot-generated-artifact-ci-drift.md docs/releases/2026-10-21-issue-1845-bouncycastle-catalog-checklist.md` 결과 `files=2`, `findings=[]`. 한국어 기술 문장과 새 test evidence도 수동으로 read-back했다.
   - **Failure:** 설명되지 않은 finding이 있으면 문서 gate를 열어 둔다.
 
+### 재발 방지 lesson 수정 게이트
+
+- [x] **LESSON-SPW-01 — 독자/목적/evidence 고정**
+  - **Action:** 기존 lesson을 수정한 이유와 현재 증거를 고정한다.
+  - **Evidence:** 대상 `docs/lessons/2026-08-31-dependabot-generated-artifact-ci-drift.md`; 독자는 catalog maintainer이며 새 규칙은 단일 SHA 수렴이다.
+  - **Failure:** 근거가 없는 lesson 주장은 남기지 않는다.
+- [x] **LESSON-SPW-02 — lesson 계약 충족**
+  - **Action:** 원인, 결정, 결과, 검증과 재발 방지 guard를 연결한다.
+  - **Evidence:** 기존 pointer drift 사례와 이번 policy override/consumer SHA 분리를 검증할 종료 조건.
+  - **Failure:** 다음 maintainer가 실행할 guard가 없으면 lesson을 닫지 않는다.
+- [x] **LESSON-SPW-03 — 한국어 기술 문체**
+  - **Action:** 한국어 기술 lesson 자연스러움 checklist를 실행한다.
+  - **Evidence:** lesson 전용 `LESSON-KO-01..07` 결과.
+  - **Failure:** 근거와 불확실성을 보존하면서 문장을 다시 다듬는다.
+- [x] **LESSON-SPW-04 — 기술 의미와 추적성 확인**
+  - **Action:** CI run, policy ref, consumer verifier와 종료 조건을 원본에 대조한다.
+  - **Evidence:** lesson의 PR/CI link, config keys와 checklist 조건을 상호 대조한다.
+  - **Failure:** source와 불일치하는 문장을 수정한다.
+- [x] **LESSON-SPW-05 — 최종 read-back/DoD 기록**
+  - **Action:** lesson을 다시 읽고 format과 traceability를 확인한다.
+  - **Evidence:** 수정된 lesson의 최종 Markdown read-back 및 term audit 결과.
+  - **Failure:** read-back 전에 lesson gate를 닫지 않는다.
+- [x] **LESSON-KO-01 — 근거/수치 보존**
+  - **Action:** lesson의 facts, identifiers, URLs와 uncertainty를 대조한다.
+  - **Evidence:** exact head, CI run, policy SHA 두 개와 job skip 조건을 live/source evidence와 대조한다.
+  - **Failure:** 불일치를 수정한다.
+- [x] **LESSON-KO-02 — 일반화 주장 제거**
+  - **Action:** 효과를 보장하는 표현 대신 검사할 동작을 쓴다.
+  - **Evidence:** 재발 방지 규칙이 settings/CI/policy/verifier의 구체 상태를 말한다.
+  - **Failure:** 범위가 불분명한 주장을 한정한다.
+- [x] **LESSON-KO-03 — 번역투/형식 문장 제거**
+  - **Action:** lesson의 문장 흐름과 기술 register를 검토한다.
+  - **Evidence:** 문장 단위 Korean naturalness review.
+  - **Failure:** 의미 보존 후 다시 읽는다.
+- [x] **LESSON-KO-04 — 용어/문체 확인**
+  - **Action:** catalog SHA, pin, override와 consumer를 일관되게 쓴다.
+  - **Evidence:** 같은 개념에 같은 용어를 적용하고 code token을 보존한다.
+  - **Failure:** 용어가 다른 동작을 뭉뚱그리면 분리한다.
+- [x] **LESSON-KO-05 — 유머와 말투 제한**
+  - **Action:** lesson register에 맞게 직접적인 문장을 쓴다.
+  - **Evidence:** 불필요한 비유와 홍보 표현이 없다.
+  - **Failure:** 사실을 직접 서술한다.
+- [x] **LESSON-KO-06 — reader-facing 면 확인**
+  - **Action:** 제목, 본문, 링크, 코드 토큰과 목록을 확인한다.
+  - **Evidence:** Korean lesson의 링크와 Markdown 구조를 최종 확인한다.
+  - **Failure:** 누락된 정보가 있으면 수선한다.
+- [x] **LESSON-KO-07 — contextual terminology audit 실행**
+  - **Action:** writer skill의 audit script로 lesson을 검사한다.
+  - **Evidence:** 최종 command output과 모든 finding의 처분.
+  - **Failure:** 설명되지 않은 finding이 있으면 lesson gate를 열어 둔다.
+
+## PR #270 inline fallback review
+
+- **Scope:** PR #270의 중앙 policy/config 및 이번 체크리스트·lesson 변경. `config/post-publish-next-development-line.json:70-85`, `scripts/verify-post-publish-next-development-line.py:280-282,347-394`, `.github/workflows/ci.yml:439-440`와 아홉 consumer의 live `develop` settings/CI를 대조했다.
+- **Review lane:** independent `code-reviewer`는 bounded wait 동안 유효한 verdict를 내지 않아 시도를 중단했다. 이 기록은 독립 attestation이 아닌 `inline fallback review`다. Architect 결과는 `WATCH`였고, 단일 SHA 종료 조건을 PUB-08에 추가했다.
+- **P0/P1:** 새 P0/P1 finding 없음. 이번 diff는 문서/검증 계획을 바꾸며 production behavior나 public API는 변경하지 않는다.
+- **P2 / Architectural WATCH:** 현재 Projects는 `dcc7fa7557d3c0548b9e3fc28c48877827ea2f74`, 다른 여덟 consumer는 `198147fd6ca2992fae32e175bd5f3d396c497096`을 pin한다. PR CI의 downstream sync는 pull request event에서 skip된다. 중앙 PR merge 전까지 전환 상태로 기록하고, PUB-08의 아홉 consumer 및 중앙 policy 수렴을 완료하기 전에는 전체 train을 완료 처리하지 않는다. 이 후속 조건은 중앙 PR #270 자체의 merge blocker가 아니며 tag와 merge는 각각 별도 승인을 요구한다.
+- **Inline verdict: PASS; P0=0, P1=0.** Aggregate code review recommendation: `COMMENT` while the architectural WATCH remains open.
+
 ## 현재 집계
 
-- Required checks: 계산 전 / 전체 게이트 종료 시 갱신한다.
-- N/A: 각 항목의 범위 증거를 확인한 뒤 집계한다.
-- Pending: PR review/CI, 별도 병합 승인, immutable catalog ref, consumer synchronization.
-- Blocked: 0 목표; 실패한 검증이 생기면 원인과 복구를 기록한다.
-- 제외/미실행: 병합, tag, release, Projects 파일 수정, Projects issue/PR 종료.
+- Required checks: `53/66`; N/A: `7`; Blocked: `0`.
+- N/A IDs: `CG-06`, `TOP-03`, `PUB-04`, `PUB-06`, `PUB-07`, `PUB-09`, `PUB-10`.
+- Pending IDs: `CG-12`, `CG-12A`, `CG-13`, `CG-14`, `CG-15`, `CG-16`, `CG-17`, `CG-17A`, `CG-17B`, `CG-18`, `PUB-05`, `PUB-08`, `PUB-11`.
+- Pending boundary: PR #270의 exact-head publish/CI/read-back 후 fresh merge approval, immutable catalog tag 승인/생성, 아홉 consumer PR과 단일 SHA CI 확인, 중앙 policy override 제거 및 verifier 재실행.
+- Blocked: `0`; 남은 항목은 필요한 evidence나 별도 승인을 기다리는 PENDING이다.
+- 제외/미실행: 중앙/consumer PR merge, tag 생성, release, consumer 파일 수정과 Projects #1844 종료. consumer PR 생성은 승인됐으나 catalog train SHA가 확정될 때까지 대기한다.
