@@ -65,6 +65,30 @@ JaVers, Leader, Text의 settings/CI는 `198147fd6ca2992fae32e175bd5f3d396c497096
 audit 요약 pointer는 갱신했지만 resolved dependency graph는 바뀌지 않아
 `central-catalog-version-deltas.json`에 새 delta를 추가하지 않았다.
 
+2026-10-23 Issue #271에서 같은 중앙 ref 불일치가 다시 발생했다. PR #268의 exact-head
+CI run [39928983924](https://github.com/bluetape4k/bluetape4k-dependencies/actions/runs/39928983924)와
+PR #273의 exact-head CI run
+[39934855281](https://github.com/bluetape4k/bluetape4k-dependencies/actions/runs/39934855281)은
+`Build BOM → Verify catalog scripts`에서 실패했다. 두 실행 시점에 아홉 라이브러리 저장소와
+기존 tag `catalog/2026-10-22-01`은 모두
+`9bd4fa16e6d64677641b1babf4629ae5b4ef6d80`을 사용했지만, 중앙 policy 기본 ref는
+`198147fd6ca2992fae32e175bd5f3d396c497096`, Projects override는
+`dcc7fa7557d3c0548b9e3fc28c48877827ea2f74`로 남아 있었다. 중앙 설정의 ref를 공통 SHA로
+바꾸고 override를 비웠다. 회귀 테스트는 공통 ref, 빈 override, 그리고 그 ref에서 파생되는
+`chore/snapshot-catalog-9bd4fa1` branch 이름을 고정한다.
+
+live verifier는 14개 저장소에서 필요한 47개 파일을 읽어 publisher 8개와 소비자 범위(라이브러리
+저장소 9개, 공식 출시 예제 0개, 개발 버전 예제 5개)를 확인했다. Python 전체 suite는 516개
+테스트 중 두 개가 실패하고 네 개는 skip됐다. 실패는 변경하지 않은
+`tests.test_sync_shared_versions`의 workspace inventory 검사였다. 승인된 hard-coded 후보는
+9개를 기대했지만 16개가 발견됐고, downstream explicit external authority는 0개를 기대했지만
+15개가 발견됐다. 네 skip은 Maven `-SNAPSHOT` artifact 조회의 HTTP `403` 항목이었다. 변경 파일에
+집중한 Python 45개 테스트와 Gradle build는 통과했다.
+
+중앙 ref와 override를 갱신하는 지침이 이미 있었는데도 하루 뒤 같은 drift가 재발했다. 따라서
+catalog train을 닫기 전에 consumer verifier 결과와 중앙 config의 기본 ref 및 override가 live
+consumer SHA에 맞는지 같은 변경에서 확인한다.
+
 ## 재발 방지
 
 catalog 변경은 원본, checksum, latest-stable inventory와 audit를 한 번에 맞춘다.
