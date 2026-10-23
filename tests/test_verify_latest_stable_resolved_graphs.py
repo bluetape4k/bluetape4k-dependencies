@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import re
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -204,27 +205,128 @@ class VerifyLatestStableResolvedGraphsTest(unittest.TestCase):
         self.assertTrue(all(delta["added-components"] for delta in deltas))
         self.assertTrue(all(delta["removed-components"] for delta in deltas))
 
-    def test_catalog_validation_binds_bytes_sidecar_and_candidate_versions(
+    def test_catalog_validation_separates_current_bytes_from_historical_candidate(
         self,
     ) -> None:
         ledger = copy.deepcopy(self.ledger)
-        ledger["candidate"] = {}
         with tempfile.TemporaryDirectory() as directory:
-            catalog = Path(directory) / "libs.versions.toml"
-            sidecar = Path(directory) / "libs.versions.toml.sha256"
-            catalog.write_text(
-                '[versions]\nexample = "1.1.0"\nnative-plugin = "1.1.0"\n',
-                encoding="utf-8",
+            repo = Path(directory)
+            subprocess.run(
+                ["git", "init", str(repo)], check=True, capture_output=True, text=True
             )
-            digest = hashlib.sha256(catalog.read_bytes()).hexdigest()
-            ledger["candidate"]["catalog-sha256"] = digest
-            sidecar.write_text(f"{digest}  libs.versions.toml\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "-C", str(repo), "config", "user.name", "test"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            catalog = repo / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir(parents=True)
+            historical_bytes = (
+                b'[versions]\nexample = "1.1.0"\nnative-plugin = "1.1.0"\n'
+            )
+            wrong_pointer_bytes = (
+                b'[versions]\nexample = "0.9.0"\nnative-plugin = "0.9.0"\n'
+            )
+            current_bytes = b'[versions]\nexample = "2.0.0"\nnative-plugin = "2.0.0"\n'
 
-            self.module.validate_catalog(ledger, catalog, sidecar)
+            def commit_catalog(content: bytes, message: str) -> str:
+                catalog.write_bytes(content)
+                subprocess.run(
+                    ["git", "-C", str(repo), "add", "gradle/libs.versions.toml"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                subprocess.run(
+                    ["git", "-C", str(repo), "commit", "-m", message],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                return subprocess.run(
+                    ["git", "-C", str(repo), "rev-parse", "HEAD"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
 
-            sidecar.write_text(f"{'0' * 64}  libs.versions.toml\n", encoding="utf-8")
-            with self.assertRaisesRegex(RuntimeError, "sidecar"):
-                self.module.validate_catalog(ledger, catalog, sidecar)
+            historical_commit = commit_catalog(historical_bytes, "candidate")
+            wrong_pointer_commit = commit_catalog(wrong_pointer_bytes, "wrong pointer")
+            catalog.write_bytes(current_bytes)
+            current_sha = hashlib.sha256(current_bytes).hexdigest()
+            historical_sha = hashlib.sha256(historical_bytes).hexdigest()
+            sidecar = catalog.with_name("libs.versions.toml.sha256")
+            sidecar.write_text(f"{current_sha}  libs.versions.toml\n", encoding="utf-8")
+
+            receipt_path = repo / "docs" / "releases" / "candidate.json"
+            receipt_path.parent.mkdir(parents=True)
+            receipt = {
+                "catalog": {
+                    "content-commit": historical_commit,
+                    "sha256": historical_sha,
+                }
+            }
+            receipt_bytes = self.module.pretty_json(receipt)
+            receipt_path.write_bytes(receipt_bytes)
+            ledger["candidate"] = {"catalog-sha256": historical_sha}
+            ledger["candidate-validation-evidence"] = {
+                "path": "docs/releases/candidate.json",
+                "sha256": hashlib.sha256(receipt_bytes).hexdigest(),
+            }
+
+            with mock.patch.object(self.module, "REPO_ROOT", repo):
+                self.assertEqual(
+                    current_sha,
+                    self.module.validate_catalog(ledger, catalog, sidecar),
+                )
+
+                sidecar.write_text(
+                    f"{'0' * 64}  libs.versions.toml\n", encoding="utf-8"
+                )
+                with self.assertRaisesRegex(RuntimeError, "sidecar"):
+                    self.module.validate_catalog(ledger, catalog, sidecar)
+                sidecar.write_text(
+                    f"{current_sha}  libs.versions.toml\n", encoding="utf-8"
+                )
+
+                receipt["catalog"]["content-commit"] = wrong_pointer_commit
+                receipt_bytes = self.module.pretty_json(receipt)
+                receipt_path.write_bytes(receipt_bytes)
+                ledger["candidate-validation-evidence"]["sha256"] = hashlib.sha256(
+                    receipt_bytes
+                ).hexdigest()
+                with self.assertRaisesRegex(
+                    RuntimeError, "historical candidate catalog"
+                ):
+                    self.module.validate_catalog(ledger, catalog, sidecar)
+
+                tree_sha = subprocess.run(
+                    [
+                        "git",
+                        "-C",
+                        str(repo),
+                        "rev-parse",
+                        f"{historical_commit}^{{tree}}",
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+                receipt["catalog"]["content-commit"] = tree_sha
+                receipt_bytes = self.module.pretty_json(receipt)
+                receipt_path.write_bytes(receipt_bytes)
+                ledger["candidate-validation-evidence"]["sha256"] = hashlib.sha256(
+                    receipt_bytes
+                ).hexdigest()
+                with self.assertRaisesRegex(RuntimeError, "must name a commit"):
+                    self.module.validate_catalog(ledger, catalog, sidecar)
 
     def test_promote_ledger_binds_every_delta_to_immutable_receipt(self) -> None:
         specs = self.module.build_specs(self.ledger)
