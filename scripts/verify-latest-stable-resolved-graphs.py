@@ -19,6 +19,7 @@ DEFAULT_LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
 DEFAULT_CATALOG = REPO_ROOT / "gradle" / "libs.versions.toml"
 DEFAULT_CATALOG_SIDECAR = REPO_ROOT / "gradle" / "libs.versions.toml.sha256"
 FULL_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+FULL_COMMIT_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 DYNAMIC_VERSION = re.compile(r"(?:\+|^latest\.|[\[\]()])")
 PREVIEW_VERSION = re.compile(
     r"(?i)(?:snapshot|alpha|beta|preview|milestone|incubating|nightly|eap|"
@@ -79,8 +80,7 @@ def _exact_version(value: object, label: str) -> str:
     return value
 
 
-def catalog_versions(catalog: Path) -> dict[str, str]:
-    content = catalog.read_text(encoding="utf-8")
+def catalog_versions_text(content: str) -> dict[str, str]:
     try:
         versions_section = content.split("[versions]", 1)[1].split("\n[", 1)[0]
     except IndexError as exc:
@@ -94,21 +94,120 @@ def catalog_versions(catalog: Path) -> dict[str, str]:
     )
 
 
-def validate_catalog(ledger: dict[str, Any], catalog: Path, sidecar: Path) -> str:
-    catalog_sha = sha256_bytes(catalog.read_bytes())
-    if ledger.get("candidate", {}).get("catalog-sha256") != catalog_sha:
-        raise RuntimeError("candidate ledger SHA does not match current catalog bytes")
+def candidate_catalog_bytes(ledger: dict[str, Any], repo_root: Path) -> bytes:
+    if "candidate" not in ledger:
+        raise RuntimeError("candidate ledger catalog evidence is required")
+    candidate = ledger.get("candidate")
+    if not isinstance(candidate, dict):
+        raise TypeError("candidate ledger catalog evidence must be an object")
+    candidate_sha = candidate.get("catalog-sha256")
+    if (
+        not isinstance(candidate_sha, str)
+        or FULL_SHA256.fullmatch(candidate_sha) is None
+    ):
+        raise RuntimeError("candidate ledger catalog SHA must be a full SHA-256")
+
+    if "candidate-validation-evidence" not in ledger:
+        raise RuntimeError("candidate validation receipt pointer is required")
+    pointer = ledger.get("candidate-validation-evidence")
+    if not isinstance(pointer, dict):
+        raise TypeError("candidate validation receipt pointer must be an object")
+    receipt_relative_path = pointer.get("path")
+    if not isinstance(receipt_relative_path, str) or not receipt_relative_path:
+        raise RuntimeError("candidate validation receipt path is required")
+    receipt_path = Path(receipt_relative_path)
+    if receipt_path.is_absolute() or ".." in receipt_path.parts:
+        raise RuntimeError(
+            "candidate validation receipt path must stay in the repository"
+        )
+    repository_root = repo_root.resolve()
+    unresolved_receipt_path = repository_root / receipt_path
+    if unresolved_receipt_path.is_symlink():
+        raise RuntimeError("candidate validation receipt must be a regular file")
+    try:
+        receipt_path = unresolved_receipt_path.resolve(strict=True)
+        receipt_path.relative_to(repository_root)
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(
+            "candidate validation receipt path escapes or is missing"
+        ) from exc
+    if not receipt_path.is_file():
+        raise RuntimeError("candidate validation receipt must be a regular file")
+
+    receipt_sha = pointer.get("sha256")
+    if not isinstance(receipt_sha, str) or FULL_SHA256.fullmatch(receipt_sha) is None:
+        raise RuntimeError("candidate validation receipt SHA must be a full SHA-256")
+    receipt_bytes = receipt_path.read_bytes()
+    if sha256_bytes(receipt_bytes) != receipt_sha:
+        raise RuntimeError("candidate validation receipt SHA does not match ledger")
+    try:
+        receipt = json.loads(receipt_bytes)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("candidate validation receipt is not valid JSON") from exc
+    if not isinstance(receipt, dict):
+        raise TypeError("candidate validation receipt must be a JSON object")
+    if "catalog" not in receipt:
+        raise RuntimeError("candidate validation receipt lacks catalog evidence")
+    if not isinstance(receipt.get("catalog"), dict):
+        raise TypeError("candidate validation receipt catalog must be an object")
+
+    catalog_evidence = receipt["catalog"]
+    if catalog_evidence.get("sha256") != candidate_sha:
+        raise RuntimeError("candidate receipt catalog SHA does not match ledger")
+    content_commit = catalog_evidence.get("content-commit")
+    if (
+        not isinstance(content_commit, str)
+        or FULL_COMMIT_SHA.fullmatch(content_commit) is None
+    ):
+        raise RuntimeError(
+            "candidate catalog content-commit must be an immutable Git SHA"
+        )
+    try:
+        object_type = subprocess.run(
+            ["git", "cat-file", "-t", content_commit],
+            cwd=repository_root,
+            check=True,
+            capture_output=True,
+        ).stdout.strip()
+        if object_type != b"commit":
+            raise RuntimeError("candidate catalog content-commit must name a commit")
+        result = subprocess.run(
+            ["git", "show", f"{content_commit}:gradle/libs.versions.toml"],
+            cwd=repository_root,
+            check=True,
+            capture_output=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("candidate catalog content-commit cannot be read") from exc
+    historical_bytes = result.stdout
+    if sha256_bytes(historical_bytes) != candidate_sha:
+        raise RuntimeError(
+            "historical candidate catalog SHA does not match content-commit bytes"
+        )
+    return historical_bytes
+
+
+def validate_catalog(
+    ledger: dict[str, Any],
+    catalog: Path,
+    sidecar: Path,
+    repo_root: Path | None = None,
+) -> str:
+    current_catalog_sha = sha256_bytes(catalog.read_bytes())
     sidecar_token = sidecar.read_text(encoding="utf-8").split(maxsplit=1)[0]
-    if sidecar_token != catalog_sha:
+    if sidecar_token != current_catalog_sha:
         raise RuntimeError(
             "catalog checksum sidecar does not match current catalog bytes"
         )
-    versions = catalog_versions(catalog)
+    historical_bytes = candidate_catalog_bytes(
+        ledger, REPO_ROOT if repo_root is None else repo_root
+    )
+    versions = catalog_versions_text(historical_bytes.decode("utf-8"))
     for entry in ledger.get("delta", []):
         version_key = entry.get("version-key")
         if versions.get(version_key) != entry.get("after"):
             raise RuntimeError(f"catalog version does not match ledger: {version_key}")
-    return catalog_sha
+    return current_catalog_sha
 
 
 def _plugin_marker(plugin_id: str) -> str:

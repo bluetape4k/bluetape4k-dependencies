@@ -17,3 +17,7 @@ directory unless they have been deliberately promoted.
 ## 2026-09
 
 - [dependency graph와 signing governance 검증 교훈](2026-09-06-issues-242-243-dependency-signing-governance.md)
+
+## 2026-10
+
+- [latest-stable 후보 catalog의 과거 입력 검증](2026-10-23-issue-272-historical-catalog-input.md)

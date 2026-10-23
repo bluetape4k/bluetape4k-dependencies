@@ -93,6 +93,34 @@ scripts/verify-publication-poms.py --workspace .. --summary
 PR CI 자체는 local fixture만 검사합니다. downstream 전체 상태는 central branch의 push 또는 수동 CI에서
 다시 clone해 감사하므로, rollout 완료 전에는 해당 non-PR audit 결과를 통합 gate로 확인해야 합니다.
 
+### latest-stable 후보 catalog 입력 확인
+
+latest-stable 버전 변경 기록은 현재 catalog와 과거 후보 catalog를 서로 다른
+입력으로 검증합니다.
+
+- 현재 `gradle/libs.versions.toml`의 SHA-256은 같은 경로의
+  `gradle/libs.versions.toml.sha256`과 비교합니다. 이 sidecar는 현재 작업 트리의
+  catalog 무결성만 증명합니다.
+- `candidate.catalog-sha256`은 후보 검증 당시 catalog 바이트의 SHA-256입니다.
+  `candidate-validation-evidence.path`와 `sha256`로 변경 기록이 가리키는 검증 기록을
+  확인하고, 그 안의 `catalog.sha256`이 후보 해시와 같은지 검증합니다.
+- 검증 기록의 `catalog.content-commit`은 전체 Git commit SHA여야 합니다. 해당
+  commit에서 `gradle/libs.versions.toml`을 읽어 바이트 해시가 후보 해시와
+  같은지 확인하고, `delta[].after`도 그 과거 catalog에서 확인합니다.
+
+따라서 후보 검증 뒤 현재 catalog가 바뀌었어도 현재 sidecar가 현재 파일과
+일치하고 검증 기록이 과거 후보를 증명하면 검증은 통과할 수 있습니다. 현재 sidecar를
+과거 후보 해시로 되돌리거나 두 해시를 같다고 요구하지 않습니다. 검증 기록 경로,
+검증 기록 해시, `content-commit`, 과거 catalog 바이트 중 하나라도 서로 맞지 않으면
+검증을 실패시킵니다.
+
+회귀 계약은 아래 명령으로 확인합니다. 이 테스트는 현재 catalog와 후보 catalog의
+해시가 다른 정상 사례, 현재 sidecar 불일치, 잘못된 과거 commit 포인터를 구분합니다.
+
+```bash
+python3 -m unittest tests/test_verify_latest_stable_resolved_graphs.py
+```
+
 ## 검증 명령
 
 스크립트는 반복 운영 도구이므로, 변경 시 다음 검증을 기본으로 수행합니다.
