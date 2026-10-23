@@ -623,11 +623,16 @@ gh() {
         compile_step = workflow.split(
             "      - name: Compile generated signing helpers\n", 1
         )[1].split("      - name:", 1)[0]
-        setup_java = workflow.index("      - uses: actions/setup-java@v6.0.1")
-        setup_gradle = workflow.index(
+        build_job = workflow.split("  build:\n", 1)[1].split(
+            "\n  publication-pom-contract:\n", 1
+        )[0]
+        setup_java_marker = "      - uses: actions/setup-java@v6"
+        self.assertEqual(build_job.count(setup_java_marker), 1)
+        setup_java = build_job.index(setup_java_marker)
+        setup_gradle = build_job.index(
             "      - uses: gradle/actions/setup-gradle@v6.4.0"
         )
-        compile_helpers = workflow.index(
+        compile_helpers = build_job.index(
             "      - name: Compile generated signing helpers"
         )
         self.assertLess(setup_java, compile_helpers)
