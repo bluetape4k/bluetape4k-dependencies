@@ -533,7 +533,7 @@ gh() {
         self.assertRegex(setup_java_refs[0], r"v6(?:\.\d+\.\d+)?\Z")
         for invalid_ref in ("v60", "v6-custom"):
             invalid_job = job.replace(
-                "actions/setup-java@v6.1.0",
+                f"actions/setup-java@{setup_java_refs[0]}",
                 f"actions/setup-java@{invalid_ref}",
                 1,
             )
@@ -655,7 +655,7 @@ gh() {
         self.assertRegex(setup_java_refs[0], r"v6(?:\.\d+\.\d+)?\Z")
         for invalid_ref in ("v60", "v6-custom"):
             invalid_build_job = build_job.replace(
-                "actions/setup-java@v6.1.0",
+                f"actions/setup-java@{setup_java_refs[0]}",
                 f"actions/setup-java@{invalid_ref}",
                 1,
             )
