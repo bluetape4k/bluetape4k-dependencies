@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -525,7 +526,27 @@ gh() {
         )
         self.assertIn('rev-parse --verify "${expected_sha}^{commit}"', checkout)
         self.assertNotIn("--depth 1", checkout)
-        self.assertIn("uses: actions/setup-java@v6", job)
+        setup_java_refs = re.findall(
+            r"(?m)^[ \t]*-\s+uses:\s+actions/setup-java@([^\s#]+)", job
+        )
+        self.assertEqual(len(setup_java_refs), 1)
+        self.assertRegex(setup_java_refs[0], r"v6(?:\.\d+\.\d+)?\Z")
+        for invalid_ref in ("v60", "v6-custom"):
+            invalid_job = job.replace(
+                f"actions/setup-java@{setup_java_refs[0]}",
+                f"actions/setup-java@{invalid_ref}",
+                1,
+            )
+            invalid_refs = re.findall(
+                r"(?m)^[ \t]*-\s+uses:\s+actions/setup-java@([^\s#]+)",
+                invalid_job,
+            )
+            self.assertEqual(
+                invalid_refs,
+                [invalid_ref],
+                f"unexpectedly accepted setup-java ref {invalid_ref}",
+            )
+            self.assertNotRegex(invalid_refs[0], r"v6(?:\.\d+\.\d+)?\Z")
         self.assertIn("uses: gradle/actions/setup-gradle@v6", job)
 
         status_job = workflow.split("  ci-status:\n", 1)[1]
@@ -623,11 +644,33 @@ gh() {
         compile_step = workflow.split(
             "      - name: Compile generated signing helpers\n", 1
         )[1].split("      - name:", 1)[0]
-        setup_java = workflow.index("      - uses: actions/setup-java@v6.0.1")
-        setup_gradle = workflow.index(
+        build_job = workflow.split("  build:\n", 1)[1].split(
+            "\n  publication-pom-contract:\n", 1
+        )[0]
+        setup_java_pattern = (
+            r"(?m)^[ \t]*-\s+uses:\s+actions/setup-java@([^\s#]+)"
+        )
+        setup_java_refs = re.findall(setup_java_pattern, build_job)
+        self.assertEqual(len(setup_java_refs), 1)
+        self.assertRegex(setup_java_refs[0], r"v6(?:\.\d+\.\d+)?\Z")
+        for invalid_ref in ("v60", "v6-custom"):
+            invalid_build_job = build_job.replace(
+                f"actions/setup-java@{setup_java_refs[0]}",
+                f"actions/setup-java@{invalid_ref}",
+                1,
+            )
+            invalid_refs = re.findall(setup_java_pattern, invalid_build_job)
+            self.assertEqual(
+                invalid_refs,
+                [invalid_ref],
+                f"unexpectedly accepted setup-java ref {invalid_ref}",
+            )
+            self.assertNotRegex(invalid_refs[0], r"v6(?:\.\d+\.\d+)?\Z")
+        setup_java = build_job.index(f"actions/setup-java@{setup_java_refs[0]}")
+        setup_gradle = build_job.index(
             "      - uses: gradle/actions/setup-gradle@v6.4.0"
         )
-        compile_helpers = workflow.index(
+        compile_helpers = build_job.index(
             "      - name: Compile generated signing helpers"
         )
         self.assertLess(setup_java, compile_helpers)
