@@ -48,19 +48,19 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 target = Path(sys.argv[2])
-original_replace = evidence.os.replace
+original_move = evidence._rename_no_replace_at
 
-def crash_after_guard(source, destination, **kwargs):
+def crash_after_guard(source_parent, source, destination_parent, destination, **kwargs):
     if (
         source == target.name
         and str(destination).startswith(f".{{target.name}}.")
         and str(destination).endswith(".replace")
     ):
-        original_replace(source, destination, **kwargs)
+        original_move(source_parent, source, destination_parent, destination, **kwargs)
         os._exit(17)
-    return original_replace(source, destination, **kwargs)
+    return original_move(source_parent, source, destination_parent, destination, **kwargs)
 
-evidence.os.replace = crash_after_guard
+evidence._rename_no_replace_at = crash_after_guard
 evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
 """
             result = subprocess.run(
@@ -105,15 +105,15 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 journal_name = evidence.catalog_rollout_transaction_path(root).name
-original_rename = evidence.os.rename
+original_move = evidence._rename_no_replace_at
 
-def crash_after_journal_move(source, destination, **kwargs):
+def crash_after_journal_move(source_parent, source, destination_parent, destination, **kwargs):
     if source == journal_name and str(destination).endswith(".rollback"):
-        original_rename(source, destination, **kwargs)
+        original_move(source_parent, source, destination_parent, destination, **kwargs)
         os._exit(19)
-    return original_rename(source, destination, **kwargs)
+    return original_move(source_parent, source, destination_parent, destination, **kwargs)
 
-evidence.os.rename = crash_after_journal_move
+evidence._rename_no_replace_at = crash_after_journal_move
 evidence.commit_catalog_rollout_transaction(
     root, ((root / "config" / "generated.json", b"new-content"),)
 )
@@ -154,13 +154,14 @@ import catalog_rollout_evidence as evidence
 root = Path(sys.argv[1])
 target = Path(sys.argv[2])
 original_fsync = evidence._fsync_directory_fd
+finalization = evidence.catalog_rollout_transaction_finalization_path(root)
 
 def crash_after_publish(descriptor):
     result = original_fsync(descriptor)
     if (
         target.exists()
         and target.read_bytes() == b"new-content"
-        and list(target.parent.glob(f".{{target.name}}.*.replace"))
+        and finalization.is_file()
     ):
         os._exit(23)
     return result
@@ -177,8 +178,8 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             self.assertEqual(result.returncode, 23, result.stderr)
             self.assertEqual(target.read_bytes(), b"new-content")
             self.assertTrue(evidence.catalog_rollout_transaction_path(root).is_file())
-            self.assertEqual(
-                len(list(target.parent.glob(f".{target.name}.*.replace"))), 1
+            self.assertTrue(
+                evidence.catalog_rollout_transaction_finalization_path(root).is_file()
             )
 
             self.assertTrue(evidence.recover_catalog_rollout_transaction(root))
@@ -188,6 +189,75 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
                 list(target.parent.glob(f".{target.name}.*.replace")), []
             )
             self.assertEqual(list(target.parent.glob(f".{target.name}.*.tmp")), [])
+
+    def test_finalization_recovery_rejects_same_bytes_new_inode(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            target = root / "config" / "generated.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"old-content")
+            child = f"""
+import os
+import sys
+from pathlib import Path
+sys.path.insert(0, {str(REPO_ROOT / "scripts")!r})
+import catalog_rollout_evidence as evidence
+
+root = Path(sys.argv[1])
+target = Path(sys.argv[2])
+original_fsync = evidence._fsync_directory_fd
+finalization = evidence.catalog_rollout_transaction_finalization_path(root)
+
+def crash_after_finalization(descriptor):
+    result = original_fsync(descriptor)
+    if target.exists() and target.read_bytes() == b"new-content" and finalization.is_file():
+        os._exit(53)
+    return result
+
+evidence._fsync_directory_fd = crash_after_finalization
+evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
+"""
+            result = subprocess.run(
+                [sys.executable, "-c", child, str(root), str(target)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 53, result.stderr)
+            replacement = target.with_name("replacement.json")
+            replacement.write_bytes(b"new-content")
+            os.replace(replacement, target)
+
+            with self.assertRaisesRegex(RuntimeError, "inode changed externally"):
+                evidence.recover_catalog_rollout_transaction(root)
+            self.assertTrue(
+                evidence.catalog_rollout_transaction_finalization_path(root).is_file()
+            )
+
+    def test_recovery_rejects_missing_journal_with_identity_evidence(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            identity = evidence.catalog_rollout_transaction_identity_path(root)
+            identity.parent.mkdir(parents=True)
+            identity.write_bytes(
+                evidence.pretty_json(
+                    {
+                        "journal-sha256": "0" * 64,
+                        "schema-version": evidence.TRANSACTION_IDENTITY_SCHEMA_VERSION,
+                        "transaction-id": "a" * 32,
+                    }
+                )
+            )
+
+            with self.assertRaisesRegex(
+                RuntimeError, "journal is missing while identity evidence remains"
+            ):
+                evidence.recover_catalog_rollout_transaction(root)
+            self.assertTrue(identity.is_file())
 
     def test_tombstone_cleanup_preserves_external_replacement(self) -> None:
         load_script()
@@ -208,17 +278,23 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             )
             identity = evidence._descriptor_identity(descriptor)
             os.close(descriptor)
-            original_rename = os.rename
+            original_move = evidence._rename_no_replace_at
 
-            def insert_external_after_move(source, destination, **kwargs):
-                result = original_rename(source, destination, **kwargs)
+            def insert_external_after_move(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
+                result = original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
                 if source == tombstone.name and str(destination).endswith(".rollback"):
                     tombstone.write_bytes(external)
                 return result
 
             try:
                 with mock.patch.object(
-                    os, "rename", side_effect=insert_external_after_move
+                    evidence,
+                    "_rename_no_replace_at",
+                    side_effect=insert_external_after_move,
                 ), self.assertRaisesRegex(RuntimeError, "tombstone"):
                     evidence._discard_expected_tombstone_at(
                         parent_descriptor,
@@ -270,26 +346,15 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             central_bytes = evidence.pretty_json(central)
             ledger_path.write_bytes(b'{"state":"previous-authority"}\n')
             central_path.write_bytes(b'{"state":"previous-central"}\n')
-            original_replace = os.replace
+            original_atomic_write = evidence.atomic_write_bytes
 
-            def fail_central_replace(source, destination, **kwargs) -> None:
-                destination_parent = kwargs.get("dst_dir_fd")
-                is_central = (
-                    (
-                        destination == central_path.name
-                        or str(destination).startswith(f".{central_path.name}.")
-                    )
-                    and
-                    destination_parent is not None
-                    and os.fstat(destination_parent).st_ino
-                    == central_path.parent.stat().st_ino
-                )
-                if is_central:
+            def fail_central_replace(path, content, **kwargs) -> None:
+                if path.name == central_path.name and path.parent.resolve() == central_path.parent.resolve():
                     raise OSError("injected central ledger replace failure")
-                original_replace(source, destination, **kwargs)
+                original_atomic_write(path, content, **kwargs)
 
             with mock.patch.object(
-                os, "replace", side_effect=fail_central_replace
+                evidence, "atomic_write_bytes", side_effect=fail_central_replace
             ), self.assertRaisesRegex(OSError, "injected central ledger"):
                 evidence.commit_catalog_rollout_transaction(
                     root,
@@ -323,35 +388,21 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             first_path.parent.mkdir(parents=True)
             first_path.write_bytes(b"old-first")
             second_path.write_bytes(b"old-second")
-            original_replace = os.replace
+            original_atomic_write = evidence.atomic_write_bytes
 
-            def fail_after_external_change(source, destination, **kwargs) -> None:
-                destination_path = destination
-                destination_parent = kwargs.get("dst_dir_fd")
-                is_first = (
-                    destination_path == first_path.name
-                    or str(destination_path).startswith(f".{first_path.name}.")
-                ) and (
-                    destination_parent is not None
-                    and os.fstat(destination_parent).st_ino == first_path.parent.stat().st_ino
-                )
-                is_second = (
-                    destination_path == second_path.name
-                    or str(destination_path).startswith(f".{second_path.name}.")
-                ) and (
-                    destination_parent is not None
-                    and os.fstat(destination_parent).st_ino == second_path.parent.stat().st_ino
-                )
-                if is_first:
-                    original_replace(source, destination, **kwargs)
+            def fail_after_external_change(path, content, **kwargs) -> None:
+                if path.name == first_path.name and path.parent.resolve() == first_path.parent.resolve():
+                    original_atomic_write(path, content, **kwargs)
                     first_path.write_bytes(b"external-change")
                     return
-                if is_second:
+                if path.name == second_path.name and path.parent.resolve() == second_path.parent.resolve():
                     raise OSError("injected second replace failure")
-                original_replace(source, destination, **kwargs)
+                original_atomic_write(path, content, **kwargs)
 
             with mock.patch.object(
-                os, "replace", side_effect=fail_after_external_change
+                evidence,
+                "atomic_write_bytes",
+                side_effect=fail_after_external_change,
             ), self.assertRaisesRegex(RuntimeError, "rollback conflict"):
                 evidence.commit_catalog_rollout_transaction(
                     root,
@@ -410,28 +461,28 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             target = root / "config" / "target.json"
             target.parent.mkdir(parents=True)
             target.write_bytes(b"old-content")
-            original_replace = os.replace
+            original_move = evidence._rename_no_replace_at
             swapped = False
 
-            def swap_before_guard(source, destination, **kwargs):
+            def swap_before_guard(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
                 nonlocal swapped
-                destination_parent = kwargs.get("dst_dir_fd")
                 is_guard = (
                     source == target.name
                     and str(destination).startswith(f".{target.name}.")
                     and str(destination).endswith(".replace")
-                    and destination_parent is not None
-                    and os.fstat(destination_parent).st_ino
-                    == target.parent.stat().st_ino
                 )
                 if is_guard and not swapped:
                     swapped = True
                     target.rename(target.with_name("original-target.json"))
                     target.write_bytes(b"external-path")
-                return original_replace(source, destination, **kwargs)
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
 
             with mock.patch.object(
-                os, "replace", side_effect=swap_before_guard
+                evidence, "_rename_no_replace_at", side_effect=swap_before_guard
             ), self.assertRaisesRegex(RuntimeError, "target changed externally"):
                 evidence.commit_catalog_rollout_transaction(
                     root, ((target, b"new-content"),)
@@ -443,6 +494,96 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
                 (target.parent / "original-target.json").read_bytes(), b"old-content"
             )
             self.assertTrue(evidence.catalog_rollout_transaction_path(root).is_file())
+
+    def test_generated_guard_destination_never_replaces_external_inode(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            target = root / "config" / "target.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"old-content")
+            root_descriptor = os.open(root, evidence._DIRECTORY_OPEN_FLAGS)
+            parent_descriptor, target_name = evidence._open_anchored_parent(
+                root_descriptor, root, target
+            )
+            original_move = evidence._rename_no_replace_at
+            injected: Path | None = None
+
+            def inject_guard_destination(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
+                nonlocal injected
+                if source == target_name and str(destination).endswith(".replace"):
+                    injected = target.parent / str(destination)
+                    injected.write_bytes(b"external-guard")
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
+
+            try:
+                with mock.patch.object(
+                    evidence,
+                    "_rename_no_replace_at",
+                    side_effect=inject_guard_destination,
+                ), self.assertRaises(FileExistsError):
+                    evidence._atomic_write_bytes_at(
+                        parent_descriptor,
+                        target_name,
+                        b"new-content",
+                        mode=0o644,
+                        expected_state=(True, b"old-content", 0o644),
+                    )
+            finally:
+                os.close(parent_descriptor)
+                os.close(root_descriptor)
+
+            self.assertIsNotNone(injected)
+            self.assertEqual(injected.read_bytes(), b"external-guard")
+            self.assertEqual(target.read_bytes(), b"old-content")
+
+    def test_generated_rollback_destination_never_replaces_external_inode(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            target = root / "config" / "target.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"new-content")
+            root_descriptor = os.open(root, evidence._DIRECTORY_OPEN_FLAGS)
+            parent_descriptor, target_name = evidence._open_anchored_parent(
+                root_descriptor, root, target
+            )
+            original_move = evidence._rename_no_replace_at
+            injected: Path | None = None
+
+            def inject_rollback_destination(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
+                nonlocal injected
+                if source == target_name and str(destination).endswith(".rollback"):
+                    injected = target.parent / str(destination)
+                    injected.write_bytes(b"external-rollback")
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
+
+            try:
+                with mock.patch.object(
+                    evidence,
+                    "_rename_no_replace_at",
+                    side_effect=inject_rollback_destination,
+                ), self.assertRaises(FileExistsError):
+                    evidence._remove_expected_target_at(
+                        parent_descriptor, target_name, b"new-content", 0o644
+                    )
+            finally:
+                os.close(parent_descriptor)
+                os.close(root_descriptor)
+
+            self.assertIsNotNone(injected)
+            self.assertEqual(injected.read_bytes(), b"external-rollback")
+            self.assertEqual(target.read_bytes(), b"new-content")
 
     def test_transaction_rolls_back_after_post_replace_fsync_failure(self) -> None:
         load_script()
@@ -520,23 +661,25 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             target = root / "config" / "target.json"
             target.parent.mkdir(parents=True)
             target.write_bytes(b"old-content")
-            original_replace = os.replace
+            original_move = evidence._rename_no_replace_at
             injected = False
 
-            def mutate_inside_replace(source, destination, **kwargs):
+            def mutate_inside_replace(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
                 nonlocal injected
-                destination_parent = kwargs.get("dst_dir_fd")
                 is_target = str(destination).startswith(f".{target.name}.") and (
-                    destination_parent is not None
-                    and os.fstat(destination_parent).st_ino == target.parent.stat().st_ino
+                    source == target.name
                 )
                 if is_target and not injected:
                     injected = True
                     target.write_bytes(b"external-inside-replace")
-                return original_replace(source, destination, **kwargs)
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
 
             with mock.patch.object(
-                os, "replace", side_effect=mutate_inside_replace
+                evidence, "_rename_no_replace_at", side_effect=mutate_inside_replace
             ), self.assertRaisesRegex(RuntimeError, "target changed externally"):
                 evidence.commit_catalog_rollout_transaction(
                     root, ((target, b"new-content"),)
@@ -553,25 +696,29 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             target = root / "config" / "target.json"
             target.parent.mkdir(parents=True)
             target.write_bytes(b"old-content")
-            original_replace = os.replace
+            original_move = evidence._rename_no_replace_at
             injected = False
 
-            def mutate_after_replace(source, destination, **kwargs):
+            def mutate_after_replace(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
                 nonlocal injected
-                destination_parent = kwargs.get("dst_dir_fd")
                 is_target = str(destination).startswith(f".{target.name}.") and (
-                    destination_parent is not None
-                    and os.fstat(destination_parent).st_ino == target.parent.stat().st_ino
+                    source == target.name
                 )
                 if is_target and not injected:
-                    result = original_replace(source, destination, **kwargs)
+                    result = original_move(
+                        source_parent, source, destination_parent, destination, **kwargs
+                    )
                     injected = True
                     target.write_bytes(b"external-after-replace")
                     return result
-                return original_replace(source, destination, **kwargs)
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
 
             with mock.patch.object(
-                os, "replace", side_effect=mutate_after_replace
+                evidence, "_rename_no_replace_at", side_effect=mutate_after_replace
             ), self.assertRaisesRegex(RuntimeError, "rollback conflict"):
                 evidence.commit_catalog_rollout_transaction(
                     root, ((target, b"new-content"),)
@@ -729,10 +876,12 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             target = root / "config" / "generated.json"
             target.parent.mkdir(parents=True)
             target.write_bytes(b"new-content")
-            original_rename = os.rename
+            original_move = evidence._rename_no_replace_at
             injected = False
 
-            def insert_external_before_remove(source, destination, **kwargs):
+            def insert_external_before_remove(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
                 nonlocal injected
                 if (
                     not injected
@@ -743,7 +892,9 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
                     moved = target.with_name("original-generated.json")
                     target.rename(moved)
                     target.write_bytes(b"external-inserted")
-                return original_rename(source, destination, **kwargs)
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
 
             root_descriptor = os.open(root, evidence._DIRECTORY_OPEN_FLAGS)
             parent_descriptor, target_name = evidence._open_anchored_parent(
@@ -751,7 +902,9 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             )
             try:
                 with mock.patch.object(
-                    os, "rename", side_effect=insert_external_before_remove
+                    evidence,
+                    "_rename_no_replace_at",
+                    side_effect=insert_external_before_remove,
                 ), self.assertRaisesRegex(RuntimeError, "rollback conflict"):
                     evidence._restore_transaction_target(
                         target,
@@ -780,10 +933,12 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             journal = evidence.catalog_rollout_transaction_path(root)
             journal.parent.mkdir(parents=True)
             journal.write_bytes(b"journal-content")
-            original_rename = os.rename
+            original_move = evidence._rename_no_replace_at
             injected = False
 
-            def replace_journal_before_remove(source, destination, **kwargs):
+            def replace_journal_before_remove(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
                 nonlocal injected
                 if (
                     not injected
@@ -794,7 +949,9 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
                     moved = journal.with_name("original-journal.json")
                     journal.rename(moved)
                     journal.write_bytes(b"external-journal")
-                return original_rename(source, destination, **kwargs)
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
 
             root_descriptor = os.open(root, evidence._DIRECTORY_OPEN_FLAGS)
             parent_descriptor, target_name = evidence._open_anchored_parent(
@@ -802,7 +959,9 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             )
             try:
                 with mock.patch.object(
-                    os, "rename", side_effect=replace_journal_before_remove
+                    evidence,
+                    "_rename_no_replace_at",
+                    side_effect=replace_journal_before_remove,
                 ), self.assertRaisesRegex(RuntimeError, "rollback conflict"):
                     evidence._remove_expected_target_at(
                         parent_descriptor,
@@ -873,15 +1032,15 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 journal_name = evidence.catalog_rollout_transaction_path(root).name
-original_rename = evidence.os.rename
+original_move = evidence._rename_no_replace_at
 
-def crash_after_journal_move(source, destination, **kwargs):
+def crash_after_journal_move(source_parent, source, destination_parent, destination, **kwargs):
     if source == journal_name and str(destination).endswith(".rollback"):
-        original_rename(source, destination, **kwargs)
+        original_move(source_parent, source, destination_parent, destination, **kwargs)
         os._exit(29)
-    return original_rename(source, destination, **kwargs)
+    return original_move(source_parent, source, destination_parent, destination, **kwargs)
 
-evidence.os.rename = crash_after_journal_move
+evidence._rename_no_replace_at = crash_after_journal_move
 evidence.commit_catalog_rollout_transaction(
     root, ((root / "config" / "generated.json", b"new-content"),)
 )
@@ -996,15 +1155,15 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 journal_name = evidence.catalog_rollout_transaction_path(root).name
-original_rename = evidence.os.rename
+original_move = evidence._rename_no_replace_at
 
-def crash_after_journal_move(source, destination, **kwargs):
+def crash_after_journal_move(source_parent, source, destination_parent, destination, **kwargs):
     if source == journal_name and str(destination).endswith(".rollback"):
-        original_rename(source, destination, **kwargs)
+        original_move(source_parent, source, destination_parent, destination, **kwargs)
         os._exit(31)
-    return original_rename(source, destination, **kwargs)
+    return original_move(source_parent, source, destination_parent, destination, **kwargs)
 
-evidence.os.rename = crash_after_journal_move
+evidence._rename_no_replace_at = crash_after_journal_move
 evidence.commit_catalog_rollout_transaction(
     root, ((root / "config" / "generated.json", b"new-content"),)
 )
@@ -1081,15 +1240,15 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 identity_name = evidence.catalog_rollout_transaction_identity_path(root).name
-original_rename = evidence.os.rename
+original_move = evidence._rename_no_replace_at
 
-def crash_after_identity_move(source, destination, **kwargs):
+def crash_after_identity_move(source_parent, source, destination_parent, destination, **kwargs):
     if source == identity_name and str(destination).endswith(".rollback"):
-        original_rename(source, destination, **kwargs)
+        original_move(source_parent, source, destination_parent, destination, **kwargs)
         os._exit(41)
-    return original_rename(source, destination, **kwargs)
+    return original_move(source_parent, source, destination_parent, destination, **kwargs)
 
-evidence.os.rename = crash_after_identity_move
+evidence._rename_no_replace_at = crash_after_identity_move
 parent = os.open(root / "config", evidence._DIRECTORY_OPEN_FLAGS)
 try:
     evidence._remove_expected_target_at(
@@ -1144,15 +1303,15 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 identity_name = evidence.catalog_rollout_transaction_identity_path(root).name
-original_rename = evidence.os.rename
+original_move = evidence._rename_no_replace_at
 
-def crash_after_identity_move(source, destination, **kwargs):
+def crash_after_identity_move(source_parent, source, destination_parent, destination, **kwargs):
     if source == identity_name and str(destination).endswith(".rollback"):
-        original_rename(source, destination, **kwargs)
+        original_move(source_parent, source, destination_parent, destination, **kwargs)
         os._exit(47)
-    return original_rename(source, destination, **kwargs)
+    return original_move(source_parent, source, destination_parent, destination, **kwargs)
 
-evidence.os.rename = crash_after_identity_move
+evidence._rename_no_replace_at = crash_after_identity_move
 evidence.commit_catalog_rollout_transaction(
     root, ((root / "config" / "generated.json", b"new-content"),)
 )
@@ -1245,14 +1404,10 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 target = Path(sys.argv[2])
-original_unlink = evidence.os.unlink
+def crash_after_quarantine(*args, **kwargs):
+    os._exit(43)
 
-def crash_after_quarantine(name, *, dir_fd=None):
-    if isinstance(name, str) and name.endswith(".rollback"):
-        os._exit(43)
-    return original_unlink(name, dir_fd=dir_fd)
-
-evidence.os.unlink = crash_after_quarantine
+evidence._unlink_expected_entry_at = crash_after_quarantine
 parent = os.open(target.parent, evidence._DIRECTORY_OPEN_FLAGS)
 try:
     evidence._remove_expected_target_at(parent, target.name, b"new-content", 0o644)
@@ -1310,6 +1465,32 @@ finally:
             self.assertEqual(target.read_bytes(), b"old-content")
             self.assertTrue((quarantine / journal_name).is_file())
 
+    def test_recovery_rejects_quarantine_owned_by_another_transaction(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            config = root / "config"
+            config.mkdir(parents=True)
+            content = b"owned-rollback"
+            tombstone_name = f".generated.json.123.{'a' * 32}.rollback"
+            entry_name = f"{tombstone_name}.456.{'b' * 32}.rollback"
+            quarantine_name = evidence._quarantine_directory_name(
+                "b" * 32, tombstone_name, content, 0o644
+            )
+            quarantine = config / quarantine_name
+            quarantine.mkdir(mode=0o700)
+            (quarantine / entry_name).write_bytes(content)
+            parent = os.open(config, evidence._DIRECTORY_OPEN_FLAGS)
+            try:
+                with self.assertRaisesRegex(RuntimeError, "belongs to another transaction"):
+                    evidence._recover_quarantine_directories_at(
+                        parent, expected_transaction_id="a" * 32
+                    )
+            finally:
+                os.close(parent)
+            self.assertTrue((quarantine / entry_name).is_file())
+
     def test_recovery_removes_orphaned_missing_target_rollback_tombstone(self) -> None:
         load_script()
         evidence = importlib.import_module("catalog_rollout_evidence")
@@ -1327,15 +1508,15 @@ import catalog_rollout_evidence as evidence
 
 root = Path(sys.argv[1])
 target = Path(sys.argv[2])
-original_rename = evidence.os.rename
+original_move = evidence._rename_no_replace_at
 
-def crash_after_target_move(source, destination, **kwargs):
+def crash_after_target_move(source_parent, source, destination_parent, destination, **kwargs):
     if source == target.name and str(destination).endswith(".rollback"):
-        original_rename(source, destination, **kwargs)
+        original_move(source_parent, source, destination_parent, destination, **kwargs)
         os._exit(37)
-    return original_rename(source, destination, **kwargs)
+    return original_move(source_parent, source, destination_parent, destination, **kwargs)
 
-evidence.os.rename = crash_after_target_move
+evidence._rename_no_replace_at = crash_after_target_move
 parent = os.open(target.parent, evidence._DIRECTORY_OPEN_FLAGS)
 try:
     evidence._remove_expected_target_at(parent, target.name, b"new-content", 0o644)
@@ -1380,16 +1561,20 @@ finally:
             journal = evidence.catalog_rollout_transaction_path(root)
             journal.parent.mkdir(parents=True)
             journal.write_bytes(b"journal-content")
-            original_rename = os.rename
+            original_move = evidence._rename_no_replace_at
             deleted = False
 
-            def delete_before_remove(source, destination, **kwargs):
+            def delete_before_remove(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
                 nonlocal deleted
                 if not deleted and source == journal.name:
                     deleted = True
                     journal.unlink()
                     raise FileNotFoundError("injected journal deletion")
-                return original_rename(source, destination, **kwargs)
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
 
             root_descriptor = os.open(root, evidence._DIRECTORY_OPEN_FLAGS)
             parent_descriptor, target_name = evidence._open_anchored_parent(
@@ -1397,7 +1582,9 @@ finally:
             )
             try:
                 with mock.patch.object(
-                    os, "rename", side_effect=delete_before_remove
+                    evidence,
+                    "_rename_no_replace_at",
+                    side_effect=delete_before_remove,
                 ), self.assertRaisesRegex(RuntimeError, "target disappeared before removal"):
                     evidence._remove_expected_target_at(
                         parent_descriptor,
@@ -1421,7 +1608,7 @@ finally:
             target.parent.mkdir(parents=True)
             target.write_bytes(b"new-content")
             original_capture = evidence._capture_transaction_state_at
-            original_unlink = os.unlink
+            original_unlink_expected = evidence._unlink_expected_entry_at
             capture_injected = False
             unlink_injected = False
 
@@ -1434,17 +1621,20 @@ finally:
                     return False, b"", None
                 return state
 
-            def fail_first_tombstone_unlink(name, **kwargs):
+            def fail_first_tombstone_unlink(
+                parent_descriptor, entry_name, expected_identity, expected_content, expected_mode
+            ):
                 nonlocal unlink_injected
-                if (
-                    not unlink_injected
-                    and isinstance(name, str)
-                    and name.startswith(f".{target.name}.")
-                    and name.endswith(".rollback")
-                ):
+                if not unlink_injected:
                     unlink_injected = True
                     raise OSError("injected tombstone unlink failure")
-                return original_unlink(name, **kwargs)
+                return original_unlink_expected(
+                    parent_descriptor,
+                    entry_name,
+                    expected_identity,
+                    expected_content,
+                    expected_mode,
+                )
 
             root_descriptor = os.open(root, evidence._DIRECTORY_OPEN_FLAGS)
             parent_descriptor, target_name = evidence._open_anchored_parent(
@@ -1456,7 +1646,9 @@ finally:
                     "_capture_transaction_state_at",
                     side_effect=report_missing_then_insert,
                 ), mock.patch.object(
-                    os, "unlink", side_effect=fail_first_tombstone_unlink
+                    evidence,
+                    "_unlink_expected_entry_at",
+                    side_effect=fail_first_tombstone_unlink,
                 ), self.assertRaisesRegex(RuntimeError, "external target appeared"):
                     evidence._remove_expected_target_at(
                         parent_descriptor,
@@ -2029,6 +2221,7 @@ finally:
 
     def test_snapshot_write_failure_does_not_leave_a_partial_immutable_directory(self) -> None:
         module = load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
         audit_bytes = b'{"schema-version":1}\n'
         authority = {
             "rollout": "candidate",
@@ -2043,15 +2236,19 @@ finally:
                 / "rollouts"
                 / "candidate"
             )
-            original_rename = os.rename
+            original_move = evidence._rename_no_replace_at
 
-            def fail_snapshot_replace(source, destination, **kwargs) -> None:
+            def fail_snapshot_replace(
+                source_parent, source, destination_parent, destination, **kwargs
+            ) -> None:
                 if destination == snapshot_dir.name:
                     raise OSError("injected snapshot directory replace failure")
-                original_rename(source, destination, **kwargs)
+                original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
 
             with mock.patch.object(
-                os, "rename", side_effect=fail_snapshot_replace
+                evidence, "_rename_no_replace_at", side_effect=fail_snapshot_replace
             ), self.assertRaisesRegex(OSError, "injected snapshot directory replace"):
                 module.snapshot_rollout_evidence(
                     authority, audit_bytes, repository_root=root
@@ -2059,6 +2256,45 @@ finally:
 
             self.assertFalse(snapshot_dir.exists())
             self.assertFalse(list(snapshot_dir.parent.glob(".candidate.*")))
+
+    def test_snapshot_destination_collision_preserves_external_directory(self) -> None:
+        module = load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        audit_bytes = b'{"schema-version":1}\n'
+        authority = {
+            "rollout": "candidate",
+            "audit": {"sha256": hashlib.sha256(audit_bytes).hexdigest()},
+            "delta": [],
+        }
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            snapshot_dir = root / "config" / "rollouts" / "candidate"
+            original_move = evidence._rename_no_replace_at
+            injected = False
+
+            def inject_snapshot_destination(
+                source_parent, source, destination_parent, destination, **kwargs
+            ):
+                nonlocal injected
+                if destination == snapshot_dir.name and not injected:
+                    injected = True
+                    snapshot_dir.mkdir(parents=True)
+                    (snapshot_dir / "external.txt").write_bytes(b"external")
+                return original_move(
+                    source_parent, source, destination_parent, destination, **kwargs
+                )
+
+            with mock.patch.object(
+                evidence,
+                "_rename_no_replace_at",
+                side_effect=inject_snapshot_destination,
+            ), self.assertRaisesRegex(RuntimeError, "immutable rollout snapshot differs"):
+                module.snapshot_rollout_evidence(
+                    authority, audit_bytes, repository_root=root
+                )
+
+            self.assertTrue(injected)
+            self.assertEqual((snapshot_dir / "external.txt").read_bytes(), b"external")
 
     def test_snapshot_reuse_checks_declared_artifact_bytes(self) -> None:
         module = load_script()
