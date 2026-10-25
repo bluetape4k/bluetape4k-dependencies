@@ -457,7 +457,7 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             def fail_central_replace(path, content, **kwargs) -> None:
                 if path.name == central_path.name and path.parent.resolve() == central_path.parent.resolve():
                     raise OSError("injected central ledger replace failure")
-                original_atomic_write(path, content, **kwargs)
+                return original_atomic_write(path, content, **kwargs)
 
             with mock.patch.object(
                 evidence, "atomic_write_bytes", side_effect=fail_central_replace
@@ -975,17 +975,22 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             parent.mkdir(parents=True)
             entry = parent / ".owned.123.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.rollback"
             entry.write_bytes(b"owned")
-            original_unlink = evidence.os.unlink
             unlink_names: list[str] = []
 
-            def replace_final_before_unlink(name, *args, **kwargs):
+            original_private_unlink = evidence._unlink_private_entry_at
+
+            def record_private_unlink(parent_descriptor, name, *args, **kwargs):
                 unlink_names.append(str(name))
-                return original_unlink(name, *args, **kwargs)
+                return original_private_unlink(
+                    parent_descriptor, name, *args, **kwargs
+                )
 
             descriptor = os.open(parent, evidence._DIRECTORY_OPEN_FLAGS)
             try:
                 with mock.patch.object(
-                    evidence.os, "unlink", side_effect=replace_final_before_unlink
+                    evidence,
+                    "_unlink_private_entry_at",
+                    side_effect=record_private_unlink,
                 ):
                     evidence._unlink_expected_entry_at(
                         descriptor,
@@ -998,7 +1003,6 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
                 os.close(descriptor)
 
             self.assertTrue(unlink_names)
-            self.assertTrue(all(not name.endswith(".rollback") for name in unlink_names))
             self.assertFalse(entry.exists())
 
     def test_expected_entry_unlink_preserves_replacement_before_terminal_unlink(self) -> None:
@@ -1098,7 +1102,7 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             self.assertTrue(injected)
             self.assertFalse(directory.exists())
             self.assertTrue(owned_moved.is_dir())
-            cleanup_dirs = list(parent.glob(f"{directory.name}.*.delete"))
+            cleanup_dirs = list(parent.glob(".owned-directory.*.delete"))
             self.assertEqual(len(cleanup_dirs), 1)
             self.assertTrue(cleanup_dirs[0].is_dir())
 
@@ -1737,6 +1741,52 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
                 )
                 self.assertNotEqual(original_identity, replacement_identity)
 
+    def test_transaction_cleanup_revalidates_published_targets_before_finalization_removal(
+        self,
+    ) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            target = root / "config" / "generated.json"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"old-content")
+            journal = evidence.catalog_rollout_transaction_path(root)
+            identity = evidence.catalog_rollout_transaction_identity_path(root)
+            finalization = evidence.catalog_rollout_transaction_finalization_path(root)
+            original_remove = evidence._remove_expected_target_at
+            replaced = False
+
+            def replace_before_finalization_removal(
+                parent_descriptor, target_name, *args, **kwargs
+            ):
+                nonlocal replaced
+                if target_name == finalization.name and not replaced:
+                    replacement = target.with_name("external-generated.json")
+                    replacement.write_bytes(b"new-content")
+                    os.chmod(replacement, stat.S_IMODE(target.stat().st_mode))
+                    os.replace(replacement, target)
+                    replaced = True
+                return original_remove(parent_descriptor, target_name, *args, **kwargs)
+
+            with mock.patch.object(
+                evidence,
+                "_remove_expected_target_at",
+                side_effect=replace_before_finalization_removal,
+            ), self.assertRaisesRegex(
+                RuntimeError, "finalization marker changed externally"
+            ):
+                evidence.commit_catalog_rollout_transaction(
+                    root, ((target, b"new-content"),)
+                )
+
+            self.assertTrue(replaced)
+            self.assertTrue(journal.is_file())
+            self.assertTrue(identity.is_file())
+            self.assertTrue(finalization.is_file())
+            self.assertEqual(target.read_bytes(), b"new-content")
+
+
     def test_transaction_rejects_a_mutated_journal_tombstone(self) -> None:
         load_script()
         evidence = importlib.import_module("catalog_rollout_evidence")
@@ -2198,12 +2248,20 @@ finally:
             content = b"owned-rollback"
             tombstone_name = f".generated.json.123.{'a' * 32}.rollback"
             entry_name = f"{tombstone_name}.456.{'b' * 32}.rollback"
-            quarantine_name = evidence._quarantine_directory_name(
-                "b" * 32, tombstone_name, content, 0o644
-            )
-            quarantine = config / quarantine_name
+            quarantine = config / ".quarantine-probe"
             quarantine.mkdir(mode=0o700)
-            (quarantine / entry_name).write_bytes(content)
+            entry = quarantine / entry_name
+            entry.write_bytes(content)
+            quarantine_name = evidence._quarantine_directory_name(
+                "b" * 32,
+                tombstone_name,
+                content,
+                0o644,
+                (entry.stat().st_dev, entry.stat().st_ino),
+            )
+            quarantine.rename(config / quarantine_name)
+            quarantine = config / quarantine_name
+            entry = quarantine / entry_name
             parent = os.open(config, evidence._DIRECTORY_OPEN_FLAGS)
             try:
                 with self.assertRaisesRegex(RuntimeError, "belongs to another transaction"):
@@ -2224,17 +2282,24 @@ finally:
             content = b"orphan-rollback"
             tombstone_name = f".generated.json.123.{'a' * 32}.rollback"
             entry_name = f"{tombstone_name}.456.{'a' * 32}.rollback"
-            quarantine_name = evidence._quarantine_directory_name(
-                "orphan", tombstone_name, content, 0o644
-            )
-            quarantine = config / quarantine_name
+            quarantine = config / ".quarantine-probe"
             quarantine.mkdir(mode=0o700)
             entry = quarantine / entry_name
             entry.write_bytes(content)
+            quarantine_name = evidence._quarantine_directory_name(
+                "orphan",
+                tombstone_name,
+                content,
+                0o644,
+                (entry.stat().st_dev, entry.stat().st_ino),
+            )
+            quarantine.rename(config / quarantine_name)
+            quarantine = config / quarantine_name
 
             with self.assertRaisesRegex(RuntimeError, "no canonical transaction"):
                 evidence.recover_catalog_rollout_transaction(root)
 
+            entry = quarantine / entry_name
             self.assertTrue(entry.is_file())
             self.assertFalse((config / entry_name).exists())
 
@@ -2248,12 +2313,19 @@ finally:
             content = b"owned-rollback"
             tombstone_name = f".generated.json.123.{'a' * 32}.rollback"
             entry_name = f"{tombstone_name}.456.{'a' * 32}.rollback"
-            quarantine_name = evidence._quarantine_directory_name(
-                "a" * 32, tombstone_name, content, 0o644
-            )
-            quarantine = config / quarantine_name
+            quarantine = config / ".quarantine-probe"
             quarantine.mkdir(mode=0o700)
-            (quarantine / entry_name).write_bytes(content)
+            entry = quarantine / entry_name
+            entry.write_bytes(content)
+            quarantine_name = evidence._quarantine_directory_name(
+                "a" * 32,
+                tombstone_name,
+                content,
+                0o644,
+                (entry.stat().st_dev, entry.stat().st_ino),
+            )
+            quarantine.rename(config / quarantine_name)
+            quarantine = config / quarantine_name
             original_move = evidence._rename_no_replace_at
             mutated = False
 
@@ -2286,6 +2358,49 @@ finally:
                 os.close(parent)
 
             self.assertTrue(mutated)
+            self.assertTrue((quarantine / entry_name).is_file())
+            self.assertFalse((config / entry_name).exists())
+
+    def test_recovery_rejects_quarantine_same_bytes_foreign_inode(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            config = root / "config"
+            config.mkdir(parents=True)
+            content = b"owned-rollback"
+            tombstone_name = f".generated.json.123.{'a' * 32}.rollback"
+            entry_name = f"{tombstone_name}.456.{'a' * 32}.rollback"
+            quarantine = config / ".quarantine-probe"
+            quarantine.mkdir(mode=0o700)
+            owned_entry = quarantine / entry_name
+            owned_entry.write_bytes(content)
+            expected_identity = (owned_entry.stat().st_dev, owned_entry.stat().st_ino)
+            quarantine_name = evidence._quarantine_directory_name(
+                "a" * 32,
+                tombstone_name,
+                content,
+                0o644,
+                expected_identity,
+            )
+            quarantine.rename(config / quarantine_name)
+            quarantine = config / quarantine_name
+            replacement = quarantine / "foreign-entry"
+            replacement.write_bytes(content)
+            os.chmod(replacement, 0o644)
+            os.replace(replacement, quarantine / entry_name)
+
+            parent = os.open(config, evidence._DIRECTORY_OPEN_FLAGS)
+            try:
+                with self.assertRaisesRegex(
+                    RuntimeError, "provenance changed externally"
+                ):
+                    evidence._recover_quarantine_directories_at(
+                        parent, expected_transaction_id="a" * 32
+                    )
+            finally:
+                os.close(parent)
+
             self.assertTrue((quarantine / entry_name).is_file())
             self.assertFalse((config / entry_name).exists())
 
@@ -3154,6 +3269,88 @@ finally:
                 (replaced_staging / "external.txt").read_bytes(), b"external-staging"
             )
             self.assertTrue(any(path.is_file() for path in owned_staging.rglob("*")))
+
+    def test_snapshot_publish_rejects_same_bytes_replaced_file_after_publish_fsync(
+        self,
+    ) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            snapshot = root / "config" / "rollouts" / "candidate"
+            original_fsync = evidence._fsync_directory_fd
+            replaced = False
+
+            def replace_snapshot_file_after_publish(descriptor):
+                nonlocal replaced
+                result = original_fsync(descriptor)
+                if snapshot.is_dir() and not replaced:
+                    replacement = snapshot / "external-ledger.json"
+                    replacement.write_bytes((snapshot / "ledger.json").read_bytes())
+                    os.replace(replacement, snapshot / "ledger.json")
+                    replaced = True
+                return result
+
+            with mock.patch.object(
+                evidence,
+                "_fsync_directory_fd",
+                side_effect=replace_snapshot_file_after_publish,
+            ), self.assertRaisesRegex(RuntimeError, "snapshot inode changed"):
+                evidence._publish_immutable_snapshot(
+                    root,
+                    Path("config/rollouts/candidate"),
+                    {Path("ledger.json"): b"ledger"},
+                )
+
+            self.assertTrue(replaced)
+            self.assertEqual((snapshot / "ledger.json").read_bytes(), b"ledger")
+
+    def test_snapshot_cleanup_rejects_replaced_staging_child(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            parent = root / "config" / "rollouts"
+            parent.mkdir(parents=True)
+            staging = parent / ".candidate.123"
+            staging.mkdir()
+            child = staging / "ledger.json"
+            child.write_bytes(b"owned")
+            detached = parent / "detached-owned"
+            original_unlink = evidence._unlink_private_entry_at
+            replaced = False
+
+            def replace_before_staging_unlink(parent_descriptor, entry_name, *args, **kwargs):
+                nonlocal replaced
+                if not replaced:
+                    child.rename(detached)
+                    child.write_bytes(b"external")
+                    replaced = True
+                return original_unlink(
+                    parent_descriptor, entry_name, *args, **kwargs
+                )
+
+            descriptor = os.open(parent, evidence._DIRECTORY_OPEN_FLAGS)
+            try:
+                with mock.patch.object(
+                    evidence,
+                    "_unlink_private_entry_at",
+                    side_effect=replace_before_staging_unlink,
+                ), self.assertRaisesRegex(
+                    RuntimeError, "private entry changed externally"
+                ):
+                    evidence._remove_directory_tree_at(
+                        descriptor,
+                        staging.name,
+                        expected_identity=(staging.stat().st_dev, staging.stat().st_ino),
+                    )
+            finally:
+                os.close(descriptor)
+
+            self.assertTrue(replaced)
+            self.assertEqual(child.read_bytes(), b"external")
+            self.assertEqual(detached.read_bytes(), b"owned")
+            self.assertTrue(staging.is_dir())
 
     def test_snapshot_destination_collision_preserves_external_directory(self) -> None:
         module = load_script()
