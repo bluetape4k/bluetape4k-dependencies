@@ -1,0 +1,78 @@
+{
+  "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
+  "command": [
+    "./gradlew",
+    "-p",
+    "<temporary-project>",
+    "resolveLatestStableGraphs",
+    "--no-daemon",
+    "--no-configuration-cache",
+    "--no-build-cache",
+    "--console=plain"
+  ],
+  "graph-deltas": [
+    {
+      "added-components": [
+        "org.jetbrains.kotlinx.kover:org.jetbrains.kotlinx.kover.gradle.plugin:0.9.11",
+        "org.jetbrains.kotlinx:kover-features-jvm:0.9.11",
+        "org.jetbrains.kotlinx:kover-gradle-plugin:0.9.11",
+        "org.jetbrains.kotlinx:kover-jvm-agent:0.9.11"
+      ],
+      "removed-components": [
+        "org.jetbrains.kotlinx.kover:org.jetbrains.kotlinx.kover.gradle.plugin:0.9.9",
+        "org.jetbrains.kotlinx:kover-features-jvm:0.9.9",
+        "org.jetbrains.kotlinx:kover-gradle-plugin:0.9.9",
+        "org.jetbrains.kotlinx:kover-jvm-agent:0.9.9"
+      ],
+      "spec_id": "45e5421899542f2f6804df18a38c0669b09c7e82bf75dc9e902e00d19a211a1c"
+    }
+  ],
+  "ledger-contract-sha256": "ac1f97d6d243b6ae7cf6b08dab632232078789be4f276b0ed9cc050cbfc5500f",
+  "log-sha256": "3bbd9d195866443e06dd6fcd19688abcb59791d65c0a996980998c32916ae2da",
+  "observation-count": 2,
+  "observations": [
+    {
+      "components": [
+        "org.freemarker:freemarker:2.3.32",
+        "org.jetbrains.intellij.deps:coverage-report:1.0.25",
+        "org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.765",
+        "org.jetbrains.intellij.deps:intellij-coverage-reporter:1.0.765",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.0",
+        "org.jetbrains.kotlinx.kover:org.jetbrains.kotlinx.kover.gradle.plugin:0.9.11",
+        "org.jetbrains.kotlinx:kover-features-jvm:0.9.11",
+        "org.jetbrains.kotlinx:kover-gradle-plugin:0.9.11",
+        "org.jetbrains.kotlinx:kover-jvm-agent:0.9.11",
+        "org.jetbrains:annotations:16.0.2",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "ca3d55d9db4c0fc1d145dedb42f035970c17fdaa0156626e83be1f70d663a51c",
+      "phase": "after",
+      "requested": "0.9.11",
+      "selected": "0.9.11",
+      "spec_id": "45e5421899542f2f6804df18a38c0669b09c7e82bf75dc9e902e00d19a211a1c"
+    },
+    {
+      "components": [
+        "org.freemarker:freemarker:2.3.32",
+        "org.jetbrains.intellij.deps:coverage-report:1.0.25",
+        "org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.765",
+        "org.jetbrains.intellij.deps:intellij-coverage-reporter:1.0.765",
+        "org.jetbrains.kotlin:kotlin-stdlib:2.2.0",
+        "org.jetbrains.kotlinx.kover:org.jetbrains.kotlinx.kover.gradle.plugin:0.9.9",
+        "org.jetbrains.kotlinx:kover-features-jvm:0.9.9",
+        "org.jetbrains.kotlinx:kover-gradle-plugin:0.9.9",
+        "org.jetbrains.kotlinx:kover-jvm-agent:0.9.9",
+        "org.jetbrains:annotations:16.0.2",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "d7faf8d272ffb1e7e3fc0bfe7a87eeeb56f1b744a919b9b368aa7c9fe612f6a9",
+      "phase": "before",
+      "requested": "0.9.9",
+      "selected": "0.9.9",
+      "spec_id": "45e5421899542f2f6804df18a38c0669b09c7e82bf75dc9e902e00d19a211a1c"
+    }
+  ],
+  "schema-version": 2,
+  "spec-count": 1,
+  "status": "verified-resolved-graph"
+}

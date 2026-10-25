@@ -107,7 +107,7 @@ class VerifyPublicationPomsTest(unittest.TestCase):
   <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
     <version>2.22.2</version><type>pom</type><scope>import</scope></dependency>
   <dependency><groupId>tools.jackson</groupId><artifactId>jackson-bom</artifactId>
-    <version>3.2.3</version><type>pom</type><scope>import</scope></dependency>
+    <version>3.2.4</version><type>pom</type><scope>import</scope></dependency>
 </dependencies></dependencyManagement>
 """,
                 ),
@@ -134,7 +134,7 @@ class VerifyPublicationPomsTest(unittest.TestCase):
   <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
     <version>2.22.3</version><type>pom</type><scope>import</scope></dependency>
   <dependency><groupId>tools.jackson</groupId><artifactId>jackson-bom</artifactId>
-    <version>3.2.3</version><type>pom</type><scope>import</scope></dependency>
+    <version>3.2.4</version><type>pom</type><scope>import</scope></dependency>
 </dependencies></dependencyManagement>
 """,
                 ),

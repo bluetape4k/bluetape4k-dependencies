@@ -1,0 +1,623 @@
+{
+  "audit": {
+    "path": "config/rollouts/2026-08-09-issue-164-security-overrides/resolved-graph-732eda2db9e05f41/latest-stable-version-audit.json",
+    "sha256": "d18da284474bc2d6cc86b1d406fe1f8b21083391debb079ba49c7031628bf528",
+    "summary": {
+      "authority-count": 518,
+      "line-count": 552,
+      "line-dispositions": {
+        "current": 440,
+        "defer-breaking-migration": 22,
+        "hold-compatibility": 82,
+        "hold-unavailable": 8
+      },
+      "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
+      "metadata-verified": 513
+    }
+  },
+  "audit-cutoff": "2026-08-09",
+  "baseline": {
+    "catalog-ref": "origin/develop",
+    "catalog-sha256": "c781a2609d62b6abc57489f9b17da73f25478acaa2e0e95a51feab067b4bb7de"
+  },
+  "candidate": {
+    "catalog-sha256": "bb58842909842524905993de086fcd7c68a104fea957f0509934729693078004"
+  },
+  "delta": [
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.11.2"
+      },
+      "after": "1.11.2",
+      "authorities": [
+        {
+          "authority-key": "policy:library:at.yawk.lz4:lz4-java",
+          "coordinate-or-plugin-id": "at.yawk.lz4:lz4-java",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.11.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "96dfbb0f88e4bd5c21751b7c9ab9752699b0b10ae16eff5b3d038db1f5d68ba4"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "at-yawk-lz4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.8.26"
+      },
+      "after": "1.8.26",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:aws.sdk.kotlin:aws-core",
+          "coordinate-or-plugin-id": "aws.sdk.kotlin:aws-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.8.24",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "45280ca8cc37077426acf2675646bc793f60857f3f17a0f9483962726e9d87a6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "aws-kotlin"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.51.3"
+      },
+      "after": "2.51.3",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:software.amazon.awssdk:bom",
+          "coordinate-or-plugin-id": "software.amazon.awssdk:bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "2.51.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "1c0797cee28167fa85e48d259dad3369fe6f5d7a24ec272e5362a5df5d73faca"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "aws2"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.85.2"
+      },
+      "after": "1.85.2",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.bouncycastle:bcprov-jdk18on",
+          "coordinate-or-plugin-id": "org.bouncycastle:bcprov-jdk18on",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.85",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "251ecd39847ff093adc82bbf37e8710e2a166469b38ff55b11ecab7efb5a9df2"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "bouncycastle-bcprov"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.8.189"
+      },
+      "after": "4.8.189",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.github.classgraph:classgraph",
+          "coordinate-or-plugin-id": "io.github.classgraph:classgraph",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.8.186",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "65f51c9ce80a59557dad8115d5688b85c64f8823e1214f433946217c1ee59580"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "classgraph"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.0"
+      },
+      "after": "1.6.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.apache.fory:fory-core",
+          "coordinate-or-plugin-id": "org.apache.fory:fory-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.5.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "69c6b3d10057060a13f4b9924d15d39c0ab54a4b5a0ffb46d09d049ab25aa8e0"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "fory"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.6.0"
+      },
+      "after": "1.6.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.apache.fory:fory-kotlin",
+          "coordinate-or-plugin-id": "org.apache.fory:fory-kotlin",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.5.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0a1df9e7b7064c12086cf2dabf805239b0b5c60f5d8238f95a2e50c3e0e15f64"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "fory-kotlin"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.5.3.Final"
+      },
+      "after": "4.5.3.Final",
+      "authorities": [
+        {
+          "authority-key": "policy:library:org.hibernate.reactive:hibernate-reactive-core",
+          "coordinate-or-plugin-id": "org.hibernate.reactive:hibernate-reactive-core",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.5.2.Final",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e01eef31bdba5bc0b9dc4a3af1e1bcc61533d89bdd2351a89f68e8615dd521a3"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "hibernate-reactive-core"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "5.6.4"
+      },
+      "after": "5.6.4",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.apache.httpcomponents.client5:httpclient5",
+          "coordinate-or-plugin-id": "org.apache.httpcomponents.client5:httpclient5",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "5.6.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "978a2ed55ecf3b1c249d97d1708e025dc7fd7883a5a615be32f7d2925e3237fb"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "httpclient5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.1.8"
+      },
+      "after": "1.1.8",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-graalvm-native-h4df74ed993d6",
+          "coordinate-or-plugin-id": "org.graalvm.buildtools.native",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "1.1.7",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "f3615ebd7b283a3345f7a38eda7196c47ad04e9396f1f206d2fe94cf9f51ebc2"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-graalvm-native-h4df74ed993d6"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-bom-h61cd2dcaa536",
+          "coordinate-or-plugin-id": "org.junit:junit-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e4e629b03a81fac1c108bb1a439ee2db8bab026594e8dc8ceb32eb3cb027a9cf"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-bom-h61cd2dcaa536"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-api-hbdb647c8c063",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-api",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7e2dd632db5b97c1e08848a73cba9416eb46c706c60a41a516d717b7524a4ab6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-api-hbdb647c8c063"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-engine-h100e4f4488c1",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "4a43e04dfda7d64d8812803360d20e7d841210e46b390956bddb42ff3af429f2"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-engine-h100e4f4488c1"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-hc9d62f8dba36",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e99649dd3ed15686ab218ec00aba4bfac60ed6e0de9b3ddf64933ebd24b5caab"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-hc9d62f8dba36"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-migrationsupport-hc68f8f05bd6d",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-migrationsupport",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "7078644f6df7dbec0f720827105a99c4c7ffd07392a3aa8d3431e149cfdbd165"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-migrationsupport-hc68f8f05bd6d"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-jupiter-params-hecee21232a80",
+          "coordinate-or-plugin-id": "org.junit.jupiter:junit-jupiter-params",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "34ebdbc164f00057e28e58ad9afff418d14daa4a5876be65a6368c7af05c6aab"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-jupiter-params-hecee21232a80"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-commons-he1ea011b202a",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-commons",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "d020cc1257c180846979f48887c1e6ad0a46c7147a58a428097c4d26e5f483bf"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-commons-he1ea011b202a"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-engine-ha913b5a2622e",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "b0353f98e4bf2cc5d427e43c54e404e56de2f0319050428b5e66aee0426b24c6"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-engine-ha913b5a2622e"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-launcher-h606d910fe011",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-launcher",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "c434921b14f54a98f2aea56a59c5c0b0f68366c2922a95eb8aa03e6372197d06"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-launcher-h606d910fe011"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-suite-api-h92cc87dc62ce",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-suite-api",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "75c6d9c8e2ba5ad6766d6db97bbcc61a1e27714e6a603706681f642d5aba7a82"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-suite-api-h92cc87dc62ce"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-platform-suite-engine-h0ac35326fce5",
+          "coordinate-or-plugin-id": "org.junit.platform:junit-platform-suite-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "e49b81ce1ba9e3e619a01c98ca965b87b21d9b61510e9b6dfe589b65d569edcb"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-platform-suite-engine-h0ac35326fce5"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "6.1.3"
+      },
+      "after": "6.1.3",
+      "authorities": [
+        {
+          "authority-key": "managed:managed-junit-vintage-engine-hc9c190fac5a4",
+          "coordinate-or-plugin-id": "org.junit.vintage:junit-vintage-engine",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "6.1.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "4f2d0e0a920626106d73d9b152b0eedffc4ab8d2b4627f47393809c71c59162b"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "managed-junit-vintage-engine-hc9c190fac5a4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.65.0"
+      },
+      "after": "1.65.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.opentelemetry:opentelemetry-api",
+          "coordinate-or-plugin-id": "io.opentelemetry:opentelemetry-api",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:io.opentelemetry:opentelemetry-bom",
+          "coordinate-or-plugin-id": "io.opentelemetry:opentelemetry-bom",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:io.opentelemetry:opentelemetry-extension-trace-propagators",
+          "coordinate-or-plugin-id": "io.opentelemetry:opentelemetry-extension-trace-propagators",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.64.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "2fb6fb314b8edf09b08976d0b534a8c2911c75bd5418db22475cc6feb92a11ca",
+        "5b72bf75e9e62c08a48cd80f5127973006dd03555dc6760ab3d12354bb1c8af1",
+        "d5294dfce9a1bc1b277d1b739335bca2496461ad2bce8673b293a36dcb6ae18d"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "opentelemetry"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.5.32"
+      },
+      "after": "4.5.32",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.vertx:vertx-dependencies",
+          "coordinate-or-plugin-id": "io.vertx:vertx-dependencies",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.vertx:vertx-core",
+          "coordinate-or-plugin-id": "io.vertx:vertx-core",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.vertx:vertx-web-client",
+          "coordinate-or-plugin-id": "io.vertx:vertx-web-client",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "policy:library:io.vertx:vertx-web-common",
+          "coordinate-or-plugin-id": "io.vertx:vertx-web-common",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "4.5.31",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "0ea2ab5418b0fdc9cc31fbee5a395380d074aa55f4ab842d0a77dadf5557f815",
+        "2c3f843d9e7a8774796c7750c023125d050ab9cb3385b8a6fef620f4df36cc96",
+        "7d913fba1b16b5495f82162438667553d6a3c7d60d18251275bae00593ad8dab",
+        "b0c373f3a60ad4522d6a6c3d88911927a719ea962d98dc5aae84fbb8bba71bfc"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "vertx4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "1.5.7-13"
+      },
+      "after": "1.5.7-13",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:com.github.luben:zstd-jni",
+          "coordinate-or-plugin-id": "com.github.luben:zstd-jni",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "1.5.7-12",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "db1f41fa93fe9db92598f4135f91d9f6b429c550ae6533c60436a6d2e55cf93e"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "zstd-jni"
+    }
+  ],
+  "resolved-graph-evidence": {
+    "observation-count": 60,
+    "path": "config/rollouts/2026-08-09-issue-164-security-overrides/resolved-graph-732eda2db9e05f41/resolved-graph-732eda2db9e05f41.json",
+    "sha256": "732eda2db9e05f418ee7e4adaaa1480e7346e79baebeadc4a74edc3d29dadf77",
+    "spec-count": 30
+  },
+  "rollout": "2026-08-09-issue-164-security-overrides",
+  "schema-version": 3,
+  "status": "verified-resolved-graph"
+}

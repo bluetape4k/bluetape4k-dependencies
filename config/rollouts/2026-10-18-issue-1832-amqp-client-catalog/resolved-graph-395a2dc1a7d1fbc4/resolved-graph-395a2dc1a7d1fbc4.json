@@ -1,0 +1,100 @@
+{
+  "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b",
+  "command": [
+    "./gradlew",
+    "-p",
+    "<temporary-project>",
+    "resolveLatestStableGraphs",
+    "--no-daemon",
+    "--no-configuration-cache",
+    "--no-build-cache",
+    "--console=plain"
+  ],
+  "graph-deltas": [
+    {
+      "added-components": [
+        "com.rabbitmq:amqp-client:5.37.0",
+        "io.netty:netty-buffer:4.2.18.Final",
+        "io.netty:netty-codec-base:4.2.18.Final",
+        "io.netty:netty-codec-compression:4.2.18.Final",
+        "io.netty:netty-codec-marshalling:4.2.18.Final",
+        "io.netty:netty-codec-protobuf:4.2.18.Final",
+        "io.netty:netty-codec:4.2.18.Final",
+        "io.netty:netty-common:4.2.18.Final",
+        "io.netty:netty-handler:4.2.18.Final",
+        "io.netty:netty-resolver:4.2.18.Final",
+        "io.netty:netty-transport-native-unix-common:4.2.18.Final",
+        "io.netty:netty-transport:4.2.18.Final"
+      ],
+      "removed-components": [
+        "com.rabbitmq:amqp-client:5.35.0",
+        "io.netty:netty-buffer:4.2.17.Final",
+        "io.netty:netty-codec-base:4.2.17.Final",
+        "io.netty:netty-codec-compression:4.2.17.Final",
+        "io.netty:netty-codec-marshalling:4.2.17.Final",
+        "io.netty:netty-codec-protobuf:4.2.17.Final",
+        "io.netty:netty-codec:4.2.17.Final",
+        "io.netty:netty-common:4.2.17.Final",
+        "io.netty:netty-handler:4.2.17.Final",
+        "io.netty:netty-resolver:4.2.17.Final",
+        "io.netty:netty-transport-native-unix-common:4.2.17.Final",
+        "io.netty:netty-transport:4.2.17.Final"
+      ],
+      "spec_id": "8c1e5f326a58cd3714154f150e70c98e1d68864fc8904ebdb30fff8f2ed21e58"
+    }
+  ],
+  "ledger-contract-sha256": "1bae0595f389049c012c6e1851784a7724a23e53de76778b7d397d342eb85ee1",
+  "log-sha256": "230c389581245ab6ba1d3fbbdefbec7e3ff82311f20b9d92b35368826f90f6bd",
+  "observation-count": 2,
+  "observations": [
+    {
+      "components": [
+        "com.rabbitmq:amqp-client:5.37.0",
+        "io.netty:netty-buffer:4.2.18.Final",
+        "io.netty:netty-codec-base:4.2.18.Final",
+        "io.netty:netty-codec-compression:4.2.18.Final",
+        "io.netty:netty-codec-marshalling:4.2.18.Final",
+        "io.netty:netty-codec-protobuf:4.2.18.Final",
+        "io.netty:netty-codec:4.2.18.Final",
+        "io.netty:netty-common:4.2.18.Final",
+        "io.netty:netty-handler:4.2.18.Final",
+        "io.netty:netty-resolver:4.2.18.Final",
+        "io.netty:netty-transport-native-unix-common:4.2.18.Final",
+        "io.netty:netty-transport:4.2.18.Final",
+        "org.slf4j:slf4j-api:1.7.36",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "8ca48c3200564e089d972220b1b1201c3c18efc12b790246c967589071ba7b8f",
+      "phase": "after",
+      "requested": "5.37.0",
+      "selected": "5.37.0",
+      "spec_id": "8c1e5f326a58cd3714154f150e70c98e1d68864fc8904ebdb30fff8f2ed21e58"
+    },
+    {
+      "components": [
+        "com.rabbitmq:amqp-client:5.35.0",
+        "io.netty:netty-buffer:4.2.17.Final",
+        "io.netty:netty-codec-base:4.2.17.Final",
+        "io.netty:netty-codec-compression:4.2.17.Final",
+        "io.netty:netty-codec-marshalling:4.2.17.Final",
+        "io.netty:netty-codec-protobuf:4.2.17.Final",
+        "io.netty:netty-codec:4.2.17.Final",
+        "io.netty:netty-common:4.2.17.Final",
+        "io.netty:netty-handler:4.2.17.Final",
+        "io.netty:netty-resolver:4.2.17.Final",
+        "io.netty:netty-transport-native-unix-common:4.2.17.Final",
+        "io.netty:netty-transport:4.2.17.Final",
+        "org.slf4j:slf4j-api:1.7.36",
+        "root project 'latest-stable-resolved-graphs'"
+      ],
+      "graph_sha256": "1d4687cc68d9790f2f8e7144f5fd8bf8b177ed05fb000d4f77617ad64cdcb81d",
+      "phase": "before",
+      "requested": "5.35.0",
+      "selected": "5.35.0",
+      "spec_id": "8c1e5f326a58cd3714154f150e70c98e1d68864fc8904ebdb30fff8f2ed21e58"
+    }
+  ],
+  "schema-version": 2,
+  "spec-count": 1,
+  "status": "verified-resolved-graph"
+}

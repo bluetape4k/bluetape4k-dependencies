@@ -6,7 +6,7 @@
     {
       "rollout": "2026-08-04-issue-169-latest-compatible-stable",
       "status": "verified",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "authority-delta-ledger": null,
       "candidate-receipt": "docs/releases/2026-08-04-issue-169-candidate-receipt.json",
       "catalog-sha256": "034ca4c42c98bfb901f49ac88bacb58984c17780c6b44f94d1b275209ad6c71a",
       "publication-pom-verification": {
@@ -438,11 +438,16 @@
           }
         ],
         "remote-immutable-ref-verification": "pending-new-candidate-commit-and-push"
-      }
+      },
+      "audit": null,
+      "audit-sha256": null,
+      "authority-delta-ledger-sha256": null,
+      "evidence-exception": "원본 authority ledger가 도달 가능한 Git 이력에 없어 복원할 수 없다. candidate-receipt와 superseding-local-candidate를 보존한다.",
+      "evidence-status": "legacy-superseded"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-08-05-issue-169-full-authority-audit/resolved-graph-4f8978f79a6726eb/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-08-05-issue-169-full-authority-audit/resolved-graph-4f8978f79a6726eb/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
       "catalog-sha256": "43949491277ad8501c5be9f53ed162c2976e3908edc7dc419d8067bdc5cf0d36",
       "delta-count": 123,
@@ -460,16 +465,18 @@
       "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
       "resolved-graph-evidence": {
         "observation-count": 286,
-        "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
+        "path": "config/rollouts/2026-08-05-issue-169-full-authority-audit/resolved-graph-4f8978f79a6726eb/resolved-graph-4f8978f79a6726eb.json",
         "sha256": "4f8978f79a6726eb3e5b90c87ec20c4f131707d05897f609c4494a99d7cf54f2",
         "spec-count": 143
       },
       "rollout": "2026-08-05-issue-169-full-authority-audit",
-      "status": "verified-resolved-graph"
+      "status": "verified-resolved-graph",
+      "audit-sha256": "866821dbf9b6e1413ea8325d11549230d2f8968b115533a2674976b6b81dc264",
+      "authority-delta-ledger-sha256": "dad43dbcd550d55291ded2a659966a3a93ad4b28a88e89c3a7498b41052407b5"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-08-06-dependencies-1.4.0-final-stable/resolved-graph-2b1735f5684aa7eb/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-08-06-dependencies-1.4.0-final-stable/resolved-graph-2b1735f5684aa7eb/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "b6667cfab4a316ad4fa51eeb1a0c1ed2dddc4749",
       "catalog-sha256": "6c52b7f09e28de2e8b23462d05819c09cb33fe9bf42762f1f97216a8b78dea34",
       "delta-count": 123,
@@ -487,16 +494,18 @@
       "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
       "resolved-graph-evidence": {
         "observation-count": 286,
-        "path": "docs/releases/2026-08-05-issue-169-exhaustive-resolved-graphs.json",
+        "path": "config/rollouts/2026-08-06-dependencies-1.4.0-final-stable/resolved-graph-2b1735f5684aa7eb/resolved-graph-2b1735f5684aa7eb.json",
         "sha256": "2b1735f5684aa7eb843d91237dae38edf613dc0485d9550537bfe9312ab5652c",
         "spec-count": 143
       },
       "rollout": "2026-08-06-dependencies-1.4.0-final-stable",
-      "status": "verified-resolved-graph"
+      "status": "verified-resolved-graph",
+      "audit-sha256": "bf43263b875c8b711457b1e01602c41e9b65aaea405839a582dada8ef4f95a8b",
+      "authority-delta-ledger-sha256": "0f2356c24dd19e7c174667bce7dad91fd221dbf8e8e19e785bedc8ddaa57dabe"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-08-09-issue-164-security-overrides/resolved-graph-732eda2db9e05f41/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-08-09-issue-164-security-overrides/resolved-graph-732eda2db9e05f41/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "origin/develop",
       "catalog-sha256": "bb58842909842524905993de086fcd7c68a104fea957f0509934729693078004",
       "delta-count": 25,
@@ -511,16 +520,18 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": {
         "observation-count": 60,
-        "path": "docs/releases/2026-08-09-issue-164-security-resolved-graphs.json",
+        "path": "config/rollouts/2026-08-09-issue-164-security-overrides/resolved-graph-732eda2db9e05f41/resolved-graph-732eda2db9e05f41.json",
         "sha256": "732eda2db9e05f418ee7e4adaaa1480e7346e79baebeadc4a74edc3d29dadf77",
         "spec-count": 30
       },
       "rollout": "2026-08-09-issue-164-security-overrides",
-      "status": "verified-resolved-graph"
+      "status": "verified-resolved-graph",
+      "audit-sha256": "d18da284474bc2d6cc86b1d406fe1f8b21083391debb079ba49c7031628bf528",
+      "authority-delta-ledger-sha256": "cfe612258d0a72d23ddb490d4561b14caa4b90928d311d44d62863ecabc12046"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-09-04-catalog-version-refresh/resolved-graph-b7354b6a847bc8e8/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-09-04-catalog-version-refresh/resolved-graph-b7354b6a847bc8e8/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "develop",
       "catalog-sha256": "622761bc3e518f052fe769c7fa057b3e1ec0cacd22ad9a871a9d1d8157120e0a",
       "delta-count": 126,
@@ -574,16 +585,18 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": {
         "observation-count": 304,
-        "path": "docs/releases/2026-09-04-catalog-version-refresh-resolved-graphs.json",
+        "path": "config/rollouts/2026-09-04-catalog-version-refresh/resolved-graph-b7354b6a847bc8e8/resolved-graph-b7354b6a847bc8e8.json",
         "sha256": "b7354b6a847bc8e82c6d0e422f9ee601d1e03294ccbd0a13e2f8e87c0564d3ab",
         "spec-count": 152
       },
       "rollout": "2026-09-04-catalog-version-refresh",
-      "status": "verified-resolved-graph"
+      "status": "verified-resolved-graph",
+      "audit-sha256": "ecb28c1072ccc1fa13e7fff5251e090b3a3aa23b1173d9f8dda42ac61fb90449",
+      "authority-delta-ledger-sha256": "e5475220cf3f1bc65809ae3e0f9866a9f95577a1138ef5245a7fc0e38442dde2"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/kotlin-2.4.20-version-deltas.json",
+      "audit": "config/rollouts/2026-09-08-issue-197-kotlin-2.4.20/historical-47db23c46bcb90b9/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-09-08-issue-197-kotlin-2.4.20/historical-47db23c46bcb90b9/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "31babe619f802eab4e35322bc3b35b851915ff50",
       "catalog-sha256": "6dcaaf935800703d34e80c9eb896f10c4375d5e67edb78d73bf67ed7aeadcff9",
       "delta-count": 1,
@@ -598,11 +611,13 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": [],
       "rollout": "2026-09-08-issue-197-kotlin-2.4.20",
-      "status": "validation-pending"
+      "status": "validation-pending",
+      "audit-sha256": "3e0540c4ddfb7034089b0d1ae4ee0f5aa2410a492a81f303af6d20162c76407f",
+      "authority-delta-ledger-sha256": "2555968a21275b8909a8d57fe5a8581e7bcf5c6067c199aee3d3263a44f1c068"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-09-09-issue-242-timefold-2.6.0/historical-fdd220db7d87fac3/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-09-09-issue-242-timefold-2.6.0/historical-fdd220db7d87fac3/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "develop",
       "catalog-sha256": "0954ccab87e9bd8380610134f91cf70aa6bcd0799f94a3b43181d7b083efd2e5",
       "delta-count": 1,
@@ -617,11 +632,13 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": [],
       "rollout": "2026-09-09-issue-242-timefold-2.6.0",
-      "status": "validation-pending"
+      "status": "validation-pending",
+      "audit-sha256": "0f8efeec4cf722e51e181f21659200f85d861bc1a92f1bcb3a9aac78bfa9bda4",
+      "authority-delta-ledger-sha256": "bcf3c57d53d9fc23b29b8159a79308aeca3b7830ee1c3e0825ecd4886f601859"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/kotlinx-benchmark-0.5.0-version-deltas.json",
+      "audit": "config/rollouts/2026-09-09-pr-244-kotlinx-benchmark-0.5.0/historical-856fffbfecea220e/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-09-09-pr-244-kotlinx-benchmark-0.5.0/historical-856fffbfecea220e/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "c3a81c52ced1c9dcca40cc4b58dc8c2a32e6bac9",
       "catalog-sha256": "f6f1ce3cdc3c4027cf536216fe7c1be6ab781e776257b664baffa927044e3ef8",
       "delta-count": 3,
@@ -636,11 +653,13 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": [],
       "rollout": "2026-09-09-pr-244-kotlinx-benchmark-0.5.0",
-      "status": "validation-pending"
+      "status": "validation-pending",
+      "audit-sha256": "dbb5731cd92c2030e737e8b56b25229ff1f7895487f55effa43cd32fd466de19",
+      "authority-delta-ledger-sha256": "672de469c07dabb8161dc47de0418c3fe020bffc416a0c5a596a38be2ef72a8d"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-10-07-dependabot-central-catalog/historical-24600a887456f6aa/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-10-07-dependabot-central-catalog/historical-24600a887456f6aa/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "ef4612ac237550b550dc48eae5ecdfc94b27dab4",
       "catalog-sha256": "7e45e45881fab8a741049735d9e5e9f04fb5d36223f2715d959a98c1966d4fed",
       "delta-count": 6,
@@ -655,11 +674,13 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": [],
       "rollout": "2026-10-07-dependabot-central-catalog",
-      "status": "validation-pending"
+      "status": "validation-pending",
+      "audit-sha256": "e2dc4a261c29bfd56e61b88b2a665aa2d09d9704ff44756566c1ec9d29e09f75",
+      "authority-delta-ledger-sha256": "4d02c075f3014e00b3b2d65b7816f8d2db5f0a93dffc95c6a695db82be8c667e"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-10-09-issue-885-central-catalog/historical-ec4f356995d0d552/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-10-09-issue-885-central-catalog/historical-ec4f356995d0d552/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "eccbc6d86374bd5402f04b1100dc3df99945df7a",
       "catalog-sha256": "7aa400efd6f27a34b927dbff00b7197b3a843c2ae8e6b01e28ea03c846b97484",
       "delta-count": 1,
@@ -674,11 +695,13 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": [],
       "rollout": "2026-10-09-issue-885-central-catalog",
-      "status": "validation-pending"
+      "status": "validation-pending",
+      "audit-sha256": "b578a58155ad510d35c12fff080a7fabfabcda44cee7983c8cd65d365f791df1",
+      "authority-delta-ledger-sha256": "b7075519b45452298762f13a5577acdb8dd17c61852a23df764e02d5648e6324"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-10-18-issue-1832-amqp-client-catalog/resolved-graph-395a2dc1a7d1fbc4/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-10-18-issue-1832-amqp-client-catalog/resolved-graph-395a2dc1a7d1fbc4/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "develop",
       "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b",
       "delta-count": 1,
@@ -705,16 +728,39 @@
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
       "resolved-graph-evidence": {
         "observation-count": 2,
-        "path": "docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json",
+        "path": "config/rollouts/2026-10-18-issue-1832-amqp-client-catalog/resolved-graph-395a2dc1a7d1fbc4/resolved-graph-395a2dc1a7d1fbc4.json",
         "sha256": "395a2dc1a7d1fbc47bc4ceed16df8247e11109704d0fd9f28eb0b09e61ff7fe4",
         "spec-count": 1
       },
       "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
-      "status": "verified-resolved-graph"
+      "status": "verified-resolved-graph",
+      "audit-sha256": "46e9cb8ca1457982cf6c26d9d0d93a010efa4046b9439f93f330154666962205",
+      "authority-delta-ledger-sha256": "06b552b38ae9c9ce089dc47388766cb9f2e0ca0d9cbb26ef896844fe8296bba8"
     },
     {
-      "audit": "config/latest-stable-version-audit.json",
-      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "audit": "config/rollouts/2026-10-24-issue-260-safe-refresh/candidate-1290bd6874cbfac7-462ac9cb818afd92/latest-stable-version-audit.json",
+      "audit-sha256": "462ac9cb818afd922570d9f41a1ec8b7f1b9736fe31c116b5aaa97f869e4f831",
+      "authority-delta-ledger": "config/rollouts/2026-10-24-issue-260-safe-refresh/candidate-1290bd6874cbfac7-462ac9cb818afd92/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "d5ab85abe71149e3c290ef353cb84e07f24ea4cff7fe65685ba8ba1b8db36f3c",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "1290bd6874cbfac7d02e21a23cfcb29d954126debaa3603a7f2e4868496841b0",
+      "delta-count": 6,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-10-24-issue-260-safe-refresh",
+      "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/2026-10-24-pr-261-kover-only/resolved-graph-bdab202dc02117090096/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/rollouts/2026-10-24-pr-261-kover-only/resolved-graph-bdab202dc02117090096/latest-stable-version-deltas.json",
       "baseline-catalog-ref": "origin/develop",
       "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
       "delta-count": 1,
@@ -739,12 +785,14 @@
       "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
       "resolved-graph-evidence": {
         "observation-count": 2,
-        "path": "docs/releases/2026-10-25-pr-261-kover-0911-resolved-graphs.json",
+        "path": "config/rollouts/2026-10-24-pr-261-kover-only/resolved-graph-bdab202dc02117090096/resolved-graphs.json",
         "sha256": "bdab202dc02117090096b09ce0560cd98a8d48c02b95b42e65d74ae9a469c2f3",
         "spec-count": 1
       },
       "rollout": "2026-10-24-pr-261-kover-only",
-      "status": "verified-resolved-graph"
+      "status": "verified-resolved-graph",
+      "audit-sha256": "b4722c49ac8034569c4db3d94cef3975c61063df1904973c1d57f1a9164489e9",
+      "authority-delta-ledger-sha256": "7d5f8b4e3fe721cda3ad6270eb11590f26441f06e7a7e61e051e3d6c804f40c6"
     }
   ],
   "delta": [

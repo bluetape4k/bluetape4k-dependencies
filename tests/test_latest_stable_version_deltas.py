@@ -18,6 +18,7 @@ BUILD = REPO_ROOT / "build.gradle.kts"
 GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
 ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
 ISSUE_261_KOVER_ROLLOUT = "2026-10-24-pr-261-kover-only"
+ISSUE_260_ROLLOUT = "2026-10-24-issue-260-safe-refresh"
 
 
 def load_script():
@@ -222,7 +223,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         )
         status = document["status"]
         self.assertIn(status, {"validation-pending", "verified-resolved-graph"})
-        if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
+        if document["rollout"] in {ISSUE_261_KOVER_ROLLOUT, ISSUE_260_ROLLOUT}:
             self.assertEqual(document["audit-cutoff"], "2026-10-24")
         elif status == "verified-resolved-graph" and document["rollout"] != ISSUE_1832_ROLLOUT:
             self.assertEqual(document["audit-cutoff"], "2026-09-04")
@@ -264,6 +265,22 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     "classification": "verified-latest-compatible",
                     "version": "0.9.11",
                 },
+            )
+        elif document["rollout"] == ISSUE_260_ROLLOUT:
+            expected_versions = {
+                "spring-boot": ("4.1.1", "4.1.2"),
+                "spring-boot4": ("4.1.1", "4.1.2"),
+                "jackson3": ("3.2.3", "3.2.4"),
+                "kafka4": ("4.2.1", "4.2.2"),
+                "spring-kafka4": ("4.1.1", "4.1.2"),
+                "ktor": ("3.5.2", "3.6.0"),
+            }
+            self.assertEqual(
+                {
+                    entry["version-key"]: (entry["before"], entry["after"])
+                    for entry in document["delta"]
+                },
+                expected_versions,
             )
         elif status == "verified-resolved-graph" and document["rollout"] != ISSUE_1832_ROLLOUT:
             self.assertEqual(len(document["delta"]), 126)
@@ -457,9 +474,10 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         current_audit = json.loads(AUDIT.read_text(encoding="utf-8"))
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
-        if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
+        if document["rollout"] in {ISSUE_261_KOVER_ROLLOUT, ISSUE_260_ROLLOUT}:
             self.assertEqual(document["audit-cutoff"], "2026-10-24")
-            self.assertEqual(audit["summary"], current_audit["summary"])
+            if document["candidate"]["catalog-sha256"] == current_audit["inputs"]["catalog"]["sha256"]:
+                self.assertEqual(audit["summary"], current_audit["summary"])
         elif (
             document["status"] == "verified-resolved-graph"
             and document["rollout"] != ISSUE_1832_ROLLOUT
@@ -524,7 +542,8 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             for line in record["current-lines"]
         }
 
-        self.assertEqual(lines[("org.apache.kafka:kafka-clients", "kafka4")]["current"], "4.2.1")
+        kafka4_line = lines[("org.apache.kafka:kafka-clients", "kafka4")]
+        self.assertEqual(kafka4_line["current"], "4.2.2")
         self.assertEqual(lines[("ch.qos.logback:logback-classic", "logback")]["current"], "1.5.34")
         self.assertEqual(
             lines[("ch.qos.logback:logback-classic", "logback")]["disposition"],
@@ -535,9 +554,11 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             lines,
         )
         self.assertEqual(
-            lines[("org.apache.kafka:kafka-clients", "kafka4")]["disposition"],
+            kafka4_line["disposition"],
             "hold-compatibility",
         )
+        self.assertIn("Kafka 4.2.2", kafka4_line["disposition-reason"])
+        self.assertIn("Spring Kafka 4.1.2", kafka4_line["disposition-reason"])
         self.assertEqual(
             lines[("org.apache.ignite:ignite-client", "ignite")]["disposition"],
             "hold-unavailable",

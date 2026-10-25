@@ -9,6 +9,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "audit-latest-stable.py"
@@ -29,6 +30,124 @@ def load_script():
 
 
 class LatestStableInventoryTest(unittest.TestCase):
+    def test_rollout_refresh_commits_related_outputs_in_one_transaction(self) -> None:
+        module = load_script()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog = root / "catalog.toml"
+            policy = root / "policy.json"
+            audit_policy = root / "audit-policy.json"
+            audit_output = root / "audit.json"
+            delta_ledger = root / "delta-ledger.json"
+            central_ledger = root / "central-ledger.json"
+            output = root / "inventory.json"
+            catalog.write_text("[versions]\nexample = \"1.0.0\"\n", encoding="utf-8")
+            policy.write_text("{}\n", encoding="utf-8")
+            audit_policy.write_text("{}\n", encoding="utf-8")
+            central_ledger.write_text(
+                json.dumps({"subsequent-rollouts": []}), encoding="utf-8"
+            )
+            audit = {"records": [{"authority-key": "example"}]}
+            ledger = {
+                "baseline": {"catalog-ref": "develop"},
+                "candidate": {"catalog-sha256": "a" * 64},
+                "delta": [],
+                "rollout": "candidate-rollout",
+                "status": "validation-pending",
+            }
+            artifacts = {
+                "audit": {
+                    "path": "config/rollouts/candidate-rollout/audit.json",
+                    "sha256": "b" * 64,
+                },
+                "authority-delta-ledger": {
+                    "path": "config/rollouts/candidate-rollout/ledger.json",
+                    "sha256": "c" * 64,
+                },
+            }
+            central = {"subsequent-rollouts": [{"rollout": "candidate-rollout"}]}
+            arguments = [
+                str(SCRIPT),
+                "--catalog",
+                str(catalog),
+                "--policy",
+                str(policy),
+                "--output",
+                str(output),
+                "--audit-output",
+                str(audit_output),
+                "--audit-policy",
+                str(audit_policy),
+                "--refresh-audit",
+                "--refresh-delta-ledger",
+                "--baseline-ref",
+                "develop",
+                "--delta-ledger",
+                str(delta_ledger),
+                "--refresh-central-rollout",
+                "--central-delta-ledger",
+                str(central_ledger),
+                "--rollout",
+                "candidate-rollout",
+            ]
+
+            with (
+                mock.patch.object(sys, "argv", arguments),
+                mock.patch.object(
+                    module,
+                    "recover_catalog_rollout_transaction",
+                    return_value=False,
+                ),
+                mock.patch.object(
+                    module,
+                    "build_inventory",
+                    return_value={"records": [], "summary": {}},
+                ),
+                mock.patch.object(module, "build_audit", return_value=audit),
+                mock.patch.object(module, "validate_audit"),
+                mock.patch.object(module, "build_delta_ledger", return_value=ledger),
+                mock.patch.object(
+                    module, "candidate_rollout_snapshot_revision", return_value=None
+                ),
+                mock.patch.object(
+                    module, "snapshot_rollout_evidence", return_value=artifacts
+                ),
+                mock.patch.object(
+                    module, "upsert_catalog_rollout", return_value=central
+                ),
+                mock.patch.object(
+                    module.subprocess,
+                    "run",
+                    return_value=mock.Mock(
+                        stdout="[versions]\nexample = \"1.0.0\"\n"
+                    ),
+                ),
+                mock.patch.object(
+                    module,
+                    "commit_catalog_rollout_transaction",
+                    create=True,
+                ) as commit,
+            ):
+                self.assertEqual(module.main(), 0)
+
+            self.assertEqual(commit.call_count, 1)
+            self.assertEqual(commit.call_args.args[0], module.REPO_ROOT)
+            writes = commit.call_args.args[1]
+            self.assertEqual(
+                {path for path, _content in writes},
+                {audit_output, delta_ledger, central_ledger},
+            )
+            payloads = dict(writes)
+            self.assertEqual(payloads[audit_output], module.canonical_json(audit))
+            self.assertEqual(payloads[delta_ledger], module.pretty_json(ledger))
+            self.assertEqual(payloads[central_ledger], module.pretty_json(central))
+            self.assertFalse(audit_output.exists())
+            self.assertFalse(delta_ledger.exists())
+            self.assertEqual(
+                central_ledger.read_text(encoding="utf-8"),
+                json.dumps({"subsequent-rollouts": []}),
+            )
+
     def test_timefold_solver_keeps_breaking_migration_hold(self) -> None:
         policy = json.loads(AUDIT_POLICY.read_text(encoding="utf-8"))
 

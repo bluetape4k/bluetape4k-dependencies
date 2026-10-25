@@ -1,0 +1,3478 @@
+"""Read, pin, and promote immutable catalog rollout evidence."""
+
+from __future__ import annotations
+
+import base64
+import copy
+import errno
+import fcntl
+import hashlib
+import json
+import os
+import re
+import stat
+import subprocess
+import tempfile
+import uuid
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
+
+FULL_SHA256 = re.compile(r"^[0-9a-f]{64}$")
+TRANSACTION_SCHEMA_VERSION = 2
+TRANSACTION_IDENTITY_SCHEMA_VERSION = 1
+TRANSACTION_NEW_FILE_MODE = 0o644
+_DIRECTORY_OPEN_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(
+    os, "O_NOFOLLOW", 0
+)
+_TARGET_OPEN_FLAGS = (
+    os.O_RDONLY
+    | getattr(os, "O_NOFOLLOW", 0)
+    | getattr(os, "O_NONBLOCK", 0)
+)
+LEGACY_VERIFIED_ROLLOUT_STATUS = "verified"
+
+
+def _fsync_directory_fd(descriptor: int) -> None:
+    os.fsync(descriptor)
+
+
+def _read_descriptor_bytes(descriptor: int) -> bytes:
+    os.lseek(descriptor, 0, os.SEEK_SET)
+    chunks: list[bytes] = []
+    while True:
+        chunk = os.read(descriptor, 1024 * 1024)
+        if not chunk:
+            return b"".join(chunks)
+        chunks.append(chunk)
+
+
+def _capture_open_descriptor_state(
+    descriptor: int,
+) -> tuple[bool, bytes, int | None]:
+    before = os.fstat(descriptor)
+    if not stat.S_ISREG(before.st_mode):
+        raise RuntimeError("catalog rollout transaction target must be a regular file")
+    content = _read_descriptor_bytes(descriptor)
+    after = os.fstat(descriptor)
+    if (
+        before.st_dev,
+        before.st_ino,
+        before.st_size,
+        stat.S_IMODE(before.st_mode),
+    ) != (
+        after.st_dev,
+        after.st_ino,
+        after.st_size,
+        stat.S_IMODE(after.st_mode),
+    ):
+        raise RuntimeError("catalog rollout transaction target changed during read")
+    return True, content, stat.S_IMODE(after.st_mode)
+
+
+def _capture_transaction_state_at(
+    parent_descriptor: int, target_name: str
+) -> tuple[bool, bytes, int | None]:
+    try:
+        descriptor = os.open(
+            target_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+    except FileNotFoundError:
+        return False, b"", None
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.ENOTDIR}:
+            raise RuntimeError(
+                f"catalog rollout transaction target must be a regular file: {target_name}"
+            ) from error
+        raise
+    try:
+        return _capture_open_descriptor_state(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _open_anchored_parent(
+    root_descriptor: int, repository_root: Path, target: Path
+) -> tuple[int, str]:
+    root = repository_root.resolve()
+    try:
+        relative = target.relative_to(root)
+    except ValueError as error:
+        raise RuntimeError("catalog rollout transaction path escapes repository") from error
+    if not relative.parts:
+        raise RuntimeError("catalog rollout transaction target path is invalid")
+    descriptor = os.dup(root_descriptor)
+    try:
+        for part in relative.parts[:-1]:
+            next_descriptor = os.open(
+                part, _DIRECTORY_OPEN_FLAGS, dir_fd=descriptor
+            )
+            os.close(descriptor)
+            descriptor = next_descriptor
+        return descriptor, relative.parts[-1]
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _open_target_lock(parent_descriptor: int, target_name: str) -> int | None:
+    try:
+        descriptor = os.open(
+            target_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+    except FileNotFoundError:
+        return None
+    except OSError as error:
+        if error.errno == errno.ELOOP:
+            raise RuntimeError(
+                f"catalog rollout transaction target must be a regular file: {target_name}"
+            ) from error
+        raise
+    try:
+        metadata = os.fstat(descriptor)
+        if not stat.S_ISREG(metadata.st_mode):
+            raise RuntimeError(
+                f"catalog rollout transaction target must be a regular file: {target_name}"
+            )
+        fcntl.flock(descriptor, fcntl.LOCK_EX)
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _descriptor_identity(descriptor: int) -> tuple[int, int]:
+    metadata = os.fstat(descriptor)
+    return metadata.st_dev, metadata.st_ino
+
+
+def _assert_directory_descriptor_matches_path(
+    descriptor: int, path: Path
+) -> None:
+    try:
+        path_descriptor = os.open(path, _DIRECTORY_OPEN_FLAGS)
+    except OSError as error:
+        raise RuntimeError(
+            f"catalog rollout transaction parent directory changed externally: {path}"
+        ) from error
+    try:
+        if _descriptor_identity(path_descriptor) != _descriptor_identity(descriptor):
+            raise RuntimeError(
+                f"catalog rollout transaction parent directory changed externally: {path}"
+            )
+    finally:
+        os.close(path_descriptor)
+
+
+def _assert_root_descriptor_matches_path(
+    root_descriptor: int, repository_root: Path
+) -> None:
+    try:
+        path_descriptor = os.open(repository_root, _DIRECTORY_OPEN_FLAGS)
+    except OSError as error:
+        raise RuntimeError("catalog rollout repository root changed externally") from error
+    try:
+        if _descriptor_identity(path_descriptor) != _descriptor_identity(root_descriptor):
+            raise RuntimeError("catalog rollout repository root changed externally")
+    finally:
+        os.close(path_descriptor)
+
+
+def _write_state_matches(
+    state: tuple[bool, bytes, int | None], content: bytes, mode: int | None
+) -> bool:
+    return state[0] and state[1] == content and (mode is None or state[2] == mode)
+
+
+def _discard_expected_tombstone_at(
+    parent_descriptor: int,
+    tombstone_name: str,
+    expected_identity: tuple[int, int],
+    expected_content: bytes,
+    expected_mode: int,
+    *,
+    sync_directory: bool = True,
+) -> None:
+    """Delete a tombstone after proving it is still our moved inode.
+
+    The caller holds the target inode lock for the entire tombstone lifecycle;
+    opening the same inode and flocking it again would deadlock on macOS.
+    """
+    try:
+        descriptor = os.open(
+            tombstone_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+    except FileNotFoundError:
+        return
+    cleanup_name = f"{tombstone_name}.{os.getpid()}.{uuid.uuid4().hex}.rollback"
+    deletion_name = f"{cleanup_name}.{os.getpid()}.{uuid.uuid4().hex}.rollback"
+    moved_name: str | None = None
+    quarantine_name: str | None = None
+    quarantine_descriptor: int | None = None
+    quarantined = False
+
+    def restore_from_quarantine() -> None:
+        nonlocal quarantined, moved_name, quarantine_name
+        if not quarantined or quarantine_descriptor is None:
+            return
+        try:
+            os.link(
+                deletion_name,
+                deletion_name,
+                src_dir_fd=quarantine_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except FileExistsError as restore_error:
+            raise RuntimeError(
+                "catalog rollout transaction rollback tombstone restore "
+                f"conflict; cleanup preserved: {deletion_name}"
+            ) from restore_error
+        try:
+            os.unlink(deletion_name, dir_fd=quarantine_descriptor)
+        except BaseException as restore_error:
+            # The destination was published without replacing an external
+            # entry.  Preserve the private duplicate for the next recovery.
+            quarantined = False
+            moved_name = None
+            quarantine_name = None
+            raise RuntimeError(
+                "catalog rollout transaction rollback tombstone restore "
+                f"left duplicate evidence: {deletion_name}"
+            ) from restore_error
+        quarantined = False
+        moved_name = deletion_name
+
+    def preserve_or_restore_moved() -> None:
+        nonlocal moved_name
+        if moved_name is None:
+            return
+        moved_state = _capture_transaction_state_at(parent_descriptor, moved_name)
+        if not _write_state_matches(moved_state, expected_content, expected_mode):
+            raise RuntimeError(
+                "catalog rollout transaction rollback tombstone changed externally; "
+                f"cleanup preserved: {moved_name}"
+            )
+        current = _capture_transaction_state_at(parent_descriptor, tombstone_name)
+        if current[0]:
+            raise RuntimeError(
+                "catalog rollout transaction rollback tombstone restore "
+                f"conflict; cleanup preserved: {moved_name}"
+            )
+        try:
+            os.link(
+                moved_name,
+                tombstone_name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except FileExistsError as restore_error:
+            raise RuntimeError(
+                "catalog rollout transaction rollback tombstone restore "
+                f"conflict; cleanup preserved: {moved_name}"
+            ) from restore_error
+        try:
+            os.unlink(moved_name, dir_fd=parent_descriptor)
+        except BaseException as cleanup_error:
+            raise RuntimeError(
+                "catalog rollout transaction rollback tombstone restore "
+                f"left duplicate evidence: {moved_name}"
+            ) from cleanup_error
+        moved_name = None
+
+    try:
+        state = _capture_open_descriptor_state(descriptor)
+        if (
+            _descriptor_identity(descriptor) != expected_identity
+            or not _write_state_matches(state, expected_content, expected_mode)
+        ):
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+            )
+        try:
+            # Move the owned entry away from its public tombstone name before
+            # unlinking.  A concurrent insertion at the original name is then
+            # preserved instead of being removed by cleanup.
+            os.rename(
+                tombstone_name,
+                cleanup_name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except FileNotFoundError as error:
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+            ) from error
+        moved_name = cleanup_name
+
+        cleanup_descriptor = os.open(
+            cleanup_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            cleanup_state = _capture_open_descriptor_state(cleanup_descriptor)
+            if (
+                _descriptor_identity(cleanup_descriptor) != expected_identity
+                or not _write_state_matches(
+                    cleanup_state, expected_content, expected_mode
+                )
+            ):
+                raise RuntimeError(
+                    f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+                )
+        finally:
+            os.close(cleanup_descriptor)
+
+        if _capture_transaction_state_at(parent_descriptor, tombstone_name)[0]:
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+            )
+
+        # Quarantine the already-validated inode a second time before unlinking
+        # it.  The public cleanup name is never passed to unlink after its
+        # validation, so a concurrent insertion at that name is preserved.
+        try:
+            os.rename(
+                cleanup_name,
+                deletion_name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except FileNotFoundError as error:
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+            ) from error
+        moved_name = deletion_name
+        deletion_descriptor = os.open(
+            deletion_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            deletion_state = _capture_open_descriptor_state(deletion_descriptor)
+            if (
+                _descriptor_identity(deletion_descriptor) != expected_identity
+                or not _write_state_matches(
+                    deletion_state, expected_content, expected_mode
+                )
+            ):
+                raise RuntimeError(
+                    f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+                )
+        finally:
+            os.close(deletion_descriptor)
+        if _capture_transaction_state_at(parent_descriptor, cleanup_name)[0]:
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+            )
+        if _capture_transaction_state_at(parent_descriptor, tombstone_name)[0]:
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+            )
+        # A path-entry can be replaced after the final validation.  Move the
+        # owned inode into a private directory before unlinking it so an
+        # external replacement at the public rollback name cannot be removed.
+        quarantine_name = (
+            f".catalog-rollout-quarantine.{os.getpid()}.{uuid.uuid4().hex}"
+        )
+        os.mkdir(quarantine_name, 0o700, dir_fd=parent_descriptor)
+        quarantine_descriptor = os.open(
+            quarantine_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        os.rename(
+            deletion_name,
+            deletion_name,
+            src_dir_fd=parent_descriptor,
+            dst_dir_fd=quarantine_descriptor,
+        )
+        moved_name = None
+        quarantined = True
+        quarantined_descriptor = os.open(
+            deletion_name, _TARGET_OPEN_FLAGS, dir_fd=quarantine_descriptor
+        )
+        try:
+            quarantined_state = _capture_open_descriptor_state(quarantined_descriptor)
+            if (
+                _descriptor_identity(quarantined_descriptor) != expected_identity
+                or not _write_state_matches(
+                    quarantined_state, expected_content, expected_mode
+                )
+            ):
+                restore_from_quarantine()
+                raise RuntimeError(
+                    f"catalog rollout transaction rollback tombstone changed externally: {tombstone_name}"
+                )
+        finally:
+            os.close(quarantined_descriptor)
+        os.unlink(deletion_name, dir_fd=quarantine_descriptor)
+        quarantined = False
+        os.rmdir(quarantine_name, dir_fd=parent_descriptor)
+        quarantine_name = None
+        moved_name = None
+        if sync_directory:
+            _fsync_directory_fd(parent_descriptor)
+    except BaseException as error:
+        if quarantined:
+            restore_from_quarantine()
+        if quarantine_descriptor is not None:
+            os.close(quarantine_descriptor)
+            quarantine_descriptor = None
+        if quarantine_name is not None and not quarantined:
+            try:
+                os.rmdir(quarantine_name, dir_fd=parent_descriptor)
+            except FileNotFoundError:
+                pass
+        if moved_name is not None:
+            try:
+                preserve_or_restore_moved()
+            except RuntimeError:
+                raise
+            except FileNotFoundError as restore_error:
+                raise RuntimeError(
+                    "catalog rollout transaction rollback tombstone restore "
+                    f"failed; cleanup preserved: {moved_name}"
+                ) from restore_error
+            except BaseException as restore_error:
+                raise RuntimeError(
+                    "catalog rollout transaction rollback tombstone restore "
+                    f"failed; cleanup preserved: {moved_name}"
+                ) from restore_error
+        if moved_name is not None:
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone preserved: {moved_name}"
+            ) from error
+        raise
+    finally:
+        if quarantine_descriptor is not None:
+            os.close(quarantine_descriptor)
+        os.close(descriptor)
+
+
+def _directory_entry_names(parent_descriptor: int) -> list[str]:
+    """List one anchored directory without resolving its path again."""
+    try:
+        return os.listdir(parent_descriptor)
+    except OSError as error:
+        raise RuntimeError(
+            "catalog rollout transaction parent directory cannot be enumerated"
+        ) from error
+
+
+def _recover_quarantine_directories_at(parent_descriptor: int) -> None:
+    """Return files stranded in a private purge directory to its parent.
+
+    A process can stop after the owned rollback inode enters the private
+    directory but before unlinking it.  Re-expose that inode under its unique
+    rollback name so the normal identity and content checks can finish the
+    cleanup on the next transaction recovery.
+    """
+    prefix = ".catalog-rollout-quarantine."
+    for quarantine_name in sorted(
+        name for name in _directory_entry_names(parent_descriptor) if name.startswith(prefix)
+    ):
+        try:
+            quarantine_descriptor = os.open(
+                quarantine_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+            )
+        except OSError as error:
+            if error.errno in {errno.ELOOP, errno.ENOTDIR}:
+                raise RuntimeError(
+                    "catalog rollout transaction quarantine changed externally"
+                ) from error
+            raise
+        try:
+            entries = os.listdir(quarantine_descriptor)
+            if len(entries) > 1:
+                raise RuntimeError(
+                    "catalog rollout transaction quarantine has ambiguous evidence"
+                )
+            if entries:
+                entry_name = entries[0]
+                if _capture_transaction_state_at(parent_descriptor, entry_name)[0]:
+                    raise RuntimeError(
+                        "catalog rollout transaction quarantine restore conflict"
+                    )
+                if (
+                    entry_name
+                    in {
+                        ".catalog-rollout-transaction.json",
+                        ".catalog-rollout-transaction.identity",
+                        ".catalog-rollout-transaction.finalizing",
+                    }
+                    or not entry_name.startswith(".")
+                    or not entry_name.endswith(".rollback")
+                ):
+                    raise RuntimeError(
+                        "catalog rollout transaction quarantine evidence is invalid"
+                    )
+                entry_descriptor = os.open(
+                    entry_name, _TARGET_OPEN_FLAGS, dir_fd=quarantine_descriptor
+                )
+                try:
+                    _capture_open_descriptor_state(entry_descriptor)
+                finally:
+                    os.close(entry_descriptor)
+                try:
+                    os.link(
+                        entry_name,
+                        entry_name,
+                        src_dir_fd=quarantine_descriptor,
+                        dst_dir_fd=parent_descriptor,
+                    )
+                except FileExistsError as error:
+                    raise RuntimeError(
+                        "catalog rollout transaction quarantine restore conflict"
+                    ) from error
+                try:
+                    os.unlink(entry_name, dir_fd=quarantine_descriptor)
+                except BaseException as error:
+                    raise RuntimeError(
+                        "catalog rollout transaction quarantine restore left duplicate evidence"
+                    ) from error
+        finally:
+            os.close(quarantine_descriptor)
+        try:
+            os.rmdir(quarantine_name, dir_fd=parent_descriptor)
+        except OSError as error:
+            raise RuntimeError(
+                "catalog rollout transaction quarantine cleanup failed"
+            ) from error
+
+
+def _artifact_candidates(
+    parent_descriptor: int, target_name: str, suffix: str
+) -> list[str]:
+    prefix = f".{target_name}."
+    return sorted(
+        name
+        for name in _directory_entry_names(parent_descriptor)
+        if name.startswith(prefix)
+        and (
+            name.endswith(suffix)
+            or (f"{suffix}." in name and name.endswith(".rollback"))
+        )
+    )
+
+
+def _reconcile_target_artifacts_at(
+    parent_descriptor: int,
+    target_name: str,
+    prior_exists: bool,
+    prior_content: bytes,
+    prior_mode: int | None,
+    desired_content: bytes,
+    desired_mode: int,
+) -> None:
+    """Recover or remove artifacts left by a process crash during publication."""
+    _recover_quarantine_directories_at(parent_descriptor)
+    guard_names = _artifact_candidates(parent_descriptor, target_name, ".replace")
+    temporary_names = _artifact_candidates(parent_descriptor, target_name, ".tmp")
+    rollback_names = _artifact_candidates(parent_descriptor, target_name, ".rollback")
+    if len(guard_names) > 1:
+        raise RuntimeError(
+            f"catalog rollout transaction has ambiguous replacement guards: {target_name}"
+        )
+    if len(rollback_names) > 1:
+        raise RuntimeError(
+            f"catalog rollout transaction has ambiguous rollback tombstones: {target_name}"
+        )
+
+    current = _capture_transaction_state_at(parent_descriptor, target_name)
+    if rollback_names:
+        rollback_name = rollback_names[0]
+        rollback_state = _capture_transaction_state_at(parent_descriptor, rollback_name)
+        if not _write_state_matches(rollback_state, desired_content, desired_mode):
+            raise RuntimeError(
+                f"catalog rollout transaction rollback tombstone changed externally: {rollback_name}"
+            )
+        rollback_descriptor = os.open(
+            rollback_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            rollback_identity = _descriptor_identity(rollback_descriptor)
+        finally:
+            os.close(rollback_descriptor)
+        _discard_expected_tombstone_at(
+            parent_descriptor,
+            rollback_name,
+            rollback_identity,
+            desired_content,
+            desired_mode,
+        )
+    if guard_names:
+        guard_name = guard_names[0]
+        guard_state = _capture_transaction_state_at(parent_descriptor, guard_name)
+        if not prior_exists or not _write_state_matches(
+            guard_state, prior_content, prior_mode
+        ):
+            raise RuntimeError(
+                f"catalog rollout transaction replacement guard changed externally: {guard_name}"
+            )
+        if not current[0]:
+            try:
+                os.link(
+                    guard_name,
+                    target_name,
+                    src_dir_fd=parent_descriptor,
+                    dst_dir_fd=parent_descriptor,
+                )
+            except FileExistsError as error:
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally: {target_name}"
+                ) from error
+            _fsync_directory_fd(parent_descriptor)
+            current = _capture_transaction_state_at(parent_descriptor, target_name)
+            if not _write_state_matches(current, prior_content, prior_mode):
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally: {target_name}"
+                )
+        elif not (
+            _write_state_matches(current, prior_content, prior_mode)
+            or _write_state_matches(current, desired_content, desired_mode)
+        ):
+            raise RuntimeError(
+                f"catalog rollout transaction target changed externally: {target_name}"
+            )
+        guard_descriptor = os.open(
+            guard_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            guard_identity = _descriptor_identity(guard_descriptor)
+        finally:
+            os.close(guard_descriptor)
+        _discard_expected_tombstone_at(
+            parent_descriptor,
+            guard_name,
+            guard_identity,
+            prior_content,
+            prior_mode if prior_mode is not None else TRANSACTION_NEW_FILE_MODE,
+        )
+
+    for temporary_name in temporary_names:
+        temporary_state = _capture_transaction_state_at(parent_descriptor, temporary_name)
+        if not _write_state_matches(temporary_state, desired_content, desired_mode):
+            raise RuntimeError(
+                f"catalog rollout transaction temporary artifact changed externally: {temporary_name}"
+            )
+        temporary_descriptor = os.open(
+            temporary_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            temporary_identity = _descriptor_identity(temporary_descriptor)
+        finally:
+            os.close(temporary_descriptor)
+        _discard_expected_tombstone_at(
+            parent_descriptor,
+            temporary_name,
+            temporary_identity,
+            desired_content,
+            desired_mode,
+        )
+
+
+def _journal_tombstone_candidates(
+    parent_descriptor: int, journal_name: str
+) -> list[str]:
+    prefix = f".{journal_name}."
+    return sorted(
+        name
+        for name in _directory_entry_names(parent_descriptor)
+        if name.startswith(prefix)
+        and (name.endswith(".rollback") or ".rollback." in name)
+    )
+
+
+def _identity_tombstone_candidates(
+    parent_descriptor: int, identity_name: str
+) -> list[str]:
+    prefix = f".{identity_name}."
+    return sorted(
+        name
+        for name in _directory_entry_names(parent_descriptor)
+        if name.startswith(prefix)
+        and (name.endswith(".rollback") or ".rollback." in name)
+    )
+
+
+def catalog_rollout_transaction_identity_path(repository_root: Path) -> Path:
+    return repository_root / "config" / ".catalog-rollout-transaction.identity"
+
+
+def catalog_rollout_transaction_finalization_path(repository_root: Path) -> Path:
+    return repository_root / "config" / ".catalog-rollout-transaction.finalizing"
+
+
+def _parse_transaction_identity(
+    content: bytes,
+) -> tuple[str, str]:
+    try:
+        identity = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise RuntimeError("catalog rollout transaction identity is invalid") from error
+    transaction_id = identity.get("transaction-id") if isinstance(identity, dict) else None
+    journal_sha256 = identity.get("journal-sha256") if isinstance(identity, dict) else None
+    if (
+        not isinstance(identity, dict)
+        or identity.get("schema-version") != TRANSACTION_IDENTITY_SCHEMA_VERSION
+        or not isinstance(transaction_id, str)
+        or re.fullmatch(r"[0-9a-f]{32}", transaction_id) is None
+        or not isinstance(journal_sha256, str)
+        or FULL_SHA256.fullmatch(journal_sha256) is None
+    ):
+        raise RuntimeError("catalog rollout transaction identity is invalid")
+    return transaction_id, journal_sha256
+
+
+def _parse_transaction_finalization_marker(content: bytes) -> tuple[str, str]:
+    try:
+        marker = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise RuntimeError(
+            "catalog rollout transaction finalization marker is invalid"
+        ) from error
+    transaction_id = marker.get("transaction-id") if isinstance(marker, dict) else None
+    journal_sha256 = marker.get("journal-sha256") if isinstance(marker, dict) else None
+    if (
+        not isinstance(marker, dict)
+        or marker.get("schema-version") != TRANSACTION_IDENTITY_SCHEMA_VERSION
+        or not isinstance(transaction_id, str)
+        or re.fullmatch(r"[0-9a-f]{32}", transaction_id) is None
+        or not isinstance(journal_sha256, str)
+        or FULL_SHA256.fullmatch(journal_sha256) is None
+    ):
+        raise RuntimeError(
+            "catalog rollout transaction finalization marker is invalid"
+        )
+    return transaction_id, journal_sha256
+
+
+def _validated_identity_tombstones_at(
+    parent_descriptor: int,
+    identity_name: str,
+    *,
+    canonical_content: bytes | None = None,
+) -> list[tuple[str, tuple[int, int], bytes, int]]:
+    valid: list[tuple[str, tuple[int, int], bytes, int]] = []
+    for candidate in _identity_tombstone_candidates(parent_descriptor, identity_name):
+        state = _capture_transaction_state_at(parent_descriptor, candidate)
+        if not state[0] or state[2] is None:
+            continue
+        _parse_transaction_identity(state[1])
+        if canonical_content is not None and state[1] != canonical_content:
+            raise RuntimeError(
+                "catalog rollout transaction identity tombstone differs from canonical identity"
+            )
+        descriptor = os.open(candidate, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor)
+        try:
+            valid.append(
+                (
+                    candidate,
+                    _descriptor_identity(descriptor),
+                    state[1],
+                    state[2],
+                )
+            )
+        finally:
+            os.close(descriptor)
+    return valid
+
+
+def _parse_transaction_journal(content: bytes) -> dict[str, Any]:
+    try:
+        transaction = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise RuntimeError("catalog rollout transaction journal is invalid") from error
+    if (
+        not isinstance(transaction, dict)
+        or transaction.get("schema-version") != TRANSACTION_SCHEMA_VERSION
+        or not isinstance(transaction.get("writes"), list)
+        or not transaction["writes"]
+    ):
+        raise RuntimeError("catalog rollout transaction journal is invalid")
+    transaction_id = transaction.get("transaction-id")
+    if (
+        not isinstance(transaction_id, str)
+        or re.fullmatch(r"[0-9a-f]{32}", transaction_id) is None
+    ):
+        raise RuntimeError("catalog rollout transaction journal is invalid")
+    return transaction
+
+
+def _validate_journal_against_identity(
+    content: bytes,
+    transaction: dict[str, Any],
+    identity: tuple[str, str] | None,
+    *,
+    require_identity: bool,
+) -> None:
+    if identity is None:
+        if require_identity:
+            raise RuntimeError(
+                "catalog rollout transaction journal tombstone identity is missing"
+            )
+        return
+    transaction_id, journal_sha256 = identity
+    if (
+        transaction.get("transaction-id") != transaction_id
+        or hashlib.sha256(content).hexdigest() != journal_sha256
+    ):
+        raise RuntimeError(
+            "catalog rollout transaction journal tombstone changed externally"
+        )
+
+
+def _validated_journal_tombstones_at(
+    parent_descriptor: int,
+    journal_name: str,
+    identity: tuple[str, str] | None,
+    *,
+    canonical_content: bytes | None = None,
+) -> list[tuple[str, tuple[int, int], bytes, int]]:
+    valid: list[tuple[str, tuple[int, int], bytes, int]] = []
+    for candidate in _journal_tombstone_candidates(parent_descriptor, journal_name):
+        state = _capture_transaction_state_at(parent_descriptor, candidate)
+        if not state[0] or state[2] is None:
+            continue
+        transaction = _parse_transaction_journal(state[1])
+        _validate_journal_against_identity(
+            state[1], transaction, identity, require_identity=True
+        )
+        if canonical_content is not None and state[1] != canonical_content:
+            raise RuntimeError(
+                "catalog rollout transaction journal tombstone differs from canonical journal"
+            )
+        descriptor = os.open(candidate, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor)
+        try:
+            valid.append(
+                (
+                    candidate,
+                    _descriptor_identity(descriptor),
+                    state[1],
+                    state[2],
+                )
+            )
+        finally:
+            os.close(descriptor)
+    return valid
+
+
+def _restore_transaction_journal_tombstone_at(
+    parent_descriptor: int,
+    journal_name: str,
+    identity: tuple[str, str] | None,
+) -> tuple[str, tuple[int, int], bytes, int] | None:
+    """Restore a journal moved to a rollback tombstone before its unlink."""
+    valid = _validated_journal_tombstones_at(parent_descriptor, journal_name, identity)
+    if not valid:
+        return None
+    if len(valid) > 1:
+        raise RuntimeError(
+            "catalog rollout transaction has ambiguous journal tombstones"
+        )
+    candidate, identity, content, mode = valid[0]
+    try:
+        os.link(
+            candidate,
+            journal_name,
+            src_dir_fd=parent_descriptor,
+            dst_dir_fd=parent_descriptor,
+        )
+    except FileExistsError as error:
+        raise RuntimeError(
+            "catalog rollout transaction journal changed externally"
+        ) from error
+    _fsync_directory_fd(parent_descriptor)
+    restored = _capture_transaction_state_at(parent_descriptor, journal_name)
+    if not _write_state_matches(restored, content, mode):
+        raise RuntimeError("catalog rollout transaction journal restore mismatch")
+    return candidate, identity, content, mode
+
+
+def _restore_transaction_identity_tombstone_at(
+    parent_descriptor: int,
+    identity_name: str,
+) -> tuple[str, tuple[int, int], bytes, int] | None:
+    """Restore an identity sidecar moved to a rollback tombstone before its unlink."""
+    valid = _validated_identity_tombstones_at(parent_descriptor, identity_name)
+    if not valid:
+        return None
+    if len(valid) > 1:
+        raise RuntimeError(
+            "catalog rollout transaction has ambiguous identity tombstones"
+        )
+    candidate, identity, content, mode = valid[0]
+    try:
+        os.link(
+            candidate,
+            identity_name,
+            src_dir_fd=parent_descriptor,
+            dst_dir_fd=parent_descriptor,
+        )
+    except FileExistsError as error:
+        raise RuntimeError(
+            "catalog rollout transaction identity changed externally"
+        ) from error
+    _fsync_directory_fd(parent_descriptor)
+    restored = _capture_transaction_state_at(parent_descriptor, identity_name)
+    if not _write_state_matches(restored, content, mode):
+        raise RuntimeError("catalog rollout transaction identity restore mismatch")
+    return candidate, identity, content, mode
+
+
+def _write_expected_bytes_without_directory_fsync(
+    parent_descriptor: int,
+    target_name: str,
+    content: bytes,
+    mode: int,
+) -> None:
+    """Recreate retry evidence without depending on a second directory fsync.
+
+    This is only used after a directory fsync failure has already made the
+    normal atomic writer unusable.  The exclusive hard-link publication keeps
+    an externally inserted path from being overwritten while restoring the
+    expected bytes for the next recovery attempt.
+    """
+    temporary_name = f".{target_name}.{os.getpid()}.{uuid.uuid4().hex}.evidence"
+    temporary_descriptor: int | None = None
+    temporary_identity: tuple[int, int] | None = None
+    temporary_mode: int | None = None
+    try:
+        temporary_descriptor = os.open(
+            temporary_name,
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=parent_descriptor,
+        )
+        os.fchmod(temporary_descriptor, mode)
+        temporary_identity = _descriptor_identity(temporary_descriptor)
+        temporary_mode = stat.S_IMODE(os.fstat(temporary_descriptor).st_mode)
+        view = memoryview(content)
+        while view:
+            written = os.write(temporary_descriptor, view)
+            if written <= 0:
+                raise OSError("short write while restoring catalog rollout evidence")
+            view = view[written:]
+        os.fchmod(temporary_descriptor, mode)
+        os.fsync(temporary_descriptor)
+        os.close(temporary_descriptor)
+        temporary_descriptor = None
+        try:
+            os.link(
+                temporary_name,
+                target_name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except FileExistsError as error:
+            raise RuntimeError(
+                f"catalog rollout transaction evidence path changed externally: {target_name}"
+            ) from error
+        if temporary_identity is None or temporary_mode is None:
+            raise RuntimeError("catalog rollout transaction evidence state is unavailable")
+        _discard_expected_tombstone_at(
+            parent_descriptor,
+            temporary_name,
+            temporary_identity,
+            content,
+            temporary_mode,
+            sync_directory=False,
+        )
+    finally:
+        if temporary_descriptor is not None:
+            os.close(temporary_descriptor)
+        if temporary_identity is not None and temporary_mode is not None:
+            try:
+                _discard_expected_tombstone_at(
+                    parent_descriptor,
+                    temporary_name,
+                    temporary_identity,
+                    content,
+                    temporary_mode,
+                    sync_directory=False,
+                )
+            except (FileNotFoundError, OSError, RuntimeError):
+                # Preserve an ambiguous evidence artifact for transaction
+                # recovery instead of unlinking a replacement path by name.
+                pass
+
+
+def _ensure_expected_target_at(
+    parent_descriptor: int,
+    target_name: str,
+    expected_content: bytes,
+    expected_mode: int,
+) -> None:
+    current = _capture_transaction_state_at(parent_descriptor, target_name)
+    if _write_state_matches(current, expected_content, expected_mode):
+        return
+    if current[0]:
+        raise RuntimeError(
+            f"catalog rollout transaction evidence path changed externally: {target_name}"
+        )
+    _write_expected_bytes_without_directory_fsync(
+        parent_descriptor,
+        target_name,
+        expected_content,
+        expected_mode,
+    )
+    restored = _capture_transaction_state_at(parent_descriptor, target_name)
+    if not _write_state_matches(restored, expected_content, expected_mode):
+        raise RuntimeError(
+            f"catalog rollout transaction evidence restore mismatch: {target_name}"
+        )
+
+
+def _remove_expected_target_at(
+    parent_descriptor: int,
+    target_name: str,
+    expected_content: bytes,
+    expected_mode: int,
+) -> None:
+    """Remove one known inode without deleting a replacement at the same name."""
+    target_lock = _open_target_lock(parent_descriptor, target_name)
+    if target_lock is None:
+        raise RuntimeError(
+            f"catalog rollout transaction rollback conflict: {target_name}"
+        )
+    tombstone_name = f".{target_name}.{os.getpid()}.{uuid.uuid4().hex}.rollback"
+    moved = False
+    try:
+        locked_state = _capture_open_descriptor_state(target_lock)
+        identity = _descriptor_identity(target_lock)
+        if not _write_state_matches(locked_state, expected_content, expected_mode):
+            raise RuntimeError(
+                f"catalog rollout transaction rollback conflict: {target_name}"
+            )
+
+        path_descriptor = os.open(
+            target_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            path_state = _capture_open_descriptor_state(path_descriptor)
+            if (
+                _descriptor_identity(path_descriptor) != identity
+                or not _write_state_matches(path_state, expected_content, expected_mode)
+            ):
+                raise RuntimeError(
+                    f"catalog rollout transaction rollback conflict: {target_name}"
+                )
+        finally:
+            os.close(path_descriptor)
+
+        try:
+            os.rename(
+                target_name,
+                tombstone_name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except FileNotFoundError as error:
+            try:
+                _ensure_expected_target_at(
+                    parent_descriptor,
+                    target_name,
+                    expected_content,
+                    expected_mode,
+                )
+            except BaseException as restore_error:
+                raise RuntimeError(
+                    "catalog rollout transaction rollback conflict; "
+                    f"expected evidence could not be restored: {target_name}"
+                ) from restore_error
+            raise RuntimeError(
+                "catalog rollout transaction rollback conflict; "
+                f"target disappeared before removal: {target_name}"
+            ) from error
+        moved = True
+
+        tombstone_descriptor = os.open(
+            tombstone_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            tombstone_state = _capture_open_descriptor_state(tombstone_descriptor)
+            if (
+                _descriptor_identity(tombstone_descriptor) != identity
+                or not _write_state_matches(
+                    tombstone_state, expected_content, expected_mode
+                )
+            ):
+                raise RuntimeError(
+                    f"catalog rollout transaction rollback conflict: {target_name}"
+                )
+        finally:
+            os.close(tombstone_descriptor)
+
+        target_state = _capture_transaction_state_at(parent_descriptor, target_name)
+        if target_state[0] or _capture_transaction_state_at(parent_descriptor, target_name)[0]:
+            try:
+                _discard_expected_tombstone_at(
+                    parent_descriptor,
+                    tombstone_name,
+                    identity,
+                    expected_content,
+                    expected_mode,
+                )
+                moved = False
+            except BaseException:  # noqa: BLE001 - retry cleanup must preserve external conflicts
+                try:
+                    _discard_expected_tombstone_at(
+                        parent_descriptor,
+                        tombstone_name,
+                        identity,
+                        expected_content,
+                        expected_mode,
+                    )
+                    moved = False
+                except BaseException as retry_error:
+                    raise RuntimeError(
+                        "catalog rollout transaction rollback conflict; "
+                        f"rollback tombstone preserved: {tombstone_name}"
+                    ) from retry_error
+            raise RuntimeError(
+                "catalog rollout transaction rollback conflict; "
+                "external target appeared before tombstone cleanup"
+            )
+        try:
+            _discard_expected_tombstone_at(
+                parent_descriptor,
+                tombstone_name,
+                identity,
+                expected_content,
+                expected_mode,
+            )
+        except BaseException:
+            # A directory-fsync failure after the owned tombstone was unlinked
+            # leaves neither path available for the normal rollback branch.
+            # Recreate the evidence path before propagating the failure so a
+            # later retry still has an unambiguous journal boundary.
+            if not _capture_transaction_state_at(parent_descriptor, target_name)[0] and not _capture_transaction_state_at(
+                parent_descriptor, tombstone_name
+            )[0]:
+                _ensure_expected_target_at(
+                    parent_descriptor,
+                    target_name,
+                    expected_content,
+                    expected_mode,
+                )
+                moved = False
+            raise
+        moved = False
+    except BaseException as error:
+        if moved:
+            try:
+                current = _capture_transaction_state_at(parent_descriptor, target_name)
+                if not current[0]:
+                    try:
+                        os.link(
+                            tombstone_name,
+                            target_name,
+                            src_dir_fd=parent_descriptor,
+                            dst_dir_fd=parent_descriptor,
+                        )
+                    except FileExistsError as restore_error:
+                        try:
+                            _discard_expected_tombstone_at(
+                                parent_descriptor,
+                                tombstone_name,
+                                identity,
+                                expected_content,
+                                expected_mode,
+                            )
+                            moved = False
+                        except BaseException as cleanup_error:
+                            raise RuntimeError(
+                                "catalog rollout transaction rollback conflict; "
+                                f"rollback tombstone preserved: {tombstone_name}"
+                            ) from cleanup_error
+                        raise RuntimeError(
+                            "catalog rollout transaction rollback conflict; "
+                            "external target appeared while restoring"
+                        ) from restore_error
+                    try:
+                        _discard_expected_tombstone_at(
+                            parent_descriptor,
+                            tombstone_name,
+                            identity,
+                            expected_content,
+                            expected_mode,
+                        )
+                        moved = False
+                    except BaseException as cleanup_error:
+                        raise RuntimeError(
+                            "catalog rollout transaction rollback conflict; "
+                            f"rollback tombstone preserved: {tombstone_name}"
+                        ) from cleanup_error
+                    moved = False
+                    _fsync_directory_fd(parent_descriptor)
+            except FileNotFoundError:
+                pass
+            except RuntimeError as restore_error:
+                if moved and "rollback tombstone preserved:" not in str(restore_error):
+                    raise RuntimeError(
+                        "catalog rollout transaction rollback conflict; "
+                        f"rollback tombstone preserved: {tombstone_name}"
+                    ) from restore_error
+                raise
+            except BaseException as restore_error:
+                if moved:
+                    raise RuntimeError(
+                        "catalog rollout transaction rollback conflict; "
+                        f"rollback tombstone preserved: {tombstone_name}"
+                    ) from restore_error
+                raise
+        if moved:
+            detail = str(error) or error.__class__.__name__
+            raise RuntimeError(
+                f"{detail}; rollback tombstone preserved: {tombstone_name}"
+            ) from error
+        raise
+    finally:
+        if moved:
+            # Preserve an ambiguous tombstone for the journal retry path.
+            pass
+        fcntl.flock(target_lock, fcntl.LOCK_UN)
+        os.close(target_lock)
+
+
+def _atomic_write_bytes_at(
+    parent_descriptor: int,
+    target_name: str,
+    content: bytes,
+    *,
+    mode: int | None = None,
+    expected_state: tuple[bool, bytes, int | None] | None = None,
+) -> None:
+    if expected_state is not None and not _transaction_state_matches(
+        _capture_transaction_state_at(parent_descriptor, target_name),
+        *expected_state,
+    ):
+        raise RuntimeError(
+            f"catalog rollout transaction target changed externally: {target_name}"
+        )
+    target_lock = _open_target_lock(parent_descriptor, target_name)
+    locked_state = (False, b"", None)
+    temporary_name = (
+        f".{target_name}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
+    )
+    temporary_descriptor: int | None = None
+    temporary_identity: tuple[int, int] | None = None
+    temporary_mode: int | None = None
+    replacement_lock: int | None = None
+    replacement_guard_name: str | None = None
+    replacement_guard_identity: tuple[int, int] | None = None
+    replacement_guard_moved = False
+    replacement_guard_preserved = False
+    try:
+        if target_lock is not None:
+            locked_state = _capture_open_descriptor_state(target_lock)
+        temporary_descriptor = os.open(
+            temporary_name,
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=parent_descriptor,
+        )
+        if mode is not None:
+            os.fchmod(temporary_descriptor, mode)
+        view = memoryview(content)
+        while view:
+            written = os.write(temporary_descriptor, view)
+            if written <= 0:
+                raise OSError("short write while committing catalog rollout")
+            view = view[written:]
+        if mode is not None:
+            os.fchmod(temporary_descriptor, mode)
+        temporary_identity = _descriptor_identity(temporary_descriptor)
+        temporary_mode = stat.S_IMODE(os.fstat(temporary_descriptor).st_mode)
+        os.fsync(temporary_descriptor)
+        os.close(temporary_descriptor)
+        temporary_descriptor = None
+
+        if expected_state is not None and not _transaction_state_matches(
+            _capture_transaction_state_at(parent_descriptor, target_name),
+            *expected_state,
+        ):
+            raise RuntimeError(
+                f"catalog rollout transaction target changed externally: {target_name}"
+            )
+        if locked_state[0]:
+            if expected_state is not None and not _transaction_state_matches(
+                _capture_open_descriptor_state(target_lock), *expected_state
+            ):
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally: {target_name}"
+                )
+            replacement_guard_name = (
+                f".{target_name}.{os.getpid()}.{uuid.uuid4().hex}.replace"
+            )
+            try:
+                # Move the old inode to a unique guard first.  The destination
+                # is never the live target name, so a concurrent path-entry
+                # replacement cannot be overwritten by this operation.
+                os.replace(
+                    target_name,
+                    replacement_guard_name,
+                    src_dir_fd=parent_descriptor,
+                    dst_dir_fd=parent_descriptor,
+                )
+            except FileNotFoundError as error:
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally: {target_name}"
+                ) from error
+            replacement_guard_moved = True
+            guard_descriptor = os.open(
+                replacement_guard_name,
+                _TARGET_OPEN_FLAGS,
+                dir_fd=parent_descriptor,
+            )
+            try:
+                guard_state = _capture_open_descriptor_state(guard_descriptor)
+                replacement_guard_identity = _descriptor_identity(guard_descriptor)
+                if (
+                    replacement_guard_identity != _descriptor_identity(target_lock)
+                    or not _transaction_state_matches(guard_state, *locked_state)
+                ):
+                    try:
+                        os.link(
+                            replacement_guard_name,
+                            target_name,
+                            src_dir_fd=parent_descriptor,
+                            dst_dir_fd=parent_descriptor,
+                        )
+                    except FileExistsError as restore_error:
+                        replacement_guard_preserved = True
+                        raise RuntimeError(
+                            f"catalog rollout transaction target changed externally; "
+                            f"replacement guard preserved: {replacement_guard_name}"
+                        ) from restore_error
+                    try:
+                        _discard_expected_tombstone_at(
+                            parent_descriptor,
+                            replacement_guard_name,
+                            replacement_guard_identity,
+                            guard_state[1],
+                            guard_state[2]
+                            if guard_state[2] is not None
+                            else TRANSACTION_NEW_FILE_MODE,
+                        )
+                    except BaseException as cleanup_error:
+                        replacement_guard_preserved = True
+                        raise RuntimeError(
+                            f"catalog rollout transaction target changed externally; "
+                            f"replacement guard preserved: {replacement_guard_name}"
+                        ) from cleanup_error
+                    replacement_guard_moved = False
+                    raise RuntimeError(
+                        f"catalog rollout transaction target changed externally: {target_name}"
+                    )
+            finally:
+                os.close(guard_descriptor)
+            try:
+                os.link(
+                    temporary_name,
+                    target_name,
+                    src_dir_fd=parent_descriptor,
+                    dst_dir_fd=parent_descriptor,
+                )
+            except FileExistsError as error:
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally: {target_name}"
+                ) from error
+            if temporary_identity is None or temporary_mode is None:
+                raise RuntimeError("catalog rollout transaction temporary state is unavailable")
+            _discard_expected_tombstone_at(
+                parent_descriptor,
+                temporary_name,
+                temporary_identity,
+                content,
+                temporary_mode,
+                sync_directory=False,
+            )
+        else:
+            try:
+                os.link(
+                    temporary_name,
+                    target_name,
+                    src_dir_fd=parent_descriptor,
+                    dst_dir_fd=parent_descriptor,
+                )
+            except FileExistsError as error:
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally: {target_name}"
+                ) from error
+            if temporary_identity is None or temporary_mode is None:
+                raise RuntimeError("catalog rollout transaction temporary state is unavailable")
+            _discard_expected_tombstone_at(
+                parent_descriptor,
+                temporary_name,
+                temporary_identity,
+                content,
+                temporary_mode,
+                sync_directory=False,
+            )
+        if locked_state[0]:
+            replaced_lock_state = _capture_open_descriptor_state(target_lock)
+            if not _transaction_state_matches(replaced_lock_state, *locked_state):
+                replacement_guard_preserved = True
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally; "
+                    f"replacement guard preserved: {replacement_guard_name}"
+                )
+
+        observed_state = _capture_transaction_state_at(parent_descriptor, target_name)
+        if not _write_state_matches(observed_state, content, mode):
+            raise RuntimeError(
+                f"catalog rollout transaction target changed externally: {target_name}"
+            )
+
+        replacement_lock = _open_target_lock(parent_descriptor, target_name)
+        if replacement_lock is None or not _write_state_matches(
+            _capture_open_descriptor_state(replacement_lock), content, mode
+        ):
+            raise RuntimeError(
+                f"catalog rollout transaction target changed externally: {target_name}"
+            )
+        _fsync_directory_fd(parent_descriptor)
+        if not _write_state_matches(
+            _capture_open_descriptor_state(replacement_lock), content, mode
+        ) or not _write_state_matches(
+            _capture_transaction_state_at(parent_descriptor, target_name), content, mode
+        ):
+            raise RuntimeError(
+                f"catalog rollout transaction target changed externally: {target_name}"
+            )
+        if (
+            replacement_guard_moved
+            and not replacement_guard_preserved
+            and replacement_guard_name is not None
+            and replacement_guard_identity is not None
+        ):
+            _discard_expected_tombstone_at(
+                parent_descriptor,
+                replacement_guard_name,
+                replacement_guard_identity,
+                locked_state[1],
+                locked_state[2] if locked_state[2] is not None else 0o644,
+            )
+            replacement_guard_moved = False
+    finally:
+        if temporary_descriptor is not None:
+            os.close(temporary_descriptor)
+        try:
+            if temporary_identity is not None and temporary_mode is not None:
+                _discard_expected_tombstone_at(
+                    parent_descriptor,
+                    temporary_name,
+                    temporary_identity,
+                    content,
+                    temporary_mode,
+                    sync_directory=False,
+                )
+        except (OSError, RuntimeError):
+            # Preserve an ambiguous temporary artifact for the transaction
+            # recovery pass instead of deleting a replacement path by name.
+            pass
+        if target_lock is not None:
+            fcntl.flock(target_lock, fcntl.LOCK_UN)
+            os.close(target_lock)
+        if replacement_lock is not None:
+            fcntl.flock(replacement_lock, fcntl.LOCK_UN)
+            os.close(replacement_lock)
+        if (
+            replacement_guard_moved
+            and not replacement_guard_preserved
+            and replacement_guard_name is not None
+            and replacement_guard_identity is not None
+        ):
+            try:
+                current = _capture_transaction_state_at(parent_descriptor, target_name)
+                if not current[0] and locked_state[0]:
+                    os.link(
+                        replacement_guard_name,
+                        target_name,
+                        src_dir_fd=parent_descriptor,
+                        dst_dir_fd=parent_descriptor,
+                    )
+                    _discard_expected_tombstone_at(
+                        parent_descriptor,
+                        replacement_guard_name,
+                        replacement_guard_identity,
+                        locked_state[1],
+                        locked_state[2]
+                        if locked_state[2] is not None
+                        else TRANSACTION_NEW_FILE_MODE,
+                        sync_directory=False,
+                    )
+                    _fsync_directory_fd(parent_descriptor)
+                    replacement_guard_moved = False
+                elif _write_state_matches(
+                    _capture_transaction_state_at(
+                        parent_descriptor, replacement_guard_name
+                    ),
+                    locked_state[1],
+                    locked_state[2],
+                ):
+                    _discard_expected_tombstone_at(
+                        parent_descriptor,
+                        replacement_guard_name,
+                        replacement_guard_identity,
+                        locked_state[1],
+                        locked_state[2] if locked_state[2] is not None else 0o644,
+                    )
+                    replacement_guard_moved = False
+            except (OSError, RuntimeError):
+                # Keep an unambiguous guard when cleanup races with an
+                # external path change; the transaction journal remains the
+                # retry authority.
+                replacement_guard_preserved = True
+
+
+def atomic_write_bytes(
+    path: Path,
+    content: bytes,
+    *,
+    mode: int | None = None,
+    expected_state: tuple[bool, bytes, int | None] | None = None,
+    parent_descriptor: int | None = None,
+    target_name: str | None = None,
+) -> None:
+    if parent_descriptor is not None:
+        _atomic_write_bytes_at(
+            parent_descriptor,
+            target_name or path.name,
+            content,
+            mode=mode,
+            expected_state=expected_state,
+        )
+        return
+    if expected_state is not None and not _transaction_state_matches(
+        _capture_transaction_state(path), *expected_state
+    ):
+        raise RuntimeError(
+            f"catalog rollout transaction target changed externally: {path}"
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            if mode is not None:
+                os.fchmod(stream.fileno(), mode)
+            stream.write(content)
+            if mode is not None:
+                os.fchmod(stream.fileno(), mode)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if expected_state is not None and not _transaction_state_matches(
+            _capture_transaction_state(path), *expected_state
+        ):
+            raise RuntimeError(
+                f"catalog rollout transaction target changed externally: {path}"
+            )
+        os.replace(temporary_path, path)
+        _fsync_directory(path.parent)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def write_immutable_bytes(path: Path, content: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        try:
+            os.link(temporary_path, path)
+        except FileExistsError:
+            if path.read_bytes() != content:
+                raise RuntimeError(f"immutable rollout snapshot differs: {path}")
+        else:
+            _fsync_directory(path.parent)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
+def _fsync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def catalog_rollout_transaction_path(repository_root: Path) -> Path:
+    return repository_root / "config" / ".catalog-rollout-transaction.json"
+
+
+def catalog_rollout_transaction_lock_path(repository_root: Path) -> Path:
+    return repository_root / ".bluetape" / "catalog-rollout-transaction.lock"
+
+
+@contextmanager
+def _catalog_rollout_transaction_lock(repository_root: Path):
+    root = repository_root.resolve()
+    root_descriptor = os.open(root, _DIRECTORY_OPEN_FLAGS)
+    state_descriptor: int | None = None
+    lock_descriptor: int | None = None
+    root_locked = False
+    try:
+        # Lock the stable repository-root inode before opening the mutable
+        # `.bluetape` path.  This keeps cooperating transactions serialized even
+        # if that directory is renamed and recreated during the operation.
+        fcntl.flock(root_descriptor, fcntl.LOCK_EX)
+        root_locked = True
+        _assert_root_descriptor_matches_path(root_descriptor, root)
+        try:
+            os.mkdir(".bluetape", 0o755, dir_fd=root_descriptor)
+        except FileExistsError:
+            pass
+        state_descriptor = os.open(
+            ".bluetape", _DIRECTORY_OPEN_FLAGS, dir_fd=root_descriptor
+        )
+        lock_descriptor = os.open(
+            "catalog-rollout-transaction.lock",
+            os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=state_descriptor,
+        )
+        fcntl.flock(lock_descriptor, fcntl.LOCK_EX)
+        try:
+            yield root_descriptor
+        finally:
+            fcntl.flock(lock_descriptor, fcntl.LOCK_UN)
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.ENOTDIR}:
+            raise RuntimeError(
+                "catalog rollout transaction lock path must not contain symlinks"
+            ) from error
+        raise
+    finally:
+        if lock_descriptor is not None:
+            os.close(lock_descriptor)
+        if state_descriptor is not None:
+            os.close(state_descriptor)
+        if root_locked:
+            fcntl.flock(root_descriptor, fcntl.LOCK_UN)
+        os.close(root_descriptor)
+
+
+def _capture_transaction_state(target: Path) -> tuple[bool, bytes, int | None]:
+    if target.is_symlink():
+        raise RuntimeError(f"catalog rollout transaction target must be a regular file: {target}")
+    try:
+        metadata = target.stat()
+    except FileNotFoundError:
+        return False, b"", None
+    if not stat.S_ISREG(metadata.st_mode):
+        raise RuntimeError(f"catalog rollout transaction target must be a regular file: {target}")
+    return True, target.read_bytes(), stat.S_IMODE(metadata.st_mode)
+
+
+def _transaction_state_matches(
+    current: tuple[bool, bytes, int | None],
+    expected_exists: bool,
+    expected_content: bytes,
+    expected_mode: int | None,
+) -> bool:
+    return current == (expected_exists, expected_content, expected_mode)
+
+
+def validate_receipt_destination(receipt_path: Path, repository_root: Path) -> Path:
+    """Validate a receipt output before a caller starts any write."""
+    root = repository_root.resolve()
+    raw_path = str(receipt_path)
+    if "\\" in raw_path or any(
+        part in {".", ".."} for part in raw_path.split("/")
+    ):
+        raise RuntimeError("resolved graph receipt path must stay in the repository")
+    lexical_root = repository_root.absolute()
+    unresolved = (
+        receipt_path if receipt_path.is_absolute() else lexical_root / receipt_path
+    )
+    relative = None
+    for root_candidate in (lexical_root, root):
+        try:
+            relative = unresolved.absolute().relative_to(root_candidate)
+            break
+        except ValueError:
+            continue
+    if relative is None:
+        raise RuntimeError("resolved graph receipt path must stay in the repository")
+    target, _relative = _validate_relative_repository_path(
+        root, relative.as_posix(), "resolved graph receipt"
+    )
+    target = target.resolve(strict=False)
+    try:
+        target.relative_to(root)
+    except ValueError as error:
+        raise RuntimeError("resolved graph receipt path must stay in the repository") from error
+    if target.is_symlink():
+        raise RuntimeError("resolved graph receipt must be a regular file")
+    if target.exists() and not target.is_file():
+        raise RuntimeError("resolved graph receipt must be a regular file")
+    return target
+
+
+def _immutable_rollout_path(rollout: str, relative_path: object, label: str) -> str:
+    _validate_snapshot_segment(rollout, "rollout")
+    if not isinstance(relative_path, str) or not relative_path:
+        raise RuntimeError(f"{label} path is required")
+    if any(part in {".", ".."} for part in relative_path.replace("\\", "/").split("/")):
+        raise RuntimeError(f"{label} must use an immutable snapshot")
+    path = Path(relative_path)
+    prefix = Path("config") / "rollouts" / rollout
+    if path.is_absolute() or ".." in path.parts:
+        raise RuntimeError(f"{label} must use an immutable snapshot")
+    try:
+        path.relative_to(prefix)
+    except ValueError as error:
+        raise RuntimeError(f"{label} must use an immutable snapshot") from error
+    if path == prefix:
+        raise RuntimeError(f"{label} must use an immutable snapshot")
+    return path.as_posix()
+
+
+def _validate_snapshot_segment(value: object, label: str) -> str:
+    if (
+        not isinstance(value, str)
+        or re.fullmatch(r"[A-Za-z0-9._-]+", value) is None
+        or not re.search(r"[A-Za-z0-9_-]", value)
+    ):
+        raise RuntimeError(f"{label} is not safe for an immutable snapshot path")
+    return value
+
+
+def _validate_relative_repository_path(
+    repository_root: Path, relative_path: object, label: str
+) -> tuple[Path, str]:
+    if not isinstance(relative_path, str) or not relative_path:
+        raise RuntimeError(f"{label} path is required")
+    if "\\" in relative_path or any(
+        part in {".", ".."} for part in relative_path.split("/")
+    ):
+        raise RuntimeError(f"{label} path must stay inside the repository")
+    path = Path(relative_path)
+    if path.is_absolute():
+        raise RuntimeError(f"{label} path must stay inside the repository")
+    root = repository_root.resolve()
+    target = root / path
+    current = root
+    for part in path.parts:
+        current = current / part
+        if current.is_symlink():
+            raise RuntimeError(f"{label} path must not contain symlinks")
+    try:
+        target.resolve(strict=False).relative_to(root)
+    except (OSError, ValueError) as error:
+        raise RuntimeError(f"{label} path escapes the repository") from error
+    return target, path.as_posix()
+
+
+def _require_immutable_rollout_row(
+    rollout: str, row: dict[str, Any], *, require_receipt: bool = True
+) -> None:
+    _immutable_rollout_path(rollout, row.get("audit"), "verified rollout audit")
+    _immutable_rollout_path(
+        rollout,
+        row.get("authority-delta-ledger"),
+        "verified rollout delta-ledger",
+    )
+    for field, label in (
+        ("audit-sha256", "verified rollout audit SHA"),
+        ("authority-delta-ledger-sha256", "verified rollout delta-ledger SHA"),
+    ):
+        if FULL_SHA256.fullmatch(str(row.get(field, ""))) is None:
+            raise RuntimeError(f"{label} is invalid")
+    evidence = row.get("resolved-graph-evidence")
+    if not require_receipt and evidence in (None, []):
+        return
+    if not isinstance(evidence, dict):
+        raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+            "verified rollout lacks immutable resolved graph receipt"
+        )
+    _immutable_rollout_path(
+        rollout, evidence.get("path"), "verified rollout resolved graph receipt"
+    )
+    if FULL_SHA256.fullmatch(str(evidence.get("sha256", ""))) is None:
+        raise RuntimeError("verified rollout resolved graph receipt SHA is invalid")
+
+
+def is_legacy_rollout_row(row: dict[str, Any]) -> bool:
+    """Return whether a row is the explicitly preserved pre-immutable record."""
+    return (
+        row.get("status") == LEGACY_VERIFIED_ROLLOUT_STATUS
+        and row.get("evidence-status") == "legacy-superseded"
+    )
+
+
+def validate_legacy_rollout_contract(row: dict[str, Any]) -> None:
+    """Validate the preserved shape of a legacy rollout with unavailable lineage."""
+    if not is_legacy_rollout_row(row):
+        raise RuntimeError("central rollout row is not an explicit legacy verified row")
+    if not isinstance(row.get("rollout"), str) or not row["rollout"]:
+        raise RuntimeError("legacy central rollout row requires a rollout name")
+    if FULL_SHA256.fullmatch(str(row.get("catalog-sha256", ""))) is None:
+        raise RuntimeError("legacy central rollout row catalog SHA is invalid")
+    receipt = row.get("candidate-receipt")
+    if not isinstance(receipt, str) or not receipt:
+        raise RuntimeError("legacy central rollout row requires candidate-receipt")
+    path = Path(receipt)
+    if path.is_absolute() or ".." in path.parts:
+        raise RuntimeError("legacy central rollout row candidate-receipt path is invalid")
+    if row.get("authority-delta-ledger") is not None:
+        raise RuntimeError("legacy central rollout row cannot claim its missing authority ledger")
+    superseding = row.get("superseding-local-candidate")
+    if not isinstance(superseding, dict) or superseding.get("status") != "verified-local-candidate":
+        raise RuntimeError("legacy central rollout row requires its superseding local candidate")
+    if FULL_SHA256.fullmatch(str(superseding.get("catalog-sha256", ""))) is None:
+        raise RuntimeError("legacy superseding candidate catalog SHA is invalid")
+    if not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", str(superseding.get("catalog-commit", ""))):
+        raise RuntimeError("legacy superseding candidate commit is invalid")
+    if not isinstance(row.get("resolved-graph-evidence"), list):
+        raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+            "legacy central rollout row requires inline graph evidence"
+        )
+    if row.get("audit") is not None or row.get("audit-sha256") is not None:
+        raise RuntimeError("legacy central rollout row cannot claim immutable audit evidence")
+    if not isinstance(row.get("evidence-exception"), str) or not row["evidence-exception"].strip():
+        raise RuntimeError("legacy central rollout row requires an evidence exception")
+
+
+def _rollout_resolution_contract(ledger: dict[str, Any]) -> dict[str, Any]:
+    excluded_top = {
+        "candidate-validation-evidence",
+        "resolved-graph-evidence",
+        "status",
+    }
+    contract = {
+        key: copy.deepcopy(value)
+        for key, value in ledger.items()
+        if key not in excluded_top and key != "delta"
+    }
+    contract["delta"] = [
+        {
+            key: copy.deepcopy(value)
+            for key, value in entry.items()
+            if key not in {"resolved-graph-specs", "verification"}
+        }
+        for entry in ledger.get("delta", [])
+    ]
+    return contract
+
+
+def _transaction_write_map(
+    repository_root: Path, pending_writes: list[tuple[Path, bytes]] | None
+) -> dict[str, bytes]:
+    root = repository_root.resolve()
+    writes: dict[str, bytes] = {}
+    for path, content in pending_writes or []:
+        try:
+            relative = path.relative_to(root).as_posix()
+        except ValueError as error:
+            raise RuntimeError("catalog rollout transaction path escapes repository") from error
+        writes[relative] = content
+    return writes
+
+
+def _transaction_read(
+    repository_root: Path,
+    relative_path: str,
+    label: str,
+    pending_writes: dict[str, bytes],
+) -> bytes:
+    if relative_path in pending_writes:
+        return pending_writes[relative_path]
+    return _read_repo_file(repository_root, relative_path, label)
+
+
+def _validate_cross_file_rollout_evidence(
+    repository_root: Path,
+    pending_writes: list[tuple[Path, bytes]] | None = None,
+) -> None:
+    repository_root = repository_root.resolve()
+    overlay = _transaction_write_map(repository_root, pending_writes)
+    central_path = repository_root / "config" / "central-catalog-version-deltas.json"
+    authority_path = repository_root / "config" / "latest-stable-version-deltas.json"
+    central_relative = "config/central-catalog-version-deltas.json"
+    authority_relative = "config/latest-stable-version-deltas.json"
+    if central_relative not in overlay and not central_path.is_file():
+        return
+    if authority_relative not in overlay and not authority_path.is_file():
+        return
+    try:
+        central = json.loads(
+            _transaction_read(repository_root, central_relative, "central ledger", overlay)
+        )
+        authority = json.loads(
+            _transaction_read(repository_root, authority_relative, "authority ledger", overlay)
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise RuntimeError("cross-file rollout evidence is invalid") from error
+    try:
+        if not isinstance(central, dict) or not isinstance(authority, dict):
+            raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+                "central and current authority ledgers must be objects"
+            )
+        rows = central.get("subsequent-rollouts")
+        if not isinstance(rows, list):
+            raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+                "central catalog rollout rows are invalid"
+            )
+        loaded_by_rollout: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            if not isinstance(row, dict) or row.get("status") not in {
+                "validation-pending",
+                "verified",
+                "verified-resolved-graph",
+            }:
+                continue
+            rollout = row.get("rollout")
+            if not isinstance(rollout, str) or not rollout:
+                raise RuntimeError("central catalog rollout name is invalid")
+            if is_legacy_rollout_row(row):
+                validate_legacy_rollout_contract(row)
+                continue
+            _require_immutable_rollout_row(
+                rollout,
+                row,
+                require_receipt=row.get("status") == "verified-resolved-graph",
+            )
+            loaded, _audit, _artifacts = load_catalog_rollout_evidence(
+                central,
+                rollout,
+                repository_root,
+                pending_writes=overlay,
+            )
+            if loaded.get("status") != row.get("status"):
+                raise RuntimeError("central rollout status does not match its delta-ledger")
+            if row.get("delta-count") is not None and row["delta-count"] != len(
+                loaded.get("delta", [])
+            ):
+                raise RuntimeError("central rollout delta count does not match its ledger")
+            if row.get("baseline-catalog-ref") is not None and row[
+                "baseline-catalog-ref"
+            ] != loaded.get("baseline", {}).get("catalog-ref"):
+                raise RuntimeError("central rollout baseline does not match its ledger")
+            row_graph = row.get("resolved-graph-evidence") or []
+            ledger_graph = loaded.get("resolved-graph-evidence") or []
+            if row_graph != ledger_graph:
+                raise RuntimeError("central rollout graph evidence does not match its ledger")
+            loaded_by_rollout[rollout] = loaded
+
+        rollout = authority.get("rollout")
+        if not isinstance(rollout, str):
+            raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+                "current authority rollout is invalid"
+            )
+        if is_legacy_rollout_row(_one_rollout_row(central, rollout)):
+            raise RuntimeError("current authority cannot use a legacy verified rollout")
+        snapshot_authority = loaded_by_rollout.get(rollout)
+        if snapshot_authority is None:
+            snapshot_authority, _, _ = load_catalog_rollout_evidence(
+                central,
+                rollout,
+                repository_root,
+                pending_writes=overlay,
+            )
+        if snapshot_authority.get("status") != authority.get("status"):
+            raise RuntimeError("transaction status does not match central evidence")
+        if snapshot_authority.get("candidate-validation-evidence") != authority.get(
+            "candidate-validation-evidence"
+        ):
+            raise RuntimeError("transaction candidate-validation evidence does not match")
+        normalized_snapshot = copy.deepcopy(snapshot_authority)
+        normalized_current = copy.deepcopy(authority)
+        if isinstance(normalized_snapshot.get("audit"), dict) and isinstance(
+            normalized_current.get("audit"), dict
+        ):
+            normalized_snapshot["audit"]["path"] = normalized_current["audit"].get("path")
+        if _rollout_resolution_contract(normalized_snapshot) != _rollout_resolution_contract(
+            normalized_current
+        ):
+            raise RuntimeError("transaction resolution contract does not match central evidence")
+    except (OSError, RuntimeError, TypeError, ValueError) as error:
+        raise RuntimeError("cross-file rollout evidence is invalid") from error
+
+
+def _transaction_target(repository_root: Path, relative_path: object) -> Path:
+    root = repository_root.resolve()
+    target, _relative = _validate_relative_repository_path(
+        root, relative_path, "catalog rollout transaction"
+    )
+    if target in {
+        catalog_rollout_transaction_path(root),
+        catalog_rollout_transaction_identity_path(root),
+        catalog_rollout_transaction_finalization_path(root),
+        catalog_rollout_transaction_lock_path(root),
+    }:
+        raise RuntimeError("catalog rollout transaction cannot replace its journal")
+    return target
+
+
+def _transaction_input_relative_path(
+    repository_root: Path, path: Path
+) -> str:
+    root = repository_root.resolve()
+    lexical_root = repository_root.absolute()
+    candidate = path if path.is_absolute() else lexical_root / path
+    candidate = candidate.absolute()
+    for base in (lexical_root, root):
+        try:
+            return candidate.relative_to(base).as_posix()
+        except ValueError:
+            continue
+    raise RuntimeError("catalog rollout transaction path escapes repository")
+
+
+def _restore_transaction_target(
+    target: Path,
+    prior_exists: bool,
+    prior_content: bytes,
+    prior_mode: int | None,
+    desired_content: bytes,
+    desired_mode: int,
+    *,
+    parent_descriptor: int | None = None,
+    target_name: str | None = None,
+) -> None:
+    """Restore a target only when its current bytes match this transaction."""
+    if parent_descriptor is None:
+        current_exists, current_content, current_mode = _capture_transaction_state(target)
+    else:
+        current_exists, current_content, current_mode = _capture_transaction_state_at(
+            parent_descriptor, target_name or target.name
+        )
+    if _transaction_state_matches(
+        (current_exists, current_content, current_mode),
+        prior_exists,
+        prior_content,
+        prior_mode,
+    ):
+        return
+    if not _transaction_state_matches(
+        (current_exists, current_content, current_mode),
+        True,
+        desired_content,
+        desired_mode,
+    ):
+        raise RuntimeError(f"catalog rollout transaction rollback conflict: {target}")
+
+    if prior_exists:
+        if prior_mode is None:
+            raise RuntimeError(f"catalog rollout transaction rollback state is invalid: {target}")
+        expected_state = (True, desired_content, desired_mode)
+        atomic_write_bytes(
+            target,
+            prior_content,
+            mode=prior_mode,
+            expected_state=expected_state,
+            parent_descriptor=parent_descriptor,
+            target_name=target_name,
+        )
+        if parent_descriptor is None:
+            restored_state = _capture_transaction_state(target)
+        else:
+            restored_state = _capture_transaction_state_at(
+                parent_descriptor, target_name or target.name
+            )
+        if not _transaction_state_matches(restored_state, True, prior_content, prior_mode):
+            raise RuntimeError(f"catalog rollout transaction rollback mismatch: {target}")
+        return
+
+    if parent_descriptor is None:
+        parent_descriptor = os.open(target.parent, _DIRECTORY_OPEN_FLAGS)
+        try:
+            _remove_expected_target_at(
+                parent_descriptor,
+                target_name or target.name,
+                desired_content,
+                desired_mode,
+            )
+            still_exists = _capture_transaction_state_at(
+                parent_descriptor, target_name or target.name
+            )[0]
+        finally:
+            os.close(parent_descriptor)
+    else:
+        _remove_expected_target_at(
+            parent_descriptor,
+            target_name or target.name,
+            desired_content,
+            desired_mode,
+        )
+        still_exists = _capture_transaction_state_at(
+            parent_descriptor, target_name or target.name
+        )[0]
+    if still_exists:
+        raise RuntimeError(f"catalog rollout transaction rollback mismatch: {target}")
+
+
+def _recover_catalog_rollout_transaction(
+    repository_root: Path,
+    root_descriptor: int,
+    *,
+    journal_parent_descriptor: int | None = None,
+    journal_name: str | None = None,
+    target_parent_descriptors: dict[str, int] | None = None,
+) -> bool:
+    repository_root = repository_root.resolve()
+    _assert_root_descriptor_matches_path(root_descriptor, repository_root)
+    journal_path = catalog_rollout_transaction_path(repository_root)
+    if (journal_parent_descriptor is None) != (journal_name is None):
+        raise RuntimeError("catalog rollout transaction journal descriptor is incomplete")
+    if journal_parent_descriptor is None:
+        journal_parent, journal_name = _open_anchored_parent(
+            root_descriptor, repository_root, journal_path
+        )
+    else:
+        _assert_directory_descriptor_matches_path(
+            journal_parent_descriptor, journal_path.parent
+        )
+        journal_parent = os.dup(journal_parent_descriptor)
+    supplied_target_parents = target_parent_descriptors or {}
+    try:
+        _recover_quarantine_directories_at(journal_parent)
+        journal_state = _capture_transaction_state_at(journal_parent, journal_name)
+        identity_path = catalog_rollout_transaction_identity_path(repository_root)
+        identity_name = identity_path.name
+        identity_state = _capture_transaction_state_at(journal_parent, identity_name)
+        finalization_path = catalog_rollout_transaction_finalization_path(repository_root)
+        finalization_name = finalization_path.name
+        finalization_state = _capture_transaction_state_at(
+            journal_parent, finalization_name
+        )
+        journal_candidates = _journal_tombstone_candidates(journal_parent, journal_name)
+        identity_candidates = _identity_tombstone_candidates(
+            journal_parent, identity_name
+        )
+        identity_tombstone_artifacts: list[tuple[str, tuple[int, int], bytes, int]] = []
+        # A crash can leave the journal in place while the identity sidecar is
+        # already moved to its rollback tombstone.  Restore that sidecar before
+        # parsing the journal or its finalization marker so v2 recovery retains
+        # the same identity boundary as the original transaction.
+        if (
+            not identity_state[0]
+            and identity_candidates
+            and (journal_state[0] or journal_candidates or finalization_state[0])
+        ):
+            identity_tombstone_artifacts = _validated_identity_tombstones_at(
+                journal_parent, identity_name
+            )
+            restored_identity = _restore_transaction_identity_tombstone_at(
+                journal_parent, identity_name
+            )
+            if restored_identity is None:
+                raise RuntimeError(
+                    "catalog rollout transaction journal tombstone identity is missing"
+                )
+            identity_state = _capture_transaction_state_at(
+                journal_parent, identity_name
+            )
+            identity_candidates = _identity_tombstone_candidates(
+                journal_parent, identity_name
+            )
+        transaction_identity = (
+            _parse_transaction_identity(identity_state[1])
+            if identity_state[0]
+            else None
+        )
+        finalization_recovery = False
+        if finalization_state[0]:
+            marker_identity = _parse_transaction_finalization_marker(
+                finalization_state[1]
+            )
+            if transaction_identity is not None and marker_identity != transaction_identity:
+                raise RuntimeError(
+                    "catalog rollout transaction finalization marker changed externally"
+                )
+            finalization_recovery = True
+            if transaction_identity is None:
+                transaction_identity = marker_identity
+        journal_tombstone_artifacts: list[tuple[str, tuple[int, int], bytes, int]] = []
+        if not journal_state[0]:
+            if not journal_candidates:
+                if identity_candidates:
+                    identity_tombstone_artifacts = _validated_identity_tombstones_at(
+                        journal_parent,
+                        identity_name,
+                        canonical_content=identity_state[1]
+                        if identity_state[0]
+                        else None,
+                    )
+                    if transaction_identity is not None:
+                        for (
+                            _candidate,
+                            _candidate_identity,
+                            candidate_content,
+                            _candidate_mode,
+                        ) in identity_tombstone_artifacts:
+                            if _parse_transaction_identity(candidate_content) != transaction_identity:
+                                raise RuntimeError(
+                                    "catalog rollout transaction identity tombstone changed externally"
+                                )
+                for (
+                    tombstone_name,
+                    tombstone_identity,
+                    tombstone_content,
+                    tombstone_mode,
+                ) in identity_tombstone_artifacts:
+                    _discard_expected_tombstone_at(
+                        journal_parent,
+                        tombstone_name,
+                        tombstone_identity,
+                        tombstone_content,
+                        tombstone_mode,
+                    )
+                if identity_state[0]:
+                    _remove_expected_target_at(
+                        journal_parent,
+                        identity_name,
+                        identity_state[1],
+                        identity_state[2]
+                        if identity_state[2] is not None
+                        else TRANSACTION_NEW_FILE_MODE,
+                    )
+                if finalization_state[0]:
+                    _remove_expected_target_at(
+                        journal_parent,
+                        finalization_name,
+                        finalization_state[1],
+                        finalization_state[2]
+                        if finalization_state[2] is not None
+                        else TRANSACTION_NEW_FILE_MODE,
+                    )
+                return False
+            _restore_transaction_journal_tombstone_at(
+                journal_parent, journal_name, transaction_identity
+            )
+            journal_state = _capture_transaction_state_at(journal_parent, journal_name)
+            journal_candidates = _journal_tombstone_candidates(journal_parent, journal_name)
+        transaction = _parse_transaction_journal(journal_state[1])
+        requires_identity = True
+        if requires_identity and transaction_identity is None:
+            raise RuntimeError(
+                "catalog rollout transaction journal tombstone identity is missing"
+            )
+        _validate_journal_against_identity(
+            journal_state[1],
+            transaction,
+            transaction_identity,
+            require_identity=requires_identity,
+        )
+        if identity_candidates:
+            identity_tombstone_artifacts = _validated_identity_tombstones_at(
+                journal_parent,
+                identity_name,
+                canonical_content=identity_state[1] if identity_state[0] else None,
+            )
+            for (
+                _candidate,
+                _candidate_identity,
+                candidate_content,
+                _candidate_mode,
+            ) in identity_tombstone_artifacts:
+                if _parse_transaction_identity(candidate_content) != transaction_identity:
+                    raise RuntimeError(
+                        "catalog rollout transaction identity tombstone changed externally"
+                    )
+        if journal_candidates:
+            journal_tombstone_artifacts = _validated_journal_tombstones_at(
+                journal_parent,
+                journal_name,
+                transaction_identity,
+                canonical_content=journal_state[1],
+            )
+
+        targets: set[str] = set()
+        pending_writes: list[tuple[Path, bytes]] = []
+        originals: list[
+            tuple[Path, int, str, bool, bytes, int | None, bytes, int]
+        ] = []
+        try:
+            for item in transaction["writes"]:
+                if not isinstance(item, dict):
+                    raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+                        "catalog rollout transaction write is invalid"
+                    )
+                target = _transaction_target(repository_root, item.get("path"))
+                relative_path = target.relative_to(repository_root).as_posix()
+                if relative_path in targets:
+                    raise RuntimeError("catalog rollout transaction has duplicate paths")
+                targets.add(relative_path)
+                encoded = item.get("content-base64")
+                digest = item.get("sha256")
+                if not isinstance(encoded, str) or not isinstance(digest, str):
+                    raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+                        "catalog rollout transaction write is invalid"
+                    )
+                try:
+                    content = base64.b64decode(encoded, validate=True)
+                except ValueError as error:
+                    raise RuntimeError(
+                        "catalog rollout transaction content is invalid"
+                    ) from error
+                if hashlib.sha256(content).hexdigest() != digest:
+                    raise RuntimeError("catalog rollout transaction content SHA does not match")
+                prior_exists = item.get("prior-exists")
+                prior_digest = item.get("prior-sha256")
+                prior_encoded = item.get("prior-content-base64")
+                prior_mode = item.get("prior-mode")
+                if not isinstance(prior_exists, bool) or not isinstance(
+                    prior_digest, str
+                ) or not isinstance(prior_encoded, str):
+                    raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+                        "catalog rollout transaction original state is invalid"
+                    )
+                if prior_exists:
+                    if (
+                        isinstance(prior_mode, bool)
+                        or not isinstance(prior_mode, int)
+                        or not 0 <= prior_mode <= 0o7777
+                    ):
+                        raise RuntimeError(
+                            "catalog rollout transaction original mode is invalid"
+                        )
+                elif prior_mode is not None:
+                    raise RuntimeError(
+                        "catalog rollout transaction original mode is invalid"
+                    )
+                try:
+                    prior_content = base64.b64decode(prior_encoded, validate=True)
+                except ValueError as error:
+                    raise RuntimeError(
+                        "catalog rollout transaction original content is invalid"
+                    ) from error
+                if hashlib.sha256(prior_content).hexdigest() != prior_digest:
+                    raise RuntimeError(
+                        "catalog rollout transaction original SHA does not match"
+                    )
+                if not prior_exists and prior_content:
+                    raise RuntimeError(
+                        "catalog rollout transaction missing target has content"
+                    )
+                desired_mode = prior_mode if prior_exists else TRANSACTION_NEW_FILE_MODE
+                supplied_parent = supplied_target_parents.get(relative_path)
+                if supplied_parent is None:
+                    parent_descriptor, target_name = _open_anchored_parent(
+                        root_descriptor, repository_root, target
+                    )
+                else:
+                    _assert_directory_descriptor_matches_path(
+                        supplied_parent, target.parent
+                    )
+                    parent_descriptor = os.dup(supplied_parent)
+                    target_name = target.name
+                pending_writes.append((target, content))
+                originals.append(
+                    (
+                        target,
+                        parent_descriptor,
+                        target_name,
+                        prior_exists,
+                        prior_content,
+                        prior_mode,
+                        content,
+                        desired_mode,
+                    )
+                )
+
+            if finalization_recovery:
+                for (
+                    target,
+                    parent_descriptor,
+                    target_name,
+                    _prior_exists,
+                    _prior_content,
+                    _prior_mode,
+                    content,
+                    desired_mode,
+                ) in originals:
+                    current = _capture_transaction_state_at(parent_descriptor, target_name)
+                    if not _transaction_state_matches(
+                        current, True, content, desired_mode
+                    ):
+                        raise RuntimeError(
+                            "catalog rollout transaction finalization target changed externally: "
+                            f"{target}"
+                        )
+
+            for target, parent_descriptor, _target_name, *_rest in originals:
+                _assert_directory_descriptor_matches_path(
+                    parent_descriptor, target.parent
+                )
+
+            for (
+                target,
+                parent_descriptor,
+                target_name,
+                prior_exists,
+                prior_content,
+                prior_mode,
+                content,
+                desired_mode,
+            ) in originals:
+                _reconcile_target_artifacts_at(
+                    parent_descriptor,
+                    target_name,
+                    prior_exists,
+                    prior_content,
+                    prior_mode,
+                    content,
+                    desired_mode,
+                )
+
+            for (
+                target,
+                parent_descriptor,
+                target_name,
+                prior_exists,
+                prior_content,
+                prior_mode,
+                content,
+                desired_mode,
+            ) in originals:
+                current = _capture_transaction_state_at(parent_descriptor, target_name)
+                if _transaction_state_matches(
+                    current, prior_exists, prior_content, prior_mode
+                ):
+                    continue
+                if _transaction_state_matches(current, True, content, desired_mode):
+                    continue
+                raise RuntimeError(
+                    f"catalog rollout transaction target changed externally: {target}"
+                )
+
+            _assert_root_descriptor_matches_path(root_descriptor, repository_root)
+            _validate_cross_file_rollout_evidence(repository_root, pending_writes)
+
+            try:
+                for (
+                    target,
+                    parent_descriptor,
+                    target_name,
+                    prior_exists,
+                    prior_content,
+                    prior_mode,
+                    content,
+                    desired_mode,
+                ) in originals:
+                    current = _capture_transaction_state_at(parent_descriptor, target_name)
+                    if _transaction_state_matches(current, True, content, desired_mode):
+                        continue
+                    if not _transaction_state_matches(
+                        current, prior_exists, prior_content, prior_mode
+                    ):
+                        raise RuntimeError(
+                            f"catalog rollout transaction target changed externally: {target}"
+                        )
+                    atomic_write_bytes(
+                        target,
+                        content,
+                        mode=desired_mode,
+                        expected_state=(prior_exists, prior_content, prior_mode),
+                        parent_descriptor=parent_descriptor,
+                        target_name=target_name,
+                    )
+
+                _assert_root_descriptor_matches_path(root_descriptor, repository_root)
+                for target, parent_descriptor, _target_name, *_rest in originals:
+                    _assert_directory_descriptor_matches_path(
+                        parent_descriptor, target.parent
+                    )
+                for (
+                    target,
+                    parent_descriptor,
+                    target_name,
+                    prior_exists,
+                    prior_content,
+                    prior_mode,
+                    content,
+                    desired_mode,
+                ) in originals:
+                    _reconcile_target_artifacts_at(
+                        parent_descriptor,
+                        target_name,
+                        prior_exists,
+                        prior_content,
+                        prior_mode,
+                        content,
+                        desired_mode,
+                    )
+                _validate_cross_file_rollout_evidence(repository_root)
+                if _capture_transaction_state_at(journal_parent, journal_name) != journal_state:
+                    raise RuntimeError(
+                        "catalog rollout transaction journal changed externally"
+                    )
+                _assert_root_descriptor_matches_path(root_descriptor, repository_root)
+                _assert_directory_descriptor_matches_path(
+                    journal_parent, journal_path.parent
+                )
+            except BaseException as error:
+                rollback_errors: list[str] = []
+                for (
+                    target,
+                    parent_descriptor,
+                    target_name,
+                    prior_exists,
+                    prior_content,
+                    prior_mode,
+                    desired_content,
+                    desired_mode,
+                ) in reversed(originals):
+                    try:
+                        _restore_transaction_target(
+                            target,
+                            prior_exists,
+                            prior_content,
+                            prior_mode,
+                            desired_content,
+                            desired_mode,
+                            parent_descriptor=parent_descriptor,
+                            target_name=target_name,
+                        )
+                    except BaseException as rollback_error:  # noqa: BLE001 - rollback must cover interrupts
+                        rollback_errors.append(str(rollback_error))
+                if rollback_errors:
+                    detail = str(error) or error.__class__.__name__
+                    detail += "; rollback failed: " + " | ".join(rollback_errors)
+                    raise RuntimeError(detail) from error
+                raise
+
+            finalization_content: bytes | None = None
+            if transaction_identity is not None:
+                finalization_content = pretty_json(
+                    {
+                        "journal-sha256": hashlib.sha256(journal_state[1]).hexdigest(),
+                        "schema-version": TRANSACTION_IDENTITY_SCHEMA_VERSION,
+                        "transaction-id": transaction_identity[0],
+                    }
+                )
+                if finalization_state[0]:
+                    if finalization_state[1] != finalization_content:
+                        raise RuntimeError(
+                            "catalog rollout transaction finalization marker changed externally"
+                        )
+                else:
+                    atomic_write_bytes(
+                        finalization_path,
+                        finalization_content,
+                        expected_state=(False, b"", None),
+                        parent_descriptor=journal_parent,
+                        target_name=finalization_name,
+                    )
+                    finalization_state = _capture_transaction_state_at(
+                        journal_parent, finalization_name
+                    )
+
+                if identity_state[0] and _capture_transaction_state_at(
+                    journal_parent, identity_name
+                ) != identity_state:
+                    raise RuntimeError(
+                        "catalog rollout transaction identity changed externally"
+                    )
+
+            for (
+                tombstone_name,
+                tombstone_identity,
+                tombstone_content,
+                tombstone_mode,
+            ) in journal_tombstone_artifacts:
+                _discard_expected_tombstone_at(
+                    journal_parent,
+                    tombstone_name,
+                    tombstone_identity,
+                    tombstone_content,
+                    tombstone_mode,
+                )
+            for (
+                tombstone_name,
+                tombstone_identity,
+                tombstone_content,
+                tombstone_mode,
+            ) in identity_tombstone_artifacts:
+                _discard_expected_tombstone_at(
+                    journal_parent,
+                    tombstone_name,
+                    tombstone_identity,
+                    tombstone_content,
+                    tombstone_mode,
+                )
+            if identity_state[0]:
+                _remove_expected_target_at(
+                    journal_parent,
+                    identity_name,
+                    identity_state[1],
+                    identity_state[2]
+                    if identity_state[2] is not None
+                    else TRANSACTION_NEW_FILE_MODE,
+                )
+            if _capture_transaction_state_at(journal_parent, identity_name)[0]:
+                raise RuntimeError(
+                    "catalog rollout transaction identity changed externally"
+                )
+            if _identity_tombstone_candidates(journal_parent, identity_name):
+                raise RuntimeError(
+                    "catalog rollout transaction identity tombstone changed externally"
+                )
+            if _journal_tombstone_candidates(journal_parent, journal_name):
+                raise RuntimeError(
+                    "catalog rollout transaction journal tombstone changed externally"
+                )
+            if _capture_transaction_state_at(journal_parent, journal_name) != journal_state:
+                raise RuntimeError(
+                    "catalog rollout transaction journal changed externally"
+                )
+            try:
+                _remove_expected_target_at(
+                    journal_parent,
+                    journal_name,
+                    journal_state[1],
+                    (
+                        journal_state[2]
+                        if journal_state[2] is not None
+                        else TRANSACTION_NEW_FILE_MODE
+                    ),
+                )
+            except (OSError, RuntimeError) as error:
+                raise RuntimeError(
+                    "catalog rollout transaction journal changed externally"
+                ) from error
+            if finalization_content is not None:
+                try:
+                    _remove_expected_target_at(
+                        journal_parent,
+                        finalization_name,
+                        finalization_content,
+                        (
+                            finalization_state[2]
+                            if finalization_state[2] is not None
+                            else TRANSACTION_NEW_FILE_MODE
+                        ),
+                    )
+                except (OSError, RuntimeError) as error:
+                    raise RuntimeError(
+                        "catalog rollout transaction finalization marker changed externally"
+                    ) from error
+            return True
+        finally:
+            for _target, parent_descriptor, _target_name, *_rest in originals:
+                os.close(parent_descriptor)
+    finally:
+        os.close(journal_parent)
+
+
+def recover_catalog_rollout_transaction(repository_root: Path) -> bool:
+    root = repository_root.resolve()
+    with _catalog_rollout_transaction_lock(root) as root_descriptor:
+        _assert_root_descriptor_matches_path(root_descriptor, root)
+        return _recover_catalog_rollout_transaction(root, root_descriptor)
+
+
+def commit_catalog_rollout_transaction(
+    repository_root: Path, writes: tuple[tuple[Path, bytes], ...]
+) -> None:
+    if not writes:
+        raise RuntimeError("catalog rollout transaction requires at least one write")
+    repository_root_input = repository_root
+    root = repository_root.resolve()
+    with _catalog_rollout_transaction_lock(root) as root_descriptor:
+        _assert_root_descriptor_matches_path(root_descriptor, root)
+        journal_path = catalog_rollout_transaction_path(root)
+        journal_parent, journal_name = _open_anchored_parent(
+            root_descriptor, root, journal_path
+        )
+        try:
+            journal_state = _capture_transaction_state_at(journal_parent, journal_name)
+            identity_path = catalog_rollout_transaction_identity_path(root)
+            identity_name = identity_path.name
+            identity_state = _capture_transaction_state_at(journal_parent, identity_name)
+            finalization_path = catalog_rollout_transaction_finalization_path(root)
+            finalization_name = finalization_path.name
+            finalization_state = _capture_transaction_state_at(
+                journal_parent, finalization_name
+            )
+            if journal_state[0]:
+                raise RuntimeError(
+                    "catalog rollout transaction already has a pending journal"
+                )
+            if (
+                identity_state[0]
+                or finalization_state[0]
+                or _journal_tombstone_candidates(journal_parent, journal_name)
+                or _identity_tombstone_candidates(journal_parent, identity_name)
+            ):
+                _recover_catalog_rollout_transaction(
+                    root,
+                    root_descriptor,
+                    journal_parent_descriptor=journal_parent,
+                    journal_name=journal_name,
+                )
+                journal_state = _capture_transaction_state_at(journal_parent, journal_name)
+                identity_state = _capture_transaction_state_at(
+                    journal_parent, identity_name
+                )
+                finalization_state = _capture_transaction_state_at(
+                    journal_parent, finalization_name
+                )
+                if (
+                    journal_state[0]
+                    or identity_state[0]
+                    or finalization_state[0]
+                    or _journal_tombstone_candidates(journal_parent, journal_name)
+                    or _identity_tombstone_candidates(journal_parent, identity_name)
+                ):
+                    raise RuntimeError(
+                        "catalog rollout transaction already has pending evidence"
+                    )
+
+            transaction_writes = []
+            targets: set[str] = set()
+            target_descriptors: dict[str, int] = {}
+            try:
+                for path, content in writes:
+                    relative_input = _transaction_input_relative_path(
+                        repository_root_input, path
+                    )
+                    target = _transaction_target(root, relative_input)
+                    relative_path = target.relative_to(root).as_posix()
+                    if relative_path in targets:
+                        raise RuntimeError("catalog rollout transaction has duplicate paths")
+                    targets.add(relative_path)
+                    target_parent, target_name = _open_anchored_parent(
+                        root_descriptor, root, target
+                    )
+                    target_descriptors[relative_path] = target_parent
+                    prior_exists, prior_content, prior_mode = _capture_transaction_state_at(
+                        target_parent, target_name
+                    )
+                    transaction_writes.append(
+                        {
+                            "content-base64": base64.b64encode(content).decode("ascii"),
+                            "path": relative_path,
+                            "prior-content-base64": base64.b64encode(
+                                prior_content
+                            ).decode("ascii"),
+                            "prior-exists": prior_exists,
+                            "prior-mode": prior_mode,
+                            "prior-sha256": hashlib.sha256(prior_content).hexdigest(),
+                            "sha256": hashlib.sha256(content).hexdigest(),
+                        }
+                    )
+                transaction_id = uuid.uuid4().hex
+                journal = {
+                    "schema-version": TRANSACTION_SCHEMA_VERSION,
+                    "transaction-id": transaction_id,
+                    "writes": transaction_writes,
+                }
+                journal_bytes = pretty_json(journal)
+                identity_bytes = pretty_json(
+                    {
+                        "journal-sha256": hashlib.sha256(journal_bytes).hexdigest(),
+                        "schema-version": TRANSACTION_IDENTITY_SCHEMA_VERSION,
+                        "transaction-id": transaction_id,
+                    }
+                )
+                atomic_write_bytes(
+                    identity_path,
+                    identity_bytes,
+                    expected_state=(False, b"", None),
+                    parent_descriptor=journal_parent,
+                    target_name=identity_name,
+                )
+                atomic_write_bytes(
+                    journal_path,
+                    journal_bytes,
+                    expected_state=(False, b"", None),
+                    parent_descriptor=journal_parent,
+                    target_name=journal_name,
+                )
+                recovered = _recover_catalog_rollout_transaction(
+                    root,
+                    root_descriptor,
+                    journal_parent_descriptor=journal_parent,
+                    journal_name=journal_name,
+                    target_parent_descriptors=target_descriptors,
+                )
+                if not recovered:
+                    raise RuntimeError(
+                        "catalog rollout transaction journal disappeared during recovery"
+                    )
+            finally:
+                for descriptor in target_descriptors.values():
+                    os.close(descriptor)
+        finally:
+            os.close(journal_parent)
+
+
+def pretty_json(value: object) -> bytes:
+    return (json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode()
+
+
+def _rollout_rows(document: dict[str, Any], rollout_name: str) -> list[dict[str, Any]]:
+    rows = document.get("subsequent-rollouts")
+    if not isinstance(rows, list):
+        raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+            "central catalog ledger rollout rows are invalid"
+        )
+    return [
+        item
+        for item in rows
+        if isinstance(item, dict) and item.get("rollout") == rollout_name
+    ]
+
+
+def _one_rollout_row(document: dict[str, Any], rollout_name: str) -> dict[str, Any]:
+    rows = _rollout_rows(document, rollout_name)
+    if len(rows) != 1:
+        raise RuntimeError(
+            f"expected exactly one central rollout row for {rollout_name}; found {len(rows)}"
+        )
+    return rows[0]
+
+
+def _read_repo_file(
+    repository_root: Path,
+    relative_path: object,
+    label: str,
+    source_ref: str | None = None,
+    pending_writes: dict[str, bytes] | None = None,
+) -> bytes:
+    root = repository_root.resolve()
+    unresolved, relative = _validate_relative_repository_path(
+        root, relative_path, label
+    )
+    path = Path(relative)
+    if source_ref is None and pending_writes is not None and relative in pending_writes:
+        return pending_writes[relative]
+    if source_ref is not None:
+        try:
+            return subprocess.run(
+                ["git", "show", f"{source_ref}:{path.as_posix()}"],
+                cwd=repository_root,
+                check=True,
+                capture_output=True,
+            ).stdout
+        except (OSError, subprocess.CalledProcessError) as error:
+            raise RuntimeError(f"{label} path cannot be read from {source_ref}") from error
+    try:
+        resolved = unresolved.resolve(strict=True)
+        resolved.relative_to(root)
+    except (OSError, ValueError) as error:
+        raise RuntimeError(f"{label} path escapes or is missing") from error
+    if not resolved.is_file():
+        raise RuntimeError(f"{label} must be a regular file")
+    return resolved.read_bytes()
+
+
+def load_catalog_rollout_evidence(
+    document: dict[str, Any],
+    rollout_name: str,
+    repository_root: Path,
+    source_ref: str | None = None,
+    pending_writes: dict[str, bytes] | None = None,
+) -> tuple[dict[str, Any], bytes, dict[str, dict[str, str]]]:
+    """Load evidence from the exact files named by one central rollout row."""
+    row = _one_rollout_row(document, rollout_name)
+    if is_legacy_rollout_row(row):
+        validate_legacy_rollout_contract(row)
+        raise RuntimeError(
+            "central rollout row uses the explicit legacy verified contract; "
+            "do not load it as immutable rollout evidence"
+        )
+    if row.get("status") in {"validation-pending", "verified-resolved-graph"}:
+        _require_immutable_rollout_row(
+            rollout_name,
+            row,
+            require_receipt=row.get("status") == "verified-resolved-graph",
+        )
+    elif row.get("status") != "verified":
+        raise RuntimeError("central rollout row status is unsupported")
+    ledger_bytes = _read_repo_file(
+        repository_root,
+        row.get("authority-delta-ledger"),
+        "delta-ledger",
+        source_ref,
+        pending_writes,
+    )
+    try:
+        authority_ledger = json.loads(ledger_bytes)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise RuntimeError("central delta-ledger is not valid JSON") from error
+    if not isinstance(authority_ledger, dict):
+        raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+            "central delta-ledger must be a JSON object"
+        )
+    if authority_ledger.get("rollout") != rollout_name:
+        raise RuntimeError("central delta-ledger rollout does not match its row")
+    if authority_ledger.get("status") != row.get("status"):
+        raise RuntimeError("central delta-ledger status does not match its row")
+    if authority_ledger.get("candidate", {}).get("catalog-sha256") != row.get(
+        "catalog-sha256"
+    ):
+        raise RuntimeError("central rollout catalog SHA does not match delta-ledger")
+
+    ledger_sha = hashlib.sha256(ledger_bytes).hexdigest()
+    expected_ledger_sha = row.get("authority-delta-ledger-sha256")
+    if expected_ledger_sha != ledger_sha:
+        raise RuntimeError("central delta-ledger SHA does not match file")
+
+    audit_record = authority_ledger.get("audit")
+    if not isinstance(audit_record, dict) or audit_record.get("path") != row.get("audit"):
+        raise RuntimeError("central audit path does not match delta-ledger")
+    audit_bytes = _read_repo_file(
+        repository_root,
+        row.get("audit"),
+        "audit",
+        source_ref,
+        pending_writes,
+    )
+    audit_sha = hashlib.sha256(audit_bytes).hexdigest()
+    if audit_record.get("sha256") != audit_sha:
+        raise RuntimeError("central audit SHA does not match delta-ledger")
+    expected_audit_sha = row.get("audit-sha256")
+    if expected_audit_sha != audit_sha:
+        raise RuntimeError("central audit SHA does not match file")
+    if row.get("delta-count") is not None and row["delta-count"] != len(
+        authority_ledger.get("delta", [])
+    ):
+        raise RuntimeError("central rollout delta count does not match its ledger")
+    if row.get("baseline-catalog-ref") is not None and row[
+        "baseline-catalog-ref"
+    ] != authority_ledger.get("baseline", {}).get("catalog-ref"):
+        raise RuntimeError("central rollout baseline does not match its ledger")
+    if (row.get("resolved-graph-evidence") or []) != (
+        authority_ledger.get("resolved-graph-evidence") or []
+    ):
+        raise RuntimeError("central rollout graph evidence does not match its ledger")
+    resolved_graph_artifact = None
+    if row.get("status") == "verified-resolved-graph":
+        resolved_graph_evidence = row["resolved-graph-evidence"]
+        receipt_bytes = _read_repo_file(
+            repository_root,
+            resolved_graph_evidence["path"],
+            "resolved graph receipt",
+            source_ref,
+            pending_writes,
+        )
+        receipt_sha = hashlib.sha256(receipt_bytes).hexdigest()
+        if receipt_sha != resolved_graph_evidence["sha256"]:
+            raise RuntimeError("central resolved graph receipt SHA does not match file")
+        resolved_graph_artifact = {
+            **copy.deepcopy(resolved_graph_evidence),
+            "path": resolved_graph_evidence["path"],
+            "sha256": receipt_sha,
+        }
+    artifacts = {
+        "audit": {"path": row["audit"], "sha256": audit_sha},
+        "authority-delta-ledger": {
+            "path": row["authority-delta-ledger"],
+            "sha256": ledger_sha,
+        },
+    }
+    if resolved_graph_artifact is not None:
+        artifacts["resolved-graph-evidence"] = resolved_graph_artifact
+    return (
+        authority_ledger,
+        audit_bytes,
+        artifacts,
+    )
+
+
+def snapshot_rollout_evidence(
+    authority_ledger: dict[str, Any],
+    audit_bytes: bytes,
+    repository_root: Path,
+    revision: str | None = None,
+    resolved_graph_receipt_bytes: bytes | None = None,
+) -> dict[str, dict[str, str]]:
+    rollout = _validate_snapshot_segment(
+        authority_ledger.get("rollout"), "rollout name"
+    )
+    if revision is not None:
+        revision = _validate_snapshot_segment(revision, "rollout revision")
+
+    audit_sha256 = hashlib.sha256(audit_bytes).hexdigest()
+    expected_audit_sha256 = authority_ledger.get("audit", {}).get("sha256")
+    if expected_audit_sha256 != audit_sha256:
+        raise RuntimeError("rollout audit SHA does not match the audit snapshot")
+
+    snapshot_dir = Path("config") / "rollouts" / rollout
+    if revision is not None:
+        snapshot_dir /= revision
+    audit_relative_path = snapshot_dir / "latest-stable-version-audit.json"
+    ledger_relative_path = snapshot_dir / "latest-stable-version-deltas.json"
+    ledger_snapshot = copy.deepcopy(authority_ledger)
+    ledger_snapshot["audit"]["path"] = audit_relative_path.as_posix()
+    ledger_bytes = pretty_json(ledger_snapshot)
+    files = {
+        Path("latest-stable-version-audit.json"): audit_bytes,
+        Path("latest-stable-version-deltas.json"): ledger_bytes,
+    }
+    artifacts: dict[str, dict[str, str]] = {
+        "audit": {"path": audit_relative_path.as_posix(), "sha256": audit_sha256},
+        "authority-delta-ledger": {
+            "path": ledger_relative_path.as_posix(),
+            "sha256": hashlib.sha256(ledger_bytes).hexdigest(),
+        },
+    }
+    resolved_graph_evidence = authority_ledger.get("resolved-graph-evidence")
+    if resolved_graph_receipt_bytes is not None:
+        if not isinstance(resolved_graph_evidence, dict):
+            raise RuntimeError("verified rollout lacks resolved graph receipt evidence")
+        receipt_sha256 = hashlib.sha256(resolved_graph_receipt_bytes).hexdigest()
+        if resolved_graph_evidence.get("sha256") != receipt_sha256:
+            raise RuntimeError("resolved graph receipt SHA does not match evidence")
+        receipt_relative_path = (
+            snapshot_dir / f"resolved-graph-{receipt_sha256[:16]}.json"
+        )
+        receipt_evidence = copy.deepcopy(resolved_graph_evidence)
+        receipt_evidence["path"] = receipt_relative_path.as_posix()
+        receipt_evidence["sha256"] = receipt_sha256
+        ledger_snapshot["resolved-graph-evidence"] = receipt_evidence
+        ledger_bytes = pretty_json(ledger_snapshot)
+        files[Path(receipt_relative_path.name)] = resolved_graph_receipt_bytes
+        files[Path("latest-stable-version-deltas.json")] = ledger_bytes
+        artifacts["resolved-graph-evidence"] = receipt_evidence
+    elif authority_ledger.get("status") == "verified-resolved-graph":
+        raise RuntimeError("verified rollout requires resolved graph receipt bytes")
+
+    _publish_immutable_snapshot(repository_root, snapshot_dir, files)
+    artifacts["authority-delta-ledger"]["sha256"] = hashlib.sha256(ledger_bytes).hexdigest()
+    return artifacts
+
+
+def _open_or_create_directory_at(
+    base_descriptor: int,
+    parts: tuple[str, ...],
+    *,
+    mode: int = 0o755,
+) -> int:
+    """Open a directory path relative to an anchored descriptor without following symlinks."""
+    descriptor = os.dup(base_descriptor)
+    try:
+        for part in parts:
+            if part in {"", ".", ".."} or "/" in part:
+                raise RuntimeError("immutable rollout snapshot path is invalid")
+            try:
+                os.mkdir(part, mode, dir_fd=descriptor)
+            except FileExistsError:
+                pass
+            try:
+                next_descriptor = os.open(
+                    part, _DIRECTORY_OPEN_FLAGS, dir_fd=descriptor
+                )
+            except OSError as error:
+                raise RuntimeError(
+                    "immutable rollout snapshot parent changed externally"
+                ) from error
+            os.close(descriptor)
+            descriptor = next_descriptor
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _open_existing_directory_at(
+    base_descriptor: int, parts: tuple[str, ...]
+) -> int:
+    """Open an existing descriptor-anchored directory without following symlinks."""
+    descriptor = os.dup(base_descriptor)
+    try:
+        for part in parts:
+            if part in {"", ".", ".."} or "/" in part:
+                raise RuntimeError("immutable rollout snapshot path is invalid")
+            try:
+                next_descriptor = os.open(
+                    part, _DIRECTORY_OPEN_FLAGS, dir_fd=descriptor
+                )
+            except OSError as error:
+                raise RuntimeError(
+                    "immutable rollout snapshot parent changed externally"
+                ) from error
+            os.close(descriptor)
+            descriptor = next_descriptor
+        return descriptor
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def _snapshot_relative_parts(relative_path: Path) -> tuple[str, ...]:
+    if relative_path.is_absolute() or not relative_path.parts:
+        raise RuntimeError("immutable rollout snapshot file path is invalid")
+    parts = tuple(relative_path.parts)
+    if any(part in {"", ".", ".."} or "/" in part for part in parts):
+        raise RuntimeError("immutable rollout snapshot file path is invalid")
+    return parts
+
+
+def _snapshot_file_matches(
+    snapshot_descriptor: int,
+    relative_path: Path,
+    content: bytes,
+    display_path: Path,
+) -> None:
+    parts = _snapshot_relative_parts(relative_path)
+    parent_descriptor = _open_existing_directory_at(
+        snapshot_descriptor, parts[:-1]
+    )
+    try:
+        try:
+            descriptor = os.open(
+                parts[-1], _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+            )
+        except OSError as error:
+            raise RuntimeError(
+                f"immutable rollout snapshot differs: {display_path}"
+            ) from error
+        try:
+            state = _capture_open_descriptor_state(descriptor)
+        finally:
+            os.close(descriptor)
+        if state[1] != content:
+            raise RuntimeError(f"immutable rollout snapshot differs: {display_path}")
+    finally:
+        os.close(parent_descriptor)
+
+
+def _write_snapshot_file_at(
+    staging_descriptor: int,
+    relative_path: Path,
+    content: bytes,
+) -> None:
+    parts = _snapshot_relative_parts(relative_path)
+    parent_descriptor = _open_or_create_directory_at(
+        staging_descriptor, parts[:-1]
+    )
+    descriptor: int | None = None
+    try:
+        descriptor = os.open(
+            parts[-1],
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_NOFOLLOW", 0),
+            0o644,
+            dir_fd=parent_descriptor,
+        )
+        view = memoryview(content)
+        while view:
+            written = os.write(descriptor, view)
+            if written <= 0:
+                raise OSError("short write while publishing immutable rollout snapshot")
+            view = view[written:]
+        os.fsync(descriptor)
+        _fsync_directory_fd(parent_descriptor)
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+        os.close(parent_descriptor)
+
+
+def _remove_directory_tree_at(parent_descriptor: int, directory_name: str) -> None:
+    directory_descriptor = os.open(
+        directory_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+    )
+    try:
+        for entry_name in os.listdir(directory_descriptor):
+            try:
+                os.unlink(entry_name, dir_fd=directory_descriptor)
+            except IsADirectoryError:
+                _remove_directory_tree_at(directory_descriptor, entry_name)
+    finally:
+        os.close(directory_descriptor)
+    os.rmdir(directory_name, dir_fd=parent_descriptor)
+
+
+def _publish_immutable_snapshot(
+    repository_root: Path,
+    snapshot_relative: Path,
+    files: dict[Path, bytes],
+) -> None:
+    """Publish one complete immutable snapshot directory atomically.
+
+    Every parent and file is opened relative to an ``O_NOFOLLOW`` descriptor so
+    a symlinked ``config``/``rollouts`` path cannot redirect evidence outside
+    the repository.
+    """
+    root = repository_root.resolve()
+    if snapshot_relative.is_absolute():
+        try:
+            snapshot_relative = snapshot_relative.relative_to(root)
+        except ValueError as error:
+            raise RuntimeError(
+                "immutable rollout snapshot path escapes repository"
+            ) from error
+    snapshot_parts = _snapshot_relative_parts(snapshot_relative)
+    if not snapshot_parts:
+        raise RuntimeError("immutable rollout snapshot path is invalid")
+    for relative_path in files:
+        _snapshot_relative_parts(relative_path)
+
+    root_descriptor = os.open(root, _DIRECTORY_OPEN_FLAGS)
+    parent_descriptor: int | None = None
+    staging_descriptor: int | None = None
+    staging_name: str | None = None
+    try:
+        parent_descriptor = _open_or_create_directory_at(
+            root_descriptor, snapshot_parts[:-1]
+        )
+        snapshot_name = snapshot_parts[-1]
+        snapshot_display = root.joinpath(*snapshot_parts)
+        try:
+            snapshot_descriptor = os.open(
+                snapshot_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+            )
+        except FileNotFoundError:
+            snapshot_descriptor = None
+        except OSError as error:
+            raise RuntimeError(
+                f"immutable rollout snapshot is not a directory: {snapshot_display}"
+            ) from error
+        if snapshot_descriptor is not None:
+            try:
+                for relative_path, content in files.items():
+                    _snapshot_file_matches(
+                        snapshot_descriptor,
+                        relative_path,
+                        content,
+                        snapshot_display / relative_path,
+                    )
+            finally:
+                os.close(snapshot_descriptor)
+            return
+
+        staging_name = f".{snapshot_name}.{os.getpid()}.{uuid.uuid4().hex}"
+        os.mkdir(staging_name, 0o700, dir_fd=parent_descriptor)
+        staging_descriptor = os.open(
+            staging_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        for relative_path, content in files.items():
+            _write_snapshot_file_at(staging_descriptor, relative_path, content)
+        _fsync_directory_fd(staging_descriptor)
+        os.close(staging_descriptor)
+        staging_descriptor = None
+        try:
+            os.rename(
+                staging_name,
+                snapshot_name,
+                src_dir_fd=parent_descriptor,
+                dst_dir_fd=parent_descriptor,
+            )
+        except FileExistsError:
+            snapshot_descriptor = os.open(
+                snapshot_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+            )
+            try:
+                for relative_path, content in files.items():
+                    _snapshot_file_matches(
+                        snapshot_descriptor,
+                        relative_path,
+                        content,
+                        snapshot_display / relative_path,
+                    )
+            finally:
+                os.close(snapshot_descriptor)
+        else:
+            _fsync_directory_fd(parent_descriptor)
+            staging_name = None
+    finally:
+        if staging_descriptor is not None:
+            os.close(staging_descriptor)
+        if staging_name is not None and parent_descriptor is not None:
+            try:
+                _remove_directory_tree_at(parent_descriptor, staging_name)
+            except FileNotFoundError:
+                pass
+        if parent_descriptor is not None:
+            os.close(parent_descriptor)
+        os.close(root_descriptor)
+
+
+def ensure_immutable_rollout_snapshot(
+    authority_ledger: dict[str, Any],
+    audit_bytes: bytes,
+    declared_artifacts: dict[str, dict[str, str]],
+    repository_root: Path,
+) -> dict[str, dict[str, str]]:
+    rollout = authority_ledger.get("rollout")
+    if not isinstance(rollout, str):
+        raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+            "rollout name is required"
+        )
+    prefix = f"config/rollouts/{rollout}/"
+    if all(
+        artifact.get("path", "").startswith(prefix)
+        for artifact in declared_artifacts.values()
+    ):
+        validate_rollout_artifacts(rollout, declared_artifacts)
+        for name, artifact in declared_artifacts.items():
+            content = _read_repo_file(
+                repository_root,
+                artifact["path"],
+                f"{name} snapshot",
+            )
+            if hashlib.sha256(content).hexdigest() != artifact["sha256"]:
+                raise RuntimeError(f"{name} snapshot SHA does not match file")
+        return copy.deepcopy(declared_artifacts)
+
+    ledger_sha = declared_artifacts.get("authority-delta-ledger", {}).get("sha256", "")
+    if FULL_SHA256.fullmatch(ledger_sha) is None:
+        raise RuntimeError("previous rollout delta-ledger SHA-256 is invalid")
+    return snapshot_rollout_evidence(
+        authority_ledger,
+        audit_bytes,
+        repository_root,
+        revision=f"legacy-{ledger_sha[:16]}",
+    )
+
+
+def candidate_rollout_snapshot_revision(
+    document: dict[str, Any], authority_ledger: dict[str, Any]
+) -> str | None:
+    rollout = authority_ledger.get("rollout")
+    if not isinstance(rollout, str):
+        raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+            "rollout name is required"
+        )
+    if not _rollout_rows(document, rollout):
+        return None
+    _one_rollout_row(document, rollout)
+
+    catalog_sha = authority_ledger.get("candidate", {}).get("catalog-sha256", "")
+    audit_sha = authority_ledger.get("audit", {}).get("sha256", "")
+    if FULL_SHA256.fullmatch(catalog_sha) is None or FULL_SHA256.fullmatch(audit_sha) is None:
+        raise RuntimeError("catalog rollout revision requires exact evidence SHA-256 values")
+    return f"candidate-{catalog_sha[:16]}-{audit_sha[:16]}"
+
+
+def validate_rollout_artifacts(
+    rollout: str, artifacts: dict[str, dict[str, str]]
+) -> None:
+    _validate_snapshot_segment(rollout, "rollout name")
+    for name in ("audit", "authority-delta-ledger"):
+        artifact = artifacts.get(name, {})
+        _immutable_rollout_path(rollout, artifact.get("path"), name)
+        if FULL_SHA256.fullmatch(artifact.get("sha256", "")) is None:
+            raise RuntimeError(f"{name} snapshot SHA-256 is invalid")
+    receipt = artifacts.get("resolved-graph-evidence")
+    if receipt is not None:
+        _immutable_rollout_path(
+            rollout, receipt.get("path"), "resolved graph receipt"
+        )
+        if FULL_SHA256.fullmatch(receipt.get("sha256", "")) is None:
+            raise RuntimeError("resolved graph receipt SHA-256 is invalid")
+
+
+def pin_catalog_rollout_evidence(
+    document: dict[str, Any], rollout_name: str, artifacts: dict[str, dict[str, str]]
+) -> dict[str, Any]:
+    validate_rollout_artifacts(rollout_name, artifacts)
+    updated = copy.deepcopy(document)
+    row = _one_rollout_row(updated, rollout_name)
+    row["audit"] = artifacts["audit"]["path"]
+    row["audit-sha256"] = artifacts["audit"]["sha256"]
+    row["authority-delta-ledger"] = artifacts["authority-delta-ledger"]["path"]
+    row["authority-delta-ledger-sha256"] = artifacts["authority-delta-ledger"][
+        "sha256"
+    ]
+    if "resolved-graph-evidence" in artifacts:
+        row["resolved-graph-evidence"] = copy.deepcopy(
+            artifacts["resolved-graph-evidence"]
+        )
+    return updated
+
+
+def upsert_catalog_rollout(
+    document: dict[str, Any],
+    authority_ledger: dict[str, Any],
+    artifacts: dict[str, dict[str, str]],
+) -> dict[str, Any]:
+    rollout_name = authority_ledger["rollout"]
+    validate_rollout_artifacts(rollout_name, artifacts)
+    updated = copy.deepcopy(document)
+    candidate_evidence = authority_ledger.get("candidate-validation-evidence", {})
+    downstream_evidence = candidate_evidence.get(
+        "downstream-full-builds", {"repositories": 9, "status": "pending"}
+    )
+    publication_evidence = candidate_evidence.get(
+        "publication-poms", {"repositories": 9, "status": "pending"}
+    )
+    if authority_ledger.get("status") == "verified-resolved-graph":
+        resolved_graph_evidence = artifacts.get("resolved-graph-evidence")
+        if resolved_graph_evidence is None:
+            raise RuntimeError("verified rollout requires an immutable resolved graph receipt")
+    else:
+        resolved_graph_evidence = []
+    rollout = {
+        "audit": artifacts["audit"]["path"],
+        "audit-sha256": artifacts["audit"]["sha256"],
+        "authority-delta-ledger": artifacts["authority-delta-ledger"]["path"],
+        "authority-delta-ledger-sha256": artifacts["authority-delta-ledger"][
+            "sha256"
+        ],
+        "baseline-catalog-ref": authority_ledger["baseline"]["catalog-ref"],
+        "catalog-sha256": authority_ledger["candidate"]["catalog-sha256"],
+        "delta-count": len(authority_ledger["delta"]),
+        "downstream-full-builds": copy.deepcopy(downstream_evidence),
+        "publication-pom-verification": copy.deepcopy(publication_evidence),
+        "remote-immutable-ref-verification": candidate_evidence.get(
+            "remote-immutable-ref-verification", "pending-candidate-commit-and-push"
+        ),
+        "resolved-graph-evidence": copy.deepcopy(resolved_graph_evidence),
+        "rollout": rollout_name,
+        "status": authority_ledger["status"],
+    }
+    existing = updated["subsequent-rollouts"]
+    updated["subsequent-rollouts"] = [
+        item for item in existing if item.get("rollout") != rollout_name
+    ] + [rollout]
+    return updated
+
+
+def record_promoted_catalog_rollout(
+    document: dict[str, Any],
+    authority_ledger: dict[str, Any],
+    audit_bytes: bytes,
+    repository_root: Path,
+) -> dict[str, Any]:
+    rollout_name = authority_ledger.get("rollout")
+    if authority_ledger.get("status") != "verified-resolved-graph":
+        raise RuntimeError("only a verified resolved-graph rollout can be recorded")
+    row = _one_rollout_row(document, rollout_name)
+    if row.get("status") not in {"validation-pending", "verified-resolved-graph"}:
+        raise RuntimeError("central rollout is not in a promotable lifecycle state")
+    if row.get("catalog-sha256") != authority_ledger.get("candidate", {}).get(
+        "catalog-sha256"
+    ):
+        raise RuntimeError("central rollout catalog SHA does not match promoted ledger")
+    evidence = authority_ledger.get("resolved-graph-evidence", {})
+    if not isinstance(evidence, dict):
+        raise RuntimeError(  # noqa: TRY004 - preserve the validation error contract
+            "promoted rollout lacks resolved graph receipt evidence"
+        )
+    receipt_sha = evidence.get("sha256")
+    if not isinstance(receipt_sha, str) or FULL_SHA256.fullmatch(receipt_sha) is None:
+        raise RuntimeError("promoted rollout lacks resolved-graph receipt SHA")
+    receipt_bytes = _read_repo_file(
+        repository_root, evidence.get("path"), "resolved graph receipt"
+    )
+    if hashlib.sha256(receipt_bytes).hexdigest() != receipt_sha:
+        raise RuntimeError("promoted resolved graph receipt SHA does not match file")
+    artifacts = snapshot_rollout_evidence(
+        authority_ledger,
+        audit_bytes,
+        repository_root,
+        revision=f"resolved-graph-{receipt_sha[:16]}",
+        resolved_graph_receipt_bytes=receipt_bytes,
+    )
+    return upsert_catalog_rollout(document, authority_ledger, artifacts)
