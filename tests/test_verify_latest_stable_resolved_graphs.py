@@ -395,12 +395,8 @@ class VerifyLatestStableResolvedGraphsTest(unittest.TestCase):
             with (
                 mock.patch.object(self.module, "REPO_ROOT", root),
                 mock.patch.object(self.module, "validate_catalog", return_value="a" * 64),
-                mock.patch.object(
-                    self.module, "run_gradle", return_value=([], [])
-                ) as run_gradle,
-                mock.patch.object(
-                    self.module, "validate_observations", return_value=[]
-                ),
+                mock.patch.object(self.module, "run_gradle", return_value=([], [])) as run_gradle,
+                mock.patch.object(self.module, "validate_observations", return_value=[]),
                 mock.patch(
                     "sys.argv",
                     [
@@ -417,9 +413,9 @@ class VerifyLatestStableResolvedGraphsTest(unittest.TestCase):
                         str(log_path),
                     ],
                 ),
+                self.assertRaisesRegex(RuntimeError, "receipt path"),
             ):
-                with self.assertRaisesRegex(RuntimeError, "receipt path"):
-                    self.module.main()
+                self.module.main()
 
             run_gradle.assert_not_called()
             self.assertFalse(outside_receipt.exists())

@@ -208,6 +208,29 @@ def _unlink_private_entry_at(
         os.close(descriptor)
 
 
+def _unlink_expected_path_if_present(
+    path: Path,
+    expected_identity: tuple[int, int],
+    expected_content: bytes,
+    expected_mode: int,
+) -> None:
+    """Remove a temporary path only when its anchored inode is still owned."""
+    parent_descriptor = os.open(path.parent, _DIRECTORY_OPEN_FLAGS)
+    try:
+        try:
+            _unlink_private_entry_at(
+                parent_descriptor,
+                path.name,
+                expected_identity,
+                expected_content,
+                expected_mode,
+            )
+        except FileNotFoundError:
+            return
+    finally:
+        os.close(parent_descriptor)
+
+
 def _remove_private_directory_at(
     parent_descriptor: int,
     entry_name: str,
@@ -2756,6 +2779,8 @@ def atomic_write_bytes(
         prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
     )
     temporary_path = Path(temporary_name)
+    temporary_identity: tuple[int, int] | None = None
+    temporary_mode: int | None = None
     try:
         with os.fdopen(descriptor, "wb") as stream:
             if mode is not None:
@@ -2765,6 +2790,8 @@ def atomic_write_bytes(
                 os.fchmod(stream.fileno(), mode)
             stream.flush()
             os.fsync(stream.fileno())
+            temporary_identity = _descriptor_identity(stream.fileno())
+            temporary_mode = stat.S_IMODE(os.fstat(stream.fileno()).st_mode)
         if expected_state is not None and not _transaction_state_matches(
             _capture_transaction_state(path), *expected_state
         ):
@@ -2777,7 +2804,13 @@ def atomic_write_bytes(
         # ownership; only the descriptor-anchored transaction path needs it.
         return None
     finally:
-        temporary_path.unlink(missing_ok=True)
+        if temporary_identity is not None and temporary_mode is not None:
+            _unlink_expected_path_if_present(
+                temporary_path,
+                temporary_identity,
+                content,
+                temporary_mode,
+            )
 
 
 def write_immutable_bytes(path: Path, content: bytes) -> None:

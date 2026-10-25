@@ -25,8 +25,8 @@ from catalog_rollout_evidence import (
     ensure_immutable_rollout_snapshot,
     load_catalog_rollout_evidence,
     pin_catalog_rollout_evidence,
+    record_promoted_catalog_rollout,  # noqa: F401 - 테스트와 기존 호출자의 모듈 표면을 유지한다.
     recover_catalog_rollout_transaction,
-    record_promoted_catalog_rollout,
     snapshot_rollout_evidence,
     upsert_catalog_rollout,
 )
@@ -83,7 +83,7 @@ def pretty_json(value: Any) -> bytes:
 
 def utc_timestamp() -> str:
     return (
-        dt.datetime.now(dt.timezone.utc)
+        dt.datetime.now(dt.UTC)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z")
@@ -489,7 +489,7 @@ def parse_retrieval_time(value: Any) -> dt.datetime:
         raise RuntimeError("audit metadata retrieval time is invalid")
     try:
         return dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=dt.timezone.utc
+            tzinfo=dt.UTC
         )
     except ValueError as error:
         raise RuntimeError("audit metadata retrieval time is invalid") from error
@@ -940,7 +940,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--central-ledger-base-ref")
     parser.add_argument(
-        "--audit-cutoff", default=dt.datetime.now(dt.timezone.utc).date().isoformat()
+        "--audit-cutoff", default=dt.datetime.now(dt.UTC).date().isoformat()
     )
     parser.add_argument("--rollout", default="2026-08-05-issue-169-full-authority-audit")
     parser.add_argument("--workers", type=int, default=16)

@@ -274,6 +274,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 "kafka4": ("4.2.1", "4.2.2"),
                 "spring-kafka4": ("4.1.1", "4.1.2"),
                 "ktor": ("3.5.2", "3.6.0"),
+                "kotlin": ("2.4.20", "2.4.21"),
             }
             self.assertEqual(
                 {
@@ -509,7 +510,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
 
     def test_kotlin_candidate_is_stable_and_all_plugin_aliases_are_aligned(self) -> None:
         versions = catalog_versions()
-        self.assertEqual(versions["kotlin"], "2.4.20")
+        self.assertEqual(versions["kotlin"], "2.4.21")
         audit = json.loads(AUDIT.read_text(encoding="utf-8"))
         kotlin_records = [
             record

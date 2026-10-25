@@ -3581,6 +3581,32 @@ finally:
             self.assertEqual((parent / "generated.json").read_bytes(), b"generated\n")
             self.assertEqual(list(parent.glob("*.tmp")), [])
 
+    def test_path_atomic_writer_preserves_replaced_temporary_inode(self) -> None:
+        load_script()
+        module = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            parent = root / "config"
+            parent.mkdir()
+            injected: list[Path] = []
+            original_replace = module.os.replace
+
+            def replace_then_inject(source: str | os.PathLike[str], destination: str | os.PathLike[str]) -> None:
+                original_replace(source, destination)
+                foreign_temporary = Path(source)
+                foreign_temporary.write_bytes(b"generated\n")
+                foreign_temporary.chmod(0o600)
+                injected.append(foreign_temporary)
+
+            with mock.patch.object(
+                module.os, "replace", side_effect=replace_then_inject
+            ), self.assertRaisesRegex(RuntimeError, "private entry changed externally"):
+                module.atomic_write_bytes(parent / "generated.json", b"generated\n")
+
+            self.assertEqual((parent / "generated.json").read_bytes(), b"generated\n")
+            self.assertEqual(len(injected), 1)
+            self.assertEqual(injected[0].read_bytes(), b"generated\n")
+
     def test_immutable_bytes_recovers_orphaned_private_cleanup_artifact(self) -> None:
         load_script()
         module = importlib.import_module("catalog_rollout_evidence")

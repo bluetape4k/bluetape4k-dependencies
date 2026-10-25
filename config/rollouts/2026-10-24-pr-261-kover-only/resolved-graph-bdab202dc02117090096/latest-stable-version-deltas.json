@@ -1,6 +1,6 @@
 {
   "audit": {
-    "path": "config/latest-stable-version-audit.json",
+    "path": "config/rollouts/2026-10-24-pr-261-kover-only/resolved-graph-bdab202dc02117090096/latest-stable-version-audit.json",
     "sha256": "b4722c49ac8034569c4db3d94cef3975c61063df1904973c1d57f1a9164489e9",
     "summary": {
       "authority-count": 523,
@@ -98,7 +98,7 @@
   ],
   "resolved-graph-evidence": {
     "observation-count": 2,
-    "path": "docs/releases/2026-10-25-pr-261-kover-0911-resolved-graphs.json",
+    "path": "config/rollouts/2026-10-24-pr-261-kover-only/resolved-graph-bdab202dc02117090096/resolved-graphs.json",
     "sha256": "bdab202dc02117090096b09ce0560cd98a8d48c02b95b42e65d74ae9a469c2f3",
     "spec-count": 1
   },
