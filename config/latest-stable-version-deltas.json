@@ -27,9 +27,14 @@
   },
   "candidate-validation-evidence": {
     "downstream-full-builds": {
-      "failures": null,
+      "failures": 2,
       "repositories": 9,
-      "status": "pending"
+      "status": "completed-with-failures",
+      "verified-repositories": 7,
+      "evidence": {
+        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+        "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+      }
     },
     "path": "docs/releases/2026-10-25-pr-261-kover-0911-candidate-receipt.json",
     "publication-poms": {
@@ -40,8 +45,32 @@
       "repositories": 9,
       "status": "verified-hosted-ci"
     },
-    "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-    "sha256": "24f3acd8529af9980b6224aa88eb43ef4e354c7721505aea31fbe6fcf1fca458"
+    "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
+    "sha256": "d23de58b58185c6525f971bd3a4e7e553c468032fda663e3f740c13ce299417f",
+    "remote-immutable-ref-evidence": {
+      "status": "verified-fresh-remote-commit-ref",
+      "remote": "origin",
+      "ref": "refs/heads/develop",
+      "commit": "c55e3478eed8131cbaa39974879f82b43e96c8f3",
+      "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
+      "checked-at": "2026-10-25T08:53:38Z",
+      "proof": "git ls-remote origin refs/heads/develop and git show <commit>:gradle/libs.versions.toml matched the candidate catalog SHA."
+    },
+    "baseline-comparison": {
+      "status": "completed",
+      "evidence": {
+        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+        "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+      }
+    },
+    "governance-checks": {
+      "status": "failed-unresolved-adoption-gaps",
+      "evidence": {
+        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+        "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+      },
+      "sync-shared-versions-gap-count": 7
+    }
   },
   "delta": [
     {

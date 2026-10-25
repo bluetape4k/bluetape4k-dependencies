@@ -6,41 +6,122 @@
   },
   "full-builds": {
     "assemble": {
-      "failures": 0,
+      "failures": 2,
       "repositories": 9,
-      "status": "pending"
+      "status": "pending",
+      "evidence": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json"
     },
-    "failures": null,
+    "failures": 2,
     "repositories": {
       "bluetape4k-aws": {
-        "status": "pending"
+        "head": "dfcc9ab32befe7afa74981a39996c0b8945d5f0e",
+        "status": "verified",
+        "exit-code": 0,
+        "elapsed-seconds": 451.95,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-aws-full-build.log",
+        "log-sha256": "ea9110d4037af125d0957a119e16fe6365e806ecb457cfb5240fe1e7cce322a7"
       },
       "bluetape4k-experimental": {
-        "status": "pending"
+        "head": "3229eb000f88cc5128b34cb448a85c114ef4abb8",
+        "status": "verified",
+        "exit-code": 0,
+        "elapsed-seconds": 120.02,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-experimental-full-build.log",
+        "log-sha256": "90c56d94ed9f7e9ed75a894d2c692a6ebc79d15f5e16e824110af2b1c6a091b8"
       },
       "bluetape4k-exposed": {
-        "status": "pending"
+        "head": "d7ad9334971f429e4b106ed2c6b5587eb7b503a2",
+        "status": "completed-with-failures",
+        "exit-code": 1,
+        "elapsed-seconds": 1320.09,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-exposed-full-build.log",
+        "log-sha256": "e22cc1d091bfb464cbd8dc1c80c8812995a5d1cb050b01c0179e1030977fa8c1",
+        "failure": {
+          "classification": "reproduced-with-baseline",
+          "failed-tasks": [
+            ":bluetape4k-exposed-r2dbc-redisson:test (248 tests: 130 failed, 3 skipped)"
+          ],
+          "summary": "H2 R2DBC Redisson 실패가 기존 catalog baseline에서도 재현되어 Kover catalog 변경의 원인으로 분류하지 않는다.",
+          "environment": "실패는 H2 R2DBC 시나리오에 집중되었고, candidate catalog 변경과의 인과는 별도 baseline 재검증 전까지 확정하지 않는다."
+        }
       },
       "bluetape4k-graph": {
-        "status": "pending"
+        "head": "d3f648c1ab64ec7d91f9d804f14852b4a7799961",
+        "status": "verified",
+        "exit-code": 0,
+        "elapsed-seconds": 480.04,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-graph-full-build.log",
+        "log-sha256": "0b02c0ad876ef6c33f425e4185bc9cfa0b4df1b1f6a0fb308b1fce37ae3945d8"
       },
       "bluetape4k-image": {
-        "status": "pending"
+        "head": "74653c5a6ca7b8cb02477dd2cb66c6238ab4ee5a",
+        "status": "verified",
+        "exit-code": 0,
+        "elapsed-seconds": 480.05,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-image-full-build.log",
+        "log-sha256": "253ff38a6d3c6f61b1ab9f57c3d1e4ea636a0152aa2c3655a8fdd86d0ba7be9e"
       },
       "bluetape4k-javers": {
-        "status": "pending"
+        "head": "67700b3bdca9d0858cf624504ea8dc275a0bfb43",
+        "status": "verified",
+        "exit-code": 0,
+        "elapsed-seconds": 150.11,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-javers-full-build.log",
+        "log-sha256": "571fca923130239e0f5262e2e6bcdd0af5d1bd849a7e8906a03bfa724da727ff"
       },
       "bluetape4k-leader": {
-        "status": "pending"
+        "head": "e9c1fbe29ef89d03423e4f515bf92145dda5009d",
+        "status": "verified",
+        "exit-code": 0,
+        "elapsed-seconds": 690.13,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-leader-full-build.log",
+        "log-sha256": "0b2c7e844bee2d6ceaf551b4ea3ff786889b3a22c448ae47f8f18e294ee67a68"
       },
       "bluetape4k-projects": {
-        "status": "pending"
+        "head": "8a9cd23a5b6677209645462a8caeb27a6129437e",
+        "status": "completed-with-failures",
+        "exit-code": 1,
+        "elapsed-seconds": 1950.43,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-projects-full-build.log",
+        "log-sha256": "ef531739de8f620942a5fd4ed6d6faceccfa40205f6604383b0c6f2fc7bc0a48",
+        "failure": {
+          "classification": "mixed-baseline-results",
+          "failed-tasks": [
+            ":bluetape4k-cache-core:test (3 documentation contract tests failed)",
+            ":bluetape4k-lettuce:test (1 FutureLettuceFairLock TTL test failed)",
+            ":bluetape4k-testcontainers:test (CockroachDB container readiness timeout; 1 failed, 9 skipped)"
+          ],
+          "summary": "cache-core 문서 계약 실패는 baseline에서도 재현되었고, Lettuce TTL 및 CockroachDB timeout은 후보와 baseline targeted 재실행에서 재현되지 않았다. full-build는 혼합된 실패와 daemon 종료로 완료되지 않았다.",
+          "environment": "Colima was running with Docker context default; CockroachDB container wait strategy timed out."
+        }
       },
       "bluetape4k-text": {
-        "status": "pending"
+        "head": "62e2a172c952822b806eed3c923e8f72c88802e3",
+        "status": "verified",
+        "exit-code": 0,
+        "elapsed-seconds": 90.03,
+        "log": "build/pr-261-kover-0911-post-merge/bluetape4k-text-full-build.log",
+        "log-sha256": "3158affd72b31629b26b592688f0dc42bb05c65921ec15c0e146d7f83126dbff"
       }
     },
-    "status": "pending"
+    "status": "completed-with-failures",
+    "evidence": {
+      "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+      "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+    },
+    "command": [
+      "./gradlew",
+      "build",
+      "-Pbluetape4kDependenciesCatalogPath=/Users/debop/work/bluetape4k/bluetape4k-dependencies/gradle/libs.versions.toml",
+      "--continue",
+      "--no-daemon",
+      "--no-configuration-cache",
+      "--no-build-cache",
+      "--no-parallel",
+      "--max-workers=1",
+      "--console=plain"
+    ],
+    "verified-repositories": 7
   },
   "publication-poms": {
     "ci-run": 40152590237,
@@ -50,7 +131,7 @@
     "repositories": 9,
     "status": "verified-hosted-ci"
   },
-  "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+  "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
   "resolved-graphs": {
     "evidence": {
       "observation-count": 2,
@@ -83,5 +164,29 @@
     ]
   },
   "status": "verified-local-candidate",
-  "verified-at": "2026-10-25"
+  "verified-at": "2026-10-25T09:15:46Z",
+  "remote-immutable-ref-evidence": {
+    "status": "verified-fresh-remote-commit-ref",
+    "remote": "origin",
+    "ref": "refs/heads/develop",
+    "commit": "c55e3478eed8131cbaa39974879f82b43e96c8f3",
+    "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
+    "checked-at": "2026-10-25T08:53:38Z",
+    "proof": "git ls-remote origin refs/heads/develop and git show <commit>:gradle/libs.versions.toml matched the candidate catalog SHA."
+  },
+  "baseline-comparison": {
+    "status": "completed",
+    "evidence": {
+      "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+      "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+    }
+  },
+  "governance-checks": {
+    "status": "failed-unresolved-adoption-gaps",
+    "evidence": {
+      "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+      "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+    },
+    "sync-shared-versions-gap-count": 7
+  }
 }

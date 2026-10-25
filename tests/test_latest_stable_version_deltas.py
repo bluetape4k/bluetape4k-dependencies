@@ -374,9 +374,19 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 candidate_receipt["catalog"]["sha256"],
                 document["candidate"]["catalog-sha256"],
             )
-            self.assertEqual(candidate_receipt["full-builds"]["status"], "pending")
+            if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
+                self.assertEqual(
+                    candidate_receipt["full-builds"]["status"],
+                    "completed-with-failures",
+                )
+                self.assertEqual(candidate_receipt["full-builds"]["failures"], 2)
+            else:
+                self.assertEqual(candidate_receipt["full-builds"]["status"], "pending")
             self.assertEqual(len(candidate_receipt["full-builds"]["repositories"]), 9)
-            self.assertEqual(candidate_receipt["full-builds"]["assemble"]["failures"], 0)
+            self.assertEqual(
+                candidate_receipt["full-builds"]["assemble"]["failures"],
+                2 if document["rollout"] == ISSUE_261_KOVER_ROLLOUT else 0,
+            )
             self.assertEqual(candidate_receipt["publication-poms"]["failures"], 0)
             self.assertEqual(candidate_receipt["publication-poms"]["files"], 192)
             self.assertEqual(candidate_receipt["resolved-graphs"]["status"], "verified")
@@ -392,12 +402,46 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                 graph_evidence["path"], document["resolved-graph-evidence"]["path"]
             )
             if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
-                self.assertEqual(candidate_receipt["full-builds"]["status"], "pending")
+                self.assertEqual(
+                    candidate_receipt["full-builds"]["status"],
+                    "completed-with-failures",
+                )
                 self.assertEqual(
                     candidate_receipt["full-builds"]["assemble"]["status"],
                     "pending",
                 )
-                self.assertIsNone(candidate_receipt["full-builds"]["failures"])
+                self.assertEqual(candidate_receipt["full-builds"]["failures"], 2)
+                self.assertEqual(
+                    candidate_receipt["full-builds"]["verified-repositories"], 7
+                )
+                self.assertEqual(
+                    candidate_receipt["full-builds"]["evidence"]["path"],
+                    "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+                )
+                full_build_evidence = candidate_receipt["full-builds"]["evidence"]
+                full_build_evidence_path = REPO_ROOT / full_build_evidence["path"]
+                full_build_evidence_bytes = full_build_evidence_path.read_bytes()
+                full_build_evidence_document = json.loads(full_build_evidence_bytes)
+                self.assertEqual(
+                    hashlib.sha256(full_build_evidence_bytes).hexdigest(),
+                    full_build_evidence["sha256"],
+                )
+                self.assertEqual(
+                    full_build_evidence_document["baseline-comparison"]["status"],
+                    "completed",
+                )
+                self.assertEqual(
+                    full_build_evidence_document["governance-checks"][
+                        "sync-shared-versions"
+                    ]["gap-count"],
+                    7,
+                )
+                self.assertEqual(
+                    full_build_evidence_document["repositories"]["bluetape4k-exposed"][
+                        "failure"
+                    ]["classification"],
+                    "reproduced-with-baseline",
+                )
             else:
                 projects_build = candidate_receipt["full-builds"]["projects-full-build"]
                 self.assertEqual(projects_build["status"], "completed-with-failures")
