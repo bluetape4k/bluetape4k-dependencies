@@ -391,13 +391,21 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(
                 graph_evidence["path"], document["resolved-graph-evidence"]["path"]
             )
-            projects_build = candidate_receipt["full-builds"]["projects-full-build"]
-            self.assertEqual(projects_build["status"], "completed-with-failures")
-            self.assertEqual(projects_build["failed-tasks"], 32)
-            self.assertEqual(projects_build["testcontainers"]["failed"], 10)
-            self.assertEqual(
-                projects_build["isolated-reruns"]["science"]["tests-failed"], 0
-            )
+            if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
+                self.assertEqual(candidate_receipt["full-builds"]["status"], "pending")
+                self.assertEqual(
+                    candidate_receipt["full-builds"]["assemble"]["status"],
+                    "pending",
+                )
+                self.assertIsNone(candidate_receipt["full-builds"]["failures"])
+            else:
+                projects_build = candidate_receipt["full-builds"]["projects-full-build"]
+                self.assertEqual(projects_build["status"], "completed-with-failures")
+                self.assertEqual(projects_build["failed-tasks"], 32)
+                self.assertEqual(projects_build["testcontainers"]["failed"], 10)
+                self.assertEqual(
+                    projects_build["isolated-reruns"]["science"]["tests-failed"], 0
+                )
 
     def test_rollout_audit_summary_matches_its_lifecycle(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))

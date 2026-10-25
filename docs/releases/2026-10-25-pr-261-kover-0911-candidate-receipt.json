@@ -1,0 +1,87 @@
+{
+  "catalog": {
+    "carrier-head": "8429ce08334c89eeba9114a9366c29b25fdfe6b6",
+    "content-commit": "8429ce08334c89eeba9114a9366c29b25fdfe6b6",
+    "sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15"
+  },
+  "full-builds": {
+    "assemble": {
+      "failures": 0,
+      "repositories": 9,
+      "status": "pending"
+    },
+    "failures": null,
+    "repositories": {
+      "bluetape4k-aws": {
+        "status": "pending"
+      },
+      "bluetape4k-experimental": {
+        "status": "pending"
+      },
+      "bluetape4k-exposed": {
+        "status": "pending"
+      },
+      "bluetape4k-graph": {
+        "status": "pending"
+      },
+      "bluetape4k-image": {
+        "status": "pending"
+      },
+      "bluetape4k-javers": {
+        "status": "pending"
+      },
+      "bluetape4k-leader": {
+        "status": "pending"
+      },
+      "bluetape4k-projects": {
+        "status": "pending"
+      },
+      "bluetape4k-text": {
+        "status": "pending"
+      }
+    },
+    "status": "pending"
+  },
+  "publication-poms": {
+    "ci-run": 40152590237,
+    "failures": 0,
+    "files": 192,
+    "job": "Cross-repository Publication POM Contract",
+    "repositories": 9,
+    "status": "verified-hosted-ci"
+  },
+  "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+  "resolved-graphs": {
+    "evidence": {
+      "observation-count": 2,
+      "path": "docs/releases/2026-10-25-pr-261-kover-0911-resolved-graphs.json",
+      "sha256": "bdab202dc02117090096b09ce0560cd98a8d48c02b95b42e65d74ae9a469c2f3",
+      "spec-count": 1
+    },
+    "status": "verified"
+  },
+  "rollout": "2026-10-24-pr-261-kover-only",
+  "schema-version": 1,
+  "scope": {
+    "excluded": [
+      "bluetape4k-workshop",
+      "clinic-appointment",
+      "exposed-r2dbc-workshop",
+      "exposed-workshop",
+      "timefold-workshop"
+    ],
+    "included": [
+      "bluetape4k-projects",
+      "bluetape4k-aws",
+      "bluetape4k-experimental",
+      "bluetape4k-exposed",
+      "bluetape4k-graph",
+      "bluetape4k-image",
+      "bluetape4k-javers",
+      "bluetape4k-leader",
+      "bluetape4k-text"
+    ]
+  },
+  "status": "verified-local-candidate",
+  "verified-at": "2026-10-25"
+}

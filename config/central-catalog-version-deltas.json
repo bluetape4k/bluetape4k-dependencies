@@ -719,17 +719,27 @@
       "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
       "delta-count": 1,
       "downstream-full-builds": {
+        "failures": null,
         "repositories": 9,
         "status": "pending"
       },
       "publication-pom-verification": {
+        "ci-run": 40152590237,
+        "failures": 0,
+        "files": 192,
+        "job": "Cross-repository Publication POM Contract",
         "repositories": 9,
-        "status": "pending"
+        "status": "verified-hosted-ci"
       },
       "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-      "resolved-graph-evidence": [],
+      "resolved-graph-evidence": {
+        "observation-count": 2,
+        "path": "docs/releases/2026-10-25-pr-261-kover-0911-resolved-graphs.json",
+        "sha256": "bdab202dc02117090096b09ce0560cd98a8d48c02b95b42e65d74ae9a469c2f3",
+        "spec-count": 1
+      },
       "rollout": "2026-10-24-pr-261-kover-only",
-      "status": "validation-pending"
+      "status": "verified-resolved-graph"
     }
   ],
   "delta": [
