@@ -96,6 +96,28 @@ def _capture_transaction_state_at(
         os.close(descriptor)
 
 
+def _capture_transaction_state_and_identity_at(
+    parent_descriptor: int, target_name: str
+) -> tuple[tuple[bool, bytes, int | None], tuple[int, int] | None]:
+    try:
+        descriptor = os.open(
+            target_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+    except FileNotFoundError:
+        return (False, b"", None), None
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.ENOTDIR}:
+            raise RuntimeError(
+                f"catalog rollout transaction target must be a regular file: {target_name}"
+            ) from error
+        raise
+    try:
+        state = _capture_open_descriptor_state(descriptor)
+        return state, _descriptor_identity(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def _capture_transaction_identity_at(
     parent_descriptor: int, target_name: str
 ) -> tuple[int, int] | None:
@@ -199,10 +221,32 @@ def _link_expected_entry_at(
         destination_name, _TARGET_OPEN_FLAGS, dir_fd=destination_parent
     )
     try:
+        destination_state = _capture_open_descriptor_state(destination_descriptor)
         destination_identity = _descriptor_identity(destination_descriptor)
     finally:
         os.close(destination_descriptor)
-    if destination_identity != expected_identity:
+    source_path_identity = _capture_transaction_identity_at(source_parent, source_name)
+    if destination_identity != expected_identity or source_path_identity != expected_identity:
+        if destination_identity != expected_identity:
+            try:
+                _remove_expected_target_at(
+                    destination_parent,
+                    destination_name,
+                    destination_state[1],
+                    destination_state[2]
+                    if destination_state[2] is not None
+                    else TRANSACTION_NEW_FILE_MODE,
+                    expected_identity=destination_identity,
+                )
+            except BaseException as cleanup_error:
+                raise RuntimeError(
+                    "catalog rollout transaction linked inode changed externally; "
+                    f"destination cleanup preserved: {destination_name}"
+                ) from cleanup_error
+        if source_path_identity != expected_identity:
+            raise RuntimeError(
+                f"catalog rollout transaction source changed externally: {source_name}"
+            )
         raise RuntimeError(
             f"catalog rollout transaction linked inode changed externally: {destination_name}"
         )
@@ -430,7 +474,56 @@ def _unlink_expected_entry_at(
                 )
         finally:
             os.close(final_descriptor)
-        os.unlink(final_name, dir_fd=parent_descriptor)
+        transaction_id = _infer_transaction_id_at(parent_descriptor)
+        quarantine_name = _quarantine_directory_name(
+            transaction_id, entry_name, expected_content, expected_mode
+        )
+        os.mkdir(quarantine_name, 0o700, dir_fd=parent_descriptor)
+        quarantine_descriptor = os.open(
+            quarantine_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        quarantine_identity = _descriptor_identity(quarantine_descriptor)
+        cleanup_name = f".owned.{os.getpid()}.{uuid.uuid4().hex}.unlink"
+        try:
+            _rename_no_replace_at(
+                parent_descriptor,
+                final_name,
+                quarantine_descriptor,
+                cleanup_name,
+                expected_identity=expected_identity,
+            )
+            cleanup_descriptor = os.open(
+                cleanup_name, _TARGET_OPEN_FLAGS, dir_fd=quarantine_descriptor
+            )
+            try:
+                cleanup_state = _capture_open_descriptor_state(cleanup_descriptor)
+                if (
+                    _descriptor_identity(cleanup_descriptor) != expected_identity
+                    or not _write_state_matches(
+                        cleanup_state, expected_content, expected_mode
+                    )
+                ):
+                    raise RuntimeError(
+                        f"catalog rollout transaction entry changed externally: {entry_name}"
+                    )
+            finally:
+                os.close(cleanup_descriptor)
+            if _capture_transaction_state_at(parent_descriptor, final_name)[0]:
+                raise RuntimeError(
+                    f"catalog rollout transaction entry changed externally: {entry_name}"
+                )
+            os.unlink(cleanup_name, dir_fd=quarantine_descriptor)
+            if _capture_transaction_identity_at(quarantine_descriptor, cleanup_name) is not None:
+                raise RuntimeError(
+                    f"catalog rollout transaction entry cleanup failed: {entry_name}"
+                )
+        finally:
+            os.close(quarantine_descriptor)
+            _remove_expected_directory_at(
+                parent_descriptor,
+                quarantine_name,
+                quarantine_identity,
+            )
     except BaseException:  # noqa: TRY203 - preserve the private recovery artifact
         # Leave the expected inode under whichever private name the last
         # anchored move reached; the quarantine recovery path will re-expose it.
@@ -451,6 +544,7 @@ def _remove_expected_directory_at(
         cleanup_name,
         expected_identity=expected_identity,
     )
+    removal_name: str | None = None
     try:
         cleanup_descriptor = os.open(
             cleanup_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
@@ -462,22 +556,49 @@ def _remove_expected_directory_at(
                 )
         finally:
             os.close(cleanup_descriptor)
-        os.rmdir(cleanup_name, dir_fd=parent_descriptor)
+        candidate_removal_name = (
+            f".{directory_name}.{os.getpid()}.{uuid.uuid4().hex}.remove"
+        )
+        _rename_no_replace_at(
+            parent_descriptor,
+            cleanup_name,
+            parent_descriptor,
+            candidate_removal_name,
+            expected_identity=expected_identity,
+        )
+        removal_name = candidate_removal_name
+        removal_descriptor = os.open(
+            removal_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        try:
+            if os.listdir(removal_descriptor):
+                raise RuntimeError(
+                    f"catalog rollout transaction directory is not empty: {directory_name}"
+                )
+            if _descriptor_identity(removal_descriptor) != expected_identity:
+                raise RuntimeError(
+                    f"catalog rollout transaction directory changed externally: {directory_name}"
+                )
+        finally:
+            os.close(removal_descriptor)
+        os.rmdir(removal_name, dir_fd=parent_descriptor)
+        removal_name = None
     except BaseException:
-        cleanup_exists = True
+        restore_name = removal_name or cleanup_name
+        restore_exists = True
         try:
             probe = os.open(
-                cleanup_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+                restore_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
             )
         except FileNotFoundError:
-            cleanup_exists = False
+            restore_exists = False
         else:
             os.close(probe)
-        if cleanup_exists:
+        if restore_exists:
             try:
                 _rename_no_replace_at(
                     parent_descriptor,
-                    cleanup_name,
+                    restore_name,
                     parent_descriptor,
                     directory_name,
                     expected_identity=expected_identity,
@@ -2278,6 +2399,7 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
             root_descriptor,
             absolute_path.relative_to(Path(absolute_path.anchor)).parts[:-1],
         )
+        _assert_directory_descriptor_matches_path(parent_descriptor, absolute_path.parent)
         descriptor = os.open(
             temporary_name,
             os.O_WRONLY
@@ -2293,6 +2415,9 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
             os.fsync(stream.fileno())
             temporary_identity = _descriptor_identity(stream.fileno())
         try:
+            _assert_directory_descriptor_matches_path(
+                parent_descriptor, absolute_path.parent
+            )
             _rename_no_replace_at(
                 parent_descriptor,
                 temporary_name,
@@ -2301,6 +2426,9 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
                 expected_identity=temporary_identity,
             )
         except FileExistsError:
+            _assert_directory_descriptor_matches_path(
+                parent_descriptor, absolute_path.parent
+            )
             try:
                 existing_descriptor = os.open(
                     absolute_path.name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
@@ -2316,25 +2444,29 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
             if existing_state[1] != content:
                 raise RuntimeError(f"immutable rollout snapshot differs: {absolute_path}")
         else:
+            _assert_directory_descriptor_matches_path(
+                parent_descriptor, absolute_path.parent
+            )
             _fsync_directory_fd(parent_descriptor)
         finally:
             if temporary_identity is not None:
-                try:
-                    if (
-                        _capture_transaction_identity_at(parent_descriptor, temporary_name)
-                        == temporary_identity
-                    ):
-                        _unlink_expected_entry_at(
-                            parent_descriptor,
-                            temporary_name,
-                            temporary_identity,
-                            content,
-                            0o600,
-                        )
-                except (OSError, RuntimeError):
-                    # Preserve an ambiguous private artifact for a later
-                    # diagnostic instead of deleting a replacement by name.
+                temporary_path_identity = _capture_transaction_identity_at(
+                    parent_descriptor, temporary_name
+                )
+                if temporary_path_identity is None:
                     pass
+                elif temporary_path_identity != temporary_identity:
+                    raise RuntimeError(
+                        "immutable rollout snapshot temporary artifact changed externally"
+                    )
+                else:
+                    _unlink_expected_entry_at(
+                        parent_descriptor,
+                        temporary_name,
+                        temporary_identity,
+                        content,
+                        0o600,
+                    )
     finally:
         if parent_descriptor is not None:
             os.close(parent_descriptor)
@@ -2904,13 +3036,17 @@ def _recover_catalog_rollout_transaction(
         journal_parent = os.dup(journal_parent_descriptor)
     supplied_target_parents = target_parent_descriptors or {}
     try:
-        journal_state = _capture_transaction_state_at(journal_parent, journal_name)
+        journal_state, journal_identity = _capture_transaction_state_and_identity_at(
+            journal_parent, journal_name
+        )
         identity_path = catalog_rollout_transaction_identity_path(repository_root)
         identity_name = identity_path.name
-        identity_state = _capture_transaction_state_at(journal_parent, identity_name)
+        identity_state, identity_identity = _capture_transaction_state_and_identity_at(
+            journal_parent, identity_name
+        )
         finalization_path = catalog_rollout_transaction_finalization_path(repository_root)
         finalization_name = finalization_path.name
-        finalization_state = _capture_transaction_state_at(
+        finalization_state, finalization_identity = _capture_transaction_state_and_identity_at(
             journal_parent, finalization_name
         )
         journal_candidates = _journal_tombstone_candidates(journal_parent, journal_name)
@@ -2937,7 +3073,7 @@ def _recover_catalog_rollout_transaction(
                 raise RuntimeError(
                     "catalog rollout transaction journal tombstone identity is missing"
                 )
-            identity_state = _capture_transaction_state_at(
+            identity_state, identity_identity = _capture_transaction_state_and_identity_at(
                 journal_parent, identity_name
             )
             identity_candidates = _identity_tombstone_candidates(
@@ -3054,6 +3190,7 @@ def _recover_catalog_rollout_transaction(
                         transaction_id=transaction_identity[0]
                         if transaction_identity is not None
                         else None,
+                        expected_identity=identity_identity,
                     )
                 if finalization_state[0]:
                     _remove_expected_target_at(
@@ -3066,12 +3203,15 @@ def _recover_catalog_rollout_transaction(
                         transaction_id=transaction_identity[0]
                         if transaction_identity is not None
                         else None,
+                        expected_identity=finalization_identity,
                     )
                 return False
             _restore_transaction_journal_tombstone_at(
                 journal_parent, journal_name, transaction_identity
             )
-            journal_state = _capture_transaction_state_at(journal_parent, journal_name)
+            journal_state, journal_identity = _capture_transaction_state_and_identity_at(
+                journal_parent, journal_name
+            )
             journal_candidates = _journal_tombstone_candidates(journal_parent, journal_name)
         transaction = _parse_transaction_journal(journal_state[1])
         requires_identity = True
@@ -3294,10 +3434,35 @@ def _recover_catalog_rollout_transaction(
                         )
                     )
                     if published_identity is None:
-                        raise RuntimeError(
-                            "catalog rollout transaction post-publish inode evidence is missing: "
-                            f"{target}"
+                        # The target replace can be durable while the process
+                        # dies before the inode progress sidecar is updated.
+                        # Bytes alone do not prove ownership, so restore the
+                        # journal's prior state and let the publish loop retry
+                        # with a fresh durable inode proof.
+                        _restore_transaction_target(
+                            target,
+                            prior_exists,
+                            prior_content,
+                            prior_mode,
+                            content,
+                            desired_mode,
+                            parent_descriptor=parent_descriptor,
+                            target_name=target_name,
+                            transaction_id=transaction_identity[0]
+                            if transaction_identity is not None
+                            else None,
                         )
+                        current = _capture_transaction_state_at(
+                            parent_descriptor, target_name
+                        )
+                        if not _transaction_state_matches(
+                            current, prior_exists, prior_content, prior_mode
+                        ):
+                            raise RuntimeError(
+                                "catalog rollout transaction rollback mismatch: "
+                                f"{target}"
+                            )
+                        continue
                     if published_identity is None or _capture_transaction_identity_at(
                         parent_descriptor, target_name
                     ) != published_identity:
@@ -3320,7 +3485,7 @@ def _recover_catalog_rollout_transaction(
             )
 
             def persist_published_identities() -> None:
-                nonlocal identity_state
+                nonlocal identity_identity, identity_state
                 if transaction_identity is None:
                     return
                 identity_content = _transaction_identity_bytes(
@@ -3349,7 +3514,7 @@ def _recover_catalog_rollout_transaction(
                     target_name=identity_name,
                     transaction_id=transaction_identity[0],
                 )
-                identity_state = _capture_transaction_state_at(
+                identity_state, identity_identity = _capture_transaction_state_and_identity_at(
                     journal_parent, identity_name
                 )
 
@@ -3401,10 +3566,36 @@ def _recover_catalog_rollout_transaction(
                             target.relative_to(repository_root).as_posix()
                         )
                         if published_identity is None:
-                            raise RuntimeError(
-                                "catalog rollout transaction post-publish inode evidence is missing: "
-                                f"{target}"
+                            # A process may die after the target replace is
+                            # durable but before the published inode map is
+                            # persisted.  The current desired bytes are not a
+                            # durable ownership proof, so roll this target
+                            # back to the journal's prior state and let the
+                            # normal publish loop retry it with fresh proof.
+                            _restore_transaction_target(
+                                target,
+                                prior_exists,
+                                prior_content,
+                                prior_mode,
+                                content,
+                                desired_mode,
+                                parent_descriptor=parent_descriptor,
+                                target_name=target_name,
+                                transaction_id=transaction_identity[0]
+                                if transaction_identity is not None
+                                else None,
                             )
+                            current = _capture_transaction_state_at(
+                                parent_descriptor, target_name
+                            )
+                            if not _transaction_state_matches(
+                                current, prior_exists, prior_content, prior_mode
+                            ):
+                                raise RuntimeError(
+                                    "catalog rollout transaction rollback mismatch: "
+                                    f"{target}"
+                                )
+                            continue
                         if _capture_transaction_identity_at(
                             parent_descriptor, target_name
                         ) != published_identity:
@@ -3550,7 +3741,7 @@ def _recover_catalog_rollout_transaction(
                         if transaction_identity is not None
                         else None,
                     )
-                    finalization_state = _capture_transaction_state_at(
+                    finalization_state, finalization_identity = _capture_transaction_state_and_identity_at(
                         journal_parent, finalization_name
                     )
 
@@ -3596,10 +3787,7 @@ def _recover_catalog_rollout_transaction(
                     else None,
                 )
             if identity_state[0]:
-                identity_cleanup_identity = _capture_transaction_identity_at(
-                    journal_parent, identity_name
-                )
-                if identity_cleanup_identity is None:
+                if identity_identity is None:
                     raise RuntimeError(
                         "catalog rollout transaction identity changed externally"
                     )
@@ -3613,7 +3801,7 @@ def _recover_catalog_rollout_transaction(
                     transaction_id=transaction_identity[0]
                     if transaction_identity is not None
                     else None,
-                    expected_identity=identity_cleanup_identity,
+                    expected_identity=identity_identity,
                 )
             if _capture_transaction_state_at(journal_parent, identity_name)[0]:
                 raise RuntimeError(
@@ -3632,10 +3820,7 @@ def _recover_catalog_rollout_transaction(
                     "catalog rollout transaction journal changed externally"
                 )
             try:
-                journal_cleanup_identity = _capture_transaction_identity_at(
-                    journal_parent, journal_name
-                )
-                if journal_cleanup_identity is None:
+                if journal_identity is None:
                     raise RuntimeError(
                         "catalog rollout transaction journal changed externally"
                     )
@@ -3651,7 +3836,7 @@ def _recover_catalog_rollout_transaction(
                     transaction_id=transaction_identity[0]
                     if transaction_identity is not None
                     else None,
-                    expected_identity=journal_cleanup_identity,
+                    expected_identity=journal_identity,
                 )
             except (OSError, RuntimeError) as error:
                 raise RuntimeError(
@@ -3659,10 +3844,7 @@ def _recover_catalog_rollout_transaction(
                 ) from error
             if finalization_content is not None:
                 try:
-                    finalization_cleanup_identity = _capture_transaction_identity_at(
-                        journal_parent, finalization_name
-                    )
-                    if finalization_cleanup_identity is None:
+                    if finalization_identity is None:
                         raise RuntimeError(
                             "catalog rollout transaction finalization marker changed externally"
                         )
@@ -3678,7 +3860,7 @@ def _recover_catalog_rollout_transaction(
                         transaction_id=transaction_identity[0]
                         if transaction_identity is not None
                         else None,
-                        expected_identity=finalization_cleanup_identity,
+                        expected_identity=finalization_identity,
                     )
                 except (OSError, RuntimeError) as error:
                     raise RuntimeError(
