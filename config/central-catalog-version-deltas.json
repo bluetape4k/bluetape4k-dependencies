@@ -719,9 +719,14 @@
       "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
       "delta-count": 1,
       "downstream-full-builds": {
-        "failures": null,
+        "failures": 2,
         "repositories": 9,
-        "status": "pending"
+        "status": "completed-with-failures",
+        "verified-repositories": 7,
+        "evidence": {
+          "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+          "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
+        }
       },
       "publication-pom-verification": {
         "ci-run": 40152590237,
@@ -731,7 +736,7 @@
         "repositories": 9,
         "status": "verified-hosted-ci"
       },
-      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
       "resolved-graph-evidence": {
         "observation-count": 2,
         "path": "docs/releases/2026-10-25-pr-261-kover-0911-resolved-graphs.json",

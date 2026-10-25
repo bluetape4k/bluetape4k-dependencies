@@ -145,6 +145,10 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
                 validation["downstream-full-builds"]["status"],
             )
             self.assertEqual(
+                rollout["downstream-full-builds"]["evidence"]["sha256"],
+                validation["downstream-full-builds"]["evidence"]["sha256"],
+            )
+            self.assertEqual(
                 rollout["publication-pom-verification"]["status"],
                 validation["publication-poms"]["status"],
             )
@@ -153,7 +157,7 @@ class CentralCatalogVersionDeltaLedgerTest(unittest.TestCase):
             )
             self.assertEqual(
                 rollout["remote-immutable-ref-verification"],
-                "pending-candidate-commit-and-push",
+                validation["remote-immutable-ref-verification"],
             )
 
     def test_issue_1832_resolved_graph_evidence_sha256_matches_receipt(self) -> None:

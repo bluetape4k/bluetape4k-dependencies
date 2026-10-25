@@ -1,0 +1,276 @@
+{
+  "schema-version": 1,
+  "status": "completed-with-failures",
+  "verified-at": "2026-10-25T09:15:46Z",
+  "rollout": "2026-10-24-pr-261-kover-only",
+  "catalog": {
+    "carrier-commit": "8429ce08334c89eeba9114a9366c29b25fdfe6b6",
+    "merge-commit": "c55e3478eed8131cbaa39974879f82b43e96c8f3",
+    "sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15"
+  },
+  "remote-immutable-ref": {
+    "status": "verified-fresh-remote-commit-ref",
+    "remote": "origin",
+    "ref": "refs/heads/develop",
+    "commit": "c55e3478eed8131cbaa39974879f82b43e96c8f3",
+    "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
+    "checked-at": "2026-10-25T08:53:38Z",
+    "proof": "git ls-remote origin refs/heads/develop and git show <commit>:gradle/libs.versions.toml matched the candidate catalog SHA."
+  },
+  "command": {
+    "argv": [
+      "./gradlew",
+      "build",
+      "-Pbluetape4kDependenciesCatalogPath=/Users/debop/work/bluetape4k/bluetape4k-dependencies/gradle/libs.versions.toml",
+      "--continue",
+      "--no-daemon",
+      "--no-configuration-cache",
+      "--no-build-cache",
+      "--no-parallel",
+      "--max-workers=1",
+      "--console=plain"
+    ],
+    "catalog-path": "gradle/libs.versions.toml",
+    "working-tree-policy": "canonical clean develop checkouts; bluetape4k-exposed used a detached exact-head worktree to preserve a dirty canonical feature worktree."
+  },
+  "environment": {
+    "colima": "running",
+    "docker-context": "default",
+    "docker-server": "29.2.1",
+    "testcontainers-sequencing": "sequential repositories, max-workers=1, no-parallel"
+  },
+  "repositories": {
+    "bluetape4k-projects": {
+      "head": "8a9cd23a5b6677209645462a8caeb27a6129437e",
+      "status": "completed-with-failures",
+      "exit-code": 1,
+      "elapsed-seconds": 1950.43,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-projects-full-build.log",
+      "log-sha256": "ef531739de8f620942a5fd4ed6d6faceccfa40205f6604383b0c6f2fc7bc0a48",
+      "failure": {
+        "classification": "mixed-baseline-results",
+        "failed-tasks": [
+          ":bluetape4k-cache-core:test (3 documentation contract tests failed)",
+          ":bluetape4k-lettuce:test (1 FutureLettuceFairLock TTL test failed)",
+          ":bluetape4k-testcontainers:test (CockroachDB container readiness timeout; 1 failed, 9 skipped)"
+        ],
+        "summary": "cache-core의 3개 문서 계약 실패는 baseline에서도 재현되었고, Lettuce TTL 및 CockroachDB timeout은 후보와 baseline targeted 재실행에서 재현되지 않았다. full-build는 혼합된 실패와 daemon 종료로 완료되지 않았다.",
+        "environment": "Colima was running with Docker context default; CockroachDB container wait strategy timed out."
+      }
+    },
+    "bluetape4k-aws": {
+      "head": "dfcc9ab32befe7afa74981a39996c0b8945d5f0e",
+      "status": "verified",
+      "exit-code": 0,
+      "elapsed-seconds": 451.95,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-aws-full-build.log",
+      "log-sha256": "ea9110d4037af125d0957a119e16fe6365e806ecb457cfb5240fe1e7cce322a7"
+    },
+    "bluetape4k-experimental": {
+      "head": "3229eb000f88cc5128b34cb448a85c114ef4abb8",
+      "status": "verified",
+      "exit-code": 0,
+      "elapsed-seconds": 120.02,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-experimental-full-build.log",
+      "log-sha256": "90c56d94ed9f7e9ed75a894d2c692a6ebc79d15f5e16e824110af2b1c6a091b8"
+    },
+    "bluetape4k-exposed": {
+      "head": "d7ad9334971f429e4b106ed2c6b5587eb7b503a2",
+      "status": "completed-with-failures",
+      "exit-code": 1,
+      "elapsed-seconds": 1320.09,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-exposed-full-build.log",
+      "log-sha256": "e22cc1d091bfb464cbd8dc1c80c8812995a5d1cb050b01c0179e1030977fa8c1",
+      "failure": {
+        "classification": "reproduced-with-baseline",
+        "failed-tasks": [
+          ":bluetape4k-exposed-r2dbc-redisson:test (248 tests: 130 failed, 3 skipped)"
+        ],
+        "summary": "H2 R2DBC Redisson의 USERS table missing, empty cache assertions, invalidate assertions, Awaitility timeout이 기존 catalog baseline에서도 동일하게 재현되어 Kover catalog 변경의 원인으로 분류하지 않는다.",
+        "environment": "실패는 H2 R2DBC 시나리오에 집중되었고, candidate catalog 변경과의 인과는 별도 baseline 재검증 전까지 확정하지 않는다."
+      }
+    },
+    "bluetape4k-graph": {
+      "head": "d3f648c1ab64ec7d91f9d804f14852b4a7799961",
+      "status": "verified",
+      "exit-code": 0,
+      "elapsed-seconds": 480.04,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-graph-full-build.log",
+      "log-sha256": "0b02c0ad876ef6c33f425e4185bc9cfa0b4df1b1f6a0fb308b1fce37ae3945d8"
+    },
+    "bluetape4k-image": {
+      "head": "74653c5a6ca7b8cb02477dd2cb66c6238ab4ee5a",
+      "status": "verified",
+      "exit-code": 0,
+      "elapsed-seconds": 480.05,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-image-full-build.log",
+      "log-sha256": "253ff38a6d3c6f61b1ab9f57c3d1e4ea636a0152aa2c3655a8fdd86d0ba7be9e"
+    },
+    "bluetape4k-javers": {
+      "head": "67700b3bdca9d0858cf624504ea8dc275a0bfb43",
+      "status": "verified",
+      "exit-code": 0,
+      "elapsed-seconds": 150.11,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-javers-full-build.log",
+      "log-sha256": "571fca923130239e0f5262e2e6bcdd0af5d1bd849a7e8906a03bfa724da727ff"
+    },
+    "bluetape4k-leader": {
+      "head": "e9c1fbe29ef89d03423e4f515bf92145dda5009d",
+      "status": "verified",
+      "exit-code": 0,
+      "elapsed-seconds": 690.13,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-leader-full-build.log",
+      "log-sha256": "0b2c7e844bee2d6ceaf551b4ea3ff786889b3a22c448ae47f8f18e294ee67a68"
+    },
+    "bluetape4k-text": {
+      "head": "62e2a172c952822b806eed3c923e8f72c88802e3",
+      "status": "verified",
+      "exit-code": 0,
+      "elapsed-seconds": 90.03,
+      "log": "build/pr-261-kover-0911-post-merge/bluetape4k-text-full-build.log",
+      "log-sha256": "3158affd72b31629b26b592688f0dc42bb05c65921ec15c0e146d7f83126dbff"
+    }
+  },
+  "summary": {
+    "repositories": 9,
+    "verified": 7,
+    "failures": 2,
+    "exit-code-failures": 2
+  },
+  "logs": {
+    "summary": "build/pr-261-kover-0911-post-merge/summary.json",
+    "summary-sha256": "e3edaf3ad5b4d1e21673e13d63ca2e8f8ec9df772f61752b08fe9c8591939bb6"
+  },
+  "baseline-comparison": {
+    "status": "completed",
+    "baseline-catalog": {
+      "commit": "eb1c08e5ad056fb1f92edbecbeee065d538199ad",
+      "sha256": "11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30",
+      "description": "PR #261 merge parent catalog before Kover 0.9.11."
+    },
+    "repositories": {
+      "bluetape4k-projects": {
+        "cache-core": {
+          "status": "reproduced-baseline-failure",
+          "tests": 720,
+          "failures": 3,
+          "skipped": 0,
+          "exit-code": 0,
+          "log": "build/pr-261-kover-0911-post-merge/baseline-comparison/projects-targeted.log",
+          "log-sha256": "bcd799aeb47c6319b3e134cd7258852b8c87f274d526bbf526dae5287da213f8",
+          "failed-tests": [
+            "NearJCacheDocumentationTest: 3 documentation contract tests"
+          ]
+        },
+        "lettuce": {
+          "status": "verified-baseline-targeted",
+          "tests": 951,
+          "failures": 0,
+          "skipped": 0,
+          "exit-code": 0,
+          "log": "build/pr-261-kover-0911-post-merge/baseline-comparison/projects-targeted.log",
+          "log-sha256": "bcd799aeb47c6319b3e134cd7258852b8c87f274d526bbf526dae5287da213f8",
+          "note": "FutureLettuceFairLockTest TTL case passed under the baseline catalog."
+        },
+        "testcontainers": {
+          "status": "verified-baseline-targeted",
+          "tests": 3,
+          "failures": 0,
+          "skipped": 0,
+          "exit-code": 0,
+          "log": "build/pr-261-kover-0911-post-merge/baseline-comparison/projects-cockroach.log",
+          "log-sha256": "50ec35519d6144d45cb09ed604cc41f0c0d26306e415fc608691398b2cf54f0c",
+          "test-class": "io.bluetape4k.testcontainers.database.CockroachServerTest",
+          "note": "CockroachServerTest passed with the baseline catalog after the full-build timeout."
+        }
+      },
+      "bluetape4k-exposed": {
+        "r2dbc-redisson": {
+          "status": "reproduced-baseline-failure",
+          "tests": 248,
+          "failures": 130,
+          "skipped": 3,
+          "exit-code": 0,
+          "log": "build/pr-261-kover-0911-post-merge/baseline-comparison/exposed-targeted.log",
+          "log-sha256": "385226d97930a948a1e9bc5582ed381fc7f0303b10299491c7c0b245829d0dfa",
+          "note": "H2 R2DBC USERS-table and Awaitility failures reproduce without the Kover catalog change."
+        }
+      }
+    },
+    "interpretation": "Projects cache-core and Exposed r2dbc-redisson failures reproduce under the pre-merge catalog. Projects Lettuce and Cockroach failures did not reproduce in targeted reruns, so the full-build failures remain environment-sensitive and are not attributed to Kover 0.9.11."
+  },
+  "candidate-targeted-rechecks": {
+    "bluetape4k-projects": {
+      "lettuce": {
+        "status": "verified-candidate-targeted",
+        "tests": 8,
+        "failures": 0,
+        "skipped": 0,
+        "exit-code": 0,
+        "log": "build/pr-261-kover-0911-post-merge/baseline-comparison/projects-candidate-lettuce.log",
+        "log-sha256": "9031e5875a574b182b79f9cfeb432fab293975a4f35382213149979ff34d4dcc",
+        "test-class": "io.bluetape4k.redis.lettuce.lock.FutureLettuceFairLockTest"
+      },
+      "testcontainers": {
+        "status": "verified-candidate-targeted",
+        "tests": 3,
+        "failures": 0,
+        "skipped": 0,
+        "exit-code": 0,
+        "log": "build/pr-261-kover-0911-post-merge/baseline-comparison/projects-candidate-cockroach.log",
+        "log-sha256": "f99441856b017fee382011c1e2eb772d27cd436bd6e142590746e11f0fc691c1",
+        "test-class": "io.bluetape4k.testcontainers.database.CockroachServerTest"
+      }
+    }
+  },
+  "governance-checks": {
+    "sync-shared-versions": {
+      "status": "failed-unresolved-adoption-gaps",
+      "exit-code": 1,
+      "command": [
+        "python3",
+        "scripts/sync-shared-versions.py",
+        "--workspace",
+        "..",
+        "--check",
+        "--summary"
+      ],
+      "gap-count": 7,
+      "gaps": [
+        "bluetape4k-projects: library-coordinate-duplicate amqp-client local=com.rabbitmq:amqp-client central=amqp-client",
+        "bluetape4k-projects: library-coordinate-duplicate bouncycastle-bcprov local=org.bouncycastle:bcprov-jdk18on central=bouncycastle-bcprov",
+        "bluetape4k-projects: library-coordinate-duplicate bouncycastle-bcprov-lts8on local=org.bouncycastle:bcprov-lts8on central=bouncycastle-bcprov-lts8on",
+        "bluetape4k-projects: library-coordinate-duplicate freemarker local=org.freemarker:freemarker central=freemarker",
+        "bluetape4k-projects: library-coordinate-duplicate jackson-core local=com.fasterxml.jackson.core:jackson-core central=jackson-core",
+        "bluetape4k-projects: library-coordinate-duplicate jsoup local=org.jsoup:jsoup central=jsoup",
+        "bluetape4k-projects: library-coordinate-duplicate netty-handler local=io.netty:netty-handler central=netty4-handler"
+      ],
+      "classification": "pre-existing-looking-adoption-gaps; causality-not-established"
+    },
+    "sync-managed-catalog": {
+      "status": "verified",
+      "exit-code": 0
+    },
+    "sync-dependabot-ignores": {
+      "status": "verified",
+      "exit-code": 0
+    },
+    "audit-latest-stable": {
+      "status": "verified",
+      "exit-code": 0
+    },
+    "verify-publication-poms": {
+      "status": "blocked-dirty-publisher",
+      "exit-code": 1,
+      "command": [
+        "python3",
+        "scripts/verify-publication-poms.py",
+        "--workspace",
+        "..",
+        "--summary"
+      ],
+      "reason": "publisher repository is dirty: bluetape4k-exposed",
+      "note": "The dirty Exposed canonical worktree was preserved; hosted CI remains the recorded 192-file/0-failure publication POM proof."
+    }
+  }
+}
