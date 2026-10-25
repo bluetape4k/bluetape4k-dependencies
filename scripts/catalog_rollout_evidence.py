@@ -2266,39 +2266,79 @@ def atomic_write_bytes(
 
 
 def write_immutable_bytes(path: Path, content: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
-    )
-    temporary_path = Path(temporary_name)
+    absolute_path = path.absolute()
+    if not absolute_path.name or absolute_path == Path(absolute_path.anchor):
+        raise RuntimeError("immutable rollout snapshot file path is invalid")
+    root_descriptor = os.open(Path(absolute_path.anchor), _DIRECTORY_OPEN_FLAGS)
+    parent_descriptor: int | None = None
+    temporary_name = f".{absolute_path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
+    temporary_identity: tuple[int, int] | None = None
     try:
+        parent_descriptor = _open_or_create_directory_at(
+            root_descriptor,
+            absolute_path.relative_to(Path(absolute_path.anchor)).parts[:-1],
+        )
+        descriptor = os.open(
+            temporary_name,
+            os.O_WRONLY
+            | os.O_CREAT
+            | os.O_EXCL
+            | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+            dir_fd=parent_descriptor,
+        )
         with os.fdopen(descriptor, "wb") as stream:
             stream.write(content)
             stream.flush()
             os.fsync(stream.fileno())
-        parent_descriptor = os.open(path.parent, _DIRECTORY_OPEN_FLAGS)
+            temporary_identity = _descriptor_identity(stream.fileno())
         try:
-            temporary_identity = _capture_transaction_identity_at(
-                parent_descriptor, temporary_path.name
-            )
-            if temporary_identity is None:
-                raise RuntimeError(f"immutable rollout snapshot temporary file missing: {path}")
             _rename_no_replace_at(
                 parent_descriptor,
-                temporary_path.name,
+                temporary_name,
                 parent_descriptor,
-                path.name,
+                absolute_path.name,
                 expected_identity=temporary_identity,
             )
         except FileExistsError:
-            if path.read_bytes() != content:
-                raise RuntimeError(f"immutable rollout snapshot differs: {path}")
+            try:
+                existing_descriptor = os.open(
+                    absolute_path.name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+                )
+            except OSError as error:
+                raise RuntimeError(
+                    f"immutable rollout snapshot differs: {absolute_path}"
+                ) from error
+            try:
+                existing_state = _capture_open_descriptor_state(existing_descriptor)
+            finally:
+                os.close(existing_descriptor)
+            if existing_state[1] != content:
+                raise RuntimeError(f"immutable rollout snapshot differs: {absolute_path}")
         else:
-            _fsync_directory(path.parent)
+            _fsync_directory_fd(parent_descriptor)
         finally:
-            os.close(parent_descriptor)
+            if temporary_identity is not None:
+                try:
+                    if (
+                        _capture_transaction_identity_at(parent_descriptor, temporary_name)
+                        == temporary_identity
+                    ):
+                        _unlink_expected_entry_at(
+                            parent_descriptor,
+                            temporary_name,
+                            temporary_identity,
+                            content,
+                            0o600,
+                        )
+                except (OSError, RuntimeError):
+                    # Preserve an ambiguous private artifact for a later
+                    # diagnostic instead of deleting a replacement by name.
+                    pass
     finally:
-        temporary_path.unlink(missing_ok=True)
+        if parent_descriptor is not None:
+            os.close(parent_descriptor)
+        os.close(root_descriptor)
 
 
 def _fsync_directory(path: Path) -> None:

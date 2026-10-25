@@ -2740,6 +2740,22 @@ finally:
 
             self.assertEqual(list(outside.rglob("*")), [])
 
+    def test_immutable_bytes_rejects_symlinked_parent_before_external_write(self) -> None:
+        load_script()
+        module = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory, tempfile.TemporaryDirectory() as outside_directory:
+            root = Path(temporary_directory).resolve()
+            outside = Path(outside_directory).resolve()
+            (root / "config").symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaisesRegex(RuntimeError, "snapshot parent changed externally"):
+                module.write_immutable_bytes(
+                    root / "config" / "rollouts" / "candidate" / "receipt.json",
+                    b"receipt\n",
+                )
+
+            self.assertEqual(list(outside.rglob("*")), [])
+
     def test_snapshot_rollout_evidence_pins_an_immutable_resolved_graph_receipt(self) -> None:
         module = load_script()
         receipt_bytes = b'{"status":"verified-resolved-graph"}\n'
