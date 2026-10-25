@@ -138,6 +138,27 @@ def _capture_transaction_identity_at(
         os.close(descriptor)
 
 
+def _capture_directory_identity_at(
+    parent_descriptor: int, directory_name: str
+) -> tuple[int, int] | None:
+    try:
+        descriptor = os.open(
+            directory_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+    except FileNotFoundError:
+        return None
+    except OSError as error:
+        if error.errno in {errno.ELOOP, errno.ENOTDIR}:
+            raise RuntimeError(
+                f"catalog rollout transaction directory must remain a directory: {directory_name}"
+            ) from error
+        raise
+    try:
+        return _descriptor_identity(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 def _open_anchored_parent(
     root_descriptor: int, repository_root: Path, target: Path
 ) -> tuple[int, str]:
@@ -217,38 +238,41 @@ def _link_expected_entry_at(
         dst_dir_fd=destination_parent,
         follow_symlinks=False,
     )
-    destination_descriptor = os.open(
-        destination_name, _TARGET_OPEN_FLAGS, dir_fd=destination_parent
-    )
     try:
-        destination_state = _capture_open_descriptor_state(destination_descriptor)
+        destination_descriptor = os.open(
+            destination_name, _TARGET_OPEN_FLAGS, dir_fd=destination_parent
+        )
+    except OSError as error:
+        # ``os.link(..., follow_symlinks=False)`` can publish a symlink when
+        # the source path is replaced between the initial identity check and
+        # the link syscall.  Do not try to clean up an entry that we can no
+        # longer identify as our regular-file inode.
+        raise RuntimeError(
+            f"catalog rollout transaction linked destination changed externally: {destination_name}"
+        ) from error
+    try:
+        _capture_open_descriptor_state(destination_descriptor)
         destination_identity = _descriptor_identity(destination_descriptor)
     finally:
         os.close(destination_descriptor)
+    initial_destination_path_identity = _capture_transaction_identity_at(
+        destination_parent, destination_name
+    )
     source_path_identity = _capture_transaction_identity_at(source_parent, source_name)
-    if destination_identity != expected_identity or source_path_identity != expected_identity:
-        if destination_identity != expected_identity:
-            try:
-                _remove_expected_target_at(
-                    destination_parent,
-                    destination_name,
-                    destination_state[1],
-                    destination_state[2]
-                    if destination_state[2] is not None
-                    else TRANSACTION_NEW_FILE_MODE,
-                    expected_identity=destination_identity,
-                )
-            except BaseException as cleanup_error:
-                raise RuntimeError(
-                    "catalog rollout transaction linked inode changed externally; "
-                    f"destination cleanup preserved: {destination_name}"
-                ) from cleanup_error
-        if source_path_identity != expected_identity:
-            raise RuntimeError(
-                f"catalog rollout transaction source changed externally: {source_name}"
-            )
+    destination_path_identity = _capture_transaction_identity_at(
+        destination_parent, destination_name
+    )
+    if source_path_identity != expected_identity:
         raise RuntimeError(
-            f"catalog rollout transaction linked inode changed externally: {destination_name}"
+            f"catalog rollout transaction source changed externally: {source_name}"
+        )
+    if (
+        destination_identity != expected_identity
+        or initial_destination_path_identity != destination_identity
+        or destination_path_identity != destination_identity
+    ):
+        raise RuntimeError(
+            f"catalog rollout transaction linked destination changed externally: {destination_name}"
         )
     return destination_identity
 
@@ -420,6 +444,8 @@ def _unlink_expected_entry_at(
     expected_identity: tuple[int, int],
     expected_content: bytes,
     expected_mode: int,
+    *,
+    quarantine_directory: bool = True,
 ) -> None:
     """Remove an expected inode without unlinking a replacement path entry."""
     deletion_name = f"{entry_name}.delete"
@@ -475,6 +501,40 @@ def _unlink_expected_entry_at(
         finally:
             os.close(final_descriptor)
         transaction_id = _infer_transaction_id_at(parent_descriptor)
+        if not quarantine_directory:
+            terminal_name = (
+                f"{_quarantine_rollback_base_name(final_name)}."
+                f"{os.getpid()}.{uuid.uuid4().hex}.rollback"
+            )
+            _rename_no_replace_at(
+                parent_descriptor,
+                final_name,
+                parent_descriptor,
+                terminal_name,
+                expected_identity=expected_identity,
+            )
+            terminal_descriptor = os.open(
+                terminal_name, _TARGET_OPEN_FLAGS, dir_fd=parent_descriptor
+            )
+            try:
+                terminal_state = _capture_open_descriptor_state(terminal_descriptor)
+                if (
+                    _descriptor_identity(terminal_descriptor) != expected_identity
+                    or not _write_state_matches(
+                        terminal_state, expected_content, expected_mode
+                    )
+                ):
+                    raise RuntimeError(
+                        f"catalog rollout transaction entry changed externally: {entry_name}"
+                    )
+            finally:
+                os.close(terminal_descriptor)
+            os.unlink(terminal_name, dir_fd=parent_descriptor)
+            if _capture_transaction_identity_at(parent_descriptor, terminal_name) is not None:
+                raise RuntimeError(
+                    f"catalog rollout transaction entry cleanup failed: {entry_name}"
+                )
+            return
         quarantine_name = _quarantine_directory_name(
             transaction_id, entry_name, expected_content, expected_mode
         )
@@ -512,8 +572,34 @@ def _unlink_expected_entry_at(
                 raise RuntimeError(
                     f"catalog rollout transaction entry changed externally: {entry_name}"
                 )
-            os.unlink(cleanup_name, dir_fd=quarantine_descriptor)
-            if _capture_transaction_identity_at(quarantine_descriptor, cleanup_name) is not None:
+            terminal_name = (
+                f".owned.{os.getpid()}.{uuid.uuid4().hex}.terminal"
+            )
+            _rename_no_replace_at(
+                quarantine_descriptor,
+                cleanup_name,
+                quarantine_descriptor,
+                terminal_name,
+                expected_identity=expected_identity,
+            )
+            terminal_descriptor = os.open(
+                terminal_name, _TARGET_OPEN_FLAGS, dir_fd=quarantine_descriptor
+            )
+            try:
+                terminal_state = _capture_open_descriptor_state(terminal_descriptor)
+                if (
+                    _descriptor_identity(terminal_descriptor) != expected_identity
+                    or not _write_state_matches(
+                        terminal_state, expected_content, expected_mode
+                    )
+                ):
+                    raise RuntimeError(
+                        f"catalog rollout transaction entry changed externally: {entry_name}"
+                    )
+            finally:
+                os.close(terminal_descriptor)
+            os.unlink(terminal_name, dir_fd=quarantine_descriptor)
+            if _capture_transaction_identity_at(quarantine_descriptor, terminal_name) is not None:
                 raise RuntimeError(
                     f"catalog rollout transaction entry cleanup failed: {entry_name}"
                 )
@@ -545,6 +631,11 @@ def _remove_expected_directory_at(
         expected_identity=expected_identity,
     )
     removal_name: str | None = None
+    quarantine_name: str | None = None
+    quarantine_identity: tuple[int, int] | None = None
+    quarantine_descriptor: int | None = None
+    quarantine_removal_name: str | None = None
+    moved_into_quarantine = False
     try:
         cleanup_descriptor = os.open(
             cleanup_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
@@ -581,32 +672,114 @@ def _remove_expected_directory_at(
                 )
         finally:
             os.close(removal_descriptor)
-        os.rmdir(removal_name, dir_fd=parent_descriptor)
+        # Move the validated directory into a private 0700 container before
+        # the final rmdir.  The public cleanup names are never passed to
+        # rmdir, so a replacement at either public name is preserved by the
+        # anchored identity check on the move.
+        quarantine_name = (
+            f".catalog-rollout-directory-cleanup."
+            f"{os.getpid()}.{uuid.uuid4().hex}"
+        )
+        os.mkdir(quarantine_name, 0o700, dir_fd=parent_descriptor)
+        quarantine_descriptor = os.open(
+            quarantine_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+        )
+        quarantine_identity = _descriptor_identity(quarantine_descriptor)
+        terminal_name = f".owned.{os.getpid()}.{uuid.uuid4().hex}.directory"
+        _rename_no_replace_at(
+            parent_descriptor,
+            removal_name,
+            quarantine_descriptor,
+            terminal_name,
+            expected_identity=expected_identity,
+        )
+        moved_into_quarantine = True
         removal_name = None
-    except BaseException:
-        restore_name = removal_name or cleanup_name
-        restore_exists = True
+        terminal_descriptor = os.open(
+            terminal_name, _DIRECTORY_OPEN_FLAGS, dir_fd=quarantine_descriptor
+        )
         try:
-            probe = os.open(
-                restore_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+            if os.listdir(terminal_descriptor):
+                raise RuntimeError(
+                    f"catalog rollout transaction directory is not empty: {directory_name}"
+                )
+            if _descriptor_identity(terminal_descriptor) != expected_identity:
+                raise RuntimeError(
+                    f"catalog rollout transaction directory changed externally: {directory_name}"
+                )
+        finally:
+            os.close(terminal_descriptor)
+        os.rmdir(terminal_name, dir_fd=quarantine_descriptor)
+        try:
+            terminal_probe = os.open(
+                terminal_name, _DIRECTORY_OPEN_FLAGS, dir_fd=quarantine_descriptor
             )
         except FileNotFoundError:
-            restore_exists = False
+            pass
         else:
-            os.close(probe)
-        if restore_exists:
-            try:
-                _rename_no_replace_at(
-                    parent_descriptor,
-                    restore_name,
-                    parent_descriptor,
-                    directory_name,
-                    expected_identity=expected_identity,
-                )
-            except FileExistsError as restore_error:
+            os.close(terminal_probe)
+            raise RuntimeError(
+                f"catalog rollout transaction directory cleanup failed: {directory_name}"
+            )
+        os.close(quarantine_descriptor)
+        quarantine_descriptor = None
+
+        quarantine_removal_name = (
+            f".{quarantine_name}.{os.getpid()}.{uuid.uuid4().hex}.remove"
+        )
+        _rename_no_replace_at(
+            parent_descriptor,
+            quarantine_name,
+            parent_descriptor,
+            quarantine_removal_name,
+            expected_identity=quarantine_identity,
+        )
+        quarantine_name = None
+        quarantine_removal_descriptor = os.open(
+            quarantine_removal_name,
+            _DIRECTORY_OPEN_FLAGS,
+            dir_fd=parent_descriptor,
+        )
+        try:
+            if os.listdir(quarantine_removal_descriptor):
                 raise RuntimeError(
-                    f"catalog rollout transaction directory cleanup conflict: {directory_name}"
-                ) from restore_error
+                    f"catalog rollout transaction directory cleanup is not empty: {directory_name}"
+                )
+            if _descriptor_identity(quarantine_removal_descriptor) != quarantine_identity:
+                raise RuntimeError(
+                    f"catalog rollout transaction directory changed externally: {directory_name}"
+                )
+        finally:
+            os.close(quarantine_removal_descriptor)
+        os.rmdir(quarantine_removal_name, dir_fd=parent_descriptor)
+        quarantine_removal_name = None
+    except BaseException:
+        if quarantine_descriptor is not None:
+            os.close(quarantine_descriptor)
+        if not moved_into_quarantine:
+            restore_name = removal_name or cleanup_name
+            restore_exists = True
+            try:
+                probe = os.open(
+                    restore_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
+                )
+            except FileNotFoundError:
+                restore_exists = False
+            else:
+                os.close(probe)
+            if restore_exists:
+                try:
+                    _rename_no_replace_at(
+                        parent_descriptor,
+                        restore_name,
+                        parent_descriptor,
+                        directory_name,
+                        expected_identity=expected_identity,
+                    )
+                except FileExistsError as restore_error:
+                    raise RuntimeError(
+                        f"catalog rollout transaction directory cleanup conflict: {directory_name}"
+                    ) from restore_error
         raise
 
 
@@ -896,6 +1069,7 @@ def _discard_expected_tombstone_at(
             expected_identity,
             expected_content,
             expected_mode,
+            quarantine_directory=False,
         )
         quarantined = False
         _remove_expected_directory_at(
@@ -1015,6 +1189,40 @@ def _quarantine_rollback_base_name(entry_name: str) -> str:
         entry_name,
     )
     return match.group("base") if match is not None else entry_name
+
+
+def _recover_immutable_cleanup_artifacts_at(
+    parent_descriptor: int,
+    target_name: str,
+    content: bytes,
+) -> None:
+    """Remove receipt-writer rollback artifacts left by an interrupted cleanup."""
+    prefix = f".{target_name}."
+    for entry_name in sorted(_directory_entry_names(parent_descriptor)):
+        if (
+            not entry_name.startswith(prefix)
+            or ".tmp." not in entry_name
+            or not entry_name.endswith(".rollback")
+        ):
+            continue
+        state, identity = _capture_transaction_state_and_identity_at(
+            parent_descriptor, entry_name
+        )
+        if identity is None:
+            continue
+        if not _write_state_matches(state, content, 0o600):
+            raise RuntimeError(
+                "immutable rollout cleanup artifact changed externally: "
+                f"{entry_name}"
+            )
+        _unlink_expected_entry_at(
+            parent_descriptor,
+            entry_name,
+            identity,
+            content,
+            0o600,
+            quarantine_directory=False,
+        )
 
 
 def _quarantine_target_name(entry_name: str) -> str:
@@ -2090,6 +2298,7 @@ def _atomic_write_bytes_at(
     replacement_guard_identity: tuple[int, int] | None = None
     replacement_guard_moved = False
     replacement_guard_preserved = False
+    temporary_cleanup_error: BaseException | None = None
     try:
         if target_lock is not None:
             locked_state = _capture_open_descriptor_state(target_lock)
@@ -2228,17 +2437,34 @@ def _atomic_write_bytes_at(
             )
 
         replacement_lock = _open_target_lock(parent_descriptor, target_name)
-        if replacement_lock is None or not _write_state_matches(
-            _capture_open_descriptor_state(replacement_lock), content, mode
+        if replacement_lock is None or temporary_identity is None:
+            raise RuntimeError(
+                f"catalog rollout transaction target changed externally: {target_name}"
+            )
+        if (
+            _descriptor_identity(replacement_lock) != temporary_identity
+            or not _write_state_matches(
+                _capture_open_descriptor_state(replacement_lock), content, mode
+            )
+            or _capture_transaction_identity_at(parent_descriptor, target_name)
+            != temporary_identity
         ):
             raise RuntimeError(
                 f"catalog rollout transaction target changed externally: {target_name}"
             )
         _fsync_directory_fd(parent_descriptor)
-        if not _write_state_matches(
-            _capture_open_descriptor_state(replacement_lock), content, mode
-        ) or not _write_state_matches(
-            _capture_transaction_state_at(parent_descriptor, target_name), content, mode
+        if (
+            _descriptor_identity(replacement_lock) != temporary_identity
+            or not _write_state_matches(
+                _capture_open_descriptor_state(replacement_lock), content, mode
+            )
+            or _capture_transaction_identity_at(parent_descriptor, target_name)
+            != temporary_identity
+            or not _write_state_matches(
+                _capture_transaction_state_at(parent_descriptor, target_name),
+                content,
+                mode,
+            )
         ):
             raise RuntimeError(
                 f"catalog rollout transaction target changed externally: {target_name}"
@@ -2272,10 +2498,11 @@ def _atomic_write_bytes_at(
                     sync_directory=False,
                     transaction_id=transaction_id,
                 )
-        except (OSError, RuntimeError):
+        except (OSError, RuntimeError) as cleanup_error:
             # Preserve an ambiguous temporary artifact for the transaction
-            # recovery pass instead of deleting a replacement path by name.
-            pass
+            # recovery pass instead of deleting a replacement path by name,
+            # but never report a successful transaction while cleanup failed.
+            temporary_cleanup_error = cleanup_error
         if target_lock is not None:
             fcntl.flock(target_lock, fcntl.LOCK_UN)
             os.close(target_lock)
@@ -2332,6 +2559,11 @@ def _atomic_write_bytes_at(
                 # external path change; the transaction journal remains the
                 # retry authority.
                 replacement_guard_preserved = True
+        if temporary_cleanup_error is not None:
+            raise RuntimeError(
+                "catalog rollout transaction temporary cleanup failed; "
+                f"artifact preserved: {temporary_name}"
+            ) from temporary_cleanup_error
 
 
 def atomic_write_bytes(
@@ -2400,6 +2632,9 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
             absolute_path.relative_to(Path(absolute_path.anchor)).parts[:-1],
         )
         _assert_directory_descriptor_matches_path(parent_descriptor, absolute_path.parent)
+        _recover_immutable_cleanup_artifacts_at(
+            parent_descriptor, absolute_path.name, content
+        )
         descriptor = os.open(
             temporary_name,
             os.O_WRONLY
@@ -2448,6 +2683,9 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
                 parent_descriptor, absolute_path.parent
             )
             _fsync_directory_fd(parent_descriptor)
+            _assert_directory_descriptor_matches_path(
+                parent_descriptor, absolute_path.parent
+            )
         finally:
             if temporary_identity is not None:
                 temporary_path_identity = _capture_transaction_identity_at(
@@ -2466,6 +2704,7 @@ def write_immutable_bytes(path: Path, content: bytes) -> None:
                         temporary_identity,
                         content,
                         0o600,
+                        quarantine_directory=False,
                     )
     finally:
         if parent_descriptor is not None:
@@ -3434,35 +3673,15 @@ def _recover_catalog_rollout_transaction(
                         )
                     )
                     if published_identity is None:
-                        # The target replace can be durable while the process
-                        # dies before the inode progress sidecar is updated.
-                        # Bytes alone do not prove ownership, so restore the
-                        # journal's prior state and let the publish loop retry
-                        # with a fresh durable inode proof.
-                        _restore_transaction_target(
-                            target,
-                            prior_exists,
-                            prior_content,
-                            prior_mode,
-                            content,
-                            desired_mode,
-                            parent_descriptor=parent_descriptor,
-                            target_name=target_name,
-                            transaction_id=transaction_identity[0]
-                            if transaction_identity is not None
-                            else None,
+                        # A durable desired byte sequence without its
+                        # published inode sidecar is not ownership evidence.
+                        # Preserve the target and journal for an operator-led
+                        # recovery instead of rewriting or deleting an inode
+                        # that may have been inserted by another process.
+                        raise RuntimeError(
+                            "catalog rollout transaction post-publish inode evidence is missing: "
+                            f"{target}"
                         )
-                        current = _capture_transaction_state_at(
-                            parent_descriptor, target_name
-                        )
-                        if not _transaction_state_matches(
-                            current, prior_exists, prior_content, prior_mode
-                        ):
-                            raise RuntimeError(
-                                "catalog rollout transaction rollback mismatch: "
-                                f"{target}"
-                            )
-                        continue
                     if published_identity is None or _capture_transaction_identity_at(
                         parent_descriptor, target_name
                     ) != published_identity:
@@ -3566,36 +3785,15 @@ def _recover_catalog_rollout_transaction(
                             target.relative_to(repository_root).as_posix()
                         )
                         if published_identity is None:
-                            # A process may die after the target replace is
-                            # durable but before the published inode map is
-                            # persisted.  The current desired bytes are not a
-                            # durable ownership proof, so roll this target
-                            # back to the journal's prior state and let the
-                            # normal publish loop retry it with fresh proof.
-                            _restore_transaction_target(
-                                target,
-                                prior_exists,
-                                prior_content,
-                                prior_mode,
-                                content,
-                                desired_mode,
-                                parent_descriptor=parent_descriptor,
-                                target_name=target_name,
-                                transaction_id=transaction_identity[0]
-                                if transaction_identity is not None
-                                else None,
+                            # A durable desired byte sequence without its
+                            # published inode sidecar is not ownership
+                            # evidence.  Preserve the target and journal for
+                            # fail-closed recovery instead of retrying a write
+                            # against an inode that may be external.
+                            raise RuntimeError(
+                                "catalog rollout transaction post-publish inode evidence is missing: "
+                                f"{target}"
                             )
-                            current = _capture_transaction_state_at(
-                                parent_descriptor, target_name
-                            )
-                            if not _transaction_state_matches(
-                                current, prior_exists, prior_content, prior_mode
-                            ):
-                                raise RuntimeError(
-                                    "catalog rollout transaction rollback mismatch: "
-                                    f"{target}"
-                                )
-                            continue
                         if _capture_transaction_identity_at(
                             parent_descriptor, target_name
                         ) != published_identity:
@@ -4385,11 +4583,23 @@ def _write_snapshot_file_at(
         os.close(parent_descriptor)
 
 
-def _remove_directory_tree_at(parent_descriptor: int, directory_name: str) -> None:
+def _remove_directory_tree_at(
+    parent_descriptor: int,
+    directory_name: str,
+    *,
+    expected_identity: tuple[int, int] | None = None,
+) -> None:
     directory_descriptor = os.open(
         directory_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
     )
     try:
+        if (
+            expected_identity is not None
+            and _descriptor_identity(directory_descriptor) != expected_identity
+        ):
+            raise RuntimeError(
+                f"immutable rollout staging directory changed externally: {directory_name}"
+            )
         for entry_name in os.listdir(directory_descriptor):
             try:
                 os.unlink(entry_name, dir_fd=directory_descriptor)
@@ -4397,6 +4607,14 @@ def _remove_directory_tree_at(parent_descriptor: int, directory_name: str) -> No
                 _remove_directory_tree_at(directory_descriptor, entry_name)
     finally:
         os.close(directory_descriptor)
+    if (
+        expected_identity is not None
+        and _capture_directory_identity_at(parent_descriptor, directory_name)
+        != expected_identity
+    ):
+        raise RuntimeError(
+            f"immutable rollout staging directory changed externally: {directory_name}"
+        )
     os.rmdir(directory_name, dir_fd=parent_descriptor)
 
 
@@ -4428,6 +4646,7 @@ def _publish_immutable_snapshot(
     root_descriptor = os.open(root, _DIRECTORY_OPEN_FLAGS)
     parent_descriptor: int | None = None
     staging_descriptor: int | None = None
+    staging_identity: tuple[int, int] | None = None
     staging_name: str | None = None
     try:
         parent_descriptor = _open_or_create_directory_at(
@@ -4446,6 +4665,7 @@ def _publish_immutable_snapshot(
                 f"immutable rollout snapshot is not a directory: {snapshot_display}"
             ) from error
         if snapshot_descriptor is not None:
+            snapshot_identity = _descriptor_identity(snapshot_descriptor)
             try:
                 for relative_path, content in files.items():
                     _snapshot_file_matches(
@@ -4456,6 +4676,16 @@ def _publish_immutable_snapshot(
                     )
             finally:
                 os.close(snapshot_descriptor)
+            if (
+                _capture_directory_identity_at(parent_descriptor, snapshot_name)
+                != snapshot_identity
+            ):
+                raise RuntimeError(
+                    f"immutable rollout snapshot changed externally: {snapshot_display}"
+                )
+            _assert_directory_descriptor_matches_path(
+                parent_descriptor, root.joinpath(*snapshot_parts[:-1])
+            )
             return
 
         staging_name = f".{snapshot_name}.{os.getpid()}.{uuid.uuid4().hex}"
@@ -4463,6 +4693,7 @@ def _publish_immutable_snapshot(
         staging_descriptor = os.open(
             staging_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
         )
+        staging_identity = _descriptor_identity(staging_descriptor)
         for relative_path, content in files.items():
             _write_snapshot_file_at(staging_descriptor, relative_path, content)
         _fsync_directory_fd(staging_descriptor)
@@ -4479,6 +4710,7 @@ def _publish_immutable_snapshot(
             snapshot_descriptor = os.open(
                 snapshot_name, _DIRECTORY_OPEN_FLAGS, dir_fd=parent_descriptor
             )
+            snapshot_identity = _descriptor_identity(snapshot_descriptor)
             try:
                 for relative_path, content in files.items():
                     _snapshot_file_matches(
@@ -4489,15 +4721,43 @@ def _publish_immutable_snapshot(
                     )
             finally:
                 os.close(snapshot_descriptor)
+            if (
+                _capture_directory_identity_at(parent_descriptor, snapshot_name)
+                != snapshot_identity
+            ):
+                raise RuntimeError(
+                    f"immutable rollout snapshot changed externally: {snapshot_display}"
+                )
+            _assert_directory_descriptor_matches_path(
+                parent_descriptor, root.joinpath(*snapshot_parts[:-1])
+            )
         else:
+            if (
+                _capture_directory_identity_at(parent_descriptor, snapshot_name)
+                != staging_identity
+            ):
+                raise RuntimeError(
+                    f"immutable rollout snapshot changed externally: {snapshot_display}"
+                )
             _fsync_directory_fd(parent_descriptor)
+            _assert_directory_descriptor_matches_path(
+                parent_descriptor, root.joinpath(*snapshot_parts[:-1])
+            )
             staging_name = None
     finally:
         if staging_descriptor is not None:
             os.close(staging_descriptor)
         if staging_name is not None and parent_descriptor is not None:
             try:
-                _remove_directory_tree_at(parent_descriptor, staging_name)
+                if staging_identity is None:
+                    raise RuntimeError(
+                        "immutable rollout staging directory identity is unavailable"
+                    )
+                _remove_directory_tree_at(
+                    parent_descriptor,
+                    staging_name,
+                    expected_identity=staging_identity,
+                )
             except FileNotFoundError:
                 pass
         if parent_descriptor is not None:
