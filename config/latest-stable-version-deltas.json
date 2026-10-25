@@ -1,15 +1,15 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "46e9cb8ca1457982cf6c26d9d0d93a010efa4046b9439f93f330154666962205",
+    "sha256": "b4722c49ac8034569c4db3d94cef3975c61063df1904973c1d57f1a9164489e9",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
-        "adopt-latest": 196,
-        "current": 265,
-        "defer-breaking-migration": 23,
-        "hold-compatibility": 64,
+        "adopt-latest": 239,
+        "current": 226,
+        "defer-breaking-migration": 21,
+        "hold-compatibility": 62,
         "hold-unavailable": 9
       },
       "metadata-preview-only": 5,
@@ -17,70 +17,36 @@
       "metadata-verified": 518
     }
   },
-  "audit-cutoff": "2026-10-18",
+  "audit-cutoff": "2026-10-24",
   "baseline": {
-    "catalog-ref": "develop",
-    "catalog-sha256": "7aa400efd6f27a34b927dbff00b7197b3a843c2ae8e6b01e28ea03c846b97484"
+    "catalog-ref": "origin/develop",
+    "catalog-sha256": "11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30"
   },
   "candidate": {
-    "catalog-sha256": "32887e9060e334600d3ff623ba60bd17fb732f45894d29e0f4a2f1b96924af8b"
-  },
-  "candidate-validation-evidence": {
-    "downstream-full-builds": {
-      "assemble": {
-        "failures": 0,
-        "repositories": 9,
-        "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789",
-        "status": "verified"
-      },
-      "failures": null,
-      "repositories": 9,
-      "status": "pending"
-    },
-    "path": "docs/releases/2026-10-18-issue-1832-amqp-client-candidate-receipt.json",
-    "publication-poms": {
-      "dependencies": 50543,
-      "failures": 0,
-      "files": 192,
-      "maven-models": 192,
-      "repositories": 9,
-      "repository-map-sha256": "2066bc8cfc9425a22f969853562802891dc34205576fb3c35b35dca638e29789",
-      "status": "verified-local-candidate"
-    },
-    "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
-    "sha256": "86b72e90a8c64df73b3584be1ed40086e496f7fcc2d47e865af856b66a63bbff"
+    "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15"
   },
   "delta": [
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "5.37.0"
+        "version": "0.9.11"
       },
-      "after": "5.37.0",
+      "after": "0.9.11",
       "authorities": [
         {
-          "authority-key": "managed:managed-amqp-client-h639dbc3b57d0",
-          "coordinate-or-plugin-id": "com.rabbitmq:amqp-client",
+          "authority-key": "catalog:plugin:org.jetbrains.kotlinx.kover",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlinx.kover",
           "disposition": "current",
-          "kind": "library"
+          "kind": "plugin"
         }
       ],
-      "before": "5.35.0",
+      "before": "0.9.9",
       "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "resolved-graph-specs": [
-        "8c1e5f326a58cd3714154f150e70c98e1d68864fc8904ebdb30fff8f2ed21e58"
-      ],
-      "verification": "verified-resolved-graph",
-      "version-key": "managed-amqp-client-h639dbc3b57d0"
+      "verification": "pending-resolved-graph",
+      "version-key": "kover"
     }
   ],
-  "resolved-graph-evidence": {
-    "observation-count": 2,
-    "path": "docs/releases/2026-10-18-issue-1832-amqp-client-resolved-graphs.json",
-    "sha256": "395a2dc1a7d1fbc47bc4ceed16df8247e11109704d0fd9f28eb0b09e61ff7fe4",
-    "spec-count": 1
-  },
-  "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
+  "rollout": "2026-10-24-pr-261-kover-only",
   "schema-version": 3,
-  "status": "verified-resolved-graph"
+  "status": "validation-pending"
 }

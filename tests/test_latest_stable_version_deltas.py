@@ -17,6 +17,7 @@ AUDIT = REPO_ROOT / "config" / "latest-stable-version-audit.json"
 BUILD = REPO_ROOT / "build.gradle.kts"
 GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
 ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
+ISSUE_261_KOVER_ROLLOUT = "2026-10-24-pr-261-kover-only"
 
 
 def load_script():
@@ -221,10 +222,9 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         )
         status = document["status"]
         self.assertIn(status, {"validation-pending", "verified-resolved-graph"})
-        if (
-            status == "verified-resolved-graph"
-            and document["rollout"] != ISSUE_1832_ROLLOUT
-        ):
+        if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
+            self.assertEqual(document["audit-cutoff"], "2026-10-24")
+        elif status == "verified-resolved-graph" and document["rollout"] != ISSUE_1832_ROLLOUT:
             self.assertEqual(document["audit-cutoff"], "2026-09-04")
         else:
             self.assertEqual(document["audit-cutoff"], "2026-10-18")
@@ -244,10 +244,28 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         self.assertTrue(
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
-        if (
-            status == "verified-resolved-graph"
-            and document["rollout"] != ISSUE_1832_ROLLOUT
-        ):
+        if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
+            expected_deltas = {"kover"}
+            self.assertEqual(
+                {entry["version-key"] for entry in document["delta"]},
+                expected_deltas,
+            )
+            self.assertEqual(len(document["delta"]), 1)
+            candidate = document["delta"][0]
+            self.assertEqual(candidate["before"], "0.9.9")
+            self.assertEqual(candidate["after"], "0.9.11")
+            self.assertEqual(
+                candidate["authorities"][0]["coordinate-or-plugin-id"],
+                "org.jetbrains.kotlinx.kover",
+            )
+            self.assertEqual(
+                candidate["adoption-evidence"],
+                {
+                    "classification": "verified-latest-compatible",
+                    "version": "0.9.11",
+                },
+            )
+        elif status == "verified-resolved-graph" and document["rollout"] != ISSUE_1832_ROLLOUT:
             self.assertEqual(len(document["delta"]), 126)
         else:
             expected_deltas = {
@@ -384,9 +402,13 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
     def test_rollout_audit_summary_matches_its_lifecycle(self) -> None:
         document = json.loads(LEDGER.read_text(encoding="utf-8"))
         audit = document["audit"]
+        current_audit = json.loads(AUDIT.read_text(encoding="utf-8"))
 
         self.assertEqual(document["audit"]["path"], "config/latest-stable-version-audit.json")
-        if (
+        if document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
+            self.assertEqual(document["audit-cutoff"], "2026-10-24")
+            self.assertEqual(audit["summary"], current_audit["summary"])
+        elif (
             document["status"] == "verified-resolved-graph"
             and document["rollout"] != ISSUE_1832_ROLLOUT
         ):
@@ -397,7 +419,6 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             self.assertEqual(audit["summary"]["line-dispositions"]["current"], 440)
             self.assertEqual(audit["summary"]["metadata-verified"], 510)
         else:
-            current_audit = json.loads(AUDIT.read_text(encoding="utf-8"))
             if document["rollout"] == ISSUE_1832_ROLLOUT:
                 self.assertEqual(document["audit-cutoff"], "2026-10-18")
                 self.assertEqual(audit["summary"], current_audit["summary"])

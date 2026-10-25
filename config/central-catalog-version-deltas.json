@@ -711,6 +711,25 @@
       },
       "rollout": "2026-10-18-issue-1832-amqp-client-catalog",
       "status": "verified-resolved-graph"
+    },
+    {
+      "audit": "config/latest-stable-version-audit.json",
+      "authority-delta-ledger": "config/latest-stable-version-deltas.json",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
+      "delta-count": 1,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "2026-10-24-pr-261-kover-only",
+      "status": "validation-pending"
     }
   ],
   "delta": [
