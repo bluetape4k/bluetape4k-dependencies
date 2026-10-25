@@ -725,7 +725,7 @@
         "verified-repositories": 7,
         "evidence": {
           "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
-          "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+          "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
         }
       },
       "publication-pom-verification": {

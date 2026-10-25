@@ -258,6 +258,19 @@
     "audit-latest-stable": {
       "status": "verified",
       "exit-code": 0
+    },
+    "verify-publication-poms": {
+      "status": "blocked-dirty-publisher",
+      "exit-code": 1,
+      "command": [
+        "python3",
+        "scripts/verify-publication-poms.py",
+        "--workspace",
+        "..",
+        "--summary"
+      ],
+      "reason": "publisher repository is dirty: bluetape4k-exposed",
+      "note": "The dirty Exposed canonical worktree was preserved; hosted CI remains the recorded 192-file/0-failure publication POM proof."
     }
   }
 }

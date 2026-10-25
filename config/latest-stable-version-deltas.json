@@ -33,7 +33,7 @@
       "verified-repositories": 7,
       "evidence": {
         "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
-        "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
       }
     },
     "path": "docs/releases/2026-10-25-pr-261-kover-0911-candidate-receipt.json",
@@ -46,7 +46,7 @@
       "status": "verified-hosted-ci"
     },
     "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
-    "sha256": "d23de58b58185c6525f971bd3a4e7e553c468032fda663e3f740c13ce299417f",
+    "sha256": "b1bd0eac5caa62c609c99fdcfbd9e60f247183abfde8303056f7c19702c07fa0",
     "remote-immutable-ref-evidence": {
       "status": "verified-fresh-remote-commit-ref",
       "remote": "origin",
@@ -60,14 +60,14 @@
       "status": "completed",
       "evidence": {
         "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
-        "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
       }
     },
     "governance-checks": {
       "status": "failed-unresolved-adoption-gaps",
       "evidence": {
         "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
-        "sha256": "1598dcc7eb03339407eff2e88e801a8f48cd65fce6e4577cadfc5be44837590e"
+        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
       },
       "sync-shared-versions-gap-count": 7
     }
