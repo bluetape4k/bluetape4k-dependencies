@@ -20,4 +20,5 @@ directory unless they have been deliberately promoted.
 
 ## 2026-10
 
+- [여러 저장소 Gradle wrapper train은 live inventory에서 시작한다](2026-10-27-issue-259-gradle-wrapper-train.md)
 - [latest-stable 후보 catalog의 과거 입력 검증](2026-10-23-issue-272-historical-catalog-input.md)
