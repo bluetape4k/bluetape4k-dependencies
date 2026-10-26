@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import hashlib
 import importlib
 import importlib.util
@@ -702,6 +703,41 @@ evidence.commit_catalog_rollout_transaction(root, ((target, b"new-content"),))
             self.assertEqual(source.read_bytes(), b"external-source")
             self.assertEqual((parent / "owned-moved.json").read_bytes(), b"owned-source")
             self.assertFalse(destination.exists())
+
+    def test_same_entry_no_replace_is_a_cross_platform_noop(self) -> None:
+        load_script()
+        evidence = importlib.import_module("catalog_rollout_evidence")
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory).resolve()
+            parent = root / "config"
+            parent.mkdir(parents=True)
+            source = parent / "source.json"
+            source.write_bytes(b"owned-source")
+            source_identity = (source.stat().st_dev, source.stat().st_ino)
+            root_descriptor = os.open(root, evidence._DIRECTORY_OPEN_FLAGS)
+            parent_descriptor, _ = evidence._open_anchored_parent(
+                root_descriptor, root, source
+            )
+            try:
+                with mock.patch.object(
+                    evidence,
+                    "_native_rename_no_replace",
+                    side_effect=FileExistsError(errno.EEXIST, "same entry"),
+                ) as native_move:
+                    result = evidence._rename_no_replace_at(
+                        parent_descriptor,
+                        source.name,
+                        parent_descriptor,
+                        source.name,
+                        expected_identity=source_identity,
+                    )
+            finally:
+                os.close(parent_descriptor)
+                os.close(root_descriptor)
+
+            self.assertEqual(result, source_identity)
+            native_move.assert_not_called()
+            self.assertEqual(source.read_bytes(), b"owned-source")
 
     def test_link_expected_entry_preserves_destination_when_source_is_replaced(self) -> None:
         load_script()

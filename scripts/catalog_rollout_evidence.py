@@ -491,6 +491,18 @@ def _rename_no_replace_at(
                 f"catalog rollout transaction source changed externally: {source_name}"
             )
 
+        # A no-replace rename of an entry onto itself is already complete.
+        # Darwin's ``renameatx_np`` treats this as a no-op, while Linux
+        # ``renameat2(..., RENAME_NOREPLACE)`` reports ``EEXIST``.  Keep the
+        # anchored identity validation above, then avoid a platform-specific
+        # syscall for this same-entry case.
+        if (
+            source_parent == destination_parent
+            and source_name == destination_name
+            and (source_descriptor is not None or expected_identity is not None)
+        ):
+            return source_identity
+
         if _native_rename_no_replace(
             source_name, destination_name, source_parent, destination_parent
         ):
