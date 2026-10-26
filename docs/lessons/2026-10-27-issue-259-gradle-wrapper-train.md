@@ -21,7 +21,9 @@ bluetape4k 라이브러리와 workshop 예제 저장소 전체의 Gradle wrapper
   보존한다.
 - wrapper task에 Gradle distribution SHA-256
   `21bd5da2de49b642904077f38c0efdc7778e92b3ed0889392dca61b97e389607`을 사용하고,
-  생성된 wrapper artifact만 포함한다.
+  checksum 속성을 이미 보유한 properties에는 같은 값을 유지한다. `bluetape4k-dependencies`,
+  `exposed-r2dbc-workshop`, `exposed-workshop`, `timefold-workshop`처럼 checksum 속성이
+  없는 properties에는 새 속성을 임의로 추가하지 않는다. 생성된 wrapper artifact만 포함한다.
 - 중복 wrapper 레이아웃이 있는 Text는 두 properties와 두 JAR를 함께 갱신한다.
   Projects처럼 JAR와 Windows script가 이미 `9.8.2` wrapper와 일치하면 properties만
   변경한다.
@@ -31,18 +33,21 @@ bluetape4k 라이브러리와 workshop 예제 저장소 전체의 Gradle wrapper
 13개 isolated worktree의 모든 Gradle wrapper가 `9.8.2`를 가리킨다. 표준 wrapper
 파일은 저장소별로 생성되었고 Text의 legacy 중복 경로도 같은 버전으로 맞췄다. Exposed의
 첫 wrapper 실행은 기존 SHA-256 설정과 새 배포판이 일치하지 않아 실패했지만, 명시적인
-`9.8.2` checksum으로 재실행해 통과했다. 아직 canonical checkout, 원격 branch, PR,
-merge에는 side effect를 적용하지 않았다.
+`9.8.2` checksum으로 재실행해 통과했다. Dependencies 저장소의 PR에는 이 lesson과
+README 색인 갱신도 함께 포함한다.
 
 ## 검증
 
 - 각 저장소에서 `./gradlew wrapper --gradle-version 9.8.2` 또는 저장소의 동등한
   wrapper 갱신 명령이 `BUILD SUCCESSFUL`로 끝났다.
 - 13개 worktree의 `./gradlew --version`이 모두 Gradle `9.8.2`를 보고했다.
-- 모든 properties의 `distributionSha256Sum`이 위 checksum과 일치했고, 갱신된
+- checksum 속성을 가진 properties의 `distributionSha256Sum`이 위 checksum과 일치했고,
+  checksum 속성이 없는 네 저장소의 properties에는 해당 속성을 추가하지 않았다. 갱신된
   wrapper JAR의 SHA-256은
   `3b8a25775a69158b5ad2b1d17a80a88dc7b40a352a73eb27d06c612a7ce68e98`로 일치했다.
-- 각 worktree에서 `git diff --check`가 통과했고 wrapper artifact 외 변경은 없었다.
+- 각 worktree에서 `git -c core.whitespace=cr-at-eol diff --check`가 통과했다. Dependencies
+  저장소의 의도한 추가 변경은 이 lesson과 `docs/lessons/README.md`이며, 나머지 저장소는
+  wrapper 관련 파일만 변경했다.
 
 ## 향후 지침
 
