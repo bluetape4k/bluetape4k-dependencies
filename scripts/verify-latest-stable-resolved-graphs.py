@@ -9,10 +9,22 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, NamedTuple
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from catalog_rollout_evidence import (
+    commit_catalog_rollout_transaction,
+    load_catalog_rollout_evidence,
+    pretty_json as pretty_rollout_json,
+    recover_catalog_rollout_transaction,
+    record_promoted_catalog_rollout,
+    validate_receipt_destination,
+    write_immutable_bytes,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_LEDGER = REPO_ROOT / "config" / "latest-stable-version-deltas.json"
@@ -107,9 +119,22 @@ def candidate_catalog_bytes(ledger: dict[str, Any], repo_root: Path) -> bytes:
     ):
         raise RuntimeError("candidate ledger catalog SHA must be a full SHA-256")
 
-    if "candidate-validation-evidence" not in ledger:
-        raise RuntimeError("candidate validation receipt pointer is required")
     pointer = ledger.get("candidate-validation-evidence")
+    if pointer is None:
+        if ledger.get("status") != "validation-pending":
+            raise RuntimeError("candidate validation receipt pointer is required")
+        candidate_path = repo_root.resolve() / "gradle" / "libs.versions.toml"
+        try:
+            candidate_bytes = candidate_path.read_bytes()
+        except OSError as exc:
+            raise RuntimeError(
+                "pending candidate catalog bytes cannot be read"
+            ) from exc
+        if sha256_bytes(candidate_bytes) != candidate_sha:
+            raise RuntimeError(
+                "pending candidate catalog SHA does not match current catalog bytes"
+            )
+        return candidate_bytes
     if not isinstance(pointer, dict):
         raise TypeError("candidate validation receipt pointer must be an object")
     receipt_relative_path = pointer.get("path")
@@ -634,11 +659,19 @@ def main() -> int:
     parser.add_argument("--ledger", type=Path, default=DEFAULT_LEDGER)
     parser.add_argument("--catalog", type=Path, default=DEFAULT_CATALOG)
     parser.add_argument("--catalog-sidecar", type=Path, default=DEFAULT_CATALOG_SIDECAR)
+    parser.add_argument(
+        "--central-ledger",
+        type=Path,
+        default=REPO_ROOT / "config" / "central-catalog-version-deltas.json",
+    )
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--log", type=Path, required=True)
     parser.add_argument("--promote", action="store_true")
     parser.add_argument("--refresh-evidence", action="store_true")
     args = parser.parse_args()
+
+    receipt_target = validate_receipt_destination(args.receipt, REPO_ROOT)
+    recover_catalog_rollout_transaction(REPO_ROOT)
 
     ledger = json.loads(args.ledger.read_text(encoding="utf-8"))
     if args.promote and args.refresh_evidence:
@@ -648,6 +681,26 @@ def main() -> int:
     if args.refresh_evidence and ledger.get("status") != "verified-resolved-graph":
         raise RuntimeError("only a promoted ledger can refresh evidence")
     validate_catalog(ledger, args.catalog, args.catalog_sidecar)
+    central_document = None
+    central_audit_bytes = None
+    if args.promote or args.refresh_evidence:
+        central_document = json.loads(
+            args.central_ledger.read_text(encoding="utf-8")
+        )
+        central_authority, central_audit_bytes, _ = load_catalog_rollout_evidence(
+            central_document, ledger.get("rollout"), REPO_ROOT
+        )
+        expected_status = (
+            "validation-pending" if args.promote else "verified-resolved-graph"
+        )
+        if central_authority.get("status") != expected_status:
+            raise RuntimeError("central rollout status does not match graph lifecycle")
+        central_contract = copy.deepcopy(central_authority)
+        central_contract["audit"]["path"] = ledger.get("audit", {}).get("path")
+        if resolution_contract_sha256(central_contract) != resolution_contract_sha256(
+            ledger
+        ):
+            raise RuntimeError("central rollout does not match the graph ledger")
     specs = build_specs(ledger)
     raw_observations, command = run_gradle(specs, args.log)
     observations = validate_observations(specs, raw_observations)
@@ -663,12 +716,14 @@ def main() -> int:
         "spec-count": len(specs),
         "status": "verified-resolved-graph",
     }
-    args.receipt.parent.mkdir(parents=True, exist_ok=True)
-    args.receipt.write_bytes(pretty_json(receipt))
-    receipt_sha = sha256_bytes(args.receipt.read_bytes())
+    receipt_bytes = pretty_json(receipt)
+    write_immutable_bytes(receipt_target, receipt_bytes)
+    receipt_sha = sha256_bytes(receipt_bytes)
     if args.promote or args.refresh_evidence:
         try:
-            relative_receipt = args.receipt.resolve().relative_to(REPO_ROOT).as_posix()
+            relative_receipt = receipt_target.relative_to(
+                REPO_ROOT.resolve()
+            ).as_posix()
         except ValueError as exc:
             raise RuntimeError(
                 "promoted receipt must be inside the repository"
@@ -689,7 +744,27 @@ def main() -> int:
                 "sha256": receipt_sha,
                 "spec-count": len(specs),
             }
-        args.ledger.write_bytes(pretty_json(promoted))
+        if central_document is None or central_audit_bytes is None:
+            raise RuntimeError("central rollout evidence is required for graph promotion")
+        updated_central = record_promoted_catalog_rollout(
+            central_document, promoted, central_audit_bytes, REPO_ROOT
+        )
+        promoted_row = next(
+            row
+            for row in updated_central["subsequent-rollouts"]
+            if row.get("rollout") == promoted.get("rollout")
+        )
+        promoted["resolved-graph-evidence"] = copy.deepcopy(
+            promoted_row["resolved-graph-evidence"]
+        )
+        promoted["audit"]["path"] = promoted_row["audit"]
+        commit_catalog_rollout_transaction(
+            REPO_ROOT,
+            (
+                (args.ledger, pretty_json(promoted)),
+                (args.central_ledger, pretty_rollout_json(updated_central)),
+            ),
+        )
     print(
         f"status=verified-resolved-graph specs={len(specs)} "
         f"observations={len(observations)} receipt-sha256={receipt_sha}"

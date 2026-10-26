@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import tomllib
 import unittest
@@ -42,9 +43,13 @@ class Benchmark050CatalogTest(unittest.TestCase):
             item for item in central["subsequent-rollouts"]
             if item["rollout"] == ledger["rollout"]
         )
+        ledger_path = rollout["authority-delta-ledger"]
+        self.assertTrue(
+            ledger_path.startswith(f"config/rollouts/{ledger['rollout']}/")
+        )
         self.assertEqual(
-            rollout["authority-delta-ledger"],
-            "config/kotlinx-benchmark-0.5.0-version-deltas.json",
+            hashlib.sha256((ROOT / ledger_path).read_bytes()).hexdigest(),
+            rollout["authority-delta-ledger-sha256"],
         )
 
 

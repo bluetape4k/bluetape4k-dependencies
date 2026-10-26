@@ -11,11 +11,25 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from catalog_rollout_evidence import (
+    candidate_rollout_snapshot_revision,
+    commit_catalog_rollout_transaction,
+    ensure_immutable_rollout_snapshot,
+    load_catalog_rollout_evidence,
+    pin_catalog_rollout_evidence,
+    record_promoted_catalog_rollout,  # noqa: F401 - 테스트와 기존 호출자의 모듈 표면을 유지한다.
+    recover_catalog_rollout_transaction,
+    snapshot_rollout_evidence,
+    upsert_catalog_rollout,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG = REPO_ROOT / "gradle" / "libs.versions.toml"
@@ -69,7 +83,7 @@ def pretty_json(value: Any) -> bytes:
 
 def utc_timestamp() -> str:
     return (
-        dt.datetime.now(dt.timezone.utc)
+        dt.datetime.now(dt.UTC)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z")
@@ -466,42 +480,6 @@ def build_delta_ledger(
     }
 
 
-def upsert_catalog_rollout(
-    document: dict[str, Any], authority_ledger: dict[str, Any]
-) -> dict[str, Any]:
-    updated = copy.deepcopy(document)
-    candidate_evidence = authority_ledger.get("candidate-validation-evidence", {})
-    downstream_evidence = candidate_evidence.get(
-        "downstream-full-builds", {"repositories": 9, "status": "pending"}
-    )
-    publication_evidence = candidate_evidence.get(
-        "publication-poms", {"repositories": 9, "status": "pending"}
-    )
-    rollout = {
-        "audit": authority_ledger["audit"]["path"],
-        "authority-delta-ledger": "config/latest-stable-version-deltas.json",
-        "baseline-catalog-ref": authority_ledger["baseline"]["catalog-ref"],
-        "catalog-sha256": authority_ledger["candidate"]["catalog-sha256"],
-        "delta-count": len(authority_ledger["delta"]),
-        "downstream-full-builds": copy.deepcopy(downstream_evidence),
-        "publication-pom-verification": copy.deepcopy(publication_evidence),
-        "remote-immutable-ref-verification": candidate_evidence.get(
-            "remote-immutable-ref-verification",
-            "pending-candidate-commit-and-push",
-        ),
-        "resolved-graph-evidence": copy.deepcopy(
-            authority_ledger.get("resolved-graph-evidence", [])
-        ),
-        "rollout": authority_ledger["rollout"],
-        "status": authority_ledger["status"],
-    }
-    existing = updated["subsequent-rollouts"]
-    updated["subsequent-rollouts"] = [
-        item for item in existing if item["rollout"] != rollout["rollout"]
-    ] + [rollout]
-    return updated
-
-
 def parse_retrieval_time(value: Any) -> dt.datetime:
     """감사 조회 시각을 초 단위 UTC로 검증한다."""
     if (
@@ -511,7 +489,7 @@ def parse_retrieval_time(value: Any) -> dt.datetime:
         raise RuntimeError("audit metadata retrieval time is invalid")
     try:
         return dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(
-            tzinfo=dt.timezone.utc
+            tzinfo=dt.UTC
         )
     except ValueError as error:
         raise RuntimeError("audit metadata retrieval time is invalid") from error
@@ -962,7 +940,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--central-ledger-base-ref")
     parser.add_argument(
-        "--audit-cutoff", default=dt.datetime.now(dt.timezone.utc).date().isoformat()
+        "--audit-cutoff", default=dt.datetime.now(dt.UTC).date().isoformat()
     )
     parser.add_argument("--rollout", default="2026-08-05-issue-169-full-authority-audit")
     parser.add_argument("--workers", type=int, default=16)
@@ -972,6 +950,58 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    recover_catalog_rollout_transaction(REPO_ROOT)
+    central_document = None
+    if args.central_ledger_base_ref:
+        central_document_text = subprocess.run(
+            [
+                "git",
+                "show",
+                f"{args.central_ledger_base_ref}:config/central-catalog-version-deltas.json",
+            ],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        central_document = json.loads(central_document_text)
+    elif args.refresh_central_rollout or (
+        args.refresh_delta_ledger and args.delta_ledger.exists()
+    ):
+        central_document = json.loads(
+            args.central_delta_ledger.read_text(encoding="utf-8")
+        )
+
+    previous_authority_ledger = None
+    previous_rollout_artifacts = None
+    if (
+        args.refresh_delta_ledger
+        and args.delta_ledger.exists()
+        and central_document is not None
+    ):
+        mutable_previous_ledger = json.loads(
+            args.delta_ledger.read_text(encoding="utf-8")
+        )
+        previous_rollout = mutable_previous_ledger.get("rollout")
+        if previous_rollout != args.rollout:
+            (
+                previous_authority_ledger,
+                previous_audit_bytes,
+                previous_declared_artifacts,
+            ) = (
+                load_catalog_rollout_evidence(
+                    central_document,
+                    previous_rollout,
+                    REPO_ROOT,
+                    source_ref=args.central_ledger_base_ref,
+                )
+            )
+            previous_rollout_artifacts = ensure_immutable_rollout_snapshot(
+                previous_authority_ledger,
+                previous_audit_bytes,
+                previous_declared_artifacts,
+                REPO_ROOT,
+            )
     if args.write_policy_versions:
         policy = json.loads(args.policy.read_text(encoding="utf-8"))
         catalog = args.catalog.read_text(encoding="utf-8")
@@ -988,7 +1018,10 @@ def main() -> int:
             workers=args.workers,
             audit_policy=audit_policy,
         )
-        args.audit_output.write_bytes(canonical_json(audit))
+        refreshed_audit_bytes = canonical_json(audit)
+    else:
+        refreshed_audit_bytes = None
+    refreshed_delta_ledger_bytes = None
     if args.refresh_delta_ledger:
         if not args.baseline_ref:
             raise RuntimeError("--baseline-ref is required with --refresh-delta-ledger")
@@ -1010,27 +1043,61 @@ def main() -> int:
             audit_cutoff=args.audit_cutoff,
             rollout=args.rollout,
         )
-        args.delta_ledger.write_bytes(pretty_json(ledger))
-    if args.refresh_central_rollout:
-        if args.central_ledger_base_ref:
-            document_text = subprocess.run(
-                [
-                    "git",
-                    "show",
-                    f"{args.central_ledger_base_ref}:config/central-catalog-version-deltas.json",
-                ],
-                cwd=REPO_ROOT,
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout
-        else:
-            document_text = args.central_delta_ledger.read_text(encoding="utf-8")
-        document = json.loads(document_text)
-        authority_ledger = json.loads(args.delta_ledger.read_text(encoding="utf-8"))
-        args.central_delta_ledger.write_bytes(
-            pretty_json(upsert_catalog_rollout(document, authority_ledger))
+        refreshed_delta_ledger_bytes = pretty_json(ledger)
+    current_rollout_artifacts = None
+    if args.refresh_delta_ledger:
+        current_authority_ledger = ledger
+        current_revision = (
+            candidate_rollout_snapshot_revision(
+                central_document, current_authority_ledger
+            )
+            if central_document is not None
+            else None
         )
+        current_rollout_artifacts = snapshot_rollout_evidence(
+            current_authority_ledger,
+            refreshed_audit_bytes
+            if refreshed_audit_bytes is not None
+            else args.audit_output.read_bytes(),
+            REPO_ROOT,
+            revision=current_revision,
+        )
+    refreshed_central_ledger_bytes = None
+    if args.refresh_central_rollout:
+        if current_rollout_artifacts is None:
+            raise RuntimeError("immutable rollout snapshots require --refresh-delta-ledger")
+        if central_document is None:
+            central_document = json.loads(
+                args.central_delta_ledger.read_text(encoding="utf-8")
+            )
+        document = central_document
+        authority_ledger = current_authority_ledger
+        if (
+            previous_authority_ledger is not None
+            and previous_rollout_artifacts is not None
+            and previous_authority_ledger["rollout"] != authority_ledger["rollout"]
+        ):
+            document = pin_catalog_rollout_evidence(
+                document,
+                previous_authority_ledger["rollout"],
+                previous_rollout_artifacts,
+            )
+        refreshed_central_ledger_bytes = pretty_json(
+            upsert_catalog_rollout(
+                document, authority_ledger, current_rollout_artifacts
+            )
+        )
+    lifecycle_writes = []
+    if refreshed_audit_bytes is not None:
+        lifecycle_writes.append((args.audit_output, refreshed_audit_bytes))
+    if refreshed_delta_ledger_bytes is not None:
+        lifecycle_writes.append((args.delta_ledger, refreshed_delta_ledger_bytes))
+    if refreshed_central_ledger_bytes is not None:
+        lifecycle_writes.append(
+            (args.central_delta_ledger, refreshed_central_ledger_bytes)
+        )
+    if lifecycle_writes:
+        commit_catalog_rollout_transaction(REPO_ROOT, tuple(lifecycle_writes))
     if args.write:
         args.output.write_bytes(canonical_json(inventory))
     if args.check:

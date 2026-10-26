@@ -34,7 +34,7 @@
     },
     "kotlin": {
       "disposition": "current",
-      "reason": "Keep all Kotlin compiler and Gradle plugin aliases on the approved 2.4.20 stable line (issue #197)."
+      "reason": "Keep all Kotlin compiler and Gradle plugin aliases on the approved 2.4.21 stable line (issue #260)."
     },
     "logback": {
       "disposition": "hold-compatibility",
@@ -42,7 +42,7 @@
     },
     "kafka4": {
       "disposition": "hold-compatibility",
-      "reason": "Preserve Kafka 4.2.1 because Spring Kafka 4.1.0 and spring-kafka-test manage the embedded-test artifacts at 4.2.1."
+      "reason": "Keep Kafka 4.2.2 aligned with Spring Kafka 4.1.2 and its spring-kafka-test artifacts; defer Kafka 4.4 until downstream consumers are validated."
     },
     "lettuce": {
       "disposition": "hold-compatibility",

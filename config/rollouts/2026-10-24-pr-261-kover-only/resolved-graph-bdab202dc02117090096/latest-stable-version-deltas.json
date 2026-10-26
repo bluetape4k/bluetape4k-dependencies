@@ -1,0 +1,108 @@
+{
+  "audit": {
+    "path": "config/rollouts/2026-10-24-pr-261-kover-only/resolved-graph-bdab202dc02117090096/latest-stable-version-audit.json",
+    "sha256": "b4722c49ac8034569c4db3d94cef3975c61063df1904973c1d57f1a9164489e9",
+    "summary": {
+      "authority-count": 523,
+      "line-count": 557,
+      "line-dispositions": {
+        "adopt-latest": 239,
+        "current": 226,
+        "defer-breaking-migration": 21,
+        "hold-compatibility": 62,
+        "hold-unavailable": 9
+      },
+      "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
+      "metadata-verified": 518
+    }
+  },
+  "audit-cutoff": "2026-10-24",
+  "baseline": {
+    "catalog-ref": "origin/develop",
+    "catalog-sha256": "11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30"
+  },
+  "candidate": {
+    "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15"
+  },
+  "candidate-validation-evidence": {
+    "downstream-full-builds": {
+      "failures": 2,
+      "repositories": 9,
+      "status": "completed-with-failures",
+      "verified-repositories": 7,
+      "evidence": {
+        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
+      }
+    },
+    "path": "docs/releases/2026-10-25-pr-261-kover-0911-candidate-receipt.json",
+    "publication-poms": {
+      "ci-run": 40152590237,
+      "failures": 0,
+      "files": 192,
+      "job": "Cross-repository Publication POM Contract",
+      "repositories": 9,
+      "status": "verified-hosted-ci"
+    },
+    "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
+    "sha256": "b1bd0eac5caa62c609c99fdcfbd9e60f247183abfde8303056f7c19702c07fa0",
+    "remote-immutable-ref-evidence": {
+      "status": "verified-fresh-remote-commit-ref",
+      "remote": "origin",
+      "ref": "refs/heads/develop",
+      "commit": "c55e3478eed8131cbaa39974879f82b43e96c8f3",
+      "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
+      "checked-at": "2026-10-25T08:53:38Z",
+      "proof": "git ls-remote origin refs/heads/develop and git show <commit>:gradle/libs.versions.toml matched the candidate catalog SHA."
+    },
+    "baseline-comparison": {
+      "status": "completed",
+      "evidence": {
+        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
+      }
+    },
+    "governance-checks": {
+      "status": "failed-unresolved-adoption-gaps",
+      "evidence": {
+        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
+        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
+      },
+      "sync-shared-versions-gap-count": 7
+    }
+  },
+  "delta": [
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "0.9.11"
+      },
+      "after": "0.9.11",
+      "authorities": [
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlinx.kover",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlinx.kover",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "0.9.9",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "resolved-graph-specs": [
+        "45e5421899542f2f6804df18a38c0669b09c7e82bf75dc9e902e00d19a211a1c"
+      ],
+      "verification": "verified-resolved-graph",
+      "version-key": "kover"
+    }
+  ],
+  "resolved-graph-evidence": {
+    "observation-count": 2,
+    "path": "config/rollouts/2026-10-24-pr-261-kover-only/resolved-graph-bdab202dc02117090096/resolved-graphs.json",
+    "sha256": "bdab202dc02117090096b09ce0560cd98a8d48c02b95b42e65d74ae9a469c2f3",
+    "spec-count": 1
+  },
+  "rollout": "2026-10-24-pr-261-kover-only",
+  "schema-version": 3,
+  "status": "verified-resolved-graph"
+}

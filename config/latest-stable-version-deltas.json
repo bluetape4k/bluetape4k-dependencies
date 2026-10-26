@@ -1,13 +1,13 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "b4722c49ac8034569c4db3d94cef3975c61063df1904973c1d57f1a9164489e9",
+    "sha256": "43ae66164cb765a7f373d59a9f16643d8f8e00293a39d91933fba762b8fd7e4d",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
-        "adopt-latest": 239,
-        "current": 226,
+        "adopt-latest": 231,
+        "current": 234,
         "defer-breaking-migration": 21,
         "hold-compatibility": 62,
         "hold-unavailable": 9
@@ -20,89 +20,255 @@
   "audit-cutoff": "2026-10-24",
   "baseline": {
     "catalog-ref": "origin/develop",
-    "catalog-sha256": "11255a5e195a2e66574559fff4568e4551f5b58ab89c68fabeffa2197e331f30"
-  },
-  "candidate": {
     "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15"
   },
-  "candidate-validation-evidence": {
-    "downstream-full-builds": {
-      "failures": 2,
-      "repositories": 9,
-      "status": "completed-with-failures",
-      "verified-repositories": 7,
-      "evidence": {
-        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
-        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
-      }
-    },
-    "path": "docs/releases/2026-10-25-pr-261-kover-0911-candidate-receipt.json",
-    "publication-poms": {
-      "ci-run": 40152590237,
-      "failures": 0,
-      "files": 192,
-      "job": "Cross-repository Publication POM Contract",
-      "repositories": 9,
-      "status": "verified-hosted-ci"
-    },
-    "remote-immutable-ref-verification": "verified-fresh-remote-commit-ref",
-    "sha256": "b1bd0eac5caa62c609c99fdcfbd9e60f247183abfde8303056f7c19702c07fa0",
-    "remote-immutable-ref-evidence": {
-      "status": "verified-fresh-remote-commit-ref",
-      "remote": "origin",
-      "ref": "refs/heads/develop",
-      "commit": "c55e3478eed8131cbaa39974879f82b43e96c8f3",
-      "catalog-sha256": "f109dac9da21a4462a4beba8198478da5be626f28321c0c4bc2f656daa0ccc15",
-      "checked-at": "2026-10-25T08:53:38Z",
-      "proof": "git ls-remote origin refs/heads/develop and git show <commit>:gradle/libs.versions.toml matched the candidate catalog SHA."
-    },
-    "baseline-comparison": {
-      "status": "completed",
-      "evidence": {
-        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
-        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
-      }
-    },
-    "governance-checks": {
-      "status": "failed-unresolved-adoption-gaps",
-      "evidence": {
-        "path": "docs/releases/2026-10-25-pr-261-kover-0911-downstream-full-builds.json",
-        "sha256": "ba4642dcf0f4365a2e391e00025fc014ba1ab0249fbf8180aea28e5e2f21fba0"
-      },
-      "sync-shared-versions-gap-count": 7
-    }
+  "candidate": {
+    "catalog-sha256": "0509fa6a21650518d84d61c92c5ff2974d8320f616f7fdf64dd22e44179db149"
   },
   "delta": [
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "0.9.11"
+        "version": "3.2.4"
       },
-      "after": "0.9.11",
+      "after": "3.2.4",
       "authorities": [
         {
-          "authority-key": "catalog:plugin:org.jetbrains.kotlinx.kover",
-          "coordinate-or-plugin-id": "org.jetbrains.kotlinx.kover",
+          "authority-key": "policy:library:tools.jackson:jackson-bom",
+          "coordinate-or-plugin-id": "tools.jackson:jackson-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "3.2.3",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "jackson3"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-compatibility-alignment",
+        "version": "4.2.2"
+      },
+      "after": "4.2.2",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.apache.kafka:generator",
+          "coordinate-or-plugin-id": "org.apache.kafka:generator",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-clients",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-clients",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-metadata",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-metadata",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-raft",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-raft",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-server-common",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-server-common",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-storage",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-storage",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-storage-api",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-storage-api",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-streams",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-streams",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-streams-test-utils",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-streams-test-utils",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka_2.13",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka_2.13",
+          "disposition": "hold-compatibility",
+          "kind": "library"
+        }
+      ],
+      "before": "4.2.1",
+      "reason": "Align to the explicitly audited compatibility constraint shared by every governed authority.",
+      "verification": "pending-resolved-graph",
+      "version-key": "kafka4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.4.21"
+      },
+      "after": "2.4.21",
+      "authorities": [
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.jvm",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.jvm",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.kapt",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.kapt",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.allopen",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.allopen",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.jpa",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.jpa",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.noarg",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.noarg",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.serialization",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.serialization",
+          "disposition": "current",
+          "kind": "plugin"
+        },
+        {
+          "authority-key": "catalog:plugin:org.jetbrains.kotlin.plugin.spring",
+          "coordinate-or-plugin-id": "org.jetbrains.kotlin.plugin.spring",
           "disposition": "current",
           "kind": "plugin"
         }
       ],
-      "before": "0.9.9",
+      "before": "2.4.20",
       "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "resolved-graph-specs": [
-        "45e5421899542f2f6804df18a38c0669b09c7e82bf75dc9e902e00d19a211a1c"
+      "verification": "pending-resolved-graph",
+      "version-key": "kotlin"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "3.6.0"
+      },
+      "after": "3.6.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:io.ktor:ktor-bom",
+          "coordinate-or-plugin-id": "io.ktor:ktor-bom",
+          "disposition": "current",
+          "kind": "library"
+        }
       ],
-      "verification": "verified-resolved-graph",
-      "version-key": "kover"
+      "before": "3.5.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "ktor"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.1.2"
+      },
+      "after": "4.1.2",
+      "authorities": [
+        {
+          "authority-key": "catalog:plugin:org.springframework.boot",
+          "coordinate-or-plugin-id": "org.springframework.boot",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "4.1.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "spring-boot"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.1.2"
+      },
+      "after": "4.1.2",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.springframework.boot:spring-boot-dependencies",
+          "coordinate-or-plugin-id": "org.springframework.boot:spring-boot-dependencies",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.springframework.boot:spring-boot-http-converter",
+          "coordinate-or-plugin-id": "org.springframework.boot:spring-boot-http-converter",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:plugin:org.springframework.boot",
+          "coordinate-or-plugin-id": "org.springframework.boot",
+          "disposition": "current",
+          "kind": "plugin"
+        }
+      ],
+      "before": "4.1.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "spring-boot4"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.1.2"
+      },
+      "after": "4.1.2",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.springframework.kafka:spring-kafka",
+          "coordinate-or-plugin-id": "org.springframework.kafka:spring-kafka",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.springframework.kafka:spring-kafka-test",
+          "coordinate-or-plugin-id": "org.springframework.kafka:spring-kafka-test",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.1.1",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "spring-kafka4"
     }
   ],
-  "resolved-graph-evidence": {
-    "observation-count": 2,
-    "path": "docs/releases/2026-10-25-pr-261-kover-0911-resolved-graphs.json",
-    "sha256": "bdab202dc02117090096b09ce0560cd98a8d48c02b95b42e65d74ae9a469c2f3",
-    "spec-count": 1
-  },
-  "rollout": "2026-10-24-pr-261-kover-only",
+  "rollout": "2026-10-24-issue-260-safe-refresh",
   "schema-version": 3,
-  "status": "verified-resolved-graph"
+  "status": "validation-pending"
 }

@@ -89,6 +89,30 @@ class VerifyLatestStableResolvedGraphsTest(unittest.TestCase):
             for phase in ("before", "after")
         ]
 
+    def test_pending_catalog_without_receipt_requires_matching_worktree_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            catalog_path = root / "gradle" / "libs.versions.toml"
+            catalog_path.parent.mkdir(parents=True)
+            catalog_bytes = b'[versions]\nexample = "1.1.0"\n'
+            catalog_path.write_bytes(catalog_bytes)
+            ledger = {
+                "status": "validation-pending",
+                "candidate": {"catalog-sha256": self.module.sha256_bytes(catalog_bytes)},
+            }
+
+            self.assertEqual(
+                self.module.candidate_catalog_bytes(ledger, root), catalog_bytes
+            )
+
+            catalog_path.write_bytes(b"stale candidate\n")
+            with self.assertRaisesRegex(RuntimeError, "pending candidate catalog SHA"):
+                self.module.candidate_catalog_bytes(ledger, root)
+
+            ledger["status"] = "verified-resolved-graph"
+            with self.assertRaisesRegex(RuntimeError, "receipt pointer is required"):
+                self.module.candidate_catalog_bytes(ledger, root)
+
     def test_build_specs_expands_libraries_and_plugin_markers(self) -> None:
         specs = self.module.build_specs(self.ledger)
 
@@ -347,6 +371,211 @@ class VerifyLatestStableResolvedGraphsTest(unittest.TestCase):
         for delta in promoted["delta"]:
             self.assertEqual(delta["verification"], "verified-resolved-graph")
             self.assertTrue(delta["resolved-graph-specs"])
+
+    def test_main_validates_receipt_destination_before_running_gradle(self) -> None:
+        ledger = copy.deepcopy(self.ledger)
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            canonical_receipt = root.resolve() / "docs" / "resolved-graphs.json"
+            self.assertEqual(
+                self.module.validate_receipt_destination(canonical_receipt, root),
+                canonical_receipt,
+            )
+            ledger_path = root / "config" / "latest-stable-version-deltas.json"
+            ledger_path.parent.mkdir(parents=True)
+            ledger_path.write_bytes(self.module.pretty_json(ledger))
+            catalog = root / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir()
+            catalog.write_text("[versions]\nexample = \"1.1.0\"\n", encoding="utf-8")
+            sidecar = root / "gradle" / "libs.versions.toml.sha256"
+            sidecar.write_text("catalog\n", encoding="utf-8")
+            log_path = root / "build" / "resolved-graphs.log"
+            outside_receipt = Path(temporary_directory).parent / "outside-receipt.json"
+
+            with (
+                mock.patch.object(self.module, "REPO_ROOT", root),
+                mock.patch.object(self.module, "validate_catalog", return_value="a" * 64),
+                mock.patch.object(self.module, "run_gradle", return_value=([], [])) as run_gradle,
+                mock.patch.object(self.module, "validate_observations", return_value=[]),
+                mock.patch(
+                    "sys.argv",
+                    [
+                        "verify-latest-stable-resolved-graphs.py",
+                        "--ledger",
+                        str(ledger_path),
+                        "--catalog",
+                        str(catalog),
+                        "--catalog-sidecar",
+                        str(sidecar),
+                        "--receipt",
+                        str(outside_receipt),
+                        "--log",
+                        str(log_path),
+                    ],
+                ),
+                self.assertRaisesRegex(RuntimeError, "receipt path"),
+            ):
+                self.module.main()
+
+            run_gradle.assert_not_called()
+            self.assertFalse(outside_receipt.exists())
+            self.assertFalse(log_path.exists())
+
+    def test_main_continues_graph_validation_after_transaction_recovery(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            ledger_path = root / "config" / "latest-stable-version-deltas.json"
+            ledger_path.parent.mkdir(parents=True)
+            ledger_path.write_bytes(self.module.pretty_json(self.ledger))
+            catalog = root / "gradle" / "libs.versions.toml"
+            catalog.parent.mkdir()
+            catalog.write_text("[versions]\nexample = \"1.1.0\"\n", encoding="utf-8")
+            sidecar = root / "gradle" / "libs.versions.toml.sha256"
+            sidecar.write_text("test\n", encoding="utf-8")
+            receipt_path = root / "docs" / "releases" / "resolved-graphs.json"
+            log_path = root / "build" / "resolved-graphs.log"
+
+            def run_gradle(specs, output_log):
+                output_log.parent.mkdir(parents=True, exist_ok=True)
+                output_log.write_text("resolved graph evidence\n", encoding="utf-8")
+                return self.observations(specs), [
+                    "/repo/gradlew",
+                    "-p",
+                    "/repo/build/resolved-graphs-test",
+                    "resolveLatestStableGraphs",
+                ]
+
+            with (
+                mock.patch.object(self.module, "REPO_ROOT", root),
+                mock.patch.object(
+                    self.module, "recover_catalog_rollout_transaction", return_value=True
+                ),
+                mock.patch.object(self.module, "validate_catalog", return_value="a" * 64),
+                mock.patch.object(self.module, "run_gradle", side_effect=run_gradle) as run,
+                mock.patch(
+                    "sys.argv",
+                    [
+                        "verify-latest-stable-resolved-graphs.py",
+                        "--ledger",
+                        str(ledger_path),
+                        "--catalog",
+                        str(catalog),
+                        "--catalog-sidecar",
+                        str(sidecar),
+                        "--receipt",
+                        str(receipt_path),
+                        "--log",
+                        str(log_path),
+                    ],
+                ),
+            ):
+                self.assertEqual(self.module.main(), 0)
+
+            run.assert_called_once()
+            self.assertTrue(receipt_path.is_file())
+
+    def test_main_promotion_updates_the_central_immutable_rollout_snapshot(self) -> None:
+        audit_module = importlib.util.spec_from_file_location(
+            "audit_latest_stable_for_graph_promotion",
+            REPO_ROOT / "scripts" / "audit-latest-stable.py",
+        )
+        self.assertIsNotNone(audit_module)
+        self.assertIsNotNone(audit_module.loader)
+        audit = importlib.util.module_from_spec(audit_module)
+        audit_module.loader.exec_module(audit)
+
+        ledger = copy.deepcopy(self.ledger)
+        ledger.update(
+            {
+                "rollout": "candidate",
+                "baseline": {"catalog-ref": "baseline"},
+                "audit": {
+                    "path": "config/latest-stable-version-audit.json",
+                    "sha256": "f" * 64,
+                },
+            }
+        )
+        audit_bytes = b'{"schema-version":1}\n'
+        ledger["audit"]["sha256"] = hashlib.sha256(audit_bytes).hexdigest()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            config = root / "config"
+            config.mkdir()
+            audit_path = config / "latest-stable-version-audit.json"
+            audit_path.write_bytes(audit_bytes)
+            catalog = config / "catalog.toml"
+            catalog.write_text("[versions]\nexample = \"1.1.0\"\n", encoding="utf-8")
+            sidecar = config / "catalog.sha256"
+            sidecar.write_text("test\n", encoding="utf-8")
+
+            pending_artifacts = audit.snapshot_rollout_evidence(
+                ledger, audit_bytes, repository_root=root
+            )
+            central_path = config / "central-catalog-version-deltas.json"
+            central = audit.upsert_catalog_rollout(
+                {"schema-version": 2, "subsequent-rollouts": []},
+                ledger,
+                pending_artifacts,
+            )
+            central_path.write_bytes(audit.pretty_json(central))
+            ledger_path = config / "latest-stable-version-deltas.json"
+            ledger_path.write_bytes(self.module.pretty_json(ledger))
+            pending_snapshot_path = root / pending_artifacts["authority-delta-ledger"]["path"]
+            pending_snapshot_bytes = pending_snapshot_path.read_bytes()
+            receipt_path = root / "docs" / "releases" / "resolved-graphs.json"
+            log_path = root / "build" / "resolved-graphs.log"
+
+            def run_gradle(specs, output_log):
+                output_log.parent.mkdir(parents=True, exist_ok=True)
+                output_log.write_text("resolved graph evidence\n", encoding="utf-8")
+                return self.observations(specs), [
+                    "/repo/gradlew",
+                    "-p",
+                    "/repo/build/resolved-graphs-test",
+                    "resolveLatestStableGraphs",
+                ]
+
+            with (
+                mock.patch.object(self.module, "REPO_ROOT", root),
+                mock.patch.object(self.module, "validate_catalog", return_value="a" * 64),
+                mock.patch.object(self.module, "run_gradle", side_effect=run_gradle),
+                mock.patch("sys.argv", [
+                    "verify-latest-stable-resolved-graphs.py",
+                    "--ledger", str(ledger_path),
+                    "--catalog", str(catalog),
+                    "--catalog-sidecar", str(sidecar),
+                    "--central-ledger", str(central_path),
+                    "--receipt", "docs/releases/resolved-graphs.json",
+                    "--log", str(log_path),
+                    "--promote",
+                ]),
+            ):
+                self.assertEqual(self.module.main(), 0)
+
+            promoted = json.loads(ledger_path.read_text(encoding="utf-8"))
+            updated_central = json.loads(central_path.read_text(encoding="utf-8"))
+            row = updated_central["subsequent-rollouts"][0]
+            self.assertEqual(promoted["status"], "verified-resolved-graph")
+            self.assertEqual(row["status"], "verified-resolved-graph")
+            self.assertEqual(
+                row["resolved-graph-evidence"], promoted["resolved-graph-evidence"]
+            )
+            self.assertTrue(receipt_path.is_file())
+            self.assertNotEqual(
+                row["authority-delta-ledger"],
+                pending_artifacts["authority-delta-ledger"]["path"],
+            )
+            self.assertEqual(pending_snapshot_path.read_bytes(), pending_snapshot_bytes)
+            verified_snapshot_path = root / row["authority-delta-ledger"]
+            verified_snapshot = json.loads(
+                verified_snapshot_path.read_text(encoding="utf-8")
+            )
+            self.assertEqual(verified_snapshot["status"], "verified-resolved-graph")
+            self.assertEqual(
+                hashlib.sha256(verified_snapshot_path.read_bytes()).hexdigest(),
+                row["authority-delta-ledger-sha256"],
+            )
 
     def test_receipt_command_does_not_capture_deleted_temporary_path(self) -> None:
         command = [

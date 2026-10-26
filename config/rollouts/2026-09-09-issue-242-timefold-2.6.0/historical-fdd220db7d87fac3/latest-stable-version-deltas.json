@@ -1,0 +1,52 @@
+{
+  "audit": {
+    "path": "config/rollouts/2026-09-09-issue-242-timefold-2.6.0/historical-fdd220db7d87fac3/latest-stable-version-audit.json",
+    "sha256": "0f8efeec4cf722e51e181f21659200f85d861bc1a92f1bcb3a9aac78bfa9bda4",
+    "summary": {
+      "authority-count": 521,
+      "line-count": 555,
+      "line-dispositions": {
+        "adopt-latest": 25,
+        "current": 421,
+        "defer-breaking-migration": 25,
+        "hold-compatibility": 75,
+        "hold-unavailable": 9
+      },
+      "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
+      "metadata-verified": 516
+    }
+  },
+  "audit-cutoff": "2026-09-09",
+  "baseline": {
+    "catalog-ref": "develop",
+    "catalog-sha256": "502affb547e393a81518708a39bfb7f07cf40c6866cb952f1ed6adcd3ae212da"
+  },
+  "candidate": {
+    "catalog-sha256": "0954ccab87e9bd8380610134f91cf70aa6bcd0799f94a3b43181d7b083efd2e5"
+  },
+  "delta": [
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "2.6.0"
+      },
+      "after": "2.6.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:ai.timefold.solver:timefold-solver-bom",
+          "coordinate-or-plugin-id": "ai.timefold.solver:timefold-solver-bom",
+          "disposition": "defer-breaking-migration",
+          "kind": "library"
+        }
+      ],
+      "before": "2.4.0",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "timefold-solver"
+    }
+  ],
+  "rollout": "2026-09-09-issue-242-timefold-2.6.0",
+  "schema-version": 3,
+  "status": "validation-pending"
+}
