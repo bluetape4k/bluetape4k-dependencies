@@ -1,13 +1,13 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "43ae66164cb765a7f373d59a9f16643d8f8e00293a39d91933fba762b8fd7e4d",
+    "sha256": "b9a1a85884b8b2b60470ea9f2bf1a6d8f845411905272c6b078400023a107ae4",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
-        "adopt-latest": 231,
-        "current": 234,
+        "adopt-latest": 229,
+        "current": 236,
         "defer-breaking-migration": 21,
         "hold-compatibility": 62,
         "hold-unavailable": 9
