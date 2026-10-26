@@ -15,7 +15,7 @@ class KotlinxSerializationCatalogTest(unittest.TestCase):
     def test_catalog_exposes_versioned_bom_and_json_aliases(self) -> None:
         self.assertRegex(
             self.catalog_text,
-            r'(?m)^kotlinx-serialization\s*=\s*"1\.11\.0"',
+            r'(?m)^kotlinx-serialization\s*=\s*"1\.12\.0"',
         )
         self.assert_catalog_alias(
             "kotlinx-serialization-bom",
