@@ -29,6 +29,34 @@ Issue [#256](https://github.com/bluetape4k/bluetape4k-dependencies/issues/256)�
   `detekt-dev` 버전 자체를 임의로 올리거나 compatibility line을 복제하지
   않는다.
 
+## Consumer inventory와 실제 canary
+
+문자열 guard만으로는 소비자 build에서 resolver가 제거된 상태를 감지할 수
+없으므로 `config/detekt-kotlin-compatibility-consumers.json`에 consumer를
+`active`와 `root_only`로 나눠 기록한다. 다음 명령은 inventory의 Gradle
+source를 읽고, active consumer의 `detekt` configuration dependency report와
+root-only consumer의 `detekt NO-SOURCE` task를 실제로 실행한다.
+
+```bash
+python3 scripts/verify-detekt-kotlin-compatibility.py \
+  --workspace /path/to/bluetape4k \
+  --catalog /path/to/bluetape4k-dependencies/gradle/libs.versions.toml \
+  --run-gradle --json
+```
+
+현재 checkout에서는 `consumer_count=13`, `failed_repositories=[]`로
+끝났다. 중앙 catalog를 주입한 AWS, Text, Leader, Projects, Exposed, Graph,
+Javers의 7개 probe가 모두 `dev.detekt:detekt-cli:2.0.0-alpha.6`와
+`org.jetbrains.kotlin:kotlin-compiler:2.4.10`을 해석했다. Workshop, Clinic,
+Exposed Workshop의 local-catalog probe도 같은 compiler line을 확인했다.
+Image, Experimental, Exposed R2DBC Workshop의 3개 root-only probe는 모두
+`Task :detekt NO-SOURCE`와 `BUILD SUCCESSFUL`을 반환했다.
+
+AWS 전체 `./gradlew detekt`는 compatibility resolution과 별개로 기존
+`bluetape4k-aws-ktor`의 Detekt 28개 분석 이슈 때문에 실패했다. 따라서 이
+canary는 source findings의 통과를 주장하지 않고, `detekt` configuration의
+compiler resolution을 검증하는 dependency report를 증거로 사용한다.
+
 ## 소비자 범위 점검
 
 2026-10-27 기준으로 `dev.detekt`를 실제 subproject에 적용하는 AWS, Text,
@@ -69,6 +97,9 @@ source set을 추가할 때는 같은 configuration resolver를 먼저 추가하
 - 변경 후 guard, catalog checksum, central sync, publication POM, Gradle build를
   순서대로 재실행했다. guard와 checksum은 통과했고, `sync-shared-versions`만
   기존 Projects 중복 7건으로 실패했다.
+- consumer inventory 정적 guard와 13개 실제 canary를 추가로 실행했다. 이
+  결과는 catalog/comment 문자열이 아니라 consumer Gradle resolution과
+  root-only 경계를 직접 확인한다.
 - Leader의 full Nightly backend matrix와 새 원격 immutable catalog ref는
   중앙 commit이 원격에 게시된 뒤 별도 canary에서 확인해야 한다. 현재 일일
   Nightly의 skipped backend jobs를 완료 증거로 사용하지 않는다.

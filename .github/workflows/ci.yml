@@ -414,7 +414,7 @@ jobs:
 
       - name: Verify catalog scripts
         run: |
-          python3 -m py_compile scripts/audit-latest-stable.py scripts/write-snapshot-consumer-inputs.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/sync-publishing-signing-support.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
+          python3 -m py_compile scripts/audit-latest-stable.py scripts/write-snapshot-consumer-inputs.py scripts/sync-managed-catalog.py scripts/sync-shared-versions.py scripts/sync-dependabot-ignores.py scripts/sync-publishing-signing-support.py scripts/verify-detekt-kotlin-compatibility.py scripts/verify-latest-stable-resolved-graphs.py scripts/verify-managed-artifacts.py scripts/verify-post-publish-next-development-line.py scripts/verify-publication-poms.py scripts/verify-supply-chain-reports.py tests/*.py
           python3 -m unittest \
             tests/test_sync_publishing_signing_support.py \
             tests/test_run_issues_242_243_validation.py \

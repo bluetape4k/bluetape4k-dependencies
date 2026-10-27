@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "plugin": {
+    "id": "dev.detekt",
+    "version": "2.0.0-alpha.6",
+    "supported_kotlin_compiler": "2.4.10",
+    "resolver": "getSupportedKotlinVersion()"
+  },
+  "active": [
+    {
+      "repository": "bluetape4k-aws",
+      "catalog": "central",
+      "probe_project": ":bluetape4k-aws-ktor"
+    },
+    {
+      "repository": "bluetape4k-text",
+      "catalog": "central",
+      "probe_project": ":tokenizer-core"
+    },
+    {
+      "repository": "bluetape4k-leader",
+      "catalog": "central",
+      "probe_project": ":bluetape4k-leader-core"
+    },
+    {
+      "repository": "bluetape4k-projects",
+      "catalog": "central",
+      "probe_project": ":bluetape4k-core"
+    },
+    {
+      "repository": "bluetape4k-exposed",
+      "catalog": "central",
+      "probe_project": ":bluetape4k-exposed-core"
+    },
+    {
+      "repository": "bluetape4k-graph",
+      "catalog": "central",
+      "probe_project": ":bluetape4k-graph-core"
+    },
+    {
+      "repository": "bluetape4k-javers",
+      "catalog": "central",
+      "probe_project": ":javers-core"
+    },
+    {
+      "repository": "bluetape4k-workshop",
+      "catalog": "local",
+      "probe_project": null
+    },
+    {
+      "repository": "clinic-appointment",
+      "catalog": "local",
+      "probe_project": ":appointment-core"
+    },
+    {
+      "repository": "exposed-workshop",
+      "catalog": "local",
+      "probe_project": null
+    }
+  ],
+  "root_only": [
+    {
+      "repository": "bluetape4k-image",
+      "catalog": "central"
+    },
+    {
+      "repository": "bluetape4k-experimental",
+      "catalog": "central"
+    },
+    {
+      "repository": "exposed-r2dbc-workshop",
+      "catalog": "local"
+    }
+  ],
+  "excluded": [
+    {
+      "repository": "timefold-workshop",
+      "reason": "Detekt plugin is not declared in the repository build scripts."
+    }
+  ]
+}
