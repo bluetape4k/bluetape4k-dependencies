@@ -9,6 +9,7 @@ configuration dependency report or root NO-SOURCE canary.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import dataclasses
 import hashlib
 import json
@@ -114,6 +115,21 @@ def gradle_files(repository_root: Path) -> tuple[Path, ...]:
             if file_name.endswith(".gradle.kts"):
                 files.append(Path(current_root) / file_name)
     return tuple(sorted(files))
+
+
+def repository_head(repository_root: Path) -> str | None:
+    completed = subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=repository_root,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    head = completed.stdout.strip()
+    return head if re.fullmatch(r"[0-9a-f]{40}", head) else None
 
 
 def _contains_plugin(text: str) -> bool:
@@ -319,31 +335,51 @@ def verify(
     manifest: Path,
     run_gradle: bool,
     timeout_seconds: float,
+    max_concurrency: int,
 ) -> dict[str, Any]:
+    if max_concurrency < 1:
+        raise ValueError("max concurrency must be positive")
     document, consumers = load_manifest(manifest)
     plugin = document["plugin"]
     if not catalog.is_file():
         raise ValueError(f"catalog is missing: {catalog}")
+    catalog_sha256 = hashlib.sha256(catalog.read_bytes()).hexdigest()
+    manifest_sha256 = hashlib.sha256(manifest.read_bytes()).hexdigest()
     results: list[dict[str, Any]] = []
-    for consumer in consumers:
+    pending_probes: list[tuple[int, Consumer, Path]] = []
+    for index, consumer in enumerate(consumers):
         repository_root = workspace / consumer.repository
         static_errors = inspect_static(consumer, repository_root)
+        head = repository_head(repository_root) if repository_root.is_dir() else None
+        if head is None:
+            static_errors.append("consumer checkout HEAD is unavailable")
         result: dict[str, Any] = {
             "repository": consumer.repository,
             "catalog": consumer.catalog,
             "scope": "root-only" if consumer.root_only else "active",
+            "head_sha": head,
             "static": {"status": "passed" if not static_errors else "failed", "errors": static_errors},
         }
         if run_gradle and not static_errors:
-            result["probe"] = run_probe(
-                consumer,
-                repository_root,
-                catalog,
-                timeout_seconds=timeout_seconds,
-                plugin_version=plugin["version"],
-                kotlin_compiler=plugin["supported_kotlin_compiler"],
-            )
+            pending_probes.append((index, consumer, repository_root))
         results.append(result)
+    if pending_probes:
+        workers = min(max_concurrency, len(pending_probes))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(
+                    run_probe,
+                    consumer,
+                    repository_root,
+                    catalog,
+                    timeout_seconds=timeout_seconds,
+                    plugin_version=plugin["version"],
+                    kotlin_compiler=plugin["supported_kotlin_compiler"],
+                ): index
+                for index, consumer, repository_root in pending_probes
+            }
+            for future in concurrent.futures.as_completed(futures):
+                results[futures[future]]["probe"] = future.result()
     failed = [item for item in results if item["static"]["status"] == "failed"]
     if run_gradle:
         failed.extend(item for item in results if item.get("probe", {}).get("status") == "failed")
@@ -352,7 +388,11 @@ def verify(
         "manifest": str(manifest),
         "workspace": str(workspace),
         "catalog": str(catalog),
+        "catalog_sha256": catalog_sha256,
+        "manifest_sha256": manifest_sha256,
         "run_gradle": run_gradle,
+        "max_concurrency": max_concurrency,
+        "timeout_seconds": timeout_seconds,
         "consumer_count": len(results),
         "passed_count": len(results) - len({item["repository"] for item in failed}),
         "failed_repositories": sorted({item["repository"] for item in failed}),
@@ -384,6 +424,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--run-gradle", action="store_true")
     parser.add_argument("--timeout", type=float, default=420.0)
+    parser.add_argument("--max-concurrency", type=int, default=4)
     parser.add_argument("--json", action="store_true", dest="as_json")
     args = parser.parse_args(argv)
     try:
@@ -393,6 +434,7 @@ def main(argv: Iterable[str] | None = None) -> int:
             manifest=args.manifest.resolve(),
             run_gradle=args.run_gradle,
             timeout_seconds=args.timeout,
+            max_concurrency=args.max_concurrency,
         )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         if args.as_json:

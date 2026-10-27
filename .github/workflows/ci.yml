@@ -400,6 +400,8 @@ jobs:
           python3 scripts/verify-detekt-kotlin-compatibility.py \
             --workspace "$GITHUB_WORKSPACE/.." \
             --catalog "$GITHUB_WORKSPACE/gradle/libs.versions.toml" \
+            --timeout 300 \
+            --max-concurrency 4 \
             --run-gradle --json \
             | tee "$RUNNER_TEMP/detekt-kotlin-compatibility.json"
 
@@ -409,7 +411,7 @@ jobs:
         with:
           name: detekt-kotlin-compatibility-canary
           path: ${{ runner.temp }}/detekt-kotlin-compatibility.json
-          if-no-files-found: warn
+          if-no-files-found: error
           overwrite: true
           retention-days: 90
 

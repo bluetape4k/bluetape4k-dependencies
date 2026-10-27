@@ -380,6 +380,27 @@ gh() {
         self.assertLess(build_job.index("- name: Build BOM"), build_job.index("- name: Write snapshot consumer input manifest"))
         self.assertLess(build_job.index("- name: Write snapshot consumer input manifest"), build_job.index("- name: Upload snapshot consumer input manifest"))
 
+    def test_ci_runs_and_preserves_detekt_consumer_canary(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        build_job = workflow.split("  build:\n", 1)[1].split(
+            "  publication-pom-contract:\n", 1
+        )[0]
+
+        self.assertIn("- name: Verify Detekt/Kotlin consumer canaries", build_job)
+        self.assertIn(
+            "python3 scripts/verify-detekt-kotlin-compatibility.py", build_job
+        )
+        self.assertIn("--run-gradle --json", build_job)
+        self.assertIn("--timeout 300", build_job)
+        self.assertIn("--max-concurrency 4", build_job)
+        self.assertIn("- name: Upload Detekt/Kotlin consumer canary", build_job)
+        self.assertIn("name: detekt-kotlin-compatibility-canary", build_job)
+        self.assertIn("if-no-files-found: error", build_job)
+        self.assertLess(
+            build_job.index("- name: Verify Detekt/Kotlin consumer canaries"),
+            build_job.index("- name: Upload Detekt/Kotlin consumer canary"),
+        )
+
     def test_publish_snapshot_uses_exact_manifest_heads_without_develop_fallback(
         self,
     ) -> None:
