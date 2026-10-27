@@ -399,6 +399,11 @@ gh() {
         self.assertIn("- name: Upload Detekt/Kotlin consumer canary", build_job)
         self.assertIn("name: detekt-kotlin-compatibility-canary", build_job)
         self.assertIn("if-no-files-found: error", build_job)
+        upload_step = build_job.split(
+            "      - name: Upload Detekt/Kotlin consumer canary\n", 1
+        )[1].split("      - name:", 1)[0]
+        self.assertIn("if: ${{ success() }}", upload_step)
+        self.assertNotIn("if: ${{ always() }}", upload_step)
         self.assertLess(
             build_job.index("- name: Verify Detekt/Kotlin consumer canaries"),
             build_job.index("- name: Validate Detekt/Kotlin canary receipt"),
