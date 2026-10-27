@@ -109,8 +109,12 @@ source set을 추가할 때는 같은 configuration resolver를 먼저 추가하
   ```
 
 - 변경 후 guard, catalog checksum, central sync, publication POM, Gradle build를
-  순서대로 재실행했다. guard와 checksum은 통과했고, `sync-shared-versions`만
-  기존 Projects 중복 7건으로 실패했다.
+  순서대로 재실행했다. Projects의 Dependabot용 `gradle/libs.versions.toml`을
+  기본 authority로 검사하면 기존 alias 중복 7건이 보고되지만, CI가 정의한
+  분할 계약(Projects는 `gradle/libs.project.versions.toml`, 나머지 저장소는
+  기본 catalog)으로 실행한 `sync-shared-versions --check --summary`는 모든
+  저장소에서 통과했다. 이 중복은 Issue #256 후보의 변경으로 발생한 실패가
+  아니다.
 - consumer inventory 정적 guard와 13개 실제 canary를 추가로 실행했다. 이
   결과는 catalog/comment 문자열이 아니라 consumer Gradle resolution과
   root-only 경계를 직접 확인한다.
