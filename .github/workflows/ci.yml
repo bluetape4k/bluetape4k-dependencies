@@ -405,6 +405,40 @@ jobs:
             --run-gradle --json \
             | tee "$RUNNER_TEMP/detekt-kotlin-compatibility.json"
 
+      - name: Validate Detekt/Kotlin canary receipt
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/detekt-kotlin-compatibility.json"
+          python3 - "$RUNNER_TEMP/detekt-kotlin-compatibility.json" <<'PY'
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          report = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          if report.get("schema_version") != 1 or report.get("run_gradle") is not True:
+              raise SystemExit("invalid Detekt/Kotlin canary receipt schema")
+          for field in ("catalog_head_sha", "catalog_sha256", "manifest_sha256"):
+              value = report.get(field)
+              pattern = r"[0-9a-f]{40}" if field == "catalog_head_sha" else r"[0-9a-f]{64}"
+              if not isinstance(value, str) or not re.fullmatch(pattern, value):
+                  raise SystemExit(f"invalid canary provenance field: {field}")
+          results = report.get("results")
+          if not isinstance(results, list) or report.get("consumer_count") != len(results):
+              raise SystemExit("canary consumer count does not match results")
+          if report.get("failed_repositories") or report.get("passed_count") != len(results):
+              raise SystemExit("Detekt/Kotlin canary receipt reports failed consumers")
+          for result in results:
+              if not re.fullmatch(r"[0-9a-f]{40}", result.get("head_sha", "")):
+                  raise SystemExit("canary consumer HEAD provenance is missing")
+              if result.get("static", {}).get("status") != "passed":
+                  raise SystemExit("canary static inventory is not green")
+              if result.get("probe", {}).get("status") != "passed":
+                  raise SystemExit("canary Gradle probe is not green")
+          PY
+
       - name: Upload Detekt/Kotlin consumer canary
         if: ${{ always() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7

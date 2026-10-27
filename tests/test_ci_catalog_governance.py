@@ -393,11 +393,18 @@ gh() {
         self.assertIn("--run-gradle --json", build_job)
         self.assertIn("--timeout 300", build_job)
         self.assertIn("--max-concurrency 4", build_job)
+        self.assertIn("- name: Validate Detekt/Kotlin canary receipt", build_job)
+        self.assertIn("catalog_head_sha", build_job)
+        self.assertIn("canary consumer HEAD provenance is missing", build_job)
         self.assertIn("- name: Upload Detekt/Kotlin consumer canary", build_job)
         self.assertIn("name: detekt-kotlin-compatibility-canary", build_job)
         self.assertIn("if-no-files-found: error", build_job)
         self.assertLess(
             build_job.index("- name: Verify Detekt/Kotlin consumer canaries"),
+            build_job.index("- name: Validate Detekt/Kotlin canary receipt"),
+        )
+        self.assertLess(
+            build_job.index("- name: Validate Detekt/Kotlin canary receipt"),
             build_job.index("- name: Upload Detekt/Kotlin consumer canary"),
         )
 
