@@ -164,6 +164,57 @@ def _command_for(consumer: Consumer) -> tuple[str, ...]:
     return ("./gradlew", target, "--configuration", "detekt")
 
 
+def _resolved_versions(output: str, coordinate: str) -> tuple[str, ...]:
+    """Extract selected versions for one module from a Gradle dependency report.
+
+    Gradle prints both the requested and selected version when conflict
+    resolution changes a dependency, for example ``2.4.10 -> 2.4.21``.  A
+    substring check would accept that output, so the verifier reads the
+    right-hand side of the arrow and also handles strict constraints such as
+    ``{strictly 2.4.10} -> 2.4.10``.
+    """
+
+    versions: list[str] = []
+    prefix = f"{coordinate}:"
+    for line in output.splitlines():
+        coordinate_index = line.find(prefix)
+        if coordinate_index < 0:
+            continue
+        suffix = line[coordinate_index + len(prefix) :].strip()
+        if suffix.startswith("{strictly "):
+            strict_end = suffix.find("}")
+            if strict_end < 0:
+                continue
+            suffix = suffix[strict_end + 1 :].strip()
+        if "->" in suffix:
+            selected = suffix.split("->", 1)[1].strip().split()[0]
+        else:
+            selected = suffix.split()[0] if suffix else ""
+        selected = selected.rstrip("(*)").strip()
+        if selected:
+            versions.append(selected)
+    return tuple(versions)
+
+
+def _require_resolved_version(
+    output: str,
+    coordinate: str,
+    expected_version: str,
+    *,
+    label: str,
+) -> str | None:
+    selected_versions = _resolved_versions(output, coordinate)
+    if not selected_versions:
+        return f"dependency report is missing {coordinate}:{expected_version}"
+    mismatches = sorted(set(selected_versions) - {expected_version})
+    if mismatches:
+        return (
+            f"{label} resolved to unexpected version(s): "
+            f"{', '.join(mismatches)}; expected {expected_version}"
+        )
+    return None
+
+
 def run_probe(
     consumer: Consumer,
     repository_root: Path,
@@ -216,12 +267,22 @@ def run_probe(
         if re.search(r"Task :[^\s:]+(?::[^\s:]+)*:detekt\b", output):
             errors.append("root-only detekt canary scheduled a subproject detekt task")
     else:
-        expected_plugin = f"dev.detekt:detekt-cli:{plugin_version}"
-        expected_compiler = f"org.jetbrains.kotlin:kotlin-compiler:{kotlin_compiler}"
-        if expected_plugin not in output:
-            errors.append(f"dependency report is missing {expected_plugin}")
-        if expected_compiler not in output:
-            errors.append(f"dependency report is missing {expected_compiler}")
+        plugin_error = _require_resolved_version(
+            output,
+            "dev.detekt:detekt-cli",
+            plugin_version,
+            label="Detekt CLI",
+        )
+        compiler_error = _require_resolved_version(
+            output,
+            "org.jetbrains.kotlin:kotlin-compiler",
+            kotlin_compiler,
+            label="Kotlin compiler",
+        )
+        if plugin_error:
+            errors.append(plugin_error)
+        if compiler_error:
+            errors.append(compiler_error)
     return {
         "status": "passed" if not errors else "failed",
         "returncode": completed.returncode,

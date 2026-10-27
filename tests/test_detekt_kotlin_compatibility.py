@@ -90,6 +90,48 @@ class DetektKotlinCompatibilityTest(unittest.TestCase):
 
         self.assertTrue(any("root-only consumer now applies Detekt" in error for error in errors))
 
+    def test_resolution_guard_rejects_compiler_conflict_selection(self) -> None:
+        output = """
+            +--- org.jetbrains.kotlin:kotlin-compiler:2.4.10 -> 2.4.21
+            +--- dev.detekt:detekt-cli:2.0.0-alpha.6
+            BUILD SUCCESSFUL in 1s
+        """
+
+        self.assertEqual(
+            VERIFY._resolved_versions(output, "org.jetbrains.kotlin:kotlin-compiler"),
+            ("2.4.21",),
+        )
+        self.assertEqual(
+            VERIFY._require_resolved_version(
+                output,
+                "org.jetbrains.kotlin:kotlin-compiler",
+                "2.4.10",
+                label="Kotlin compiler",
+            ),
+            "Kotlin compiler resolved to unexpected version(s): 2.4.21; expected 2.4.10",
+        )
+
+    def test_resolution_guard_accepts_plain_and_strict_selected_versions(self) -> None:
+        output = """
+            +--- dev.detekt:detekt-cli:2.0.0-alpha.6
+            +--- org.jetbrains.kotlin:kotlin-compiler:{strictly 2.4.10} -> 2.4.10 (c)
+            |    +--- org.jetbrains.kotlin:kotlin-compiler:2.4.10 (*)
+            BUILD SUCCESSFUL in 1s
+        """
+
+        self.assertEqual(
+            VERIFY._resolved_versions(output, "org.jetbrains.kotlin:kotlin-compiler"),
+            ("2.4.10", "2.4.10"),
+        )
+        self.assertIsNone(
+            VERIFY._require_resolved_version(
+                output,
+                "org.jetbrains.kotlin:kotlin-compiler",
+                "2.4.10",
+                label="Kotlin compiler",
+            )
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

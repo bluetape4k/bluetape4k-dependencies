@@ -52,6 +52,13 @@ Exposed Workshop의 local-catalog probe도 같은 compiler line을 확인했다.
 Image, Experimental, Exposed R2DBC Workshop의 3개 root-only probe는 모두
 `Task :detekt NO-SOURCE`와 `BUILD SUCCESSFUL`을 반환했다.
 
+검증기는 dependency report에 요청 좌표가 포함됐는지만 검사하지 않는다.
+Gradle이 출력하는 `requested -> selected` 형식과 `{strictly ...} -> ...`
+형식의 오른쪽 선택 버전을 읽어 예상 compiler와 일치하는지 확인한다. 예를
+들어 `kotlin-compiler:2.4.10 -> 2.4.21`은 실패하며, 선택 결과가 실제로
+`2.4.10`인 경우에만 통과한다. 이 충돌 회귀 테스트는
+`tests/test_detekt_kotlin_compatibility.py`에 보존한다.
+
 AWS 전체 `./gradlew detekt`는 compatibility resolution과 별개로 기존
 `bluetape4k-aws-ktor`의 Detekt 28개 분석 이슈 때문에 실패했다. 따라서 이
 canary는 source findings의 통과를 주장하지 않고, `detekt` configuration의
