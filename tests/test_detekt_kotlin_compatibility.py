@@ -132,6 +132,17 @@ class DetektKotlinCompatibilityTest(unittest.TestCase):
             )
         )
 
+    def test_verify_rejects_unbounded_probe_concurrency(self) -> None:
+        with self.assertRaisesRegex(ValueError, "between 1 and 4"):
+            VERIFY.verify(
+                workspace=REPO_ROOT.parent,
+                catalog=CATALOG,
+                manifest=MANIFEST,
+                run_gradle=False,
+                timeout_seconds=300.0,
+                max_concurrency=5,
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

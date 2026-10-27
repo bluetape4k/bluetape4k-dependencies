@@ -25,6 +25,7 @@ SCRIPT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = SCRIPT_ROOT / "config" / "detekt-kotlin-compatibility-consumers.json"
 DEFAULT_CATALOG = SCRIPT_ROOT / "gradle" / "libs.versions.toml"
 SUPPORTED_SCHEMA_VERSION = 1
+MAX_PROBE_CONCURRENCY = 4
 GRADLE_SKIP_PARTS = frozenset({".git", ".gradle", ".kotlin", "build", ".worktrees"})
 DETekt_PLUGIN_PATTERNS = (
     re.compile(r"\bdev\.detekt\b"),
@@ -337,12 +338,17 @@ def verify(
     timeout_seconds: float,
     max_concurrency: int,
 ) -> dict[str, Any]:
-    if max_concurrency < 1:
-        raise ValueError("max concurrency must be positive")
+    if not 1 <= max_concurrency <= MAX_PROBE_CONCURRENCY:
+        raise ValueError(
+            f"max concurrency must be between 1 and {MAX_PROBE_CONCURRENCY}"
+        )
     document, consumers = load_manifest(manifest)
     plugin = document["plugin"]
     if not catalog.is_file():
         raise ValueError(f"catalog is missing: {catalog}")
+    catalog_head = repository_head(catalog.parent.parent)
+    if catalog_head is None:
+        raise ValueError("catalog checkout HEAD is unavailable")
     catalog_sha256 = hashlib.sha256(catalog.read_bytes()).hexdigest()
     manifest_sha256 = hashlib.sha256(manifest.read_bytes()).hexdigest()
     results: list[dict[str, Any]] = []
@@ -388,6 +394,7 @@ def verify(
         "manifest": str(manifest),
         "workspace": str(workspace),
         "catalog": str(catalog),
+        "catalog_head_sha": catalog_head,
         "catalog_sha256": catalog_sha256,
         "manifest_sha256": manifest_sha256,
         "run_gradle": run_gradle,
