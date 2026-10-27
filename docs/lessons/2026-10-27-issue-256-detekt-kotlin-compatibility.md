@@ -47,7 +47,9 @@ python3 scripts/verify-detekt-kotlin-compatibility.py \
 동일한 `--run-gradle --json` canary는 CI의 catalog 소비자 clone 단계에서도
 실행하며, 결과 JSON을 `detekt-kotlin-compatibility-canary` artifact로 90일간
 보존한다. 따라서 로컬 실행 요약만으로 green을 선언하지 않고 CI exact run의
-consumer별 output hash와 선택 버전을 다시 읽을 수 있다.
+consumer별 checkout HEAD, output hash와 선택 버전을 다시 읽을 수 있다.
+CI에서는 probe를 최대 4개씩 병렬 실행하고 각 probe timeout을 300초로
+제한한다. artifact가 생성되지 않으면 CI 단계도 실패한다.
 
 현재 checkout에서는 `consumer_count=13`, `failed_repositories=[]`로
 끝났다. 중앙 catalog를 주입한 AWS, Text, Leader, Projects, Exposed, Graph,
