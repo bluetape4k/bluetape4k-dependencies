@@ -48,8 +48,14 @@ python3 scripts/verify-detekt-kotlin-compatibility.py \
 실행하며, 결과 JSON을 `detekt-kotlin-compatibility-canary` artifact로 90일간
 보존한다. 따라서 로컬 실행 요약만으로 green을 선언하지 않고 CI exact run의
 consumer별 checkout HEAD, output hash와 선택 버전을 다시 읽을 수 있다.
-CI에서는 probe를 최대 4개씩 병렬 실행하고 각 probe timeout을 300초로
-제한한다. artifact가 생성되지 않으면 CI 단계도 실패한다.
+CI에서는 probe를 최대 2개씩 병렬 실행하고 각 probe timeout을 300초로
+제한한다. artifact가 생성되지 않으면 CI 단계도 실패한다. 초기 후보의
+hosted canary를 3회 재실행한 결과는 모두 Gradle 오류 없이 약 3분 후
+GitHub-hosted runner shutdown 신호와 exit 143으로 종료됐다. 로컬 clean
+workspace의 13개 probe는 모두 통과했으므로, 단일 runner의 동시 Gradle
+부하를 낮추기 위해 CI 병렬도를 4에서 2로 줄였다. 이 조정은 제품 compiler
+resolution을 완화하지 않으며, 새 exact-head hosted run에서 다시 확인해야
+한다.
 
 Build BOM은 signing helper 검증을 위해 서명용 immutable checkout을
 `$GITHUB_WORKSPACE/..`에 유지하고, 개발선 consumer 검증용 checkout을

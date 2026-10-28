@@ -396,7 +396,7 @@ gh() {
         self.assertNotIn('--workspace "$GITHUB_WORKSPACE/.."', build_job)
         self.assertIn("--run-gradle --json", build_job)
         self.assertIn("--timeout 300", build_job)
-        self.assertIn("--max-concurrency 4", build_job)
+        self.assertIn("--max-concurrency 2", build_job)
         self.assertIn("- name: Validate Detekt/Kotlin canary receipt", build_job)
         self.assertIn("catalog_head_sha", build_job)
         self.assertIn("canary consumer HEAD provenance is missing", build_job)

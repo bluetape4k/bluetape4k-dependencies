@@ -401,7 +401,7 @@ jobs:
             --workspace "$RUNNER_TEMP/development-workspace" \
             --catalog "$GITHUB_WORKSPACE/gradle/libs.versions.toml" \
             --timeout 300 \
-            --max-concurrency 4 \
+            --max-concurrency 2 \
             --run-gradle --json \
             | tee "$RUNNER_TEMP/detekt-kotlin-compatibility.json"
 
