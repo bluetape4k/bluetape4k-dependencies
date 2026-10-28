@@ -390,6 +390,10 @@ gh() {
         self.assertIn(
             "python3 scripts/verify-detekt-kotlin-compatibility.py", build_job
         )
+        self.assertIn(
+            '--workspace "$RUNNER_TEMP/development-workspace"', build_job
+        )
+        self.assertNotIn('--workspace "$GITHUB_WORKSPACE/.."', build_job)
         self.assertIn("--run-gradle --json", build_job)
         self.assertIn("--timeout 300", build_job)
         self.assertIn("--max-concurrency 4", build_job)
