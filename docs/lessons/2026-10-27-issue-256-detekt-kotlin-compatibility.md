@@ -51,6 +51,14 @@ consumer별 checkout HEAD, output hash와 선택 버전을 다시 읽을 수 있
 CI에서는 probe를 최대 4개씩 병렬 실행하고 각 probe timeout을 300초로
 제한한다. artifact가 생성되지 않으면 CI 단계도 실패한다.
 
+Build BOM은 signing helper 검증을 위해 서명용 immutable checkout을
+`$GITHUB_WORKSPACE/..`에 유지하고, 개발선 consumer 검증용 checkout을
+`$RUNNER_TEMP/development-workspace`에 별도로 clone한다. canary는 반드시 후자를
+읽어야 한다. 전자를 읽으면 signing manifest의 과거 consumer SHA에서 아직
+resolver를 적용하지 않은 상태를 검사해 `getSupportedKotlinVersion() resolver is
+missing`이라는 오탐을 낸다. 이 경계는 CI governance test에서 두 workspace 경로를
+동시에 고정한다.
+
 현재 checkout에서는 `consumer_count=13`, `failed_repositories=[]`로
 끝났다. 중앙 catalog를 주입한 AWS, Text, Leader, Projects, Exposed, Graph,
 Javers의 7개 probe가 모두 `dev.detekt:detekt-cli:2.0.0-alpha.6`와
