@@ -134,6 +134,10 @@ assertj-core      = "3.27.7"  # https://mvnrepository.com/artifact/org.assertj/a
 awaitility        = "4.3.0"  # https://mvnrepository.com/artifact/org.awaitility/awaitility-kotlin
 random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.benas/random-beans
 sudachi           = "0.8.0"
+# Detekt compiler compatibility:
+# `dev.detekt:2.0.0-alpha.6` is built against Kotlin 2.4.10. Keep the product
+# Kotlin line on the central stable train; consumers must align only the
+# `detekt` configuration with `dev.detekt.gradle.plugin.getSupportedKotlinVersion()`.
 # <generated-central-authority-versions by scripts/promote-catalog-authority.py>
 aspectj-post-compile-weaving = "9.5.0"
 at-yawk-lz4 = "1.12.0"
