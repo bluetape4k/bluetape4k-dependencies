@@ -793,6 +793,27 @@
       "status": "verified-resolved-graph",
       "audit-sha256": "b4722c49ac8034569c4db3d94cef3975c61063df1904973c1d57f1a9164489e9",
       "authority-delta-ledger-sha256": "7440f5e91b02500d9e43ca6f190028d6ab02f392c07672c710e4a0958306f650"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-10-30/latest-stable-version-audit.json",
+      "audit-sha256": "6676defed86df701f5ef4ea1e35863f46ea5b4ba1d20e8c7811736e2af91ffb3",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-10-30/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "4420f954eda4dca97c1d73cdb387c48461aa208c1e23c940526db774b12974e7",
+      "baseline-catalog-ref": "develop",
+      "catalog-sha256": "b039887b61b82719f06e1c66a44ee6bc6e25b69f1d1e48dc9725897b1e429542",
+      "delta-count": 194,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-10-30",
+      "status": "validation-pending"
     }
   ],
   "delta": [
