@@ -19,7 +19,7 @@ GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
 ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
 ISSUE_261_KOVER_ROLLOUT = "2026-10-24-pr-261-kover-only"
 ISSUE_260_ROLLOUT = "2026-10-24-issue-260-safe-refresh"
-CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-10-30"
+CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-10-30-sudachi-hold"
 
 
 def load_script():
@@ -249,7 +249,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
         if document["rollout"] == CATALOG_REFRESH_ROLLOUT:
-            self.assertEqual(len(document["delta"]), 194)
+            self.assertEqual(len(document["delta"]), 193)
             expected_versions = {
                 "exposed": ("1.5.0", "1.6.0"),
                 "hibernate": ("7.4.7.Final", "7.4.14.Final"),
@@ -267,6 +267,11 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
                     if entry["version-key"] in expected_versions
                 },
                 expected_versions,
+            )
+            self.assertEqual(versions["sudachi"], "0.8.0")
+            self.assertNotIn(
+                "sudachi",
+                {entry["version-key"] for entry in document["delta"]},
             )
         elif document["rollout"] == ISSUE_261_KOVER_ROLLOUT:
             expected_deltas = {"kover"}

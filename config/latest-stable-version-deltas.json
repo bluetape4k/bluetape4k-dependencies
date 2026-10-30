@@ -1,7 +1,7 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "6676defed86df701f5ef4ea1e35863f46ea5b4ba1d20e8c7811736e2af91ffb3",
+    "sha256": "fff4e551641bd160732a6c5664f4ef0fd3af715337ae8e607030c86221439e07",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
@@ -23,7 +23,7 @@
     "catalog-sha256": "7f84fa483048c262868d385277c077ca10d891dcae6703fce42b51314c9d0ea7"
   },
   "candidate": {
-    "catalog-sha256": "b039887b61b82719f06e1c66a44ee6bc6e25b69f1d1e48dc9725897b1e429542"
+    "catalog-sha256": "325952096d1ff1f41c493816fc51269816c6e465e58846a3b5723414ca4896e6"
   },
   "delta": [
     {
@@ -3768,25 +3768,6 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "0.8.2"
-      },
-      "after": "0.8.2",
-      "authorities": [
-        {
-          "authority-key": "policy:library:com.worksap.nlp:sudachi",
-          "coordinate-or-plugin-id": "com.worksap.nlp:sudachi",
-          "disposition": "adopt-latest",
-          "kind": "library"
-        }
-      ],
-      "before": "0.8.0",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "verification": "pending-resolved-graph",
-      "version-key": "sudachi"
-    },
-    {
-      "adoption-evidence": {
-        "classification": "verified-latest-compatible",
         "version": "1.40.0"
       },
       "after": "1.40.0",
@@ -3941,7 +3922,7 @@
       "version-key": "zstd-jni"
     }
   ],
-  "rollout": "catalog-refresh-2026-10-30",
+  "rollout": "catalog-refresh-2026-10-30-sudachi-hold",
   "schema-version": 3,
   "status": "validation-pending"
 }

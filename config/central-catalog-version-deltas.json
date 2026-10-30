@@ -814,6 +814,27 @@
       "resolved-graph-evidence": [],
       "rollout": "catalog-refresh-2026-10-30",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-10-30-sudachi-hold/latest-stable-version-audit.json",
+      "audit-sha256": "fff4e551641bd160732a6c5664f4ef0fd3af715337ae8e607030c86221439e07",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-10-30-sudachi-hold/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "64538df780989594881835bf48d8746d198e6643e87e665fd5dc16d4dc7d4b06",
+      "baseline-catalog-ref": "develop",
+      "catalog-sha256": "325952096d1ff1f41c493816fc51269816c6e465e58846a3b5723414ca4896e6",
+      "delta-count": 193,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-10-30-sudachi-hold",
+      "status": "validation-pending"
     }
   ],
   "delta": [
