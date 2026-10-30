@@ -816,10 +816,10 @@
       "status": "validation-pending"
     },
     {
-      "audit": "config/rollouts/catalog-refresh-2026-10-30-sudachi-hold/latest-stable-version-audit.json",
-      "audit-sha256": "fff4e551641bd160732a6c5664f4ef0fd3af715337ae8e607030c86221439e07",
-      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-10-30-sudachi-hold/latest-stable-version-deltas.json",
-      "authority-delta-ledger-sha256": "64538df780989594881835bf48d8746d198e6643e87e665fd5dc16d4dc7d4b06",
+      "audit": "config/rollouts/catalog-refresh-2026-10-30-sudachi-hold/candidate-325952096d1ff1f4-739669aa5bfdc934/latest-stable-version-audit.json",
+      "audit-sha256": "739669aa5bfdc9348f9b7c28989070d2049bd636aa44d67c651d17229b0f7220",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-10-30-sudachi-hold/candidate-325952096d1ff1f4-739669aa5bfdc934/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "f09d719e552236dcbb6a433c1c4d91e8f7aa710f983af4eb71f9d78dc2788702",
       "baseline-catalog-ref": "develop",
       "catalog-sha256": "325952096d1ff1f41c493816fc51269816c6e465e58846a3b5723414ca4896e6",
       "delta-count": 193,

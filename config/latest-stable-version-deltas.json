@@ -1,19 +1,19 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "fff4e551641bd160732a6c5664f4ef0fd3af715337ae8e607030c86221439e07",
+    "sha256": "739669aa5bfdc9348f9b7c28989070d2049bd636aa44d67c651d17229b0f7220",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
-        "adopt-latest": 24,
-        "current": 428,
-        "defer-breaking-migration": 30,
-        "hold-compatibility": 66,
+        "adopt-latest": 1,
+        "current": 441,
+        "defer-breaking-migration": 32,
+        "hold-compatibility": 74,
         "hold-unavailable": 9
       },
-      "metadata-unavailable": 0,
       "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
       "metadata-verified": 518
     }
   },
@@ -36,7 +36,7 @@
         {
           "authority-key": "policy:plugin:io.freefair.aspectj.post-compile-weaving",
           "coordinate-or-plugin-id": "io.freefair.aspectj.post-compile-weaving",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "plugin"
         }
       ],
@@ -55,7 +55,7 @@
         {
           "authority-key": "policy:library:at.yawk.lz4:lz4-java",
           "coordinate-or-plugin-id": "at.yawk.lz4:lz4-java",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -74,7 +74,7 @@
         {
           "authority-key": "policy:library:com.github.avro-kotlin.avro4k:avro4k-core",
           "coordinate-or-plugin-id": "com.github.avro-kotlin.avro4k:avro4k-core",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -131,7 +131,7 @@
         {
           "authority-key": "policy:library:software.amazon.awssdk.crt:aws-crt",
           "coordinate-or-plugin-id": "software.amazon.awssdk.crt:aws-crt",
-          "disposition": "adopt-latest",
+          "disposition": "defer-breaking-migration",
           "kind": "library"
         }
       ],
@@ -264,7 +264,7 @@
         {
           "authority-key": "policy:library:org.duckdb:duckdb_jdbc",
           "coordinate-or-plugin-id": "org.duckdb:duckdb_jdbc",
-          "disposition": "adopt-latest",
+          "disposition": "defer-breaking-migration",
           "kind": "library"
         }
       ],
@@ -437,13 +437,13 @@
         {
           "authority-key": "policy:library:io.gatling.highcharts:gatling-charts-highcharts",
           "coordinate-or-plugin-id": "io.gatling.highcharts:gatling-charts-highcharts",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         },
         {
           "authority-key": "policy:library:io.gatling:gatling-core-java",
           "coordinate-or-plugin-id": "io.gatling:gatling-core-java",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -462,7 +462,7 @@
         {
           "authority-key": "policy:library:io.gatling:gatling-http-java",
           "coordinate-or-plugin-id": "io.gatling:gatling-http-java",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -481,7 +481,7 @@
         {
           "authority-key": "policy:plugin:io.gatling.gradle",
           "coordinate-or-plugin-id": "io.gatling.gradle",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "plugin"
         }
       ],
@@ -500,19 +500,19 @@
         {
           "authority-key": "policy:library:org.geotools:gt-epsg-hsql",
           "coordinate-or-plugin-id": "org.geotools:gt-epsg-hsql",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         },
         {
           "authority-key": "policy:library:org.geotools:gt-referencing",
           "coordinate-or-plugin-id": "org.geotools:gt-referencing",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         },
         {
           "authority-key": "policy:library:org.geotools:gt-shapefile",
           "coordinate-or-plugin-id": "org.geotools:gt-shapefile",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         }
       ],
@@ -550,7 +550,7 @@
         {
           "authority-key": "policy:library:com.h2database:h2",
           "coordinate-or-plugin-id": "com.h2database:h2",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -594,7 +594,7 @@
         {
           "authority-key": "policy:library:org.hibernate.reactive:hibernate-reactive-core",
           "coordinate-or-plugin-id": "org.hibernate.reactive:hibernate-reactive-core",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -663,7 +663,7 @@
         {
           "authority-key": "policy:library:com.fasterxml.jackson:jackson-bom",
           "coordinate-or-plugin-id": "com.fasterxml.jackson:jackson-bom",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -682,7 +682,7 @@
         {
           "authority-key": "policy:library:io.nats:jnats",
           "coordinate-or-plugin-id": "io.nats:jnats",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -720,7 +720,7 @@
         {
           "authority-key": "policy:library:com.googlecode.libphonenumber:libphonenumber",
           "coordinate-or-plugin-id": "com.googlecode.libphonenumber:libphonenumber",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -3437,7 +3437,7 @@
         {
           "authority-key": "policy:library:org.neo4j.driver:neo4j-java-driver",
           "coordinate-or-plugin-id": "org.neo4j.driver:neo4j-java-driver",
-          "disposition": "adopt-latest",
+          "disposition": "current",
           "kind": "library"
         }
       ],
@@ -3569,13 +3569,13 @@
         {
           "authority-key": "policy:library:org.apache.pulsar:pulsar-client",
           "coordinate-or-plugin-id": "org.apache.pulsar:pulsar-client",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         },
         {
           "authority-key": "policy:library:org.apache.pulsar:pulsar-client-api",
           "coordinate-or-plugin-id": "org.apache.pulsar:pulsar-client-api",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         }
       ],
@@ -3862,19 +3862,19 @@
         {
           "authority-key": "policy:library:io.vertx:vertx-core",
           "coordinate-or-plugin-id": "io.vertx:vertx-core",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         },
         {
           "authority-key": "policy:library:io.vertx:vertx-web-client",
           "coordinate-or-plugin-id": "io.vertx:vertx-web-client",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         },
         {
           "authority-key": "policy:library:io.vertx:vertx-web-common",
           "coordinate-or-plugin-id": "io.vertx:vertx-web-common",
-          "disposition": "adopt-latest",
+          "disposition": "hold-compatibility",
           "kind": "library"
         }
       ],
