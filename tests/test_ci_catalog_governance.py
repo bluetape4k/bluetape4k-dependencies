@@ -205,6 +205,31 @@ gh() {
             '--summary --workspace "$RUNNER_TEMP/development-workspace"', workflow
         )
 
+    def test_development_canary_steps_share_the_development_checkout_guard(self) -> None:
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        guard = "if: ${{ github.ref == 'refs/heads/develop' || github.base_ref == 'develop' }}"
+        validation_guard = (
+            "if: ${{ always() && "
+            "(github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}"
+        )
+        upload_guard = (
+            "if: ${{ success() && "
+            "(github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}"
+        )
+
+        def step_block(name: str) -> str:
+            marker = f"      - name: {name}\n"
+            self.assertIn(marker, workflow)
+            return workflow.split(marker, 1)[1].split("      - name:", 1)[0]
+
+        self.assertIn(guard, step_block("Clone development verification repositories"))
+        self.assertIn(guard, step_block("Verify Detekt/Kotlin consumer canaries"))
+        self.assertIn(
+            validation_guard,
+            step_block("Validate Detekt/Kotlin canary receipt"),
+        )
+        self.assertIn(upload_guard, step_block("Upload Detekt/Kotlin consumer canary"))
+
     def test_pinned_catalog_history_is_fetched_before_remote_switch(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
         fetch_marker = "      - name: Fetch pinned snapshot catalog history\n"
@@ -406,7 +431,11 @@ gh() {
         upload_step = build_job.split(
             "      - name: Upload Detekt/Kotlin consumer canary\n", 1
         )[1].split("      - name:", 1)[0]
-        self.assertIn("if: ${{ success() }}", upload_step)
+        self.assertIn(
+            "if: ${{ success() && "
+            "(github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}",
+            upload_step,
+        )
         self.assertNotIn("if: ${{ always() }}", upload_step)
         self.assertLess(
             build_job.index("- name: Verify Detekt/Kotlin consumer canaries"),
