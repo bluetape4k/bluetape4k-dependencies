@@ -394,6 +394,7 @@ jobs:
         run: bash scripts/checkout-catalog-publishers.sh "$RUNNER_TEMP/catalog-workspace"
 
       - name: Verify Detekt/Kotlin consumer canaries
+        if: ${{ github.ref == 'refs/heads/develop' || github.base_ref == 'develop' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -406,7 +407,7 @@ jobs:
             | tee "$RUNNER_TEMP/detekt-kotlin-compatibility.json"
 
       - name: Validate Detekt/Kotlin canary receipt
-        if: ${{ always() }}
+        if: ${{ always() && (github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}
         shell: bash
         run: |
           set -euo pipefail
@@ -440,7 +441,7 @@ jobs:
           PY
 
       - name: Upload Detekt/Kotlin consumer canary
-        if: ${{ success() }}
+        if: ${{ success() && (github.ref == 'refs/heads/develop' || github.base_ref == 'develop') }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: detekt-kotlin-compatibility-canary
