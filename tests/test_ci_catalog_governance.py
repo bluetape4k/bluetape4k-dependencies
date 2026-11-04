@@ -734,7 +734,7 @@ gh() {
             self.assertNotRegex(invalid_refs[0], r"v6(?:\.\d+\.\d+)?\Z")
         setup_java = build_job.index(f"actions/setup-java@{setup_java_refs[0]}")
         setup_gradle = build_job.index(
-            "      - uses: gradle/actions/setup-gradle@v6.4.0"
+            "      - uses: gradle/actions/setup-gradle@v6.4.1"
         )
         compile_helpers = build_job.index(
             "      - name: Compile generated signing helpers"
