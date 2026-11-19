@@ -19,7 +19,7 @@ GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
 ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
 ISSUE_261_KOVER_ROLLOUT = "2026-10-24-pr-261-kover-only"
 ISSUE_260_ROLLOUT = "2026-10-24-issue-260-safe-refresh"
-CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-10-30-sudachi-hold"
+CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-11-20-v2"
 
 
 def load_script():
@@ -225,7 +225,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         status = document["status"]
         self.assertIn(status, {"validation-pending", "verified-resolved-graph"})
         if document["rollout"] == CATALOG_REFRESH_ROLLOUT:
-            self.assertEqual(document["audit-cutoff"], "2026-10-30")
+            self.assertEqual(document["audit-cutoff"], "2026-11-20")
         elif document["rollout"] in {ISSUE_261_KOVER_ROLLOUT, ISSUE_260_ROLLOUT}:
             self.assertEqual(document["audit-cutoff"], "2026-10-24")
         elif status == "verified-resolved-graph" and document["rollout"] != ISSUE_1832_ROLLOUT:
@@ -249,16 +249,15 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
         if document["rollout"] == CATALOG_REFRESH_ROLLOUT:
-            self.assertEqual(len(document["delta"]), 193)
+            self.assertEqual(len(document["delta"]), 105)
             expected_versions = {
-                "exposed": ("1.5.0", "1.6.0"),
-                "hibernate": ("7.4.7.Final", "7.4.14.Final"),
-                "hibernate-reactive-core": ("4.5.5.Final", "4.5.12.Final"),
-                "jackson2": ("2.22.3", "2.22.4"),
-                "ktor": ("3.6.0", "3.6.1"),
-                "openfga": ("0.10.0", "0.10.1"),
-                "qdrant": ("1.19.0", "1.20.0"),
-                "temporal": ("1.38.0", "1.40.0"),
+                "exposed": ("1.6.0", "1.6.1"),
+                "hibernate": ("7.4.14.Final", "7.4.17.Final"),
+                "hibernate-reactive-core": ("4.5.12.Final", "4.5.15.Final"),
+                "jackson2": ("2.22.4", "2.23.0"),
+                "jackson3": ("3.2.4", "3.3.0"),
+                "spring-kafka4": ("4.1.2", "4.2.0"),
+                "temporal": ("1.40.0", "1.41.1"),
             }
             self.assertEqual(
                 {
