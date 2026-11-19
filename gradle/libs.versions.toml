@@ -66,7 +66,7 @@ fory              = "1.7.8"  # https://mvnrepository.com/artifact/org.apache.for
 fory-kotlin       = "1.7.8"  # https://mvnrepository.com/artifact/org.apache.fory/fory-kotlin
 
 # ── Centrally governed Dependabot lines ───────────────────────────────────
-aws2              = "2.59.4"  # https://mvnrepository.com/artifact/software.amazon.awssdk/bom
+aws2              = "2.57.7"  # compatibility hold: AWS SNS verifier cache contract
 aws2-crt          = "0.48.5"  # AWS SDK Java 2.54.x parent-tested CRT compatibility version
 aws-kotlin        = "1.9.38"  # https://mvnrepository.com/artifact/aws.sdk.kotlin/aws-core
 fabric8-kubernetes-client = "7.9.0"  # https://mvnrepository.com/artifact/io.fabric8/kubernetes-client
@@ -133,7 +133,7 @@ commons-pool2     = "2.13.1"  # https://mvnrepository.com/artifact/org.apache.co
 assertj-core      = "3.27.7"  # https://mvnrepository.com/artifact/org.assertj/assertj-core
 awaitility        = "4.3.0"  # https://mvnrepository.com/artifact/org.awaitility/awaitility-kotlin
 random-beans      = "3.9.0"  # https://mvnrepository.com/artifact/io.github.benas/random-beans
-sudachi           = "0.8.2"
+sudachi           = "0.8.0"  # compatibility hold: 0.8.2 rejects the bundled legacy dictionary
 # Detekt compiler compatibility:
 # `dev.detekt:2.0.0-alpha.6` is built against Kotlin 2.4.10. Keep the product
 # Kotlin line on the central stable train; consumers must align only the

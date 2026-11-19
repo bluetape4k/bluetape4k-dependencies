@@ -1,19 +1,19 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "af7b036d56c44ce929d3f39773ccec9e692db6bd9b29a9f1a105eb9f624d113c",
+    "sha256": "18e4156dfaa3625f5954eea551c7ad562097ae2767606dee47f12445c81590b2",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
-        "adopt-latest": 2,
-        "current": 439,
-        "defer-breaking-migration": 33,
+        "adopt-latest": 18,
+        "current": 424,
+        "defer-breaking-migration": 32,
         "hold-compatibility": 74,
         "hold-unavailable": 9
       },
-      "metadata-preview-only": 5,
       "metadata-unavailable": 0,
+      "metadata-preview-only": 5,
       "metadata-verified": 518
     }
   },
@@ -23,7 +23,7 @@
     "catalog-sha256": "194b4179b84115f6503a9a05fbe4dcf1a2d1777e78e690dbee8193d75745180b"
   },
   "candidate": {
-    "catalog-sha256": "839994e63f01e47a377a84bcea28266184de6a84db1cff844162176f0f4dac9b"
+    "catalog-sha256": "ef7046e44f28d4df4b7f1e5346b06fa2f0fbfef4f9838d81e246f643043e08d5"
   },
   "delta": [
     {
@@ -101,25 +101,6 @@
       "reason": "Adopt the audited latest stable release within the approved compatibility line.",
       "verification": "pending-resolved-graph",
       "version-key": "aws-kotlin"
-    },
-    {
-      "adoption-evidence": {
-        "classification": "verified-latest-compatible",
-        "version": "2.59.4"
-      },
-      "after": "2.59.4",
-      "authorities": [
-        {
-          "authority-key": "catalog:library:software.amazon.awssdk:bom",
-          "coordinate-or-plugin-id": "software.amazon.awssdk:bom",
-          "disposition": "current",
-          "kind": "library"
-        }
-      ],
-      "before": "2.57.7",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "verification": "pending-resolved-graph",
-      "version-key": "aws2"
     },
     {
       "adoption-evidence": {
@@ -2043,25 +2024,6 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "0.8.2"
-      },
-      "after": "0.8.2",
-      "authorities": [
-        {
-          "authority-key": "policy:library:com.worksap.nlp:sudachi",
-          "coordinate-or-plugin-id": "com.worksap.nlp:sudachi",
-          "disposition": "current",
-          "kind": "library"
-        }
-      ],
-      "before": "0.8.0",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "verification": "pending-resolved-graph",
-      "version-key": "sudachi"
-    },
-    {
-      "adoption-evidence": {
-        "classification": "verified-latest-compatible",
         "version": "1.41.1"
       },
       "after": "1.41.1",
@@ -2216,7 +2178,7 @@
       "version-key": "zstd-jni"
     }
   ],
-  "rollout": "catalog-refresh-2026-11-20",
+  "rollout": "catalog-refresh-2026-11-20-v2",
   "schema-version": 3,
   "status": "validation-pending"
 }

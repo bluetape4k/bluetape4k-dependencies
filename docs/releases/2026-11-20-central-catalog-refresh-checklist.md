@@ -14,13 +14,15 @@
 - 실행 요청 범위: central catalog, downstream refs/sync, nightly, snapshot
   publication. Stable publication, tag, merge와 public release는 별도 gate로
   유지한다.
-- 최신 audit 기준: `2026-11-19T18:43:53Z` retrieval, authority 523,
-  catalog line 557, `adopt-latest` 2, `current` 439,
-  `defer-breaking-migration` 33, `hold-compatibility` 74,
-  `hold-unavailable` 9. catalog edit 전 135개 line 후보를 재검증한 뒤,
-  동일 version-key와 compatibility line이 모두 일치하는 107개 key를
-  채택했다. `spring-boot4`는 BOM 두 line이 `4.2.0`을 제안하지만 Gradle
-  plugin line은 `4.1.2`가 최신으로 판정되어 혼합 key를 보류했다.
+- 최신 audit 기준: `2026-11-19T19:48:34Z` retrieval, authority 523,
+  catalog line 557, `adopt-latest` 18, `current` 424,
+  `defer-breaking-migration` 32, `hold-compatibility` 74,
+  `hold-unavailable` 9. catalog edit 전 후보를 재검증한 뒤, 동일
+  version-key와 compatibility line이 모두 일치하는 105개 key를 채택했다.
+  `aws2` `2.59.4`와 `sudachi` `0.8.2`는 대상 consumer 회귀를 재현해
+  각각 `2.57.7`, `0.8.0`으로 compatibility hold했다. `spring-boot4`는 BOM
+  두 line이 `4.2.0`을 제안하지만 Gradle plugin line은 `4.1.2`가 최신으로
+  판정되어 혼합 key를 보류했다.
 
 ## 작업 위치와 보호 경계
 
@@ -63,11 +65,12 @@
   dirty/unmerged 상태를 보존했다.
 - [x] **CAT-01** — 최신 stable audit를 새 catalog 기준으로 재생성했다.
   `authority=523`, `lines=557`, `metadata-unavailable=0`을 확인했다.
-- [x] **CAT-02** — `gradle/libs.versions.toml`의 107개 version-key와
-  Exposed `1.6.1`을 갱신하고 checksum `839994e63f01e47a377a84bcea28266184de6a84db1cff844162176f0f4dac9b`을
-  기록했다.
+- [x] **CAT-02** — `gradle/libs.versions.toml`의 105개 version-key와
+  Exposed `1.6.1`을 갱신하고 checksum `ef7046e44f28d4df4b7f1e5346b06fa2f0fbfef4f9838d81e246f643043e08d5`를
+  기록했다. AWS SNS verifier와 bundled Sudachi legacy dictionary 회귀는
+  각각 `aws2`, `sudachi` hold로 남겼다.
 - [x] **CAT-03** — `config/latest-stable-version-deltas.json`과 central
-  rollout evidence를 `catalog-refresh-2026-11-20`으로 생성했다. delta 107,
+  rollout evidence를 `catalog-refresh-2026-11-20-v2`로 생성했다. delta 105,
   status `validation-pending`이며 resolved graph 검증 전이다.
 - [ ] **CAT-04** — 중앙 `./gradlew build`와 catalog governance test를 통과한다.
 - [ ] **CON-01** — 9개 consumer의 settings/CI catalog ref를 한 immutable
