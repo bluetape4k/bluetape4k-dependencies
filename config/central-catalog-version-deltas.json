@@ -835,6 +835,27 @@
       "resolved-graph-evidence": [],
       "rollout": "catalog-refresh-2026-10-30-sudachi-hold",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-11-20/latest-stable-version-audit.json",
+      "audit-sha256": "af7b036d56c44ce929d3f39773ccec9e692db6bd9b29a9f1a105eb9f624d113c",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "621d9daef530d70be9ea724c871604bc2babfcfac2dafbc3c0ecc8c33a7865fc",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "839994e63f01e47a377a84bcea28266184de6a84db1cff844162176f0f4dac9b",
+      "delta-count": 107,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-11-20",
+      "status": "validation-pending"
     }
   ],
   "delta": [
