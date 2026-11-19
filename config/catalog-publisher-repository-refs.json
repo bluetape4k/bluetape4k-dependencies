@@ -2,7 +2,7 @@
   "schema-version": 1,
   "repositories": {
     "bluetape4k-aws": {"commit": "1edea816b42d5330282914167b2ed1b13892afda"},
-    "bluetape4k-exposed": {"commit": "203db479883289e0d0c31f1813eccc26d78dd0ee"},
+    "bluetape4k-exposed": {"commit": "637f30ebe219ae6771700b82e21b650f5c4a8fb8"},
     "bluetape4k-graph": {"commit": "9d07656224cfa10c1719775ceba7cb634968b788"},
     "bluetape4k-image": {"commit": "baa31049290250030cc3ce81ce7e79ac9881ef4f"},
     "bluetape4k-javers": {"commit": "bcca5423730e841f478d7e74d168904119b93e55"},
