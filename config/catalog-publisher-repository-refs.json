@@ -1,13 +1,13 @@
 {
   "schema-version": 1,
   "repositories": {
-    "bluetape4k-aws": {"commit": "0968139f7431eac3376c027fde3e8337b37d65a4"},
-    "bluetape4k-exposed": {"commit": "018f081bc005c53c948f68bc4d898424b47f0d0a"},
-    "bluetape4k-graph": {"commit": "ed9ac130e04ce6a31b3f29135e816c07cfb6d72b"},
-    "bluetape4k-image": {"commit": "1b593e87eaf8cdad2be4674810e769652c76c0cb"},
-    "bluetape4k-javers": {"commit": "e6f9f10c53f0383b32da52b9b4afd7c5362480a2"},
-    "bluetape4k-leader": {"commit": "adfb6a31b7b18faae5efb26771fd02fc2fbe5d90"},
-    "bluetape4k-projects": {"commit": "9a19ee8612f1d0e5826034e0f0432e7984e06f9b"},
-    "bluetape4k-text": {"commit": "43b54cc2f6bef1d0e08873825bcc4cf3ceed4fba"}
+    "bluetape4k-aws": {"commit": "1edea816b42d5330282914167b2ed1b13892afda"},
+    "bluetape4k-exposed": {"commit": "203db479883289e0d0c31f1813eccc26d78dd0ee"},
+    "bluetape4k-graph": {"commit": "9d07656224cfa10c1719775ceba7cb634968b788"},
+    "bluetape4k-image": {"commit": "baa31049290250030cc3ce81ce7e79ac9881ef4f"},
+    "bluetape4k-javers": {"commit": "bcca5423730e841f478d7e74d168904119b93e55"},
+    "bluetape4k-leader": {"commit": "0801b492b56d9baf272eef9d783a4778ff84053a"},
+    "bluetape4k-projects": {"commit": "f06a44e057db68044d1a2034bf42b9f089fac325"},
+    "bluetape4k-text": {"commit": "4985806c518721bf2fc468088b913a074bed47d1"}
   }
 }
