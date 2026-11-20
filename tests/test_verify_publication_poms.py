@@ -103,11 +103,11 @@ class VerifyPublicationPomsTest(unittest.TestCase):
                     dependency_management="""
 <dependencyManagement><dependencies>
   <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
-    <version>2.22.3</version><type>pom</type><scope>import</scope></dependency>
+    <version>2.23.0</version><type>pom</type><scope>import</scope></dependency>
   <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
-    <version>2.22.2</version><type>pom</type><scope>import</scope></dependency>
+    <version>2.22.4</version><type>pom</type><scope>import</scope></dependency>
   <dependency><groupId>tools.jackson</groupId><artifactId>jackson-bom</artifactId>
-    <version>3.2.4</version><type>pom</type><scope>import</scope></dependency>
+    <version>3.3.0</version><type>pom</type><scope>import</scope></dependency>
 </dependencies></dependencyManagement>
 """,
                 ),
@@ -132,9 +132,9 @@ class VerifyPublicationPomsTest(unittest.TestCase):
                     dependency_management="""
 <dependencyManagement><dependencies>
   <dependency><groupId>com.fasterxml.jackson</groupId><artifactId>jackson-bom</artifactId>
-    <version>2.22.4</version><type>pom</type><scope>import</scope></dependency>
+    <version>2.23.0</version><type>pom</type><scope>import</scope></dependency>
   <dependency><groupId>tools.jackson</groupId><artifactId>jackson-bom</artifactId>
-    <version>3.2.4</version><type>pom</type><scope>import</scope></dependency>
+    <version>3.3.0</version><type>pom</type><scope>import</scope></dependency>
 </dependencies></dependencyManagement>
 """,
                 ),

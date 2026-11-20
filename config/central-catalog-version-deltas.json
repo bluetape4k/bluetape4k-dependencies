@@ -835,6 +835,90 @@
       "resolved-graph-evidence": [],
       "rollout": "catalog-refresh-2026-10-30-sudachi-hold",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-11-20/latest-stable-version-audit.json",
+      "audit-sha256": "af7b036d56c44ce929d3f39773ccec9e692db6bd9b29a9f1a105eb9f624d113c",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "621d9daef530d70be9ea724c871604bc2babfcfac2dafbc3c0ecc8c33a7865fc",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "839994e63f01e47a377a84bcea28266184de6a84db1cff844162176f0f4dac9b",
+      "delta-count": 107,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-11-20",
+      "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-11-20-v2/latest-stable-version-audit.json",
+      "audit-sha256": "18e4156dfaa3625f5954eea551c7ad562097ae2767606dee47f12445c81590b2",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20-v2/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "3ddadc50e2f11f7d9eeeda023cbd4fce82ebc85fe5916b9041a20c30b37c2ebb",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "ef7046e44f28d4df4b7f1e5346b06fa2f0fbfef4f9838d81e246f643043e08d5",
+      "delta-count": 105,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-11-20-v2",
+      "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-11-20-v3/latest-stable-version-audit.json",
+      "audit-sha256": "b5e82e233c7b2842a73e10cc3748756ae22ecf8842f00d847d2617d9c2c00886",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20-v3/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "be467400177f3f0572cfb0f23b9f51718b4308c07ac26d6b9aba1d4972cc457d",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "1a56d30d0177f5d1bc3b256b7faab52fbb1b4cd71391770a212ccbdbc48bd9f0",
+      "delta-count": 106,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-11-20-v3",
+      "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-11-20-v4/latest-stable-version-audit.json",
+      "audit-sha256": "a7b0a023682b3d36f0b3733153fcd4d5ffc2d504ca066f930d8b5161208f6848",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20-v4/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "ae6fa6bea2567931e59567fe49c6dcef06ea2a87f6d23a8c6857dcc12dc6dd3d",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "48f7ab2fb9463cfb1a18135f5c8b02e0149cdd098494868419735262fe6caa45",
+      "delta-count": 105,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-11-20-v4",
+      "status": "validation-pending"
     }
   ],
   "delta": [
