@@ -191,7 +191,9 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         )
         self.assertEqual(
             policy.get("snapshot-catalog-ref-overrides", {}),
-            {},
+            {
+                "bluetape4k-projects": "cdab12ec8660818d522eb5ce53bae1342c44a7a2",
+            },
         )
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
