@@ -192,6 +192,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         self.assertEqual(
             policy.get("snapshot-catalog-ref-overrides", {}),
             {
+                "bluetape4k-leader": "4ec0e992679f61be4ce919c58a25ee8a90d57811",
                 "bluetape4k-projects": "cdab12ec8660818d522eb5ce53bae1342c44a7a2",
             },
         )
