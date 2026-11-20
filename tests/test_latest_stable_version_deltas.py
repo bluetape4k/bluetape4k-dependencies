@@ -19,7 +19,7 @@ GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
 ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
 ISSUE_261_KOVER_ROLLOUT = "2026-10-24-pr-261-kover-only"
 ISSUE_260_ROLLOUT = "2026-10-24-issue-260-safe-refresh"
-CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-11-20-v2"
+CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-11-20-v3"
 
 
 def load_script():
@@ -249,13 +249,14 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
         if document["rollout"] == CATALOG_REFRESH_ROLLOUT:
-            self.assertEqual(len(document["delta"]), 105)
+            self.assertEqual(len(document["delta"]), 106)
             expected_versions = {
                 "exposed": ("1.6.0", "1.6.1"),
                 "hibernate": ("7.4.14.Final", "7.4.17.Final"),
                 "hibernate-reactive-core": ("4.5.12.Final", "4.5.15.Final"),
                 "jackson2": ("2.22.4", "2.23.0"),
                 "jackson3": ("3.2.4", "3.3.0"),
+                "kafka4": ("4.2.2", "4.4.0"),
                 "spring-kafka4": ("4.1.2", "4.2.0"),
                 "temporal": ("1.40.0", "1.41.1"),
             }
@@ -571,7 +572,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
         }
 
         kafka4_line = lines[("org.apache.kafka:kafka-clients", "kafka4")]
-        self.assertEqual(kafka4_line["current"], "4.2.2")
+        self.assertEqual(kafka4_line["current"], "4.4.0")
         self.assertEqual(lines[("ch.qos.logback:logback-classic", "logback")]["current"], "1.5.34")
         self.assertEqual(
             lines[("ch.qos.logback:logback-classic", "logback")]["disposition"],
@@ -581,12 +582,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             ("org.lz4:lz4-java", "org-lz4"),
             lines,
         )
-        self.assertEqual(
-            kafka4_line["disposition"],
-            "hold-compatibility",
-        )
-        self.assertIn("Kafka 4.2.2", kafka4_line["disposition-reason"])
-        self.assertIn("Spring Kafka 4.1.2", kafka4_line["disposition-reason"])
+        self.assertEqual(kafka4_line["disposition"], "current")
         self.assertEqual(
             lines[("org.apache.ignite:ignite-client", "ignite")]["disposition"],
             "hold-unavailable",

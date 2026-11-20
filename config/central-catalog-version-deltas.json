@@ -877,6 +877,27 @@
       "resolved-graph-evidence": [],
       "rollout": "catalog-refresh-2026-11-20-v2",
       "status": "validation-pending"
+    },
+    {
+      "audit": "config/rollouts/catalog-refresh-2026-11-20-v3/latest-stable-version-audit.json",
+      "audit-sha256": "b5e82e233c7b2842a73e10cc3748756ae22ecf8842f00d847d2617d9c2c00886",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20-v3/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "be467400177f3f0572cfb0f23b9f51718b4308c07ac26d6b9aba1d4972cc457d",
+      "baseline-catalog-ref": "origin/develop",
+      "catalog-sha256": "1a56d30d0177f5d1bc3b256b7faab52fbb1b4cd71391770a212ccbdbc48bd9f0",
+      "delta-count": 106,
+      "downstream-full-builds": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "publication-pom-verification": {
+        "repositories": 9,
+        "status": "pending"
+      },
+      "remote-immutable-ref-verification": "pending-candidate-commit-and-push",
+      "resolved-graph-evidence": [],
+      "rollout": "catalog-refresh-2026-11-20-v3",
+      "status": "validation-pending"
     }
   ],
   "delta": [

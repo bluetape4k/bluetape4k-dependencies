@@ -1,15 +1,15 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "18e4156dfaa3625f5954eea551c7ad562097ae2767606dee47f12445c81590b2",
+    "sha256": "b5e82e233c7b2842a73e10cc3748756ae22ecf8842f00d847d2617d9c2c00886",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
         "adopt-latest": 18,
-        "current": 424,
+        "current": 434,
         "defer-breaking-migration": 32,
-        "hold-compatibility": 74,
+        "hold-compatibility": 64,
         "hold-unavailable": 9
       },
       "metadata-unavailable": 0,
@@ -23,7 +23,7 @@
     "catalog-sha256": "194b4179b84115f6503a9a05fbe4dcf1a2d1777e78e690dbee8193d75745180b"
   },
   "candidate": {
-    "catalog-sha256": "ef7046e44f28d4df4b7f1e5346b06fa2f0fbfef4f9838d81e246f643043e08d5"
+    "catalog-sha256": "1a56d30d0177f5d1bc3b256b7faab52fbb1b4cd71391770a212ccbdbc48bd9f0"
   },
   "delta": [
     {
@@ -577,6 +577,79 @@
       "reason": "Adopt the audited latest stable release within the approved compatibility line.",
       "verification": "pending-resolved-graph",
       "version-key": "jsoup"
+    },
+    {
+      "adoption-evidence": {
+        "classification": "verified-latest-compatible",
+        "version": "4.4.0"
+      },
+      "after": "4.4.0",
+      "authorities": [
+        {
+          "authority-key": "catalog:library:org.apache.kafka:generator",
+          "coordinate-or-plugin-id": "org.apache.kafka:generator",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-clients",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-clients",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-metadata",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-metadata",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-raft",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-raft",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-server-common",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-server-common",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-storage",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-storage",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-storage-api",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-storage-api",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-streams",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-streams",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka-streams-test-utils",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka-streams-test-utils",
+          "disposition": "current",
+          "kind": "library"
+        },
+        {
+          "authority-key": "catalog:library:org.apache.kafka:kafka_2.13",
+          "coordinate-or-plugin-id": "org.apache.kafka:kafka_2.13",
+          "disposition": "current",
+          "kind": "library"
+        }
+      ],
+      "before": "4.2.2",
+      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
+      "verification": "pending-resolved-graph",
+      "version-key": "kafka4"
     },
     {
       "adoption-evidence": {
@@ -2178,7 +2251,7 @@
       "version-key": "zstd-jni"
     }
   ],
-  "rollout": "catalog-refresh-2026-11-20-v2",
+  "rollout": "catalog-refresh-2026-11-20-v3",
   "schema-version": 3,
   "status": "validation-pending"
 }
