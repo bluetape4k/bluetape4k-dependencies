@@ -187,7 +187,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         )
         self.assertEqual(
             policy["snapshot-catalog-ref"],
-            "3a6c235067c11f09906654f078ae4d3821e16c96",
+            "c3605117f0d5f7c7ac8b15147a978c145847577b",
         )
         self.assertEqual(
             policy.get("snapshot-catalog-ref-overrides", {}),
@@ -236,7 +236,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertEqual(
             module.snapshot_candidate_branch(document),
-            "chore/snapshot-catalog-3a6c235",
+            "chore/snapshot-catalog-c360511",
         )
 
     def test_manifest_rejects_source_snapshot_suffix(self) -> None:
