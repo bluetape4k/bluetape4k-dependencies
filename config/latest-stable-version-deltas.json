@@ -1,15 +1,15 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "b5e82e233c7b2842a73e10cc3748756ae22ecf8842f00d847d2617d9c2c00886",
+    "sha256": "a7b0a023682b3d36f0b3733153fcd4d5ffc2d504ca066f930d8b5161208f6848",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
       "line-dispositions": {
         "adopt-latest": 18,
-        "current": 434,
+        "current": 433,
         "defer-breaking-migration": 32,
-        "hold-compatibility": 64,
+        "hold-compatibility": 65,
         "hold-unavailable": 9
       },
       "metadata-unavailable": 0,
@@ -23,7 +23,7 @@
     "catalog-sha256": "194b4179b84115f6503a9a05fbe4dcf1a2d1777e78e690dbee8193d75745180b"
   },
   "candidate": {
-    "catalog-sha256": "1a56d30d0177f5d1bc3b256b7faab52fbb1b4cd71391770a212ccbdbc48bd9f0"
+    "catalog-sha256": "48f7ab2fb9463cfb1a18135f5c8b02e0149cdd098494868419735262fe6caa45"
   },
   "delta": [
     {
@@ -1566,25 +1566,6 @@
     {
       "adoption-evidence": {
         "classification": "verified-latest-compatible",
-        "version": "0.8.8"
-      },
-      "after": "0.8.8",
-      "authorities": [
-        {
-          "authority-key": "managed:managed-jetcd-core-hda3167e37563",
-          "coordinate-or-plugin-id": "io.etcd:jetcd-core",
-          "disposition": "current",
-          "kind": "library"
-        }
-      ],
-      "before": "0.8.7",
-      "reason": "Adopt the audited latest stable release within the approved compatibility line.",
-      "verification": "pending-resolved-graph",
-      "version-key": "managed-jetcd-core-hda3167e37563"
-    },
-    {
-      "adoption-evidence": {
-        "classification": "verified-latest-compatible",
         "version": "1.18.0"
       },
       "after": "1.18.0",
@@ -2251,7 +2232,7 @@
       "version-key": "zstd-jni"
     }
   ],
-  "rollout": "catalog-refresh-2026-11-20-v3",
+  "rollout": "catalog-refresh-2026-11-20-v4",
   "schema-version": 3,
   "status": "validation-pending"
 }

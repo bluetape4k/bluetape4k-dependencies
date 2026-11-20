@@ -19,7 +19,7 @@ GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
 ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
 ISSUE_261_KOVER_ROLLOUT = "2026-10-24-pr-261-kover-only"
 ISSUE_260_ROLLOUT = "2026-10-24-issue-260-safe-refresh"
-CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-11-20-v3"
+CATALOG_REFRESH_ROLLOUT = "catalog-refresh-2026-11-20-v4"
 
 
 def load_script():
@@ -249,7 +249,7 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             set(document).issubset(required_keys | {"candidate-validation-evidence"})
         )
         if document["rollout"] == CATALOG_REFRESH_ROLLOUT:
-            self.assertEqual(len(document["delta"]), 106)
+            self.assertEqual(len(document["delta"]), 105)
             expected_versions = {
                 "exposed": ("1.6.0", "1.6.1"),
                 "hibernate": ("7.4.14.Final", "7.4.17.Final"),

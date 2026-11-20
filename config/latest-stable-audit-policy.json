@@ -20,6 +20,10 @@
       "disposition": "hold-compatibility",
       "reason": "Preserve the Hibernate ORM 7.3 compatibility line used by the Javers integration."
     },
+    "managed-jetcd-core-hda3167e37563": {
+      "disposition": "hold-compatibility",
+      "reason": "Jetcd 0.8.8 targets Vert.x 4.5.x and breaks the catalog's Vert.x 5.2.x runtime ABI; retain Jetcd 0.8.7 until a Vert.x 5-compatible Jetcd release is validated."
+    },
     "jakarta-persistence-v31": {
       "disposition": "hold-compatibility",
       "reason": "Preserve the Jakarta Persistence 3.1 API compatibility line."
