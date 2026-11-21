@@ -67,6 +67,16 @@
   제거해 catalog alias와 문서에 반영했습니다
   ([#230](https://github.com/bluetape4k/bluetape4k-dependencies/issues/230)).
 
+## [2.1.0] - 2026-11-21
+
+### 변경
+
+- 중앙 catalog의 검증된 외부 dependency version을 최신 stable line으로
+  갱신하고 JetBrains Exposed `1.6.1`을 반영했습니다.
+- 8개 bluetape4k library BOM의 stable release train과 최종
+  `bluetape4k-dependencies` BOM 공개를 위한 publication/POM 검증을
+  완료했습니다.
+
 ## [1.4.0] - 2026-08-06
 
 ### 추가
