@@ -10,7 +10,7 @@ temporal = "1.41.1"
 bluetape4k-dependencies = "2.1.0"  # Current catalog/BOM development line; update after each stable release.
 
 # bluetape4k-projects (monorepo core modules)
-bluetape4k-bom     = "2.1.0-SNAPSHOT"  # Projects next minor development line.
+bluetape4k-bom     = "2.1.0"  # Projects 2.1.0 stable artifact verified on Maven Central.
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
@@ -29,7 +29,7 @@ bluetape4k-graph-bom   = "1.1.0-SNAPSHOT"  # Graph next minor development line.
 bluetape4k-leader-bom  = "1.1.0-SNAPSHOT"  # Leader next minor development line.
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "2.1.0-SNAPSHOT"  # Exposed next minor development line.
+bluetape4k-exposed-bom = "2.1.0"  # Exposed 2.1.0 stable artifact follows the Projects 2.1.0 release.
 
 # https://github.com/bluetape4k/bluetape4k-javers
 bluetape4k-javers-bom  = "1.1.0-SNAPSHOT"  # Javers next minor development line.
