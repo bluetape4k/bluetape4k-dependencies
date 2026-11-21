@@ -1,6 +1,6 @@
 # Bluetape4k 2026-11-21 stable release checklist
 
-상태: **IN PROGRESS**
+상태: **READY FOR MERGE GATE**
 
 ## 고정 입력
 
@@ -31,13 +31,33 @@
 
 중앙 catalog의 현재 내부 BOM ref는 모두 `-SNAPSHOT`이다. 따라서 최종 BOM은 업스트림 8개 release의 Maven Central 공개 확인 후 stable ref로 갱신한다.
 
+## Release-prep candidate heads
+
+| repository | PR | candidate head | hosted CI/read-back |
+|---|---:|---|---|
+| `bluetape4k-projects` | [#1913](https://github.com/bluetape4k/bluetape4k-projects/pull/1913) | `c684186134acd2c93e7ba3e7f1a461a9fda8e16a` | 14 success, 15 skipped; mergeable |
+| `bluetape4k-aws` | [#686](https://github.com/bluetape4k/bluetape4k-aws/pull/686) | `df7c3279f5240c29498953dc46e42a412e7dcffb` | N/A: `CHANGELOG.md` path-ignore; no required status checks; mergeable |
+| `bluetape4k-exposed` | [#938](https://github.com/bluetape4k/bluetape4k-exposed/pull/938) | `b251608bea56f412d5e716f6f2e6dbf75323b1db` | 8 success, 33 skipped; mergeable |
+| `bluetape4k-graph` | [#666](https://github.com/bluetape4k/bluetape4k-graph/pull/666) | `15ee7a19ed8c478432f330117c2bc48b72879a7a` | 1 success; mergeable |
+| `bluetape4k-image` | [#712](https://github.com/bluetape4k/bluetape4k-image/pull/712) | `140174e378787375beb879530a55e402354b9994` | N/A: `CHANGELOG.md` path-ignore; no required status checks; mergeable |
+| `bluetape4k-javers` | [#403](https://github.com/bluetape4k/bluetape4k-javers/pull/403) | `54584056f1b7d76d6d59428374e4b237efca649f` | N/A: Markdown/path-ignore; no required status checks; mergeable |
+| `bluetape4k-leader` | [#1019](https://github.com/bluetape4k/bluetape4k-leader/pull/1019) | `af9e8222ab956429423c02f90b0d355dedf81d45` | 8 success, 38 skipped; mergeable |
+| `bluetape4k-text` | [#352](https://github.com/bluetape4k/bluetape4k-text/pull/352) | `744e5705180cd40e13c1db7076ed2c2b5b06644b` | N/A: Markdown/path-ignore; no required status checks; mergeable |
+| `bluetape4k-dependencies` | [#290](https://github.com/bluetape4k/bluetape4k-dependencies/pull/290) | `bbe3d61fbe4e356ee78726f256bd1e08110db0a3` | 9 success; mergeable |
+
+All nine candidate PRs are assigned to `debop`, have the matching milestone,
+have no unresolved review threads, and contain only the intended changelog
+addition (plus this central checklist). The four no-check cases are concrete
+N/A outcomes: the changed path is excluded by the repository workflow and the
+`develop` branch has no required-status-check protection.
+
 ## 현재 live closeout
 
 - Image `1.1.0` milestone open issues: `0`.
 - Image #513, #169는 사용자의 결정으로 `Backlog` milestone에 보존됨.
-- 9개 대상 저장소의 `develop` 대상 open PR: `0`.
+- release-prep PR 생성 직전 9개 대상 저장소의 `develop` 대상 open PR: `0`; 현재는 아래 9개 후보 PR만 열려 있다.
 - 대상 stable tags `2.1.0`/`1.1.0`: 모두 아직 없음.
-- 대상 changelog의 dated stable section: 아직 없음; release-prep PR에서 추가한다.
+- 대상 changelog의 dated stable section: 9개 release-prep PR에 모두 추가됨.
 
 ## 선행 snapshot 증거
 
@@ -57,19 +77,19 @@
 
 ## Required checklist
 
-- [ ] **REL-01 — 대상 inventory 고정**
+- [x] **REL-01 — 대상 inventory 고정**
   - **Action:** 저장소, 버전, exact head, artifact/BOM matrix, catalog role, consumer scope를 live source에 고정한다.
   - **Evidence:** 이 문서의 target table, workflow YAML, `gradle.properties`, catalog/build source.
   - **Failure:** identity가 바뀌면 checklist를 새로 고정한다.
-- [ ] **REL-02 — issue/PR closeout**
+- [x] **REL-02 — issue/PR closeout**
   - **Action:** matching milestone과 release-affecting issue/PR을 live GitHub에서 확인한다.
   - **Evidence:** 9개 milestone open issues=0, open PR=0, Image deferred issues는 Backlog로 명시 보존.
   - **Failure:** 새 release-affecting work가 생기면 해당 batch를 보류한다.
-- [ ] **REL-03 — snapshot train 증명**
+- [x] **REL-03 — snapshot train 증명**
   - **Action:** exact SHA, catalog, full Nightly, snapshot, publication-POM gate를 재사용 가능한 evidence로 고정한다.
   - **Evidence:** snapshot checklist의 7/7 완료와 9개 Central metadata/POM read-back.
   - **Failure:** mismatched/missing artifact면 stable promotion을 중지한다.
-- [ ] **REL-04 — stable batch 검증**
+- [x] **REL-04 — stable batch 검증**
   - **Action:** 업스트림 공개 순서와 각 release workflow의 prerequisite를 계산하고 중앙 catalog mutation과 분리한다.
   - **Evidence:** 8개 publisher → central BOM의 acyclic DAG와 Central HTTP 200 prerequisite.
   - **Failure:** downstream은 upstream public artifact 확인 전 실행하지 않는다.
@@ -96,16 +116,16 @@
 
 ## Preflight rows
 
-- [ ] **PRE-01 — release eligibility**: 8개 publisher와 final dependencies가 stable candidate임을 확인한다.
-- [ ] **PRE-02 — live closeout**: milestone/issue/PR 상태를 각 batch 직전에 재확인한다.
-- [ ] **PRE-03 — changelog**: 각 target version의 dated Korean release section을 검증한다.
+- [x] **PRE-01 — release eligibility**: 8개 publisher와 final dependencies가 stable candidate임을 확인한다.
+- [x] **PRE-02 — live closeout**: milestone/issue/PR 상태를 각 batch 직전에 재확인한다.
+- [x] **PRE-03 — changelog**: 각 target version의 dated Korean release section을 검증한다.
 - [ ] **PRE-04 — candidate execution**: exact-head Full Nightly와 matching snapshot을 검증한다.
-- [ ] **PRE-05 — source version**: `snapshotVersion=` empty 및 target version/tag 일치를 검증한다.
+- [x] **PRE-05 — source version**: `snapshotVersion=` empty 및 target version/tag 일치를 검증한다.
 - [ ] **PRE-06 — internal references**: 중앙 BOM의 모든 내부 ref가 stable/public인지 검증한다.
 - [ ] **PRE-07 — generated BOM/POM**: 전체 publisher inventory와 Maven effective model을 검증한다.
 - [ ] **PRE-08 — signing diagnostics**: 각 release workflow의 signing diagnostic을 실행/검증한다.
-- [ ] **PRE-09 — artifact matrix**: 예상 group/artifact/version과 대표 POM을 고정한다.
-- [ ] **PRE-10 — workflow inputs**: 정확한 release YAML의 declared inputs만 사용한다.
+- [x] **PRE-09 — artifact matrix**: 예상 group/artifact/version과 대표 POM을 고정한다.
+- [x] **PRE-10 — workflow inputs**: 정확한 release YAML의 declared inputs만 사용한다.
 
 ## Side-effect log
 
@@ -115,4 +135,6 @@
 
 ## DoD
 
-`Required checks: 0/19; N/A: 0; Blocked: 0` — 실행 중. Stable tag/publication이 모두 검증되기 전에는 `DONE`으로 표시하지 않는다.
+`Required checks: 10/19; N/A: 4; Blocked: 0` — release-prep PR은 merge-ready이며
+fresh exact-head merge approval을 기다린다. Stable tag/publication이 모두
+검증되기 전에는 `DONE`으로 표시하지 않는다.
