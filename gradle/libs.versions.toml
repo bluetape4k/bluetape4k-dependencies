@@ -29,7 +29,7 @@ bluetape4k-graph-bom   = "1.1.0"  # Graph 1.1.0 stable artifact.
 bluetape4k-leader-bom  = "1.1.0"  # Leader 1.1.0 stable artifact.
 
 # https://github.com/bluetape4k/bluetape4k-exposed
-bluetape4k-exposed-bom = "2.1.0"  # Exposed 2.1.0 stable artifact follows the Projects 2.1.0 release.
+bluetape4k-exposed-bom = "2.0.0"  # Bootstrap Exposed's own release build against the last public BOM.
 
 # https://github.com/bluetape4k/bluetape4k-javers
 bluetape4k-javers-bom  = "1.1.0"  # JaVers 1.1.0 stable artifact.
