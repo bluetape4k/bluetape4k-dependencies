@@ -14,25 +14,25 @@ bluetape4k-bom     = "2.1.0"  # Projects 2.1.0 stable artifact verified on Maven
 
 # ── Independent repos ──────────────────────────────────────────────────────
 # https://github.com/bluetape4k/bluetape4k-aws
-bluetape4k-aws-bom = "1.1.0-SNAPSHOT"  # AWS next minor development line.
+bluetape4k-aws-bom = "1.1.0"  # AWS 1.1.0 stable artifact.
 
 # https://github.com/bluetape4k/bluetape4k-image
-bluetape4k-image-bom   = "1.1.0-SNAPSHOT"  # Image next minor development line.
+bluetape4k-image-bom   = "1.1.0"  # Image 1.1.0 stable artifact.
 
 # https://github.com/bluetape4k/bluetape4k-text
-bluetape4k-text-bom    = "1.1.0-SNAPSHOT"  # Text next minor development line.
+bluetape4k-text-bom    = "1.1.0"  # Text 1.1.0 stable artifact.
 
 # https://github.com/bluetape4k/bluetape4k-graph
-bluetape4k-graph-bom   = "1.1.0-SNAPSHOT"  # Graph next minor development line.
+bluetape4k-graph-bom   = "1.1.0"  # Graph 1.1.0 stable artifact.
 
 # https://github.com/bluetape4k/bluetape4k-leader
-bluetape4k-leader-bom  = "1.1.0-SNAPSHOT"  # Leader next minor development line.
+bluetape4k-leader-bom  = "1.1.0"  # Leader 1.1.0 stable artifact.
 
 # https://github.com/bluetape4k/bluetape4k-exposed
 bluetape4k-exposed-bom = "2.1.0"  # Exposed 2.1.0 stable artifact follows the Projects 2.1.0 release.
 
 # https://github.com/bluetape4k/bluetape4k-javers
-bluetape4k-javers-bom  = "1.1.0-SNAPSHOT"  # Javers next minor development line.
+bluetape4k-javers-bom  = "1.1.0"  # JaVers 1.1.0 stable artifact.
 
 # ── Build tooling ──────────────────────────────────────────────────────────
 kotlin             = "2.4.21"  # GHSA-r937-wjx7-w2jp: 안정판 compiler와 Gradle plugin을 같은 버전으로 유지한다.
