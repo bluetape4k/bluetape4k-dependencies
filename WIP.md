@@ -1,7 +1,23 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-09-07 KST
-Scope: dependencies 2.1.0 minor 개발 train 및 외부 catalog 최신 안정판 정렬.
+Snapshot: 2026-11-22 KST
+Scope: dependencies 2.2.0 개발 train 및 외부 catalog 최신 안정판 정렬.
+
+## 2026-11-22 안정 2.1.0 이후 2.2.0 개발선 전환
+
+`bluetape4k-dependencies:2.1.0`과 Projects/Exposed `2.1.0`, AWS/Graph/Image/JaVers/Leader/Text
+`1.1.0`의 정식 배포를 확인한 뒤 다음 개발선을 연다. 중앙 catalog commit
+`7a5995fd46031ce1faf16337fa08d954436f8f9a`를 모든 publishable library 후보가
+공유하고, source의 `snapshotVersion=`은 비워 둔 채 snapshot workflow가 suffix를
+주입한다.
+
+- 중앙 BOM: `2.2.0-SNAPSHOT`
+- Projects/Exposed BOM: `2.2.0-SNAPSHOT`
+- AWS/Graph/Image/JaVers/Leader/Text BOM: `1.2.0-SNAPSHOT`
+- Workshop/example/application 소비자: 공식 `bluetape4k-dependencies:2.1.0`과
+  안정 catalog ref `1669b069690864be8a19a67598e9ac9db807f9f5`를 유지한다.
+- 배포 순서: 중앙 snapshot → Projects/Exposed 기반 snapshot → 나머지 publisher
+  snapshot → publication POM 재검증과 downstream smoke.
 
 ## 2026-09-07 예제 저장소 2.1.0-SNAPSHOT 개발선 전환
 
