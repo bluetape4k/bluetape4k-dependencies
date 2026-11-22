@@ -244,12 +244,16 @@ Snapshot 배포에서는 upstream artifact와 BOM/catalog가 모두 snapshot rep
 2. 중앙 `gradle/libs.versions.toml`의 해당 내부 BOM ref를
    `baseVersion + "-SNAPSHOT"`으로 갱신합니다. 중앙 catalog 자체 alias는
    `baseVersion`만 기록합니다.
-3. `scripts/verify-post-publish-next-development-line.py --summary`와
-   publication-POM gate를 preflight로 통과시킨 뒤 snapshot publish를
-   수행합니다.
-4. publish 직후 `scripts/verify-post-publish-next-development-line.py --summary
-   --require-artifacts`로 중앙 snapshot metadata가 실제로 생성됐는지
-   확인합니다.
+3. 각 publisher의 exact `develop` head, Nightly, publication-POM을 확인한 뒤
+   의존관계 순서로 snapshot을 공개합니다. Projects를 먼저 공개하고,
+   Projects snapshot을 소비하는 Exposed와 나머지 publisher를 순차 공개합니다.
+   모든 하위 BOM의 Central metadata/POM이 확인된 뒤에야, 이 하위 BOM들을
+   import하는 중앙 `bluetape4k-dependencies` snapshot을 마지막으로 공개합니다.
+   중앙 BOM을 먼저 공개해 하위 POM이 아직 존재하지 않는 snapshot을 가리키게
+   만드는 순환 의존은 허용하지 않습니다.
+4. 각 publish 직후 해당 BOM의 metadata/POM을 확인하고, 전체 train이 끝나면
+   `scripts/verify-post-publish-next-development-line.py --summary
+   --require-artifacts`와 publication-POM gate를 다시 실행합니다.
 
 이때 소비자 범위를 섞으면 안 됩니다.
 
