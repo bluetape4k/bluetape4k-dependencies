@@ -16,8 +16,10 @@ Scope: dependencies 2.2.0 개발 train 및 외부 catalog 최신 안정판 정�
 - AWS/Graph/Image/JaVers/Leader/Text BOM: `1.2.0-SNAPSHOT`
 - Workshop/example/application 소비자: 공식 `bluetape4k-dependencies:2.1.0`과
   안정 catalog ref `1669b069690864be8a19a67598e9ac9db807f9f5`를 유지한다.
-- 배포 순서: 중앙 snapshot → Projects/Exposed 기반 snapshot → 나머지 publisher
-  snapshot → publication POM 재검증과 downstream smoke.
+- 배포 순서: Projects snapshot → Exposed 및 나머지 publisher snapshot을
+  의존관계에 따라 순차 공개 → 모든 하위 BOM의 Central metadata 확인 →
+  하위 BOM을 import하는 중앙 `bluetape4k-dependencies` snapshot 공개 →
+  publication POM 재검증과 downstream smoke.
 
 ## 2026-09-07 예제 저장소 2.1.0-SNAPSHOT 개발선 전환
 
