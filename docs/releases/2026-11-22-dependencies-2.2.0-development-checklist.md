@@ -46,7 +46,7 @@
 | JaVers | #404 | `3eb8191e9ce64041be4bcdfa0d35942f31e1fd0a` | snapshot predecessor 대기 |
 | Leader | #1020 | `b25f9d221c59059f18a94d0f1123680790f19982` | snapshot predecessor 대기 |
 | Text | #353 | `d7e62b339937e6a443271746002853c30a7764a5` | snapshot predecessor 대기 |
-| Dependencies | #291 | `02132226c3a943589eaba7838e7175fc96cc5b83` | 하위 snapshot 공개 후 재검증 |
+| Dependencies | #291 | `c8df2ee819717e57cf09e9d7f392e308802ede38` | 하위 snapshot 공개 후 재검증 |
 
 ## 현재 증거와 정지 조건
 
