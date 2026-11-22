@@ -430,15 +430,15 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 
 ```toml
 [versions]
-bluetape4k-dependencies = "2.0.0"
-bluetape4k-bom          = "2.0.0"
-bluetape4k-aws-bom      = "1.0.0-SNAPSHOT"
-bluetape4k-image-bom    = "1.0.0"
-bluetape4k-text-bom     = "1.0.0"
-bluetape4k-graph-bom    = "1.0.0"
-bluetape4k-leader-bom   = "1.0.0-SNAPSHOT"
-bluetape4k-exposed-bom  = "2.0.0"
-bluetape4k-javers-bom   = "1.0.0-SNAPSHOT"
+bluetape4k-dependencies = "2.2.0"
+bluetape4k-bom          = "2.2.0-SNAPSHOT"
+bluetape4k-aws-bom      = "1.2.0-SNAPSHOT"
+bluetape4k-image-bom    = "1.2.0-SNAPSHOT"
+bluetape4k-text-bom     = "1.2.0-SNAPSHOT"
+bluetape4k-graph-bom    = "1.2.0-SNAPSHOT"
+bluetape4k-leader-bom   = "1.2.0-SNAPSHOT"
+bluetape4k-exposed-bom  = "2.2.0-SNAPSHOT"
+bluetape4k-javers-bom   = "1.2.0-SNAPSHOT"
 ```
 
 정식 배포 train에서는 각 upstream artifact가 Maven Central에 공개된 뒤 해당
