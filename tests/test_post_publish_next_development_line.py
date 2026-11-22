@@ -132,14 +132,14 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         }
 
         expected_versions = {
-            "bluetape4k-projects": "2.1.0-SNAPSHOT",
-            "bluetape4k-aws": "1.1.0-SNAPSHOT",
-            "bluetape4k-exposed": "2.1.0-SNAPSHOT",
-            "bluetape4k-graph": "1.1.0-SNAPSHOT",
-            "bluetape4k-image": "1.1.0-SNAPSHOT",
-            "bluetape4k-javers": "1.1.0-SNAPSHOT",
-            "bluetape4k-leader": "1.1.0-SNAPSHOT",
-            "bluetape4k-text": "1.1.0-SNAPSHOT",
+            "bluetape4k-projects": "2.2.0-SNAPSHOT",
+            "bluetape4k-aws": "1.2.0-SNAPSHOT",
+            "bluetape4k-exposed": "2.2.0-SNAPSHOT",
+            "bluetape4k-graph": "1.2.0-SNAPSHOT",
+            "bluetape4k-image": "1.2.0-SNAPSHOT",
+            "bluetape4k-javers": "1.2.0-SNAPSHOT",
+            "bluetape4k-leader": "1.2.0-SNAPSHOT",
+            "bluetape4k-text": "1.2.0-SNAPSHOT",
         }
         for repository, expected in expected_versions.items():
             with self.subTest(repository=repository):
@@ -187,14 +187,11 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         )
         self.assertEqual(
             policy["snapshot-catalog-ref"],
-            "c3605117f0d5f7c7ac8b15147a978c145847577b",
+            "7a5995fd46031ce1faf16337fa08d954436f8f9a",
         )
         self.assertEqual(
             policy.get("snapshot-catalog-ref-overrides", {}),
-            {
-                "bluetape4k-leader": "4ec0e992679f61be4ce919c58a25ee8a90d57811",
-                "bluetape4k-projects": "cdab12ec8660818d522eb5ce53bae1342c44a7a2",
-            },
+            {},
         )
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
@@ -239,7 +236,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertEqual(
             module.snapshot_candidate_branch(document),
-            "chore/snapshot-catalog-c360511",
+            "chore/snapshot-catalog-7a5995f",
         )
 
     def test_manifest_rejects_source_snapshot_suffix(self) -> None:
@@ -385,7 +382,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             errors = module.verify_development(central, workspace, document, False)
 
         self.assertIn(
-            "example-app must use official bluetape4k-dependencies 2.0.0, got '1.5.0-SNAPSHOT'",
+            "example-app must use official bluetape4k-dependencies 2.1.0, got '1.5.0-SNAPSHOT'",
             errors,
         )
 
