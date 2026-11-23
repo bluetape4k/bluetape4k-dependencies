@@ -1,9 +1,9 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-11-22 KST
-Scope: dependencies 2.2.0 개발 train 및 외부 catalog 최신 안정판 정렬.
+Snapshot: 2026-11-23 KST
+Scope: dependencies 2.2.0-SNAPSHOT train의 하위 publisher 공개를 마치고 중앙 BOM을 마지막으로 검증·배포한다.
 
-## 2026-11-22 안정 2.1.0 이후 2.2.0 개발선 전환
+## 2026-11-23 안정 2.1.0 이후 2.2.0 개발선 전환
 
 `bluetape4k-dependencies:2.1.0`과 Projects/Exposed `2.1.0`, AWS/Graph/Image/JaVers/Leader/Text
 `1.1.0`의 정식 배포를 확인한 뒤 다음 개발선을 연다. 중앙 catalog commit
@@ -20,6 +20,24 @@ Scope: dependencies 2.2.0 개발 train 및 외부 catalog 최신 안정판 정�
   의존관계에 따라 순차 공개 → 모든 하위 BOM의 Central metadata 확인 →
   하위 BOM을 import하는 중앙 `bluetape4k-dependencies` snapshot 공개 →
   publication POM 재검증과 downstream smoke.
+
+### Dependencies #291 CI 복구
+
+PR CI attempt 1은 Clinic 소비자 canary의 Maven Central checksum 누락으로
+실패했다. Clinic #496에 검증 checksum이 반영된 후 전체 하위 snapshot을
+순서대로 공개하고 재실행한 attempt 2는 `latest-stable` audit의 catalog 입력
+SHA 불일치로 실패했다. 현재 catalog의 inventory/audit 입력만 재바인딩하고
+기존 523개 외부 metadata 기록과 수집 시각은 보존했다. Python 3.13 audit 검사와
+49개 targeted test가 통과했으며, PR exact-head CI 재실행과 중앙 BOM snapshot은
+아직 대기 중이다. 독립 code-reviewer는 `codex-code-mode-host` 실행 파일이 없어
+파일을 읽기 전에 종료됐고 CUA fallback도 시작하지 못했다. 실제 독립 리뷰 결과가
+없으므로 merge 준비 완료로 판단하지 않는다.
+
+Receipt helper를 다룰 때 `--expected-head`에는 Git SHA가 아닌 직전
+`mutation-check`의 receipt checksum을 넣고, owner handle은 state root의
+`handles/` 바로 아래에서 사용한다. lane/topology 입력 JSON을 helper에 넘기기 전에
+검증하고, 30초 startup ACK deadline을 지킨다. 잘못된 입력으로 거부된 명령은
+receipt를 바꾸지 않았으며, 미실행 리뷰 예약은 만료 근거를 남겨 취소했다.
 
 ## 2026-09-07 예제 저장소 2.1.0-SNAPSHOT 개발선 전환
 
