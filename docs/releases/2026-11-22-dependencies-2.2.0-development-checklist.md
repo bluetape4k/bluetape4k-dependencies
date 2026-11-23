@@ -218,6 +218,10 @@
 - `scripts/verify-post-publish-next-development-line.py --summary`는
   `8 publishers`, `9 snapshot libraries`, `5 official-release examples`,
   `0 development-snapshot examples`를 확인했습니다.
+- 이 train의 receipt state root는 worktree 루트가 아니라
+  `.bluetape/snapshot-train-2026-11-23`입니다. helper 실행 시 이 경로를
+  `--state-root`로 지정합니다. 2026-11-24 read-back에서 `verify` sequence 57,
+  `resume-check` topology gap 0건을 확인했습니다.
 - 개발선/CI 계약 회귀 테스트 47개가 통과했습니다.
 - Projects #1914는 merge commit `905b9efa…`로 병합됐고, Full Nightly 및
   자동 Publish Snapshot이 모두 성공했다. BOM/core/io의
