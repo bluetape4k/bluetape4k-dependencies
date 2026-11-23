@@ -1,7 +1,7 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "a7b0a023682b3d36f0b3733153fcd4d5ffc2d504ca066f930d8b5161208f6848",
+    "sha256": "ef622e25d64603807caa3d7c9051a68c3f1abd875dc9f09efdb282974c7a68d1",
     "summary": {
       "authority-count": 523,
       "line-count": 557,
@@ -12,8 +12,8 @@
         "hold-compatibility": 65,
         "hold-unavailable": 9
       },
-      "metadata-unavailable": 0,
       "metadata-preview-only": 5,
+      "metadata-unavailable": 0,
       "metadata-verified": 518
     }
   },
