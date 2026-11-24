@@ -72,7 +72,8 @@
 - [x] 모든 consumer PR exact-head CI와 merged `develop` read-back
 - [ ] 전체 publisher publication-POM 및 Maven effective-model gate
 - [x] 8개 child snapshot DAG, Full Nightly, 자동 Publish Snapshot, artifact read-back
-- [ ] PR #291 exact-head checks/reviews/threads/독립 리뷰 및 guarded merge
+- [ ] PR #291 최종 exact-head checks, live review/thread read-back 및 guarded merge
+- [x] 인간 리뷰 subgate: `N/A (single-developer lane)` — 사용자는 독립 code/architecture review를 명시적으로 면제했다. 인라인 review는 계속 적용하며 attestation을 주장하지 않는다.
 - [ ] Dependencies `2.2.0-SNAPSHOT` 자동 publish와 Central artifact read-back
 - [ ] 최종 verifier `--require-artifacts`, POM gate 및 9개 consumer SHA parity
 
@@ -557,7 +558,7 @@
   Dependency Submission `45349210872`는 central snapshot 게시 전이라 아직 실패 상태이며,
   Dependencies `2.2.0-SNAPSHOT` 게시 후 실패 job을 다시 실행해 제출을 확인한다.
 
-## 2026-11-24 PR #291 재검증 준비
+## 2026-11-24 PR #291 재검증 준비 (head `08cdb922` 기준)
 
 - PR #291은 `develop` 대상 OPEN, head `08cdb92297a1494662ef2918dfe02f79409089c6`,
   merge state `CLEAN`이다. CI run `45380017787`의 9개 PR checks와 별도 Dependabot
@@ -573,12 +574,33 @@
   Sonatype read-back 전에 Experimental Dependency Submission과 최종 verifier는 끝난 것으로
   표시하지 않는다.
 
+## 2026-11-24 PR #291 단독 개발자 리뷰 면제
+
+- 사용자는 단독 개발자이므로 독립 리뷰를 생략하라고 명시했다. 저장소 작업 범위는
+  `debop` 1인 유지보수자다. 따라서 CG-14 인간 리뷰 subgate는
+  `N/A (single-developer lane)`로 기록한다.
+- 독립 reviewer attestation은 없으며, 이 면제는 이를 수행한 것으로 바꾸지 않는다.
+  main-session 인라인 source review와 정확한 head의 CI, review/thread read-back,
+  mergeability 검증은 그대로 요구한다.
+- 면제 검토 시작 시 PR #291은 OPEN, base `develop`, head
+  `327b9a59cda5d4e561a6d2f0f1a07105c1ec84d5`, merge state `CLEAN`이었다. 해당 head의
+  9개 PR checks, `Cross-repository Publication POM Contract`, 별도 `submit-gradle`
+  run은 모두 PASS했고 review submission/thread/comment는 0개였다.
+- 이후 PR branch commit `4b56d6534a32586c540f9e0f14c0814b5fa7c8f7`이 `WIP.md`에서
+  독립 아키텍처 리뷰를 merge blocker로 기록했다. 사용자의 면제 지시와 맞지 않아 이
+  변경에서 상태를 바로잡는다. 현재 head `4b56d6534a32586c540f9e0f14c0814b5fa7c8f7`의
+  run `45400006863`은 Build BOM과 publication-POM contract가 진행 중이다.
+- 이 문서 변경을 포함하는 최신 head에서도 CI/POM contract를 다시 확인한다. 남은 PR
+  gate는 최신 head CI와 live review/thread/mergeability read-back, guarded merge다. merge 뒤에는
+  중앙 automatic Publish Snapshot과 artifact read-back을 확인하고 Experimental
+  Dependency Submission을 다시 실행한 다음 최종 verifier를 수행한다.
+
 ## 2026-11-24 PR #291 문서 갱신 writer DoD
 
-- **SPW-01 — 완료.** 독자는 Dependencies BOM maintainer다. 목적은 PR #291의 다음 개발선 검토 결과와 새 consumer snapshot 증거를 정확한 범위와 함께 남기는 것이다. 근거는 live PR/CI, manifest/verifier diff, catalog tag, consumer 설정, Sonatype metadata와 artifact 응답이다.
-- **SPW-02 — 완료.** 인라인 리뷰에 범위, 수정된 발견 사항, 현재 diff 검토, 아키텍처 순서, 검증 결과, 독립 리뷰 한계와 남은 merge/publication hold를 기록했다.
-- **SPW-03 — 완료.** 한국어 문장과 코드·artifact·버전 토큰을 구분했다. `SNAPSHOT`, metadata, POM, Gradle module, JAR는 Maven 게시 맥락의 정확한 식별자로 유지했다.
-- **SPW-04 — 완료.** PR/CI 상태, 9개 consumer SHA, 8개 publisher 버전·run, 중앙 publish 보류 사유를 각각 live evidence에 연결했다. 과거 head의 CI를 이번 문서 보정 head의 검증으로 간주하지 않는다.
-- **SPW-05 — 완료.** 변경한 checklist와 `docs/reviews/2026-11-24-pr-291-inline-review.md`를 전체 읽고 제목, 목록, 명령·버전 문자열 및 진행 상태를 확인했다. 새 PR head CI/POM contract와 최종 merge 상태는 아직 pending으로 남겼다.
-- **KO-01..KO-06 — 완료.** 근거·수치·식별자·불확실성을 보존하고, 불필요한 강조나 번역체를 제거했으며, 변경한 두 문서의 reader-facing 표면을 읽었다.
-- **KO-07 — 완료.** `audit-korean-terms.mjs --series clinic-appointment --json` 결과는 두 파일에서 63건이며 모두 `snapshot-loanword`다(checklist 56건, review 7건). 모든 발생은 Maven `-SNAPSHOT`, Maven Central snapshot metadata/artifact, 또는 그 게시 절차를 가리킨다. 일반 도메인 데이터 snapshot 용례는 없어 기술 용어를 유지한 intentional exception으로 판정했다.
+- **SPW-01 — 완료.** 독자는 Dependencies BOM maintainer다. 목적은 PR #291의 다음 개발선 검토 결과, snapshot 증거, 사용자가 승인한 단독 개발자 리뷰 면제를 정확히 남기는 것이다. 근거는 저장소의 1인 maintainer 범위, 사용자 지시, live PR/CI, manifest/verifier diff, catalog tag와 Sonatype artifact 응답이다.
+- **SPW-02 — 완료.** 인라인 리뷰의 범위, 발견 사항, 아키텍처 순서, 검증, 독립 attestation 부재, `N/A (single-developer lane)` 판정과 남은 exact-head merge/publication hold를 기록했다.
+- **SPW-03 — 완료.** 한국어 자연스러움 checklist를 적용했다. contextual terminology audit는 세 파일에서 84건을 찾았고, 15건은 `WIP.md`, 61건은 checklist, 8건은 review 문서다. 모두 Maven `-SNAPSHOT` 버전 또는 snapshot publication 문맥이라 의도된 예외다.
+- **SPW-04 — 완료.** 이전 PR head `327b9a59cda5d4e561a6d2f0f1a07105c1ec84d5`의 CI/POM 및 별도 `submit-gradle`은 PASS했다. 이후 WIP commit `4b56d6534a32586c540f9e0f14c0814b5fa7c8f7`의 `45400006863`은 새 head에서 진행 중이다. consumer SHA와 child snapshot도 기록했다. 이 문서 commit head의 CI/POM을 병합 전에 다시 수집한다.
+- **SPW-05 — 완료.** 변경한 `WIP.md`, checklist, `docs/reviews/2026-11-24-pr-291-inline-review.md`를 전체 읽고 면제, attestation 구분, 목록, 기술 토큰과 진행 상태를 확인했다. `git diff --check`는 PASS했고 최신 PR head CI/POM 및 merge 상태는 pending이다.
+- **KO-01..KO-06 — 완료.** 근거·수치·식별자·불확실성을 보존하고, 불필요한 강조나 번역체를 제거했으며, 변경한 세 문서의 reader-facing 표면을 읽었다.
+- **KO-07 — 완료.** `audit-korean-terms.mjs --series clinic-appointment --json` 결과는 세 파일에서 84건이며 모두 `snapshot-loanword`다(`WIP.md` 15건, checklist 61건, review 8건). 모든 발생은 Maven `-SNAPSHOT`, Maven Central snapshot metadata/artifact, 또는 그 게시 절차를 가리킨다. 일반 도메인 데이터 snapshot 용례는 없어 기술 용어를 유지한 intentional exception으로 판정했다.
