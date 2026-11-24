@@ -32,6 +32,13 @@
 - 이 단계에서는 구현 코드나 테스트를 추가·실행하지 않았다.
 - `.bluetape` run `20261124T125346Z-df0e8e85`의 `spec_performance` native lane은 실제 실패 상태로 보존됐다. 이 문서는 inline fallback 판단이며 독립 리뷰 완료 기록이 아니다.
 
+## 보조 성능 재검토
+
+- 별도 `codex exec --ephemeral --sandbox read-only` 프로세스가 Codex CLI `0.172.0`으로 `96680109bf4eec782cc95c7242017a6c7c5af013`의 설계를 읽고 성능 관점만 검토했다. native `code-reviewer` 역할은 실행되지 않았다.
+- 결과는 발견 사항 없음(P0=0, P1=0, P2=0, P3=0)이었다. alias 하나는 런타임 의존성이나 동작을 바꾸지 않으며, accessor·소비자 해석·기존 회귀 검사·checksum·catalog 검사·저장소 build가 이 변경의 적절한 검증이라고 판단했다. 별도 성능 벤치마크는 필요하지 않다고 확인했다.
+- 이 프로세스는 lane의 `2026-11-24T13:48:17Z` command deadline 뒤에 결과를 반환했다. 따라서 결과는 기술적 참고로만 보존하고, 완료된 lane이나 독립 리뷰어의 검토 완료로 계산하지 않는다. 공식 판정은 위의 inline fallback review다.
+- 영수증 `spec_performance_rereview`의 `lane_created`는 `13:43:17Z`, `lane_started`는 `13:40:00Z`로 기록돼 시작 시각 순서가 어긋난다. `verify`의 hash-chain 검증 성공과 별개인 기록 결함이며, 기존 append-only 영수증을 수정하지 않는다.
+
 Inline verdict: PASS; P0=0, P1=0.
 
 ## Writer gate 기록
