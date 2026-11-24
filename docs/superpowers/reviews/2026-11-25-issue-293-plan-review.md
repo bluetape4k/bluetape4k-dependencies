@@ -5,19 +5,19 @@
 - 결과: **PASS — inline fallback review**
 - P0: 0건
 - P1: 0건
-- 수정 완료한 P2: 8건
+- 수정 완료한 P2: 9건
 - 미해결 P2/P3: 0건
 - 독립 검토: 수행되지 않음. 아래 inline 검토를 독립 reviewer attestation으로 간주하지 않는다.
 
 ## 검토 범위와 근거
 
 - 계획: `docs/superpowers/plans/2026-11-24-issue-293-exposed-dao-r2dbc-alias-plan.md`
-- 검토한 계획 SHA-256: `a06e937633756e111a4b29c6cc123d2a4ce401e0ab1cf5ebc03daae1374dd8e4`
+- 검토한 계획 SHA-256: `314c053f0dafff51b2293b78244b97682852a042c4cf8e99b0e8d3a8268a8345`
 - 설계 기준: `docs/superpowers/specs/2026-11-24-issue-293-exposed-dao-r2dbc-alias-design.md`
 - 검토한 저장소 HEAD: `3d757eece632e8932e6664ccbb76bf7a069c341b`
 - 최신 `origin/develop`: `78a2f525c1d12c576f80f2c8f84dbb2fbb942ede`; 해당 기준으로 rebase한 브랜치는 검토 시점에 ahead 4 / behind 0이었다.
 - 2026-11-25 원격 read-back: `git ls-remote`에서 같은 develop SHA를 확인했고, 해당 catalog에서 `exposed = "1.6.1"` 및 `exposed-dao-r2dbc` alias 누락을 확인했다.
-- 2026-11-25 workflow read-back: 이전 설계 run은 차단 전에 `running`, sequence 18, checksum `79c3b0dcdb35c275ac6093fe5d44a14357fdff1bee60681f9139da6d783fd0ee`였고, 지원 helper로 BLOCKED 처리한 뒤에는 sequence 19, checksum `b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792`다. 새 구현 run은 `planned`, sequence 1, checksum `fb670e1905a937422348fdd9962d310d88b8f65129db6bea939d36d8a1fa8711`로 유지됐다.
+- 2026-11-25 workflow read-back: 이전 설계 run은 차단 전에 `running`, sequence 18, checksum `79c3b0dcdb35c275ac6093fe5d44a14357fdff1bee60681f9139da6d783fd0ee`였고, 지원 helper로 BLOCKED 처리한 뒤에는 sequence 19, checksum `b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792`다. 새 구현 run은 init 당시 `planned`, sequence 1, checksum `fb670e1905a937422348fdd9962d310d88b8f65129db6bea939d36d8a1fa8711`였고, 이후 승인 sequence 2 / checksum `ff565e505a17af3bb4d146eb33d25ae4f4014650eb830d98622a6d911e510d05`, 시작 sequence 3 / checksum `fcb699c250ee6fde4d0b9d5c311f414f23ae932947d7c5313823fac5eac84ba3`까지 정상 진행했다.
 - receipt CAS 실행 확인: Git SHA를 전달한 `run-approve`는 `{"error":"contract_error","message":"expected receipt head must be lowercase SHA-256","ok":false,"retryable":false}`로 거부됐고 receipt는 바뀌지 않았다. helper 계약은 `bluetape_runtime.py:348-349`에서 확인했다.
 - GitHub 실시간 조회: #293은 열림, milestone `2.2.0`, `chore`/`dependencies`, 담당자 `debop`; #942는 열림, milestone `2.2.0`, `documentation`/`enhancement`/`feature`/`test`, 담당자 `debop`.
 - GNO: `bluetape4k-github`에서 #293과 #942 원문을 찾아 선행 관계와 alias 계약을 확인했다. `bluetape4k-docs`는 중앙 catalog 검증 관련 선례를 반환했으나 이번 결정의 직접 근거로 삼지 않고 live issue와 현재 저장소를 기준으로 했다.
@@ -50,6 +50,7 @@ native reviewer 실행은 `/opt/homebrew/Caskroom/codex/0.171.0/bin/codex-code-m
 | PLAN-P2-06 | P2 | PR 생성 직전 #293만 다시 조회하고 두 이슈의 milestone, labels, assignee 최신값을 비교하지 않았다. | PR 생성 전 #293과 #942의 전체 metadata를 조회하고 Task 1 값과 대조하도록 명령과 예상 결과를 보완했다. | 해결 |
 | PLAN-P2-07 | P2 | `run-approve`와 이후 helper 명령에 `git rev-parse HEAD`의 40자리 Git SHA를 `--expected-head`로 넘겼다. helper는 receipt의 64자리 lowercase SHA-256을 요구해 `contract_error`가 발생했다. | 계획에서 기존 `planned` run을 재사용하고 `resume-check.last_checksum`과 각 mutation 출력의 `checksum`을 순서대로 전달하도록 고쳤다. 실행 오류 후 새 run의 sequence 1 / checksum `fb670e1905a937422348fdd9962d310d88b8f65129db6bea939d36d8a1fa8711`이 유지됨을 read-back했다. | 해결 |
 | PLAN-P2-08 | P2 | 계획과 이전 검토는 #293 milestone을 `backlog`로 기록했으나 현재 live GitHub 값은 `2.2.0`이다. | #293/#942 live metadata를 다시 조회하고 Task 1 예상값 및 본 검토를 `2.2.0`으로 맞췄다. issue scope와 label/assignee는 유지된다. | 해결 |
+| PLAN-P2-09 | P2 | 실행 계획은 `"$plan_head를"`로 적어 zsh `set -u` 환경에서 `$plan_head를: parameter not set` 오류가 났다. `run-approve`는 이미 sequence 2까지 성공해 run이 `approved` 상태였다. | 계획을 `${plan_head}을`로 고쳤다. 올바른 인용으로 `run-start`가 sequence 3 / checksum `fcb699c250ee6fde4d0b9d5c311f414f23ae932947d7c5313823fac5eac84ba3`에 성공했고 `mutation-check`가 5개 및 7개 경로를 허용했다. | 해결 |
 
 통합 검토에서 승인 설계와 수용 기준의 충돌, 파일 범위 확대, PR 병합 권한의 혼입은 찾지 못했다. 해결하지 않은 P2/P3는 없다.
 

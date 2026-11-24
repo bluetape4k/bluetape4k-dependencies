@@ -102,7 +102,7 @@ git commit -m "중앙 catalog alias 구현 기준을 승인된 계획으로 고�
 
 - [ ] **Step 5: 미완료 설계 run을 보존하고 구현 run 시작**
 
-기존 설계 run `20261124T125346Z-df0e8e85`는 `spec_performance_rereview`가 `agent_interrupted` 없이 실패해 inline resolution 조건을 충족하지 않으므로 지원 helper로 BLOCKED 처리했다. 현재 상태는 sequence 19, checksum `b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792`다. 이 receipt는 성공으로 바꾸지 않는다. 승인된 실행 계획용 Type A run `20261124T154608Z-8f6dc689`도 이미 초기화했고, 현재 `planned`, sequence 1, checksum `fb670e1905a937422348fdd9962d310d88b8f65129db6bea939d36d8a1fa8711`이다. 기존 owner file을 사용하며 run이나 owner를 다시 만들지 않는다. `.bluetape` 상태는 지원 helper로만 변경한다.
+기존 설계 run `20261124T125346Z-df0e8e85`는 `spec_performance_rereview`가 `agent_interrupted` 없이 실패해 inline resolution 조건을 충족하지 않으므로 지원 helper로 BLOCKED 처리했다. 현재 상태는 sequence 19, checksum `b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792`다. 이 receipt는 성공으로 바꾸지 않는다. 승인된 실행 계획용 Type A run `20261124T154608Z-8f6dc689`는 init 당시 `planned`, sequence 1, checksum `fb670e1905a937422348fdd9962d310d88b8f65129db6bea939d36d8a1fa8711`이었다. `run-approve`와 `run-start`를 거쳐 현재 `running`, sequence 3, checksum `fcb699c250ee6fde4d0b9d5c311f414f23ae932947d7c5313823fac5eac84ba3`다. 이후에는 기존 owner file과 run을 재사용한다. `.bluetape` 상태는 지원 helper로만 변경한다.
 
 `--expected-head`는 Git commit SHA가 아니라 직전 receipt의 64자리 소문자 SHA-256 checksum이다. 모든 helper mutation 결과의 `checksum`을 다음 mutation에 전달한다. Git HEAD는 승인 계획 commit을 요약하는 별도 증거로만 기록한다.
 
@@ -128,7 +128,7 @@ approve_output="$(python3 "$flow" run-approve --run-id "$run_id" --owner-file "$
 receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$approve_output")"
 start_output="$(python3 "$flow" run-start --run-id "$run_id" --owner-file "$new_owner" \
   --expected-head "$receipt_head" --evidence-kind approved-plan \
-  --evidence-summary "승인한 Issue #293 계획 commit $plan_head를 기준으로 구현 run을 시작한다.")"
+  --evidence-summary "승인한 Issue #293 계획 commit ${plan_head}을 기준으로 구현 run을 시작한다.")"
 receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$start_output")"
 python3 "$flow" mutation-check --session-id "$CODEX_THREAD_ID" \
   --target "$PWD/gradle/libs.versions.toml" \
