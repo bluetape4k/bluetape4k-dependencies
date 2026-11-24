@@ -83,10 +83,6 @@
     ],
     "official-release-repositories": [
       {
-        "repository": "bluetape4k-workshop",
-        "catalog-version-key": "bluetape4k-dependencies-version"
-      },
-      {
         "repository": "clinic-appointment",
         "catalog-version-key": "bluetape4k-dependencies"
       },
@@ -103,6 +99,11 @@
         "catalog-version-key": "bluetape4k-dependencies"
       }
     ],
-    "development-snapshot-repositories": []
+    "development-snapshot-repositories": [
+      {
+        "repository": "bluetape4k-workshop",
+        "catalog-version-key": "bluetape4k-dependencies-version"
+      }
+    ]
   }
 }
