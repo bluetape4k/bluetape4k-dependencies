@@ -493,6 +493,7 @@ def verify_development(
     stable_version = manifest["stable-version"]
     development_version = manifest["development-version"]
     suffix = manifest["snapshot-suffix"]
+    expected_development_version = f"{development_version}{suffix}"
     source_contract = manifest["source-contract"]
     properties_path = central_root / "gradle.properties"
     catalog_path = central_root / "gradle" / "libs.versions.toml"
@@ -508,13 +509,16 @@ def verify_development(
         )
     if properties.get("snapshotVersion") != source_contract["snapshotVersion"]:
         errors.append("central snapshotVersion must remain empty in source")
-    if versions.get("bluetape4k-dependencies") != development_version:
-        errors.append("catalog self version must equal the development baseVersion")
+    if versions.get("bluetape4k-dependencies") != expected_development_version:
+        errors.append(
+            "catalog self version must reference "
+            f"{expected_development_version}, got "
+            f"{versions.get('bluetape4k-dependencies')!r}"
+        )
     if stable_version == development_version:
         errors.append("stable-version and development-version must differ")
     errors.extend(verify_consumer_policy(workspace, manifest, central_root))
 
-    expected_development_version = f"{development_version}{suffix}"
     stable_catalog_repositories = set(manifest["stable-catalog-repositories"])
     for item in manifest["publishable-repositories"]:
         repository = item["repository"]
