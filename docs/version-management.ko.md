@@ -212,11 +212,17 @@ catalog에서 버전을 올리고 downstream의 `bt4k` 참조를 검증한 뒤
 
 ## Snapshot 배포와 공식 릴리즈
 
-`bluetape4k-dependencies`의 catalog source alias는 `gradle.properties`의
-`baseVersion`과 맞아야 합니다. 실제 snapshot publication version은 workflow가
-주입하는 `snapshotVersion=-SNAPSHOT`으로 결정됩니다. `scripts/sync-shared-versions.py`는
-source-of-truth block의 `bluetape4k-dependencies` 버전과 `baseVersion`이 다르면
-실패합니다.
+Snapshot 개발선에서 중앙 catalog의 `bluetape4k-dependencies` self alias는
+`baseVersion`과 같지 않습니다. `gradle.properties`에는 접미사 없는
+`baseVersion`과 빈 `snapshotVersion=`을 두고, catalog alias에는
+`<development-version>-SNAPSHOT`을 기록합니다. 게시 workflow는 실행할 때만
+`-PsnapshotVersion=-SNAPSHOT`을 주입합니다.
+
+검증 책임도 구분합니다. `scripts/sync-shared-versions.py`는 source-of-truth block에
+self alias가 있는지 확인하지만 alias 값을 `baseVersion`과 비교하지 않습니다.
+`scripts/verify-post-publish-next-development-line.py`는 manifest의
+`development-version`과 `snapshot-suffix`를 결합한 값이 self alias와 일치하는지
+확인합니다. 따라서 Snapshot 개발선 alias의 `-SNAPSHOT`은 불일치가 아니라 계약입니다.
 
 ### Snapshot 배포
 

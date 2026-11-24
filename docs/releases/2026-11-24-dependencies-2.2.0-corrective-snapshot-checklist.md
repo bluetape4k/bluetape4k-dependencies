@@ -1,6 +1,35 @@
 # Dependencies 2.2.0-SNAPSHOT catalog 보정 체크리스트
 
-상태: **진행 중 — 8개 child snapshot 재게시와 공개 read-back을 마쳤으며, #291 병합·중앙 snapshot·최종 검증이 남음**
+상태: **진행 중 — #291 병합과 중앙 snapshot 공개를 확인했으며, publication-POM/effective-model 및 최종 workspace 검증이 남음**
+
+## 2026-11-25 현재 상태
+
+- PR #291 head `f4a5b58dccb5e6c62f1261179cb12519549a719d`는 2026-11-24
+  13:34:49 UTC에 merge commit `78a2f525c1d12c576f80f2c8f84dbb2fbb942ede`로
+  병합됐다. 해당 head의 CI run `45401341780`은 10개 check 모두 성공했고,
+  후속 develop CI run `45404899275`도 성공했다.
+- 자동 Publish Snapshot run `45407764459`는 merge commit에서 성공했다. Central Portal
+  snapshot 저장소의 중앙 Dependencies BOM 및 8개 하위 BOM metadata, timestamped POM,
+  `.module` 응답은 모두 HTTP 200이다. 중앙 metadata의 `lastUpdated`는
+  `20261124135253`; timestamped POM은 `2.2.0-20261124.135253-1`이다.
+- 이 BOM들은 POM packaging이므로 JAR은 요구하지 않는다. `--require-artifacts`가
+  metadata 존재만 확인하던 문제는 #294 후보에서 timestamped POM/`.module` 및
+  JAR packaging artifact 검증으로 보강했다. 집중 테스트 25개, 전체 Python suite
+  627개(2개 skip), Gradle build, live Central read-back은 통과했다. exact-head hosted
+  CI는 pending이다.
+- PR #291의 review submission, inline review comment, issue comment는 각각 0건이다.
+  인간 리뷰 subgate는 사용자의 지시에 따라 `N/A (single-developer lane)`이다.
+- 후보의 `verify_development(..., require_artifacts=True)`와 9개 consumer policy를
+  임시 workspace에서 실행해 통과했다. 이 workspace는 Timefold의 공식
+  `origin/develop` catalog를 사용했고 중앙 BOM 및 8개 하위 BOM의 timestamped
+  POM/`.module`도 확인했다.
+- 실제 로컬 workspace 전체 실행은 Timefold 작업 checkout이 `2.1.0-SNAPSHOT`을
+  가리켜 실패했다. 이 checkout은 `fix/nightly-test-dependency-cache` 브랜치이며,
+  `origin/develop`은 `2.1.0`을 사용한다. 사용자 브랜치를 보존한다.
+- `verify-publication-poms.py`는 canonical Dependencies checkout에 기존 사용자 문서
+  변경이 있어 `publisher repository is dirty: bluetape4k-dependencies`로 중단했다.
+  PR 1 exact-head CI와 publication-POM/effective-model gate는 pending이다. 아래
+  2026-11-24 기록은 각 관찰 시점의 이력이며 현재 상태를 나타내지 않는다.
 
 ## 고정 입력
 
@@ -8,8 +37,9 @@
 - 최신 정식 버전 read-back: Dependencies, Projects, Exposed `2.1.0`; AWS,
   Graph, Image, JaVers, Leader, Text `1.1.0`. GitHub 최신 release tag와 Maven
   Central POM을 2026-11-24에 확인했다. Central Dependencies `2.1.0` POM은
-  직접 fetch에서 HTTP 200이며, 현재 Dependencies `2.2.0-SNAPSHOT` metadata는
-  게시 전 상태인 HTTP 404다.
+  직접 fetch에서 HTTP 200이다. 아래 2026-11-24 게시 전 관찰에서
+  Dependencies `2.2.0-SNAPSHOT` metadata가 HTTP 404였던 상태는 같은 날 게시
+  후 HTTP 200으로 바뀌었다.
 - 목표 child snapshot: Projects/Exposed `2.2.0-SNAPSHOT`; AWS, Graph, Image,
   JaVers, Leader, Text `1.2.0-SNAPSHOT`.
 - 대상 authority: 사용자의 현재 지시와 앞서 승인한 next-development snapshot
@@ -56,10 +86,11 @@
   release·snapshot 이력은 당시 증거로 보존한다. 그 문서의
   `catalog/2026-11-22-01` / `7a5995…` 기준 child snapshot은 이 보정 train의
   완료 증거로 재사용하지 않는다.
-- PR #291은 `develop` 대상 OPEN이다. 이 체크리스트의 최신 live read-back은
+- 2026-11-24 당시 PR #291은 `develop` 대상 OPEN이었다. 당시 live read-back은
   head `0d3816359137e740b9895e25db81f4d6b9ba1d57`이며, manifest 보정과 리뷰
   기록은 같은 PR에 반영한다. merge 직전 최종 head의 checks, review/thread,
-  mergeability, 승인 상태를 다시 읽는다.
+  mergeability, 승인 상태를 다시 읽도록 기록했다. 최신 merge 결과는 위
+  `2026-11-25 현재 상태`를 참조한다.
 - Projects #1915와 Experimental #103은 action version만 변경하는 OPEN PR이다.
   catalog ref 행을 수정하지 않으며, consumer 보정 PR과 함께 현재 mergeability를
   다시 확인한다.
@@ -72,10 +103,15 @@
 - [x] 모든 consumer PR exact-head CI와 merged `develop` read-back
 - [ ] 전체 publisher publication-POM 및 Maven effective-model gate
 - [x] 8개 child snapshot DAG, Full Nightly, 자동 Publish Snapshot, artifact read-back
-- [ ] PR #291 최종 exact-head checks, live review/thread read-back 및 guarded merge
+- [x] PR #291 최종 exact-head checks, live review/thread read-back 및 guarded merge
+  - 근거: PR #291 `MERGED`, head `f4a5b58…`, merge commit `78a2f525…`, head CI 10/10 PASS, review/comment/thread 0건.
 - [x] 인간 리뷰 subgate: `N/A (single-developer lane)` — 사용자는 독립 code/architecture review를 명시적으로 면제했다. 인라인 review는 계속 적용하며 attestation을 주장하지 않는다.
-- [ ] Dependencies `2.2.0-SNAPSHOT` 자동 publish와 Central artifact read-back
-- [ ] 최종 verifier `--require-artifacts`, POM gate 및 9개 consumer SHA parity
+- [x] Dependencies `2.2.0-SNAPSHOT` 자동 publish와 Central artifact read-back
+  - 근거: Publish Snapshot run `45407764459` SUCCESS; central 및 8개 child BOM metadata/POM/`.module` HTTP 200.
+- [ ] 전체 publication-POM/effective-model gate
+- [x] 보정 verifier의 전체 `verify_development(..., require_artifacts=True)` 및 9개 consumer SHA parity
+  - 근거: 임시 workspace의 공식 Timefold `origin/develop` catalog와 중앙/8개 child artifact를 사용한 검증 통과.
+- [ ] 보정 verifier exact-head hosted CI
 
 ## 2026-11-24 후보 로컬 검증
 

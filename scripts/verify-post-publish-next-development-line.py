@@ -18,9 +18,9 @@ import sys
 import time
 import urllib.error
 import urllib.request
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
-
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = REPO_ROOT / "config" / "post-publish-next-development-line.json"
@@ -440,35 +440,148 @@ def metadata_url(group: str, artifact: str, version: str) -> str:
     )
 
 
-def metadata_exists(
+def snapshot_artifact_url(
     group: str,
     artifact: str,
     version: str,
+    snapshot_value: str,
+    extension: str,
+) -> str:
+    filename = f"{artifact}-{snapshot_value}.{extension}"
+    return (
+        f"{SNAPSHOT_REPOSITORY}/{group.replace('.', '/')}/{artifact}/{version}/"
+        f"{filename}"
+    )
+
+
+def request_url(
+    url: str,
+    method: str,
     *,
     attempts: int = 2,
     delay_seconds: float = 0.2,
-) -> tuple[bool, str]:
-    url = metadata_url(group, artifact, version)
+) -> tuple[bool, str, bytes]:
     status = "unknown"
     for attempt in range(max(1, attempts)):
-        request = urllib.request.Request(url, method="HEAD")
+        request = urllib.request.Request(url, method=method)
         try:
             with urllib.request.urlopen(request, timeout=15) as response:
-                return 200 <= response.status < 400, str(response.status)
+                return 200 <= response.status < 400, str(response.status), response.read()
         except urllib.error.HTTPError as error:
             status = str(error.code)
-            if error.code == 405:
+            if method == "HEAD" and error.code == 405:
                 try:
                     with urllib.request.urlopen(urllib.request.Request(url), timeout=15) as response:
-                        return 200 <= response.status < 400, str(response.status)
+                        return 200 <= response.status < 400, str(response.status), response.read()
                 except urllib.error.HTTPError as fallback:
                     status = str(fallback.code)
+                except (urllib.error.URLError, TimeoutError) as fallback:
+                    return False, type(fallback).__name__, b""
             if status != "403" or attempt + 1 >= max(1, attempts):
-                return False, status
+                return False, status, b""
         except (urllib.error.URLError, TimeoutError) as error:
-            return False, type(error).__name__
+            return False, type(error).__name__, b""
         time.sleep(max(0.0, delay_seconds))
-    return False, status
+    return False, status, b""
+
+
+def xml_child_text(element: ET.Element, name: str) -> str | None:
+    for child in element.iter():
+        if child.tag.rsplit("}", maxsplit=1)[-1] == name and child.text:
+            return child.text.strip()
+    return None
+
+
+def snapshot_versions(metadata: bytes) -> dict[tuple[str, str], str]:
+    root = ET.fromstring(metadata)
+    values: dict[tuple[str, str], str] = {}
+    for item in root.iter():
+        if item.tag.rsplit("}", maxsplit=1)[-1] != "snapshotVersion":
+            continue
+        extension = xml_child_text(item, "extension")
+        value = xml_child_text(item, "value")
+        classifier = xml_child_text(item, "classifier") or ""
+        if extension and value:
+            values[(extension, classifier)] = value
+    return values
+
+
+def verify_snapshot_publication(
+    group: str,
+    artifact: str,
+    version: str,
+) -> list[str]:
+    coordinate = f"{group}:{artifact}:{version}"
+    metadata_url_value = metadata_url(group, artifact, version)
+    exists, status, metadata_body = request_url(metadata_url_value, "GET")
+    if not exists:
+        return [f"missing snapshot metadata (HTTP {status}): {coordinate}"]
+
+    try:
+        published_versions = snapshot_versions(metadata_body)
+    except ET.ParseError as error:
+        return [f"invalid snapshot metadata ({error}): {coordinate}"]
+
+    errors: list[str] = []
+    artifact_versions: dict[str, str] = {}
+    for extension in ("pom", "module"):
+        value = published_versions.get((extension, ""))
+        if value is None:
+            errors.append(
+                f"missing snapshot metadata entry ({extension}): {coordinate}"
+            )
+            continue
+        artifact_versions[extension] = value
+
+    pom_body: bytes | None = None
+    pom_value = artifact_versions.get("pom")
+    if pom_value is not None:
+        pom_url = snapshot_artifact_url(group, artifact, version, pom_value, "pom")
+        exists, status, body = request_url(pom_url, "GET")
+        if not exists:
+            errors.append(
+                f"missing timestamped snapshot artifact (pom, HTTP {status}): "
+                f"{coordinate} [{pom_url}]"
+            )
+        else:
+            pom_body = body
+
+    module_value = artifact_versions.get("module")
+    if module_value is not None:
+        module_url = snapshot_artifact_url(
+            group, artifact, version, module_value, "module"
+        )
+        exists, status, _ = request_url(module_url, "HEAD")
+        if not exists:
+            errors.append(
+                f"missing timestamped snapshot artifact (.module, HTTP {status}): "
+                f"{coordinate} [{module_url}]"
+            )
+
+    if pom_body is not None:
+        try:
+            pom = ET.fromstring(pom_body)
+        except ET.ParseError as error:
+            errors.append(f"invalid timestamped snapshot POM ({error}): {coordinate}")
+        else:
+            packaging = xml_child_text(pom, "packaging") or "jar"
+            if packaging != "pom":
+                jar_value = published_versions.get(("jar", ""))
+                if jar_value is None:
+                    errors.append(
+                        f"missing snapshot metadata entry (jar): {coordinate}"
+                    )
+                else:
+                    jar_url = snapshot_artifact_url(
+                        group, artifact, version, jar_value, "jar"
+                    )
+                    exists, status, _ = request_url(jar_url, "HEAD")
+                    if not exists:
+                        errors.append(
+                            f"missing timestamped snapshot artifact (jar, HTTP {status}): "
+                            f"{coordinate} [{jar_url}]"
+                        )
+    return errors
 
 
 def expected_catalog_version(
@@ -563,18 +676,20 @@ def verify_development(
                 errors.append(f"{repository} release workflow lacks the stable snapshot guard")
         if require_artifacts and repository not in stable_catalog_repositories:
             expected_snapshot = f"{base_version}{suffix}"
-            exists, status = metadata_exists(item["group"], item["artifact"], expected_snapshot)
-            if not exists:
-                errors.append(
-                    f"missing snapshot metadata ({status}): {item['group']}:{item['artifact']}:{expected_snapshot}"
+            errors.extend(
+                verify_snapshot_publication(
+                    item["group"], item["artifact"], expected_snapshot
                 )
+            )
 
     if require_artifacts:
-        exists, status = metadata_exists(
-            "io.github.bluetape4k", "bluetape4k-dependencies", expected_development_version
+        errors.extend(
+            verify_snapshot_publication(
+                "io.github.bluetape4k",
+                "bluetape4k-dependencies",
+                expected_development_version,
+            )
         )
-        if not exists:
-            errors.append(f"missing central snapshot metadata ({status}): {expected_development_version}")
     return errors
 
 
@@ -649,7 +764,7 @@ def main() -> int:
                 "development-snapshot examples"
             )
         if args.require_artifacts and not args.stable_release:
-            print("Verified snapshot metadata for the central BOM and all child BOMs")
+            print("Verified timestamped snapshot artifacts for the central BOM and all child BOMs")
     return 0
 
 
