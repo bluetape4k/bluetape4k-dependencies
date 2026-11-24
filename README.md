@@ -458,7 +458,7 @@ Each upstream repository maintains its **own independent version**, tracked in `
 
 ```toml
 [versions]
-bluetape4k-dependencies = "2.2.0"
+bluetape4k-dependencies = "2.2.0-SNAPSHOT"
 bluetape4k-bom          = "2.2.0-SNAPSHOT"
 bluetape4k-aws-bom      = "1.2.0-SNAPSHOT"
 bluetape4k-image-bom    = "1.2.0-SNAPSHOT"

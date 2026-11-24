@@ -104,7 +104,7 @@ def write_development_workspace(
         workflows = repository / ".github" / "workflows"
         workflows.mkdir(parents=True)
         (repository / "gradle.properties").write_text(
-            f'baseVersion={item["base-version"]}\nsnapshotVersion=\n',
+            f"baseVersion={item['base-version']}\nsnapshotVersion=\n",
             encoding="utf-8",
         )
         (workflows / "publish-snapshot.yml").write_text(
@@ -239,7 +239,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         )
         self.assertEqual(
             policy["snapshot-catalog-ref"],
-            "7a5995fd46031ce1faf16337fa08d954436f8f9a",
+            "c44ec6c47aa3a8dc3e862dbd7d041eb9d78355f3",
         )
         self.assertEqual(
             policy.get("snapshot-catalog-ref-overrides", {}),
@@ -288,7 +288,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertEqual(
             module.snapshot_candidate_branch(document),
-            "chore/snapshot-catalog-7a5995f",
+            "chore/snapshot-catalog-c44ec6c",
         )
 
     def test_manifest_rejects_source_snapshot_suffix(self) -> None:

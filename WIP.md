@@ -1,37 +1,52 @@
 # WIP - bluetape4k-dependencies
 
-Snapshot: 2026-11-23 KST
-Scope: dependencies 2.2.0-SNAPSHOT train의 하위 publisher 공개를 마치고 중앙 BOM을 마지막으로 검증·배포한다.
+기준일: 2026-11-24 (KST)
+범위: Dependencies `2.2.0-SNAPSHOT` catalog를 같은 immutable ref로 다시 검증·게시하고, 중앙 BOM은 하위 BOM 뒤에 공개한다.
 
-## 2026-11-23 안정 2.1.0 이후 2.2.0 개발선 전환
+## 2026-11-24 공통 catalog ref 보정 및 snapshot 재게시
 
-`bluetape4k-dependencies:2.1.0`과 Projects/Exposed `2.1.0`, AWS/Graph/Image/JaVers/Leader/Text
-`1.1.0`의 정식 배포를 확인한 뒤 다음 개발선을 연다. 중앙 catalog commit
-`7a5995fd46031ce1faf16337fa08d954436f8f9a`를 모든 publishable library 후보가
-공유하고, source의 `snapshotVersion=`은 비워 둔 채 snapshot workflow가 suffix를
-주입한다.
+안정 기준은 Dependencies/Projects/Exposed `2.1.0`, AWS/Graph/Image/JaVers/Leader/Text
+`1.1.0`이다. 내부 게시 저장소의 개발선은 Projects/Exposed `2.2.0-SNAPSHOT`, 나머지
+하위 BOM `1.2.0-SNAPSHOT`, 중앙 Dependencies `2.2.0-SNAPSHOT`으로 정렬한다.
+공통 catalog는 서명된 tag `catalog/2026-11-24-01`과 commit
+`c44ec6c47aa3a8dc3e862dbd7d041eb9d78355f3`으로 고정한다. source의
+`snapshotVersion=`은 비워 두고 snapshot workflow가 suffix를 주입한다.
 
-- 중앙 BOM: `2.2.0-SNAPSHOT`
-- Projects/Exposed BOM: `2.2.0-SNAPSHOT`
-- AWS/Graph/Image/JaVers/Leader/Text BOM: `1.2.0-SNAPSHOT`
 - Workshop/example/application 소비자: 공식 `bluetape4k-dependencies:2.1.0`과
   안정 catalog ref `1669b069690864be8a19a67598e9ac9db807f9f5`를 유지한다.
-- 배포 순서: Projects snapshot → Exposed 및 나머지 publisher snapshot을
-  의존관계에 따라 순차 공개 → 모든 하위 BOM의 Central metadata 확인 →
-  하위 BOM을 import하는 중앙 `bluetape4k-dependencies` snapshot 공개 →
-  publication POM 재검증과 downstream smoke.
+- 9개 내부 소비자 PR의 Settings/CI ref는 모두 `c44ec6c…`을 사용한다. 마지막 live
+  확인에서 Projects #1918은 31/31, AWS #689 20/20, Experimental #110 6/6,
+  Exposed #953 42/43, Graph #669 21/21, Image #715 33/34, JaVers #406 17/17,
+  Leader #1026 46/46, Text #355 13/13 checks가 성공했다. Exposed와 Image의
+  각 1개 `SKIPPED`는 조건부 검사다. 9개 PR 모두 OPEN/CLEAN이고 review submission은
+  0건이다. 각 PR은 병합 직전에 정확한 head, CI, review/thread를 다시 읽는다.
+- 게시 순서: Projects → Exposed → AWS/Graph/Image/JaVers/Leader/Text를 의존 관계에
+  따라 차례로 병합하고 Full Nightly를 실행한다. 성공한 Nightly가 Publish Snapshot을
+  자동 실행한다. 8개 하위 BOM의 metadata/POM/GMM과 게시 파일을 확인한 뒤 중앙
+  Dependencies snapshot을 마지막에 게시하고 전체 POM 및 하위 저장소 smoke를
+  다시 검증한다. Publish Snapshot은 수동 dispatch하지 않는다.
+- 2026-11-23에 공개된 child snapshot은 `catalog/2026-11-22-01` 기준이다. 새 공통
+  ref의 배포 증거로 재사용하지 않고 새 merge SHA에서 다시 게시한다. 마지막
+  read-back에서 8개 child metadata/POM/GMM은 HTTP 200, Dependencies metadata는
+  HTTP 404였다.
 
-### Dependencies #291 CI 복구
+### Dependencies #291 후보 보정
 
-PR CI attempt 1은 Clinic 소비자 canary의 Maven Central checksum 누락으로
-실패했다. Clinic #496에 검증 checksum이 반영된 후 전체 하위 snapshot을
-순서대로 공개하고 재실행한 attempt 2는 `latest-stable` audit의 catalog 입력
-SHA 불일치로 실패했다. 현재 catalog의 inventory/audit 입력만 재바인딩하고
-기존 523개 외부 metadata 기록과 수집 시각은 보존했다. Python 3.13 audit 검사와
-49개 targeted test가 통과했으며, PR exact-head CI 재실행과 중앙 BOM snapshot은
-아직 대기 중이다. 독립 code-reviewer는 `codex-code-mode-host` 실행 파일이 없어
-파일을 읽기 전에 종료됐고 CUA fallback도 시작하지 못했다. 실제 독립 리뷰 결과가
-없으므로 merge 준비 완료로 판단하지 않는다.
+기존 #291 후보의 `consumer-policy.snapshot-catalog-ref`가 구 catalog SHA
+`7a5995f…`를 가리키는 불일치를 발견했다. manifest와 regression test를 새 공통
+ref `c44ec6c…`로 맞췄고, README의 중앙 BOM 예시도 게시되지 않은 정식 `2.2.0`에서
+`2.2.0-SNAPSHOT`으로 정렬했다. Maven Central에서 Dependencies `2.1.0` POM은
+HTTP 200, `2.2.0` POM은 HTTP 404다. 기존 PR #291 head `0d38163`의 10개 check는
+PASS했지만 이 수정 전 결과다. 새 exact-head CI와 모든 게시 저장소의 POM 및
+effective model 검증이 필요하다.
+
+인라인 코드 리뷰는 검토 범위의 두 P1을 수정하고 P0–P3 미해결 항목이 없음을 확인했다.
+별도 아키텍처 검토에서도 BOM import 구조와 공통 immutable ref, publisher DAG가
+일치함을 확인했으나 전체 POM 검증과 snapshot 재게시 전에는 출시에 사용할 수 없다.
+native reviewer/architect는 설치된 `codex-code-mode-host` 부재, Claude Code는 조직의
+subscription 차단으로 독립 검토를 완료하지 못했다. 두 main-session 검토를 독립
+attestation으로 표시하지 않는다. PR merge는 소비자 저장소 snapshot 재게시, 새
+exact-head CI, POM gate와 merge 전 마지막 점검을 마친 뒤 진행한다.
 
 Receipt helper를 다룰 때 `--expected-head`에는 Git SHA가 아닌 직전
 `mutation-check`의 receipt checksum을 넣고, owner handle은 state root의
