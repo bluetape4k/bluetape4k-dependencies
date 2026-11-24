@@ -2,7 +2,7 @@
 
 ## 문서 상태
 
-- 상태: 설계 방향 승인, 6개 관점 사양 리뷰 대기
+- 상태: 설계 방향 승인, 6개 관점 inline fallback 설계 리뷰 완료
 - 대상: [bluetape4k-dependencies #293](https://github.com/bluetape4k/bluetape4k-dependencies/issues/293)
 - 선행 소비자: [bluetape4k-exposed #942](https://github.com/bluetape4k/bluetape4k-exposed/issues/942)
 - 기준 저장소: `bluetape4k-dependencies` `develop` `77822aaf77b57ba5b13b8de34146cbb44e2358e5`
@@ -95,13 +95,15 @@ implementation(libs.exposed.dao.r2dbc)
 - checksum sidecar가 catalog 바이트와 일치한다.
 - Maven Central 전용 소비자에서 `libs.exposed.dao.r2dbc`가 `1.6.1`을 해석한다.
 - `scripts/sync-dependabot-ignores.py --workspace .. --check --summary`와 적용 가능한 catalog 검사가 통과한다.
-- `./gradlew build`가 통과하고 최종 diff에 승인된 catalog·test·evidence 파일만 포함된다.
+- Python catalog 회귀 테스트를 `python3 -m unittest discover -s tests -p 'test_*.py'`로 실행해 통과한다. 현재 CI도 이 명령으로 Python 테스트를 검색한다.
+- `./gradlew build`가 통과한다.
+- PR 변경 집합은 승인된 catalog·회귀 test·checksum/evidence와 이번 작업에 필요한 설계·계획·리뷰·lesson 기록으로 한정한다. 구현 소스 diff에는 catalog·회귀 test 변경만 포함한다.
 - PR은 승인된 `bluetape4k/bluetape4k-dependencies:develop` 대상으로 생성하고 #293 및 #942를 연결한다. exact-head CI와 live PR 상태를 확인한 뒤 merge-ready 보고에서 멈춘다.
 - merge, tag, publication은 fresh explicit approval 전까지 실행하지 않는다.
 
 ## 8. 리뷰 관점과 출처
 
-독립 리뷰는 성능, 안정성, 보안, 운영, 개발자/API, 사용자/소비자 관점을 각각 확인한다. Main-session 통합 리뷰는 중복·충돌, repository 규약, catalog/POM 범위, acceptance mapping을 확인하며 P0=0, P1=0일 때만 설계 리뷰를 통과시킨다.
+검토는 성능, 안정성, 보안, 운영, 개발자/API, 사용자/소비자 관점을 각각 확인한다. native 독립 reviewer 실행 호스트가 없어 inline fallback review를 적용했으며, 독립 reviewer attestation을 주장하지 않는다. Main-session 통합 리뷰는 중복·충돌, repository 규약, catalog/POM 범위, acceptance mapping을 확인하며 P0=0, P1=0일 때만 설계 리뷰를 통과시킨다.
 
 | 출처 | 확인한 근거 |
 |---|---|
@@ -110,13 +112,14 @@ implementation(libs.exposed.dao.r2dbc)
 | `gradle/libs.versions.toml` at `77822aaf77b57ba5b13b8de34146cbb44e2358e5` | 기존 `exposed = 1.6.1` 및 alias 배치 패턴 |
 | `scripts/sync-dependabot-ignores.py` at the same base | `org.jetbrains.exposed:*` 중앙 ignore 규칙 |
 | `tests/test_kotlinx_serialization_catalog.py` at the same base | TOML alias의 module 및 version ref 회귀 검사 패턴 |
+| `.github/workflows/ci.yml` at the same base | `python3 -m unittest discover -s tests -p 'test_*.py'` 테스트 검색 명령 |
 | [Maven Central POM](https://repo.maven.apache.org/maven2/org/jetbrains/exposed/exposed-dao-r2dbc/1.6.1/exposed-dao-r2dbc-1.6.1.pom) | `1.6.1` artifact 좌표가 중앙 저장소에 존재함 |
 | Baseline `./gradlew build --console=plain` | 변경 전 build 성공 |
 
 ## 9. Writer gate 기록
 
-- SPW-01: PASS — Korean design artifact, #293 acceptance, #942 consumer dependency, baseline/catalog/POM sources, exact identifiers와 범위를 고정했다.
-- SPW-02: PASS — 문제, 결정, 세 대안, 경계, 호환성, 다섯 실패 모드, 검증 기준, 복구 경로를 포함했다.
-- SPW-03: PASS — 한국어 기술 문체와 terminology checklist를 적용하고 API·명령·좌표·URL을 보존했다.
-- SPW-04: PASS — #293/#942와 catalog/test/ignore/POM 근거를 문서의 결정과 수용 기준에 연결했다.
-- SPW-05: PASS — 전체 Markdown을 다시 읽고 문서 상태, 제목, 표, 코드 블록과 링크를 점검했다.
+- SPW-01: PASS — #293/#942, catalog, ignore 규칙, 기존 회귀 테스트, CI의 Python 테스트 명령, baseline과 Maven Central POM을 근거로 고정했다.
+- SPW-02: PASS — 문제, 대안, 경계, 호환성, 실패 모드, 검증 명령, 복구 경로와 PR 변경 집합을 명시했다.
+- SPW-03: PASS — 한국어 기술 문체와 자연스러움 checklist를 적용하고 API·명령·좌표·URL을 보존했다. contextual terminology audit는 두 관련 문서에서 finding 0건이다.
+- SPW-04: PASS — #293/#942 및 catalog/test/CI/ignore/POM 근거를 결정과 수용 기준에 연결하고 두 P2 모순을 닫았다.
+- SPW-05: PASS — 전체 Markdown을 다시 읽고 문서 상태, 제목, 표, 코드 블록, 링크와 테스트 명령을 확인했다.
