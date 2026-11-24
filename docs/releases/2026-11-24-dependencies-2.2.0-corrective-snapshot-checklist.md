@@ -87,3 +87,24 @@
   대체하지 않는다. 새 catalog commit/tag 및 snapshot artifact 증거는 아직
   생성 전이다.
 
+## 2026-11-24 PR #291 CI 보정
+
+- PR #291 head `c44ec6c47aa3a8dc3e862dbd7d041eb9d78355f3`의 CI run
+  `45308419517`에서 `Cross-repository Publication POM Contract`는 PASS했다.
+  `Build BOM`은 기존
+  `test_catalog_self_version_matches_the_release_version`가 catalog self alias를
+  `baseVersion + snapshotVersion`인 정식 `2.2.0`으로 고정해 실패했다. 이 검사는
+  다음 개발선 `2.2.0-SNAPSHOT` 계약과 맞지 않았다.
+- 회귀 테스트를 다음 개발선 manifest의 `development-version`과
+  `snapshot-suffix`에서 기대값을 계산하고 source `baseVersion`/빈
+  `snapshotVersion` 및 catalog alias를 각각 확인하도록 변경했다. 수정된 집중
+  테스트와 새 exact-head hosted CI를 재확인한다.
+- 로컬 전체 테스트는 624개 중 이 보정 외 두 검사가 실패했다.
+  workspace-wide 검사가 실제 형제 checkout에서 catalog authority 15개와
+  hard-coded baseline 52개를 읽었기 때문이다. hard-coded 결과의 source path에
+  `.worktrees`는 0개였고, 이 차이는 local workspace 상태에 한정된다. 해당 두
+  검사는 hosted runner에 형제 저장소가 없으면 skip되므로 이 결과를 중앙 PR
+  코드의 회귀로 취급하지 않는다.
+- 현재 exact-head Build BOM 재실행, catalog tag, consumer refs, snapshots,
+  central publication은 아직 완료되지 않았다.
+
