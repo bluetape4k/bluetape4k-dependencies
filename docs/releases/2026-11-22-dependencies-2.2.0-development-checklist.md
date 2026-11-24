@@ -1,6 +1,14 @@
 # bluetape4k 2.2.0 개발선 체크리스트
 
-상태: **진행 중 / 하위 snapshot 검증 완료, PR #291 CI·리뷰 및 중앙 BOM 대기**
+상태: **역사 기록 — 2026-11-22 catalog train은 2026-11-24 보정 train으로 대체됨**
+
+> 이 문서는 `catalog/2026-11-22-01` 및 catalog commit
+> `7a5995fd46031ce1faf16337fa08d954436f8f9a`를 기준으로 진행한 이전 train의
+> 기록을 보존합니다. 이 문서의 artifact 검증을 현재 보정 train의 완료 증거로
+> 재사용하지 않습니다. 현재 기준인 `catalog/2026-11-24-01`과 commit
+> `c44ec6c47aa3a8dc3e862dbd7d041eb9d78355f3`의 진행 상태는
+> [2026-11-24 보정 체크리스트](2026-11-24-dependencies-2.2.0-corrective-snapshot-checklist.md)에서
+> 추적합니다.
 
 ## 고정 입력
 
