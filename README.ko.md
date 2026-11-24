@@ -430,7 +430,7 @@ Compatibility-line alias는 의도적으로 분리합니다. 자동 동기화 �
 
 ```toml
 [versions]
-bluetape4k-dependencies = "2.2.0"
+bluetape4k-dependencies = "2.2.0-SNAPSHOT"
 bluetape4k-bom          = "2.2.0-SNAPSHOT"
 bluetape4k-aws-bom      = "1.2.0-SNAPSHOT"
 bluetape4k-image-bom    = "1.2.0-SNAPSHOT"
