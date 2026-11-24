@@ -62,7 +62,7 @@ gh issue view 293 --repo bluetape4k/bluetape4k-dependencies --json state,title,l
 gh issue view 942 --repo bluetape4k/bluetape4k-exposed --json state,title,labels,assignees,milestone,url
 ~~~
 
-예상 결과: 승인된 작업 브랜치가 선택되고 #293은 열림·backlog·chore/dependencies·담당자 debop, #942는 열림·2.2.0·담당자 debop 상태다. 최신 label과 담당자도 계획과 비교해 기록하고, 이슈 범위가 달라졌으면 코드를 수정하기 전에 계획과 설계를 맞춘다.
+예상 결과: 승인된 작업 브랜치가 선택되고 #293과 #942 모두 열림·2.2.0·담당자 debop 상태다. #293 label은 chore/dependencies이고 #942 label은 documentation/enhancement/feature/test다. live 값이 달라지면 현재 metadata를 기록하고, 이슈 범위가 달라졌으면 코드를 수정하기 전에 계획과 설계를 맞춘다.
 
 - [ ] **Step 2: 최신 develop에 rebase**
 
@@ -102,38 +102,34 @@ git commit -m "중앙 catalog alias 구현 기준을 승인된 계획으로 고�
 
 - [ ] **Step 5: 미완료 설계 run을 보존하고 구현 run 시작**
 
-기존 run 20261124T125346Z-df0e8e85의 receipt hash chain은 정상이나, spec_performance_rereview는 probe_acknowledged 뒤 lane_failed로 끝나 agent_interrupted가 없어 현재 topology contract의 inline resolution 요건을 충족하지 않는다. 이 receipt를 성공으로 바꾸지 않는다. 계획 승인 뒤 이전 run을 지원 helper로 BLOCKED 처리하고, 승인된 계획과 이전 run/checksum을 근거로 새 A run을 만든다. helper 외 방식으로 .bluetape를 수정하지 않는다.
+기존 설계 run `20261124T125346Z-df0e8e85`는 `spec_performance_rereview`가 `agent_interrupted` 없이 실패해 inline resolution 조건을 충족하지 않으므로 지원 helper로 BLOCKED 처리했다. 현재 상태는 sequence 19, checksum `b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792`다. 이 receipt는 성공으로 바꾸지 않는다. 승인된 실행 계획용 Type A run `20261124T154608Z-8f6dc689`도 이미 초기화했고, 현재 `planned`, sequence 1, checksum `fb670e1905a937422348fdd9962d310d88b8f65129db6bea939d36d8a1fa8711`이다. 기존 owner file을 사용하며 run이나 owner를 다시 만들지 않는다. `.bluetape` 상태는 지원 helper로만 변경한다.
+
+`--expected-head`는 Git commit SHA가 아니라 직전 receipt의 64자리 소문자 SHA-256 checksum이다. 모든 helper mutation 결과의 `checksum`을 다음 mutation에 전달한다. Git HEAD는 승인 계획 commit을 요약하는 별도 증거로만 기록한다.
 
 ~~~
 set -euo pipefail
 flow=/Users/debop/.codex/skills/bluetape-workflow/scripts/bluetape-flow.py
-old_owner=.bluetape/handles/owner-issue-293-exposed-dao-r2dbc-alias.owner
 new_owner=.bluetape/handles/owner-issue-293-implementation.owner
-python3 "$flow" resume-check --run-id 20261124T125346Z-df0e8e85
-python3 "$flow" receipt-diagnose --run-id 20261124T125346Z-df0e8e85
+run_id=20261124T154608Z-8f6dc689
+plan_head="$(git rev-parse HEAD)"
+old_state="$(python3 "$flow" resume-check --run-id 20261124T125346Z-df0e8e85)"
+old_diagnosis="$(python3 "$flow" receipt-diagnose --run-id 20261124T125346Z-df0e8e85)"
 python3 "$flow" completion-check --run-id 20261124T125346Z-df0e8e85
-test ! -e "$new_owner"
-block_evidence="$(mktemp)"
-trap 'rm -f "$block_evidence"' EXIT
-cat > "$block_evidence" <<'EOF'
-[{"kind":"workflow-gap","summary":"기존 설계 run의 spec_performance_rereview는 agent_interrupted 없이 실패해 현재 topology contract로 inline resolution할 수 없다. 기존 receipt는 보존하고 승인된 구현 계획의 새 run으로 진행한다."}]
-EOF
-python3 "$flow" run-block --run-id 20261124T125346Z-df0e8e85 \
-  --owner-file "$old_owner" --evidence "$block_evidence" \
-  --reason "설계 reviewer receipt의 terminal lane을 유효한 방식으로 해결할 수 없어 새 승인 run이 필요함"
-rm "$block_evidence"
-trap - EXIT
-init_output="$(python3 "$flow" init --workflow-type A --repo-root "$PWD" \
-  --owner-file "$new_owner" --component issue-293-exposed-dao-r2dbc-alias \
-  --session-id "$CODEX_THREAD_ID")"
-run_id="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["run_id"])' <<< "$init_output")"
-head="$(git rev-parse HEAD)"
-python3 "$flow" run-approve --run-id "$run_id" --owner-file "$new_owner" \
-  --expected-head "$head" --evidence-kind user-approval \
-  --evidence-summary "사용자가 승인한 계획 및 계획 리뷰를 기준으로 진행; 이전 설계 run 20261124T125346Z-df0e8e85, checksum 79c3b0dcdb35c275ac6093fe5d44a14357fdff1bee60681f9139da6d783fd0ee"
-python3 "$flow" run-start --run-id "$run_id" --owner-file "$new_owner" \
-  --expected-head "$head" --evidence-kind approved-plan \
-  --evidence-summary "승인 계획 commit $head를 기준으로 Issue #293 구현 run을 시작한다."
+test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["run_state"])' <<< "$old_state")" = blocked
+test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["last_checksum"])' <<< "$old_state")" = b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792
+test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["last_trusted_checksum"])' <<< "$old_diagnosis")" = b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792
+test -f "$new_owner"
+planned="$(python3 "$flow" resume-check --run-id "$run_id")"
+test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["run_state"])' <<< "$planned")" = planned
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["last_checksum"])' <<< "$planned")"
+approve_output="$(python3 "$flow" run-approve --run-id "$run_id" --owner-file "$new_owner" \
+  --expected-head "$receipt_head" --evidence-kind user-approval \
+  --evidence-summary "사용자가 승인한 계획의 목표와 범위를 유지해 실행 명령의 receipt CAS 기준을 보정했다; 계획 commit $plan_head; 보존한 설계 run 20261124T125346Z-df0e8e85는 blocked, checksum b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792")"
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$approve_output")"
+start_output="$(python3 "$flow" run-start --run-id "$run_id" --owner-file "$new_owner" \
+  --expected-head "$receipt_head" --evidence-kind approved-plan \
+  --evidence-summary "승인한 Issue #293 계획 commit $plan_head를 기준으로 구현 run을 시작한다.")"
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$start_output")"
 python3 "$flow" mutation-check --session-id "$CODEX_THREAD_ID" \
   --target "$PWD/gradle/libs.versions.toml" \
   --target "$PWD/gradle/libs.versions.toml.sha256" \
@@ -142,7 +138,7 @@ python3 "$flow" mutation-check --session-id "$CODEX_THREAD_ID" \
   --target "$PWD/docs/superpowers/lessons/2026-11-25-issue-293-exposed-dao-r2dbc-alias.md"
 ~~~
 
-진행 조건: 세 read-only 결과에서 run 상태가 running, receipt chain이 정상, checksum이 `79c3b0dcdb35c275ac6093fe5d44a14357fdff1bee60681f9139da6d783fd0ee`, sequence가 18, topology gap이 없음으로 나와야 한다. `completion-check`에는 누락 component `issue-293-exposed-dao-r2dbc-alias`, unresolved terminal lane `spec_performance`와 `spec_performance_rereview`가 보여야 한다. 결과가 달라졌거나 진단이 실패하면 기존 run을 변경하지 말고 상태를 다시 조사해 계획을 갱신한다.
+진행 조건: 이전 run은 `blocked`, sequence 19, checksum `b8ca94a1d8110c01939d703c6ef77c23a2d80322e8c83d554ae79d4496693792`로 유지되고 새 run은 `running`이어야 한다. 새 run의 `resume-check`와 `completion-check` receipt checksum이 일치하고 chain 진단이 정상이어야 한다. topology 등록 전에는 component가 미완료로 남는 것이 정상이다. 상태나 checksum이 다르면 helper mutation을 중단하고 조사한다.
 
 새 run은 main session 소유의 execution lane 한 개와 issue component 한 개를 사용한다. component의 필수 check는 plan_review, implementation, verification, code_review, lesson, pr_ci이며 inline review 문서는 해당 review check의 evidence다. lane scope는 승인된 파일 목록과 일치해야 한다. lane, topology, check 결과 및 receipt는 모두 지원 helper로 기록한다.
 
@@ -155,9 +151,15 @@ set -euo pipefail
 flow=/Users/debop/.codex/skills/bluetape-workflow/scripts/bluetape-flow.py
 new_owner=.bluetape/handles/owner-issue-293-implementation.owner
 receipt="$(python3 "$flow" mutation-check --session-id "$CODEX_THREAD_ID" \
-  --target "$PWD/gradle/libs.versions.toml")"
+  --target "$PWD/gradle/libs.versions.toml" \
+  --target "$PWD/gradle/libs.versions.toml.sha256" \
+  --target "$PWD/tests/test_exposed_dao_r2dbc_catalog.py" \
+  --target "$PWD/docs/superpowers/reviews/2026-11-25-issue-293-code-review.md" \
+  --target "$PWD/docs/superpowers/lessons/2026-11-25-issue-293-exposed-dao-r2dbc-alias.md")"
 run_id="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["run_id"])' <<< "$receipt")"
-head="$(git rev-parse HEAD)"
+state="$(python3 "$flow" resume-check --run-id "$run_id")"
+test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["run_state"])' <<< "$state")" = running
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["last_checksum"])' <<< "$state")"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "$temp_dir"' EXIT
 python3 - "$temp_dir/lane.json" "$temp_dir/topology.json" <<'PY'
@@ -210,18 +212,22 @@ printf '%s\n' '[{"kind":"main-session-active","summary":"root is the current lea
 topology-register 뒤 lane-start와 startup-ack를 main session agent id root 및 현재 UTC timestamp로 순서대로 기록한다. 각 check는 관련 단계가 통과한 뒤 check-result로 기록한다. 모든 check가 통과한 뒤 component-evidence, lane-complete, completion-check 순으로 검증하고 마지막에 complete를 실행한다. check/lane 증거가 부족하면 complete를 호출하지 않는다.
 
 ~~~
-python3 "$flow" lane-create --run-id "$run_id" --owner-file "$new_owner" \
-  --expected-head "$head" --input "$temp_dir/lane.json" \
-  --evidence "$temp_dir/lane-evidence.json"
-python3 "$flow" topology-register --run-id "$run_id" --owner-file "$new_owner" \
-  --expected-head "$head" --input "$temp_dir/topology.json" \
-  --evidence "$temp_dir/topology-evidence.json"
-python3 "$flow" lane-start --run-id "$run_id" --owner-file "$new_owner" \
-  --expected-head "$head" --evidence "$temp_dir/lane-evidence.json" \
-  --lane-id issue293_main_execution --agent-id root --at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-python3 "$flow" startup-ack --run-id "$run_id" --owner-file "$new_owner" \
-  --expected-head "$head" --evidence "$temp_dir/start-evidence.json" \
-  --lane-id issue293_main_execution --agent-id root --at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+lane_output="$(python3 "$flow" lane-create --run-id "$run_id" --owner-file "$new_owner" \
+  --expected-head "$receipt_head" --input "$temp_dir/lane.json" \
+  --evidence "$temp_dir/lane-evidence.json")"
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$lane_output")"
+topology_output="$(python3 "$flow" topology-register --run-id "$run_id" --owner-file "$new_owner" \
+  --expected-head "$receipt_head" --input "$temp_dir/topology.json" \
+  --evidence "$temp_dir/topology-evidence.json")"
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$topology_output")"
+lane_start_output="$(python3 "$flow" lane-start --run-id "$run_id" --owner-file "$new_owner" \
+  --expected-head "$receipt_head" --evidence "$temp_dir/lane-evidence.json" \
+  --lane-id issue293_main_execution --agent-id root --at "$(date -u +%Y-%m-%dT%H:%M:%SZ)")"
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$lane_start_output")"
+ack_output="$(python3 "$flow" startup-ack --run-id "$run_id" --owner-file "$new_owner" \
+  --expected-head "$receipt_head" --evidence "$temp_dir/start-evidence.json" \
+  --lane-id issue293_main_execution --agent-id root --at "$(date -u +%Y-%m-%dT%H:%M:%SZ)")"
+receipt_head="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["checksum"])' <<< "$ack_output")"
 ~~~
 
 각 Task가 통과하면 check-result 입력에 component id, 해당 check id, passed=true 및 근거를 기록한다. inline plan/code review artifact는 각각 plan_review/code_review check의 근거다. 모든 check가 통과한 뒤 changed-paths 목록과 함께 lane-complete를 기록하고 component-evidence, completion-check 순으로 확인한다. completion-check에서 누락이 없을 때만 complete를 실행한다. lane, topology, check 결과 및 receipt는 모두 지원 helper로 기록한다.
