@@ -41,12 +41,14 @@ PASS했지만 이 수정 전 결과다. 새 exact-head CI와 모든 게시 저�
 effective model 검증이 필요하다.
 
 인라인 코드 리뷰는 검토 범위의 두 P1을 수정하고 P0–P3 미해결 항목이 없음을 확인했다.
-독립 아키텍처 검토는 아직 완료되지 않았다. native architect 재시도는 설치된
+독립 아키텍처 검토 attestation은 없다. native architect 재시도는 설치된
 `codex-code-mode-host` 경로 부재로 파일을 열기 전에 실패했고, Claude Code는 조직의
 subscription 정책으로 실행이 차단됐다. Codex 0.172.0 검토 프로세스는 exact diff를
-읽었지만 verdict를 반환하지 않아 중단했다. 따라서 현재까지의 검토 결과는 독립
-architecture attestation이 아니다. PR merge는 독립 아키텍처 검토, 소비자 저장소
-snapshot 재게시, 새 exact-head CI, POM gate와 merge 전 마지막 점검 뒤에 진행한다.
+읽었지만 verdict를 반환하지 않아 중단했다. 사용자는 단독 개발자 lane에서 독립 리뷰를
+생략하라고 명시했으므로, 인간 리뷰 subgate와 독립 아키텍처 리뷰는 `N/A`로 처리한다.
+기존 인라인 source review는 독립 attestation으로 표시하지 않는다. PR merge 전에는
+소비자 저장소 snapshot 재게시, 최신 exact-head CI, POM gate, live review/thread와
+mergeability를 확인한다.
 
 Receipt helper를 다룰 때 `--expected-head`에는 Git SHA가 아닌 직전
 `mutation-check`의 receipt checksum을 넣고, owner handle은 state root의

@@ -66,13 +66,37 @@
 ## 판정과 남은 hold
 
 **인라인 source review: PASS — 미해결 P0/P1 없음.** 이전 두 P1은 수정된 source와
-회귀 조건에서 해결됐음을 확인했다. 이 판정은 독립 리뷰 승인을 대신하지 않는다.
+회귀 조건에서 해결됐음을 확인했다. 이 판정은 독립 reviewer attestation이 아니다.
+사용자는 2026-11-24 단독 개발자 lane에서 독립 리뷰를 명시적으로 면제했고, 인간 리뷰
+subgate는 `N/A (single-developer lane)`다. 인라인 source review는 계속 적용한다.
 
-병합 전에 문서 보정 후 새 exact-head CI/POM contract, 독립 최종 코드 리뷰 또는 명시된
-리뷰 불가 상태의 처리 근거, live review/thread/mergeability 및 승인 경계를 다시 확인한다.
+병합 전 문서 갱신 후 새 exact-head CI/POM contract와 live review/thread/mergeability를
+다시 확인한다.
 child publisher snapshot은 모두 공개됐지만 중앙 Dependencies snapshot, 그 뒤의
 Experimental Dependency Submission 재실행과 최종 artifact/verifier read-back은 아직
 완료하지 않았다.
+
+## 2026-11-24 사용자 면제 결정 및 문서 변경 검토
+
+- 사용자는 이 저장소가 단독 개발자 프로젝트이므로 독립 리뷰를 생략하라고 명시했다.
+  저장소의 maintainer 범위는 `debop` 1인이므로 인간 리뷰 subgate는
+  `N/A (single-developer lane)`다.
+- 독립 reviewer attestation은 없다. 기존 판정은 main-session 인라인 source review이며,
+  이번 변경도 이 구분을 유지한다. 사용자 면제는 인라인 검토, exact-head CI,
+  review/thread read-back 또는 mergeability 확인을 면제하지 않는다.
+- 이번 PR 문서 변경은 release checklist의 면제·게이트 상태와 이 review의 판정을
+  명확히 한다. production source, catalog, verifier, tests, publication workflow는
+  바꾸지 않는다. 이 문서 diff에서 해결되지 않은 P0/P1은 없다.
+- 앞선 head `327b9a59cda5d4e561a6d2f0f1a07105c1ec84d5`의 9개 checks,
+  publication-POM contract와 별도 `submit-gradle` run은 PASS했다. 이후 `WIP.md`만
+  변경한 head `4b56d6534a32586c540f9e0f14c0814b5fa7c8f7`의 run `45400006863`은
+  Build BOM과 publication-POM contract가 진행 중이다. 이 문서 갱신 후의 새 head에서
+  exact-head proof를 다시 수집한다.
+
+**판정: 인라인 source review PASS; 독립 리뷰는 사용자 지시에 따라 N/A.** 이 기록은
+독립 reviewer attestation을 주장하지 않는다. 남은 병합 조건은 새 문서 head의 CI/POM,
+최종 live review/thread/mergeability read-back이다. 중앙 snapshot, artifact read-back,
+Experimental Dependency Submission 재시도는 병합 뒤 순서대로 진행한다.
 
 ## 문서 작성 검증
 
