@@ -41,12 +41,12 @@ PASS했지만 이 수정 전 결과다. 새 exact-head CI와 모든 게시 저�
 effective model 검증이 필요하다.
 
 인라인 코드 리뷰는 검토 범위의 두 P1을 수정하고 P0–P3 미해결 항목이 없음을 확인했다.
-별도 아키텍처 검토에서도 BOM import 구조와 공통 immutable ref, publisher DAG가
-일치함을 확인했으나 전체 POM 검증과 snapshot 재게시 전에는 출시에 사용할 수 없다.
-native reviewer/architect는 설치된 `codex-code-mode-host` 부재, Claude Code는 조직의
-subscription 차단으로 독립 검토를 완료하지 못했다. 두 main-session 검토를 독립
-attestation으로 표시하지 않는다. PR merge는 소비자 저장소 snapshot 재게시, 새
-exact-head CI, POM gate와 merge 전 마지막 점검을 마친 뒤 진행한다.
+독립 아키텍처 검토는 아직 완료되지 않았다. native architect 재시도는 설치된
+`codex-code-mode-host` 경로 부재로 파일을 열기 전에 실패했고, Claude Code는 조직의
+subscription 정책으로 실행이 차단됐다. Codex 0.172.0 검토 프로세스는 exact diff를
+읽었지만 verdict를 반환하지 않아 중단했다. 따라서 현재까지의 검토 결과는 독립
+architecture attestation이 아니다. PR merge는 독립 아키텍처 검토, 소비자 저장소
+snapshot 재게시, 새 exact-head CI, POM gate와 merge 전 마지막 점검 뒤에 진행한다.
 
 Receipt helper를 다룰 때 `--expected-head`에는 Git SHA가 아닌 직전
 `mutation-check`의 receipt checksum을 넣고, owner handle은 state root의
