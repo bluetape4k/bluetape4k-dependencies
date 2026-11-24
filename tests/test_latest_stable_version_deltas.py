@@ -16,6 +16,9 @@ CENTRAL_LEDGER = REPO_ROOT / "config" / "central-catalog-version-deltas.json"
 AUDIT = REPO_ROOT / "config" / "latest-stable-version-audit.json"
 BUILD = REPO_ROOT / "build.gradle.kts"
 GRADLE_PROPERTIES = REPO_ROOT / "gradle.properties"
+NEXT_DEVELOPMENT_LINE = (
+    REPO_ROOT / "config" / "post-publish-next-development-line.json"
+)
 ISSUE_1832_ROLLOUT = "2026-10-18-issue-1832-amqp-client-catalog"
 ISSUE_261_KOVER_ROLLOUT = "2026-10-24-pr-261-kover-only"
 ISSUE_260_ROLLOUT = "2026-10-24-issue-260-safe-refresh"
@@ -596,14 +599,20 @@ class LatestStableVersionDeltaLedgerTest(unittest.TestCase):
             "current",
         )
 
-    def test_catalog_self_version_matches_the_release_version(self) -> None:
+    def test_catalog_self_version_matches_the_next_development_snapshot(self) -> None:
+        document = json.loads(NEXT_DEVELOPMENT_LINE.read_text(encoding="utf-8"))
         properties = dict(
             line.split("=", 1)
             for line in GRADLE_PROPERTIES.read_text(encoding="utf-8").splitlines()
             if line and not line.startswith("#") and "=" in line
         )
-        expected = properties["baseVersion"] + properties["snapshotVersion"]
-        self.assertIn(f'bluetape4k-dependencies = "{expected}"', CATALOG.read_text())
+        expected = (
+            f"{document['development-version']}{document['snapshot-suffix']}"
+        )
+
+        self.assertEqual(properties["baseVersion"], document["development-version"])
+        self.assertEqual(properties["snapshotVersion"], "")
+        self.assertEqual(catalog_versions()["bluetape4k-dependencies"], expected)
 
     def test_aws_crt_has_a_published_bom_constraint(self) -> None:
         self.assertIn("api(libs.aws2.aws.crt)", BUILD.read_text(encoding="utf-8"))
