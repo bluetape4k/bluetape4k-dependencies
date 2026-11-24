@@ -75,3 +75,66 @@ native reviewer 실행은 `/opt/homebrew/Caskroom/codex/0.171.0/bin/codex-code-m
 - [x] **SPW-05 — 최종 read-back:** 표, 경로, 명령, 인용 오류와 P0/P1 결과를 확인했다.
 
 **Writer gate: PASS** — 두 문서의 contextual terminology audit가 각각 finding 0건이며 Markdown 구조와 경로 read-back을 마쳤다.
+
+---
+
+## 2026-11-25 Type A spec/plan 재검토 addendum
+
+### 판정
+
+Inline verdict: PASS; P0=0, P1=0.
+
+- Type A 분류에 맞춰 승인 spec과 최종 보완 계획을 여섯 관점에서 다시 읽었다.
+- P0/P1: 0건. 확인한 계획 P2 6건은 모두 문서에서 수정했다. 미해결 plan finding은 없다.
+- 계획 리뷰에 독립 attestation은 없다. 독립 reviewer lane은 실행 host 오류로 저장소 파일을 열지 못했다. 이 상태는 별도의 독립 최종 코드 리뷰 gate와 혼합하지 않는다.
+
+### 고정 근거
+
+- Spec: `docs/superpowers/specs/2026-11-24-issue-293-exposed-dao-r2dbc-alias-design.md`, SHA-256 `66d5ff80642334f1c26eda428dfb8315461cfbce06d30740e5dd1b952996eb78`.
+- Plan: `docs/superpowers/plans/2026-11-24-issue-293-exposed-dao-r2dbc-alias-plan.md`, SHA-256 `1ed8cc4a1ece1702bb5d6d5771f2ef30e819e3f9e22b290d2251fa207a27fcaf`.
+- Repository: `origin/develop` `78a2f525c1d12c576f80f2c8f84dbb2fbb942ede`; approved branch `chore/issue-293-exposed-dao-r2dbc-alias`, HEAD `b97a01148d5d5bd7ba3a634a3d1dafc75b2b5175` plus the scoped working diff.
+- Live GitHub: #293, Exposed #942, and PR #297 all belong to milestone `2.2.0` (#15). #293/#942 are open and assigned to `debop`; PR #297 is open at `2d67f92ed9406eb4c49399519f6651adac7dd05b` with 10/10 successful checks.
+- GNO: `bluetape4k-github` returned #293/#942; `bluetape4k-docs` returned prior Exposed/catalog alias lessons. The matching `bluetape4k-wiki` searches returned no results.
+- Independent execution: six plan-review lanes and the later final code-review lane could not start because `/opt/homebrew/Caskroom/codex/0.170.0/bin/codex-code-mode-host: host executable was not found`. They provide no verdict or approval.
+
+### 여섯 관점
+
+| 관점 | 검토 결과 |
+|---|---|
+| 성능 | 변경은 catalog alias 및 audit evidence다. runtime 코드와 published POM dependency graph는 바뀌지 않으며 저장소 build와 Maven Central 소비 검증이 계획돼 있다. |
+| 안정성 | 523개 immutable audit record, 105개 pending delta, 이전 candidate를 유지하고 신규 coordinate 하나만 더한다. journal recovery와 cross-file 검사를 실행 순서에 포함한다. |
+| 보안 | 새 artifact는 central repository에서만 확인한다. 신규 credential, repository, published dependency edge를 만들지 않는다. |
+| 운영 | 변경 전 최신 develop, 이슈, checksum, 실행 receipt를 다시 읽는다. reviewer host 오류는 실패로 보존하고 독립 검토 gate를 pending으로 남긴다. |
+| 개발자/API | `exposed-dao-r2dbc`는 기존 `exposed=1.6.1` ref를 쓰고 Gradle accessor 및 resolved coordinate를 별도로 확인한다. |
+| 사용자/소비자 | #293은 공용 catalog alias만 담당한다. #942의 DAO 구현과 catalog ref 변경은 별도 순서에 두고, 병합 후 고정 SHA를 사용하도록 명시했다. |
+
+### 통합 계획 발견과 조치
+
+| ID | 심각도 | 발견 | 조치 | 결과 |
+|---|---|---|---|---|
+| PLAN-P2-10 | P2 | helper bootstrap 설명이 `owner-...-recovery.owner`를 가리켜 실제 사용한 owner file과 달랐다. | 현재 사용한 `owner-issue-293-session-bound-20261125-final.owner` 경로로 맞췄다. | 해결 |
+| PLAN-P2-11 | P2 | 실행 이력은 6개 reviewer lane 실패 및 `20261124T184644Z-5bfe429a`의 최종 `blocked` 상태를 반영하지 않았다. | 184644 run의 종료 원인과 새 session-bound `20261124T190927Z-031a5d5b` 실행을 분리해 기록했다. | 해결 |
+| PLAN-P2-12 | P2 | lane scope 한 곳이 저장소 실제 lesson 경로 `docs/lessons` 대신 `docs/superpowers/lessons`를 사용했다. | 계획 표, helper 대상, write scope를 `docs/lessons`로 통일했다. | 해결 |
+| PLAN-P2-13 | P2 | 임시 Gradle consumer 명령에 `trap 'rm -rf ...'`가 있어 정리 과정에서 임시 경로 삭제를 실행했다. | 작업이 만든 임시 디렉터리를 보존해 진단에 쓸 수 있게 하고 삭제 명령을 제거했다. | 해결 |
+| PLAN-P2-14 | P2 | `git add -N` diff 포함 단계가 새 immutable candidate 파일을 포함하지 않았다. | candidate audit/delta 파일을 명시해 검토 diff에 포함했다. | 해결 |
+| PLAN-P2-15 | P2 | PR DoD에 새 PR의 milestone/assignee/labels read-back이 명시되지 않았다. | `2.2.0`, `debop`, `chore`/`dependencies`를 생성 및 read-back 기준에 추가했다. | 해결 |
+
+계획은 독립 리뷰 없이 inline fallback으로 통과했다. 독립 final code-reviewer는 host 오류로 exact diff를 읽지 못했으므로 독립 attestation은 없다. workflow의 bounded recovery 뒤 주 세션 inline fallback review가 P0/P1=0을 확인하면 코드 리뷰 gate를 충족한 것으로 기록하고 승인된 commit/PR 단계를 진행한다. publication POM 검증은 publisher build graph에 신규 artifact edge가 없다는 현재 evidence에 한해 N/A다. 전체 suite에서 `bluetape4k-core:1.9.2-SNAPSHOT` transient 확인은 HTTP 403으로 skip되어 최종 보고의 검증 한계로 유지한다.
+
+### Writer DoD 재확인
+
+- [x] SPW-01 — 이슈, milestone, spec/plan hash, branch/base/head 및 독자를 고정했다.
+- [x] SPW-02 — Type A 계획 계약, 실행 순서, 검증, 복구, 리뷰, lesson 및 PR metadata를 확인했다.
+- [x] SPW-03 — 한국어 기술 문체와 용어 보존을 확인했다.
+- [x] SPW-04 — spec, catalog diff, immutable audit 경계, POM N/A 및 남은 403/독립 리뷰 한계를 대조했다.
+- [x] SPW-05 — 최종 Markdown, 표, 명령, 경로, hash 및 verdict를 다시 읽었다.
+
+Writer gate: PASS — 독립 실행 오류를 결과로 오인하지 않고 계획 리뷰와 최종 코드 리뷰 gate를 분리했다.
+
+### 최종 실행 read-back 보완
+
+- `2.2.0` milestone은 사용자가 새로 만들었으며 live read-back에서 #293과 Exposed #942 양쪽에 연결된 것을 확인했다. assignee와 요청된 labels도 맞다.
+- 실행 worktree에서 `--workspace ..`는 저장소 상위가 아니라 `.worktrees`를 가리킨다. 검증 명령은 `/Users/debop/work/bluetape4k`를 명시하도록 고쳤고, managed catalog와 Dependabot ignore `--check --summary`를 모두 통과했다.
+- 이전 run은 잘못된 lesson write scope 때문에 보존·차단했다. 후속 session-bound run에는 실제 `docs/lessons/...` 경로를 등록했다.
+- native reviewer host 재시도가 같은 실행 오류로 끝난 뒤 workflow의 bounded recovery 절차에 따라 inline fallback을 적용했다. 이는 독립 attestation을 대신하지 않으며 코드 리뷰 gate provenance를 정확히 기록한다.
+- 최종 exact diff inline read-back에서 source boundary, immutable evidence, regression tests, writer artifacts와 검증 보고를 대조했고 P0/P1=0을 확인했다.
