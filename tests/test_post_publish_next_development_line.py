@@ -66,7 +66,7 @@ def create_catalog_history(repository: Path) -> dict[str, str]:
 
 def write_snapshot_consumer(repository: Path, settings_ref: str, ci_ref: str) -> None:
     workflow = repository / ".github" / "workflows" / "ci.yml"
-    workflow.parent.mkdir(parents=True)
+    workflow.parent.mkdir(parents=True, exist_ok=True)
     (repository / "settings.gradle.kts").write_text(
         f'catalogRef.orElse("{settings_ref}")\n', encoding="utf-8"
     )
@@ -76,6 +76,58 @@ def write_snapshot_consumer(repository: Path, settings_ref: str, ci_ref: str) ->
         f"'{ci_ref}'\n",
         encoding="utf-8",
     )
+
+
+def write_development_workspace(
+    central: Path,
+    workspace: Path,
+    module,
+    document: dict[str, object],
+) -> None:
+    development_snapshot = (
+        f"{document['development-version']}{document['snapshot-suffix']}"
+    )
+    (central / "gradle").mkdir(parents=True, exist_ok=True)
+    (central / "gradle.properties").write_text(
+        f"baseVersion={document['development-version']}\nsnapshotVersion=\n",
+        encoding="utf-8",
+    )
+    catalog_lines = [
+        "[versions]",
+        f'bluetape4k-dependencies = "{development_snapshot}"',
+    ]
+    for item in document["publishable-repositories"]:
+        catalog_lines.append(
+            f'{item["catalog-alias"]} = "{module.expected_catalog_version(document, item)}"'
+        )
+        repository = workspace / item["repository"]
+        workflows = repository / ".github" / "workflows"
+        workflows.mkdir(parents=True)
+        (repository / "gradle.properties").write_text(
+            f'baseVersion={item["base-version"]}\nsnapshotVersion=\n',
+            encoding="utf-8",
+        )
+        (workflows / "publish-snapshot.yml").write_text(
+            "JAVA_VERSION: '25'\n-PsnapshotVersion=-SNAPSHOT\n",
+            encoding="utf-8",
+        )
+        (workflows / "release.yml").write_text(
+            "snapshotVersion must be empty for release\n", encoding="utf-8"
+        )
+    (central / "gradle" / "libs.versions.toml").write_text(
+        "\n".join(catalog_lines) + "\n", encoding="utf-8"
+    )
+
+    catalog_ref = document["consumer-policy"]["snapshot-catalog-ref"]
+    for repository in document["consumer-policy"]["snapshot-catalog-repositories"]:
+        write_snapshot_consumer(workspace / repository, catalog_ref, catalog_ref)
+    for item in document["consumer-policy"]["official-release-repositories"]:
+        catalog = workspace / item["repository"] / "gradle" / "libs.versions.toml"
+        catalog.parent.mkdir(parents=True)
+        catalog.write_text(
+            f'[versions]\n{item["catalog-version-key"]} = "{document["stable-version"]}"\n',
+            encoding="utf-8",
+        )
 
 
 def snapshot_policy(
@@ -293,6 +345,37 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
 
         self.assertTrue(any("bluetape4k-bom" in error for error in errors))
 
+    def test_development_line_accepts_snapshot_self_alias(self) -> None:
+        module = load_script()
+        document = json.loads(MANIFEST.read_text(encoding="utf-8"))
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            history = create_catalog_history(central)
+            document["consumer-policy"]["snapshot-catalog-ref"] = history["minimum"]
+            write_development_workspace(central, workspace, module, document)
+
+            self.assertEqual(
+                module.verify_development(central, workspace, document, False), []
+            )
+
+            catalog = central / "gradle" / "libs.versions.toml"
+            catalog.write_text(
+                catalog.read_text(encoding="utf-8").replace(
+                    'bluetape4k-dependencies = "2.2.0-SNAPSHOT"',
+                    'bluetape4k-dependencies = "2.2.0"',
+                ),
+                encoding="utf-8",
+            )
+            errors = module.verify_development(central, workspace, document, False)
+
+        self.assertIn(
+            "catalog self version must reference 2.2.0-SNAPSHOT, got '2.2.0'",
+            errors,
+        )
+
     def test_stable_boundary_rejects_snapshot_refs(self) -> None:
         module = load_script()
         document = json.loads(MANIFEST.read_text(encoding="utf-8"))
@@ -305,7 +388,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             )
             (central / "gradle" / "libs.versions.toml").write_text(
                 "[versions]\n"
-                "bluetape4k-dependencies = \"1.5.0\"\n"
+                "bluetape4k-dependencies = \"1.5.0-SNAPSHOT\"\n"
                 "bluetape4k-bom = \"1.13.0-SNAPSHOT\"\n",
                 encoding="utf-8",
             )
@@ -316,6 +399,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             "stable catalog cannot reference a snapshot: bluetape4k-bom=1.13.0-SNAPSHOT",
             errors,
         )
+        self.assertIn("catalog self version must match the stable tag", errors)
 
     def test_development_line_rejects_snapshot_bom_in_example_repository(self) -> None:
         module = load_script()

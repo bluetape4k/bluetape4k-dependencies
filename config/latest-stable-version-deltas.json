@@ -1,7 +1,7 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "ef622e25d64603807caa3d7c9051a68c3f1abd875dc9f09efdb282974c7a68d1",
+    "sha256": "1115469f5e32bfdc33b536d13867d6823bd84718f44e7fed74e15b9aa91eddd5",
     "summary": {
       "authority-count": 523,
       "line-count": 557,

@@ -7,7 +7,7 @@ qdrant = "1.20.0"
 temporal = "1.41.1"
 # <shared-version-source-of-truth by scripts/sync-shared-versions.py>
 # ── Core ecosystem ─────────────────────────────────────────────────────────
-bluetape4k-dependencies = "2.2.0"  # Current catalog/BOM development line; update after each stable release.
+bluetape4k-dependencies = "2.2.0-SNAPSHOT"  # Next development BOM; official consumers stay on the latest stable release.
 
 # bluetape4k-projects (monorepo core modules)
 bluetape4k-bom     = "2.2.0-SNAPSHOT"  # Projects next minor development line.
