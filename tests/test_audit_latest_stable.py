@@ -18,6 +18,13 @@ POLICY = REPO_ROOT / "config" / "central-catalog-authority-policy.json"
 INVENTORY = REPO_ROOT / "config" / "latest-stable-version-inventory.json"
 AUDIT = REPO_ROOT / "config" / "latest-stable-version-audit.json"
 AUDIT_POLICY = REPO_ROOT / "config" / "latest-stable-audit-policy.json"
+BASELINE_AUDIT = (
+    REPO_ROOT
+    / "config"
+    / "rollouts"
+    / "catalog-refresh-2026-11-20-v4"
+    / "latest-stable-version-audit.json"
+)
 
 
 def load_script():
@@ -734,19 +741,19 @@ class LatestStableInventoryTest(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("authority=523", result.stdout)
+        self.assertIn("authority=524", result.stdout)
 
     def test_inventory_reconstructs_the_exact_authority_universe(self) -> None:
         module = load_script()
         inventory = module.build_inventory(CATALOG, POLICY)
 
         self.assertEqual(inventory["schema-version"], 1)
-        self.assertEqual(inventory["summary"]["authority-count"], 523)
-        self.assertEqual(inventory["summary"]["catalog-direct"], 131)
+        self.assertEqual(inventory["summary"]["authority-count"], 524)
+        self.assertEqual(inventory["summary"]["catalog-direct"], 132)
         self.assertEqual(inventory["summary"]["managed-generated"], 325)
         self.assertEqual(inventory["summary"]["policy-subjects"], 67)
-        self.assertEqual(inventory["summary"]["audit-pending"], 523)
-        self.assertEqual(len(inventory["records"]), 523)
+        self.assertEqual(inventory["summary"]["audit-pending"], 524)
+        self.assertEqual(len(inventory["records"]), 524)
         self.assertIn(
             "catalog:library:org.freemarker:freemarker",
             {record["authority-key"] for record in inventory["records"]},
@@ -757,10 +764,60 @@ class LatestStableInventoryTest(unittest.TestCase):
         )
         self.assertEqual(
             len({record["authority-key"] for record in inventory["records"]}),
-            523,
+            524,
         )
+        exposed_dao_r2dbc = next(
+            record
+            for record in inventory["records"]
+            if record["authority-key"]
+            == "catalog:library:org.jetbrains.exposed:exposed-dao-r2dbc"
+        )
+        self.assertEqual(exposed_dao_r2dbc["aliases"], ["exposed-dao-r2dbc"])
+        self.assertEqual(
+            exposed_dao_r2dbc["current-lines"][0]["version-key"], "exposed"
+        )
+        self.assertEqual(exposed_dao_r2dbc["current-lines"][0]["current"], "1.6.1")
         self.assertNotIn("bluetape4k-workshop", inventory["scope"]["repositories"])
         self.assertIn("bluetape4k-workshop", inventory["scope"]["excluded"])
+
+    def test_latest_stable_audit_covers_new_exposed_dao_r2dbc_authority(self) -> None:
+        module = load_script()
+        inventory = module.build_inventory(CATALOG, POLICY)
+        audit = json.loads(AUDIT.read_text(encoding="utf-8"))
+        audit_policy = json.loads(AUDIT_POLICY.read_text(encoding="utf-8"))
+
+        module.validate_audit(audit, inventory, audit_policy)
+
+        record = next(
+            record
+            for record in audit["records"]
+            if record["authority-key"]
+            == "catalog:library:org.jetbrains.exposed:exposed-dao-r2dbc"
+        )
+        self.assertEqual(record["latest-stable"]["status"], "verified")
+        self.assertEqual(record["latest-stable"]["latest"], "1.6.1")
+        self.assertEqual(record["current-lines"][0]["version-key"], "exposed")
+        self.assertEqual(record["current-lines"][0]["current"], "1.6.1")
+
+    def test_latest_stable_audit_preserves_existing_immutable_records(self) -> None:
+        baseline = json.loads(BASELINE_AUDIT.read_text(encoding="utf-8"))
+        current = json.loads(AUDIT.read_text(encoding="utf-8"))
+        baseline_records = {
+            record["authority-key"]: record for record in baseline["records"]
+        }
+        current_records = {
+            record["authority-key"]: record for record in current["records"]
+        }
+        new_authority = "catalog:library:org.jetbrains.exposed:exposed-dao-r2dbc"
+
+        self.assertEqual(len(baseline_records), 523)
+        self.assertEqual(len(current_records), 524)
+        self.assertEqual(set(current_records) - set(baseline_records), {new_authority})
+        self.assertEqual(set(baseline_records) - set(current_records), set())
+        self.assertEqual(
+            {key: current_records[key] for key in baseline_records},
+            baseline_records,
+        )
 
     def test_inventory_includes_the_new_infra_sdk_authorities(self) -> None:
         module = load_script()

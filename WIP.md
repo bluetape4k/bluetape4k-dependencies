@@ -1,7 +1,32 @@
 # WIP - bluetape4k-dependencies
 
 기준일: 2026-11-25 (KST)
-범위: Dependencies `2.2.0-SNAPSHOT` catalog를 같은 immutable ref로 다시 검증·게시하고, 중앙 BOM은 하위 BOM 뒤에 공개한다.
+범위: Dependencies `2.2.0-SNAPSHOT` catalog를 같은 immutable ref로 검증·게시하고 중앙 BOM은 하위 BOM 뒤에 공개한다. PR #298은 Workshop consumer 정책을 바로잡아 병합했고, PR #297은 snapshot metadata가 지정한 timestamped artifact 파일의 실재를 검증한다.
+
+## 2026-11-25 Workshop SNAPSHOT consumer 정책 정렬
+
+Dependencies PR #291은 Workshop/example 저장소가 공식 BOM `2.1.0`을 유지한다고
+기록했다. 이후 Workshop PR #1068이 `develop`의 `bluetape4k-dependencies`를
+`2.2.0-SNAPSHOT`으로 전환해 2026-11-24 18:29 UTC에 merge됐다. Dependencies PR
+#298의 exact-head CI는 그 뒤 fresh `develop` clone을 검증하며, manifest가 Workshop을
+공식 release consumer로 분류한 탓에 `2.1.0` 대 `2.2.0-SNAPSHOT` 불일치로 실패했다.
+
+- live `develop` 확인에서 `bluetape4k-workshop`만 `2.2.0-SNAPSHOT`을 사용하고,
+  `clinic-appointment`, `timefold-workshop`, `exposed-r2dbc-workshop`,
+  `exposed-workshop`은 공식 `2.1.0`을 사용한다.
+- Issue #299에서 Workshop만 `development-snapshot-repositories`로 옮기고 나머지
+  네 예제는 안정 consumer로 유지하기로 했다.
+- `verify-post-publish-next-development-line.py` 단위 테스트 22개는 통과했다.
+  로컬 전체 workspace 검사는 오래된 `timefold-workshop` checkout이 live와 달라
+  실패했다. 대신 GitHub `develop`에서 다섯 예제의 catalog를 가져온 임시 workspace로
+  verifier를 통과시켰다: publisher 8, snapshot library 9, stable example 4,
+  development-snapshot example 1. PR exact-head CI가 최종 hosted 확인이다.
+- PR #298의 exact head `59b1791385ab6947f8802d2eeeec633299cd2fe5`는 CI run
+  `45489589102`의 9개 CI job과 Dependency Submission run `45489575092`에서
+  성공했다. PR #298은 2026-11-25 03:17:30 UTC에 merge commit
+  `d9ad1af37d20545fa97af1c0d01ec05542a92e77`로 병합됐고 Issue #299는 닫혔다.
+- Workshop consumer 정책 변경은 PR #297의 timestamped artifact 검증과 별도 변경이며,
+  두 PR의 exact-head CI와 병합 기록을 각각 확인한다.
 
 ## 2026-11-25 PR #291 병합 및 snapshot 게시 확인
 

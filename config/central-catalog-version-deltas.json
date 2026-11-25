@@ -900,10 +900,10 @@
       "status": "validation-pending"
     },
     {
-      "audit": "config/rollouts/catalog-refresh-2026-11-20-v4/latest-stable-version-audit.json",
-      "audit-sha256": "a7b0a023682b3d36f0b3733153fcd4d5ffc2d504ca066f930d8b5161208f6848",
-      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20-v4/latest-stable-version-deltas.json",
-      "authority-delta-ledger-sha256": "ae6fa6bea2567931e59567fe49c6dcef06ea2a87f6d23a8c6857dcc12dc6dd3d",
+      "audit": "config/rollouts/catalog-refresh-2026-11-20-v4/candidate-48f7ab2fb9463cfb-4337efdf5c56e545/latest-stable-version-audit.json",
+      "audit-sha256": "4337efdf5c56e545549388767ba95fd152f13a31f12027a13ffe6e3d9bfc8439",
+      "authority-delta-ledger": "config/rollouts/catalog-refresh-2026-11-20-v4/candidate-48f7ab2fb9463cfb-4337efdf5c56e545/latest-stable-version-deltas.json",
+      "authority-delta-ledger-sha256": "86c35c49ee821e732891b98dffcb46779b42023ef7a5b58a610a917fe0aae647",
       "baseline-catalog-ref": "origin/develop",
       "catalog-sha256": "48f7ab2fb9463cfb1a18135f5c8b02e0149cdd098494868419735262fe6caa45",
       "delta-count": 105,

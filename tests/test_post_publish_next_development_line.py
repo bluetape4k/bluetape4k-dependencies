@@ -143,6 +143,16 @@ def write_development_workspace(
             f'[versions]\n{item["catalog-version-key"]} = "{document["stable-version"]}"\n',
             encoding="utf-8",
         )
+    development_snapshot = (
+        f"{document['development-version']}{document['snapshot-suffix']}"
+    )
+    for item in document["consumer-policy"]["development-snapshot-repositories"]:
+        catalog = workspace / item["repository"] / "gradle" / "libs.versions.toml"
+        catalog.parent.mkdir(parents=True)
+        catalog.write_text(
+            f'[versions]\n{item["catalog-version-key"]} = "{development_snapshot}"\n',
+            encoding="utf-8",
+        )
 
 
 def snapshot_policy(
@@ -263,7 +273,6 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         self.assertEqual(
             {item["repository"] for item in policy["official-release-repositories"]},
             {
-                "bluetape4k-workshop",
                 "clinic-appointment",
                 "timefold-workshop",
                 "exposed-r2dbc-workshop",
@@ -275,7 +284,20 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
                 item["repository"]
                 for item in policy["development-snapshot-repositories"]
             },
-            set(),
+            {"bluetape4k-workshop"},
+        )
+        self.assertEqual(
+            [
+                item
+                for item in policy["development-snapshot-repositories"]
+                if item["repository"] == "bluetape4k-workshop"
+            ],
+            [
+                {
+                    "repository": "bluetape4k-workshop",
+                    "catalog-version-key": "bluetape4k-dependencies-version",
+                }
+            ],
         )
         self.assertEqual(
             set(module.required_workspace_repositories(document)),

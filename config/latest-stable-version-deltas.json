@@ -1,20 +1,20 @@
 {
   "audit": {
     "path": "config/latest-stable-version-audit.json",
-    "sha256": "1115469f5e32bfdc33b536d13867d6823bd84718f44e7fed74e15b9aa91eddd5",
+    "sha256": "4337efdf5c56e545549388767ba95fd152f13a31f12027a13ffe6e3d9bfc8439",
     "summary": {
-      "authority-count": 523,
-      "line-count": 557,
+      "authority-count": 524,
+      "line-count": 558,
       "line-dispositions": {
         "adopt-latest": 18,
-        "current": 433,
+        "current": 434,
         "defer-breaking-migration": 32,
         "hold-compatibility": 65,
         "hold-unavailable": 9
       },
-      "metadata-preview-only": 5,
       "metadata-unavailable": 0,
-      "metadata-verified": 518
+      "metadata-preview-only": 5,
+      "metadata-verified": 519
     }
   },
   "audit-cutoff": "2026-11-20",
