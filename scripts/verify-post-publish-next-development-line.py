@@ -472,7 +472,11 @@ def request_url(
             if method == "HEAD" and error.code == 405:
                 try:
                     with urllib.request.urlopen(urllib.request.Request(url), timeout=15) as response:
-                        return 200 <= response.status < 400, str(response.status), response.read()
+                        return (
+                            200 <= response.status < 400,
+                            str(response.status),
+                            b"",
+                        )
                 except urllib.error.HTTPError as fallback:
                     status = str(fallback.code)
                 except (urllib.error.URLError, TimeoutError) as fallback:

@@ -17,6 +17,7 @@ class FakeHTTPResponse:
     def __init__(self, status: int, body: bytes = b"") -> None:
         self.status = status
         self._body = body
+        self.read_count = 0
 
     def __enter__(self):
         return self
@@ -25,6 +26,7 @@ class FakeHTTPResponse:
         return None
 
     def read(self) -> bytes:
+        self.read_count += 1
         return self._body
 
 
@@ -412,6 +414,29 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             "catalog self version must reference 2.2.0-SNAPSHOT, got '2.2.0'",
             errors,
         )
+
+    def test_head_405_fallback_checks_status_without_reading_response_body(
+        self,
+    ) -> None:
+        module = load_script()
+        url = "https://example.test/large-artifact.jar"
+        response = FakeHTTPResponse(200, b"jar-payload")
+        requests: list[str] = []
+
+        def head_then_get(request, timeout=15):
+            requests.append(request.get_method())
+            if request.get_method() == "HEAD":
+                raise module.urllib.error.HTTPError(
+                    url, 405, "Method Not Allowed", hdrs=None, fp=None
+                )
+            return response
+
+        with patch.object(module.urllib.request, "urlopen", side_effect=head_then_get):
+            result = module.request_url(url, "HEAD")
+
+        self.assertEqual(requests, ["HEAD", "GET"])
+        self.assertEqual(response.read_count, 0)
+        self.assertEqual(result, (True, "200", b""))
 
     def test_required_snapshot_artifacts_reject_metadata_without_timestamped_files(self) -> None:
         module = load_script()
