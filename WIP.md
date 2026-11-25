@@ -1,7 +1,7 @@
 # WIP - bluetape4k-dependencies
 
 기준일: 2026-11-25 (KST)
-범위: Dependencies `2.2.0-SNAPSHOT` catalog를 같은 immutable ref로 다시 검증·게시하고, 중앙 BOM은 하위 BOM 뒤에 공개한다. PR #298은 Issue #299의 Workshop consumer 정책 검증을 복구한 뒤 exact-head CI를 다시 확인한다.
+범위: Dependencies `2.2.0-SNAPSHOT` catalog를 같은 immutable ref로 검증·게시하고 중앙 BOM은 하위 BOM 뒤에 공개한다. PR #298은 Workshop consumer 정책을 바로잡아 병합했고, PR #297은 snapshot metadata가 지정한 timestamped artifact 파일의 실재를 검증한다.
 
 ## 2026-11-25 Workshop SNAPSHOT consumer 정책 정렬
 
@@ -21,8 +21,44 @@ Dependencies PR #291은 Workshop/example 저장소가 공식 BOM `2.1.0`을 유�
   실패했다. 대신 GitHub `develop`에서 다섯 예제의 catalog를 가져온 임시 workspace로
   verifier를 통과시켰다: publisher 8, snapshot library 9, stable example 4,
   development-snapshot example 1. PR exact-head CI가 최종 hosted 확인이다.
-- 작업 순서: #299 consumer 정책 검증 수정 → #293 Exposed alias exact-head CI 재확인
-  → 별도 merge 승인 단계.
+- PR #298의 exact head `59b1791385ab6947f8802d2eeeec633299cd2fe5`는 CI run
+  `45489589102`의 9개 CI job과 Dependency Submission run `45489575092`에서
+  성공했다. PR #298은 2026-11-25 03:17:30 UTC에 merge commit
+  `d9ad1af37d20545fa97af1c0d01ec05542a92e77`로 병합됐고 Issue #299는 닫혔다.
+- Workshop consumer 정책 변경은 PR #297의 timestamped artifact 검증과 별도 변경이며,
+  두 PR의 exact-head CI와 병합 기록을 각각 확인한다.
+
+## 2026-11-25 PR #291 병합 및 snapshot 게시 확인
+
+- PR #291은 head `f4a5b58dccb5e6c62f1261179cb12519549a719d`에서 2026-11-24
+  13:34:49 UTC에 merge commit `78a2f525c1d12c576f80f2c8f84dbb2fbb942ede`로
+  병합됐다. 해당 head의 CI run `45401341780`은 10개 check 모두 성공했다.
+- merge commit에서 후속 CI run `45404899275`와 성공한 develop Nightly에 의해
+  자동 시작된 Publish Snapshot run `45407764459`가 모두 성공했다. Publish Snapshot은
+  같은 merge commit을 게시했다.
+- Sonatype Central Portal snapshot 저장소에서 중앙 Dependencies BOM과 8개 하위
+  BOM의 snapshot metadata, metadata가 지정한 timestamped POM 및 Gradle `.module`을
+  다시 조회해 모두 HTTP 200을 확인했다. 중앙 metadata의 `lastUpdated`는
+  `20261124135253`, timestamped POM은
+  `2.2.0-20261124.135253-1`이다. 이 artifact들은 POM packaging BOM이므로 JAR을
+  요구하지 않는다.
+- PR #291의 review submission, inline review comment, issue comment는 각각 0건이다.
+  단독 개발자 lane의 인간 리뷰 subgate는 사용자의 지시에 따라
+  `N/A (single-developer lane)`으로 기록한다.
+- 보정 후보의 `verify_development(..., require_artifacts=True)`와 9개 consumer policy를
+  임시 workspace에서 실행해 통과했다. 이 workspace는 공식 `origin/develop`의
+  Timefold catalog를 사용했고, 모든 현재 snapshot artifact를 다시 검사했다.
+- 실제 로컬 workspace에서 CLI를 실행했을 때 유일한 오류는 Timefold 작업 checkout이
+  `fix/nightly-test-dependency-cache` 브랜치의 `2.1.0-SNAPSHOT`을 사용한 점이다.
+  해당 checkout의 `origin/develop` catalog는 공식 소비자 버전 `2.1.0`이다. 사용자
+  브랜치와 파일은 수정하지 않았다.
+- 전체 publication-POM/Maven effective-model gate는 canonical Dependencies checkout의
+  기존 사용자 문서 변경 때문에 `publisher repository is dirty: bluetape4k-dependencies`
+  로 중단됐다. 이 변경을 보존한다. `sync-shared-versions.py --check`는 Projects의
+  7개 `library-coordinate-duplicate` 항목을 보고했으며 이번 PR 1은 version
+  catalog를 수정하지 않는다.
+- 남은 항목: PR 1 exact-head CI와 전체 publication-POM/Maven effective-model gate.
+  snapshot read-back과 임시 workspace 검증은 이 gate들을 대신하지 않는다.
 
 ## 2026-11-24 공통 catalog ref 보정 및 snapshot 재게시
 

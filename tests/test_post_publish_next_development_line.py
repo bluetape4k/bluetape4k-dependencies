@@ -6,11 +6,26 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "verify-post-publish-next-development-line.py"
 MANIFEST = REPO_ROOT / "config" / "post-publish-next-development-line.json"
+
+
+class FakeHTTPResponse:
+    def __init__(self, status: int, body: bytes = b"") -> None:
+        self.status = status
+        self._body = body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_arguments) -> None:
+        return None
+
+    def read(self) -> bytes:
+        return self._body
 
 
 def load_script():
@@ -396,6 +411,112 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
         self.assertIn(
             "catalog self version must reference 2.2.0-SNAPSHOT, got '2.2.0'",
             errors,
+        )
+
+    def test_required_snapshot_artifacts_reject_metadata_without_timestamped_files(self) -> None:
+        module = load_script()
+        document = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        snapshot_value = "2.2.0-20261124.135253-1"
+        metadata = (
+            "<metadata><versioning><snapshotVersions>"
+            f"<snapshotVersion><extension>pom</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>module</extension><value>{snapshot_value}</value></snapshotVersion>"
+            "</snapshotVersions></versioning></metadata>"
+        ).encode()
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            history = create_catalog_history(central)
+            document["consumer-policy"]["snapshot-catalog-ref"] = history["minimum"]
+            write_development_workspace(central, workspace, module, document)
+
+            def missing_artifact(request, timeout=15):
+                if request.full_url.endswith("maven-metadata.xml"):
+                    return FakeHTTPResponse(200, metadata)
+                return FakeHTTPResponse(404)
+
+            with patch.object(module.urllib.request, "urlopen", side_effect=missing_artifact):
+                errors = module.verify_development(central, workspace, document, True)
+
+        joined_errors = "\n".join(errors)
+        self.assertIn("bluetape4k-dependencies-2.2.0-20261124.135253-1.pom", joined_errors)
+        self.assertIn("bluetape4k-dependencies-2.2.0-20261124.135253-1.module", joined_errors)
+        self.assertIn("404", joined_errors)
+
+    def test_required_snapshot_artifacts_accept_a_pom_bom_without_a_jar(self) -> None:
+        module = load_script()
+        document = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        snapshot_value = "2.2.0-20261124.135253-1"
+        metadata = (
+            "<metadata><versioning><snapshotVersions>"
+            f"<snapshotVersion><extension>pom</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>module</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>jar</extension><classifier>sources</classifier><value>{snapshot_value}</value></snapshotVersion>"
+            "</snapshotVersions></versioning></metadata>"
+        ).encode()
+        pom = b"<project><modelVersion>4.0.0</modelVersion><packaging>pom</packaging></project>"
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            central = root / "central"
+            workspace = root / "workspace"
+            history = create_catalog_history(central)
+            document["consumer-policy"]["snapshot-catalog-ref"] = history["minimum"]
+            write_development_workspace(central, workspace, module, document)
+
+            def published_bom(request, timeout=15):
+                if request.full_url.endswith("maven-metadata.xml"):
+                    return FakeHTTPResponse(200, metadata)
+                if request.full_url.endswith(".pom"):
+                    return FakeHTTPResponse(200, pom)
+                if request.full_url.endswith(".module"):
+                    return FakeHTTPResponse(200)
+                return FakeHTTPResponse(404)
+
+            with patch.object(module.urllib.request, "urlopen", side_effect=published_bom):
+                errors = module.verify_development(central, workspace, document, True)
+
+        self.assertEqual(errors, [])
+
+    def test_required_snapshot_artifacts_check_the_jar_for_jar_packaging(self) -> None:
+        module = load_script()
+        snapshot_value = "2.2.0-20261124.135253-1"
+        sources_snapshot_value = "2.2.0-20261124.135254-2"
+        metadata = (
+            "<metadata><versioning><snapshotVersions>"
+            f"<snapshotVersion><extension>pom</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>module</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>jar</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>jar</extension><classifier>sources</classifier><value>{sources_snapshot_value}</value></snapshotVersion>"
+            "</snapshotVersions></versioning></metadata>"
+        ).encode()
+        pom = b"<project><modelVersion>4.0.0</modelVersion><packaging>jar</packaging></project>"
+
+        def missing_jar(request, timeout=15):
+            if request.full_url.endswith("maven-metadata.xml"):
+                return FakeHTTPResponse(200, metadata)
+            if request.full_url.endswith(".pom"):
+                return FakeHTTPResponse(200, pom)
+            if request.full_url.endswith(".module"):
+                return FakeHTTPResponse(200)
+            if request.full_url.endswith(".jar"):
+                if not request.full_url.endswith(f"{snapshot_value}.jar"):
+                    self.fail(f"unexpected jar snapshot variant: {request.full_url}")
+                return FakeHTTPResponse(404)
+            self.fail(f"unexpected request: {request.full_url}")
+
+        with patch.object(module.urllib.request, "urlopen", side_effect=missing_jar):
+            errors = module.verify_snapshot_publication(
+                "io.github.bluetape4k", "bluetape4k-core", "2.2.0-SNAPSHOT"
+            )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("bluetape4k-core:2.2.0-SNAPSHOT", errors[0])
+        self.assertIn("(jar, HTTP 404)", errors[0])
+        self.assertIn(
+            "bluetape4k-core-2.2.0-20261124.135253-1.jar", errors[0]
         )
 
     def test_stable_boundary_rejects_snapshot_refs(self) -> None:
