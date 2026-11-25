@@ -453,6 +453,7 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             "<metadata><versioning><snapshotVersions>"
             f"<snapshotVersion><extension>pom</extension><value>{snapshot_value}</value></snapshotVersion>"
             f"<snapshotVersion><extension>module</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>jar</extension><classifier>sources</classifier><value>{snapshot_value}</value></snapshotVersion>"
             "</snapshotVersions></versioning></metadata>"
         ).encode()
         pom = b"<project><modelVersion>4.0.0</modelVersion><packaging>pom</packaging></project>"
@@ -482,11 +483,13 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
     def test_required_snapshot_artifacts_check_the_jar_for_jar_packaging(self) -> None:
         module = load_script()
         snapshot_value = "2.2.0-20261124.135253-1"
+        sources_snapshot_value = "2.2.0-20261124.135254-2"
         metadata = (
             "<metadata><versioning><snapshotVersions>"
             f"<snapshotVersion><extension>pom</extension><value>{snapshot_value}</value></snapshotVersion>"
             f"<snapshotVersion><extension>module</extension><value>{snapshot_value}</value></snapshotVersion>"
             f"<snapshotVersion><extension>jar</extension><value>{snapshot_value}</value></snapshotVersion>"
+            f"<snapshotVersion><extension>jar</extension><classifier>sources</classifier><value>{sources_snapshot_value}</value></snapshotVersion>"
             "</snapshotVersions></versioning></metadata>"
         ).encode()
         pom = b"<project><modelVersion>4.0.0</modelVersion><packaging>jar</packaging></project>"
@@ -499,6 +502,8 @@ class PostPublishNextDevelopmentLineTest(unittest.TestCase):
             if request.full_url.endswith(".module"):
                 return FakeHTTPResponse(200)
             if request.full_url.endswith(".jar"):
+                if not request.full_url.endswith(f"{snapshot_value}.jar"):
+                    self.fail(f"unexpected jar snapshot variant: {request.full_url}")
                 return FakeHTTPResponse(404)
             self.fail(f"unexpected request: {request.full_url}")
 
